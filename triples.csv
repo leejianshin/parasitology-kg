@@ -1,0 +1,10 @@
+subject,predicate,object
+ClonorchisSinensis,hasHost,Human
+ClonorchisSinensis,hasHost,Snail
+ClonorchisSinensis,causes,Clonorchiasis
+ClonorchisSinensis,diagnosedBy,StoolMicroscopy
+ClonorchisSinensis,hasLifecycleStage,Metacercaria
+ClonorchisSinensis,manifestsSymptom,BiliaryObstruction
+ClonorchisSinensis,preventedBy,HealthEducation
+ClonorchisSinensis,transmittedVia,EatingRawFish
+ClonorchisSinensis,treatedWith,Praziquantel
