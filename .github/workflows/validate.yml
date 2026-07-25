@@ -1,0 +1,26 @@
+name: Validate knowledge schema
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements-dev.txt
+      - name: Validate formal knowledge
+        run: python scripts/validate_knowledge.py
+      - name: Validate positive fixture
+        run: >-
+          python scripts/validate_knowledge.py
+          --knowledge-dir tests/fixtures/knowledge
+          --source-registry tests/fixtures/source-registry.yml

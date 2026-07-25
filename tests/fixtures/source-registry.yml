@@ -1,0 +1,9 @@
+schema_version: "1.0"
+
+sources:
+  - source_id: source.example
+    source_type: textbook
+    title: Validation Fixture
+    roles: [core_fact]
+    access_level: private
+    full_text_status: reviewed_partial

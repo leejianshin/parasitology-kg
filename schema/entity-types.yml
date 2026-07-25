@@ -1,0 +1,86 @@
+schema_version: "1.0"
+
+id_pattern: "^[a-z][a-z0-9_]*\\.[a-z0-9][a-z0-9_]*$"
+
+one_health_domains:
+  human_health:
+    label_zh: 人类健康
+  animal_health:
+    label_zh: 动物健康
+  environmental_health:
+    label_zh: 环境健康
+  cross_sector_governance:
+    label_zh: 跨部门治理
+
+review_statuses:
+  - draft
+  - in_review
+  - reviewed
+  - disputed
+  - deprecated
+
+entity_types:
+  parasite:
+    id_prefix: parasite
+    label_zh: 寄生虫
+    description: 具有稳定分类学身份的寄生虫分类单元。
+
+  life_cycle_stage:
+    id_prefix: stage
+    label_zh: 生活史阶段
+    description: 虫卵、幼虫、囊蚴、成虫等可独立表达的发育阶段。
+
+  host:
+    id_prefix: host
+    label_zh: 宿主
+    description: 人、动物或宿主类群；具体宿主角色由关系表达。
+
+  disease:
+    id_prefix: disease
+    label_zh: 疾病
+    description: 寄生虫感染导致的疾病或临床诊断实体。
+
+  anatomical_site:
+    id_prefix: anatomy
+    label_zh: 解剖部位
+    description: 寄生、移行、损伤或取材涉及的组织和器官。
+
+  pathological_process:
+    id_prefix: pathology
+    label_zh: 病理过程
+    description: 炎症、阻塞、纤维化等致病机制或病理改变。
+
+  clinical_manifestation:
+    id_prefix: manifestation
+    label_zh: 临床表现
+    description: 症状、体征或临床综合表现。
+
+  diagnostic_method:
+    id_prefix: diagnostic
+    label_zh: 诊断方法
+    description: 病原学、免疫学、分子或影像学检查方法。
+
+  treatment:
+    id_prefix: treatment
+    label_zh: 治疗
+    description: 药物、方案或其他治疗手段。
+
+  intervention:
+    id_prefix: intervention
+    label_zh: 防控干预
+    description: 针对传染源、传播途径、环境或人群的防控措施。
+
+  behavior:
+    id_prefix: behavior
+    label_zh: 行为与暴露
+    description: 影响感染或传播风险的人类生产生活行为。
+
+  environment:
+    id_prefix: environment
+    label_zh: 环境与生态条件
+    description: 水体、土壤、气候、养殖环境及其他生态条件。
+
+  institution_policy:
+    id_prefix: policy
+    label_zh: 制度与政策
+    description: 与寄生虫病治理相关的规范、政策或跨部门机制。
