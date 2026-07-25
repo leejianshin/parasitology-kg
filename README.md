@@ -32,7 +32,7 @@
 
 ## 当前阶段
 
-当前处于 **Phase 0：项目治理框架冻结**。本阶段只确定目标、边界、工作流和阶段验收标准，不批量提取语料。
+Phase 0项目治理框架已经冻结。当前处于 **Phase 1：Schema与编辑规范审阅**，正在确定实体类型、受控关系、来源字段、结构化Markdown模板和最小校验规则，尚未开始批量提取语料。
 
 首个试点为：
 
@@ -42,6 +42,8 @@
 
 - [项目范围与原则](docs/PROJECT_SCOPE.md)
 - [系统工作流与阶段目标](docs/WORKFLOW.md)
+- [Schema说明](schema/README.md)
+- [编辑与审核规范](docs/EDITORIAL_GUIDE.md)
 - [项目状态](docs/STATUS.md)
 
 ## 历史说明

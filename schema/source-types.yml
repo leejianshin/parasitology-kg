@@ -1,0 +1,61 @@
+schema_version: "1.0"
+
+source_types:
+  textbook:
+    label_zh: 教材或专著
+  courseware:
+    label_zh: 教师课件
+  syllabus:
+    label_zh: 教学大纲
+  question_bank:
+    label_zh: 题库或学习指导
+  guideline_standard:
+    label_zh: 指南、规范或标准
+  peer_reviewed_article:
+    label_zh: 同行评议论文
+  official_document:
+    label_zh: 政府或权威机构文件
+  official_web:
+    label_zh: 政府或权威机构网页
+  dataset:
+    label_zh: 数据集
+  other:
+    label_zh: 其他
+
+source_roles:
+  core_fact:
+    label_zh: 核心事实
+  teaching_emphasis:
+    label_zh: 教学重点与表达
+  curriculum_boundary:
+    label_zh: 教学目标与范围
+  assessment:
+    label_zh: 考核与易错点
+  one_health_extension:
+    label_zh: One Health扩展
+  update_evidence:
+    label_zh: 知识更新证据
+
+evidence_types:
+  direct_statement:
+    label_zh: 来源直接陈述
+    description: 来源直接支持该实体关系或事实。
+  supported_inference:
+    label_zh: 有依据的推断
+    description: 来源未直接使用该关系表述，但材料足以支持受限推断。
+  background_only:
+    label_zh: 背景材料
+    description: 只能支撑背景或语境，不能单独证明关系。
+
+access_levels:
+  public:
+    label_zh: 公开可访问
+  restricted:
+    label_zh: 受限访问
+  private:
+    label_zh: 私人教学资料
+
+full_text_statuses:
+  - reviewed_full_text
+  - reviewed_partial
+  - metadata_only

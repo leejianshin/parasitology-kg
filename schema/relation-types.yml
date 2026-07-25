@@ -1,0 +1,163 @@
+schema_version: "1.0"
+
+relation_statuses:
+  - draft
+  - in_review
+  - reviewed
+  - disputed
+  - deprecated
+
+relations:
+  has_life_cycle_stage:
+    label_zh: 具有生活史阶段
+    inverse_label_zh: 是其生活史阶段
+    subject_types: [parasite]
+    object_types: [life_cycle_stage]
+    description: 连接寄生虫与其生活史中的发育阶段。
+
+  develops_into:
+    label_zh: 发育为
+    inverse_label_zh: 由其发育而来
+    subject_types: [life_cycle_stage]
+    object_types: [life_cycle_stage]
+    description: 表达生活史阶段之间有方向的发育关系。
+
+  has_definitive_host:
+    label_zh: 具有终宿主
+    inverse_label_zh: 是其终宿主
+    subject_types: [parasite]
+    object_types: [host]
+    description: 寄生虫在该宿主体内达到性成熟或进行有性生殖。
+
+  has_first_intermediate_host:
+    label_zh: 具有第一中间宿主
+    inverse_label_zh: 是其第一中间宿主
+    subject_types: [parasite]
+    object_types: [host]
+    description: 生活史中按顺序承担第一中间宿主角色的宿主。
+
+  has_second_intermediate_host:
+    label_zh: 具有第二中间宿主
+    inverse_label_zh: 是其第二中间宿主
+    subject_types: [parasite]
+    object_types: [host]
+    description: 生活史中按顺序承担第二中间宿主角色的宿主。
+
+  has_paratenic_host:
+    label_zh: 具有转续宿主
+    inverse_label_zh: 是其转续宿主
+    subject_types: [parasite]
+    object_types: [host]
+    description: 寄生虫在其体内通常不继续发育但能保持感染性的宿主。
+
+  has_reservoir_host:
+    label_zh: 具有保虫宿主
+    inverse_label_zh: 是其保虫宿主
+    subject_types: [parasite]
+    object_types: [host]
+    description: 在自然条件下维持寄生虫并可成为人群感染来源的动物宿主。
+
+  has_vector:
+    label_zh: 具有传播媒介
+    inverse_label_zh: 是其传播媒介
+    subject_types: [parasite]
+    object_types: [host]
+    description: 连接寄生虫与承担生物性或机械性传播作用的媒介生物。
+
+  infective_stage_for:
+    label_zh: 是其感染阶段
+    inverse_label_zh: 可被该阶段感染
+    subject_types: [life_cycle_stage]
+    object_types: [host]
+    description: 表达对特定宿主具有感染性的生活史阶段。
+
+  diagnostic_stage_for:
+    label_zh: 是其诊断阶段
+    inverse_label_zh: 可通过该阶段获得病原学证据
+    subject_types: [life_cycle_stage]
+    object_types: [host]
+    description: 表达可在特定宿主样本中用于病原学诊断的阶段。
+
+  infects:
+    label_zh: 感染
+    inverse_label_zh: 可感染于
+    subject_types: [parasite]
+    object_types: [host]
+    description: 表达已知宿主范围，不替代更具体的宿主角色关系。
+
+  parasitizes_site:
+    label_zh: 寄生于
+    inverse_label_zh: 可被其寄生
+    subject_types: [parasite, life_cycle_stage]
+    object_types: [anatomical_site]
+    description: 表达寄生虫或特定阶段在宿主体内的主要寄生部位。
+
+  causes:
+    label_zh: 导致
+    inverse_label_zh: 由其导致
+    subject_types: [parasite]
+    object_types: [disease]
+    description: 表达病原体与疾病之间已有充分依据的致病关系。
+
+  has_pathological_process:
+    label_zh: 具有病理过程
+    inverse_label_zh: 参与其病理过程
+    subject_types: [disease]
+    object_types: [pathological_process]
+    description: 连接疾病与其病理机制或病理改变。
+
+  manifests_as:
+    label_zh: 表现为
+    inverse_label_zh: 可见于
+    subject_types: [disease]
+    object_types: [clinical_manifestation]
+    description: 表达疾病与临床表现之间的关系，不表示该表现具有特异性。
+
+  diagnosed_by:
+    label_zh: 可通过其诊断
+    inverse_label_zh: 可用于诊断
+    subject_types: [disease]
+    object_types: [diagnostic_method]
+    description: 表达疾病与适用诊断方法的关系。
+
+  treated_by:
+    label_zh: 可通过其治疗
+    inverse_label_zh: 可用于治疗
+    subject_types: [disease]
+    object_types: [treatment]
+    description: 表达疾病与治疗手段的关系；具体适应证和方案写入限定信息。
+
+  transmitted_via:
+    label_zh: 可通过其传播或获得感染
+    inverse_label_zh: 可促进其传播或感染
+    subject_types: [parasite]
+    object_types: [behavior]
+    description: 表达人类行为或暴露方式与感染获得之间的传播路径。
+
+  transmission_supported_by:
+    label_zh: 传播受其环境支持
+    inverse_label_zh: 可支持其传播
+    subject_types: [parasite]
+    object_types: [environment]
+    description: 表达来源支持的生态或环境传播条件，不自动表示单一因果。
+
+  risk_increased_by:
+    label_zh: 风险因其增加
+    inverse_label_zh: 可增加其风险
+    subject_types: [disease]
+    object_types: [behavior, environment]
+    description: 表达流行病学或机制材料支持的风险增加关系。
+
+  controlled_by:
+    label_zh: 可通过其防控
+    inverse_label_zh: 可用于防控
+    subject_types: [parasite, disease]
+    object_types: [intervention, institution_policy]
+    description: 表达针对寄生虫传播或疾病负担的防控措施。
+
+  targets:
+    label_zh: 针对
+    inverse_label_zh: 是其干预对象
+    subject_types: [intervention, institution_policy]
+    object_types: [host, behavior, environment, diagnostic_method, treatment]
+    description: 表达干预或政策直接作用的环节，不等同于已经证明有效。
