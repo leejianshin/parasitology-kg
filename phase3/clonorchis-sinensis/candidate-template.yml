@@ -1,0 +1,60 @@
+schema_version: "1.0"
+task_id: phase3_clonorchis_dual_extraction_v1
+route: A_or_B
+execution_id: null
+executed_at: null
+
+source_manifest:
+  status: PASS_or_FAIL
+  sources:
+    - source_id: null
+      available: false
+      scope_confirmed: false
+      observed_locator: null
+      notes: null
+
+claims:
+  - claim_id: null
+    claim_text: null
+    statement_type: null
+    subject:
+      label: null
+      entity_type_candidate: null
+    predicate_candidate: null
+    object:
+      label: null
+      entity_type_candidate: null
+    qualifiers:
+      host_species: null
+      developmental_stage: null
+      region: null
+      time_period: null
+      condition: null
+    evidence:
+      - source_id: null
+        locator_type: printed_page_or_pdf_page_or_section_or_url
+        locator_value: null
+        evidence_basis: null
+        support_type: direct_or_supported_inference
+    content_uncertainty: low_or_medium_or_high
+    traceability_status: resolved_or_partial_or_blocked
+    admission_recommendation: candidate_or_verify_or_reject
+    limitation: null
+
+source_quality: []
+omissions: []
+conflicts: []
+schema_issues: []
+
+quality_check:
+  source_manifest_complete: FAIL
+  every_claim_is_atomic: FAIL
+  every_candidate_has_eligible_direct_evidence: FAIL
+  every_claim_has_stable_locator: FAIL
+  no_out_of_scope_source_used: FAIL
+  question_bank_role_respected: FAIL
+  teaching_source_role_respected: FAIL
+  infective_and_pathogenic_stages_separated: FAIL
+  association_and_causation_separated: FAIL
+  intervention_effects_require_effect_evidence: FAIL
+  source_quality_removed_from_claims: FAIL
