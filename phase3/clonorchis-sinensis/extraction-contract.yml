@@ -1,0 +1,76 @@
+schema_version: "1.0"
+task_id: phase3_clonorchis_dual_extraction_v1
+source_set_id: clonorchis_sinensis_pilot_v1
+source_set_status_required: frozen
+candidate_only: true
+
+source_scope:
+  - source_id: source.pmph_human_parasitology_10e_2024
+    required: true
+    allowed_scope: "印刷页码93–97"
+  - source_id: source.pmph_human_parasitology_8y_4e_2023
+    required: true
+    allowed_scope: "印刷页码128–138"
+  - source_id: source.courseware_lesson_04_2025
+    required: true
+    allowed_scope: "PDF页序22–89"
+    background_only_scope: "PDF页序72–89"
+  - source_id: source.syllabus_clinical_medicine_integrated
+    required: true
+    allowed_scope: "课程简介、课程目标、第十三章医学蠕虫—吸虫"
+  - source_id: source.question_bank_export_2026
+    required: true
+    allowed_scope: "华支睾吸虫相关记录"
+    evidence_role: assessment_clue
+  - source_id: source.cdc_dpdx_clonorchiasis_2024
+    required: true
+    allowed_scope: "冻结网页全文"
+  - source_id: source.cdc_clinical_overview_clonorchis_2024
+    required: true
+    allowed_scope: "冻结网页全文"
+  - source_id: source.who_foodborne_trematode_fact_sheet
+    required: true
+    allowed_scope: "冻结网页全文"
+  - source_id: source.iarc_clonorchis_group1
+    required: true
+    allowed_scope: "华支睾吸虫感染分类记录"
+
+route_isolation:
+  route_a:
+    engine: NotebookLM/Gemini
+    forbidden_inputs:
+      - "candidates/clonorchis-sinensis/notebooklm-gemini-v1.md"
+      - "candidates/clonorchis-sinensis/notebooklm-gemini-v2.md"
+      - "candidates/clonorchis-sinensis/notebooklm-gemini-v3.md"
+      - "reviews/clonorchis-sinensis/"
+      - "冻结集以外的Notebook来源"
+  route_b:
+    engine: clean_context_independent_extractor
+    forbidden_inputs:
+      - "candidates/"
+      - "reviews/"
+      - "路线A输出"
+      - "本对话历史中的Notebook候选答案"
+
+hard_gates:
+  - id: source_manifest
+    rule: "9个来源全部可识别且限定范围一致；否则停止"
+  - id: atomicity
+    rule: "每条命题只有一个主关系"
+  - id: evidence_role
+    rule: "题库和课件不得单独证明医学事实、最新诊疗或干预效果"
+  - id: traceability
+    rule: "每条命题至少有一个数字页码、PDF页序、条款或稳定URL"
+  - id: no_source_substitution
+    rule: "不同版次、相近文件和Notebook额外来源不得替代冻结来源"
+  - id: no_candidate_admission
+    rule: "本阶段输出不得写入正式知识目录"
+
+required_outputs:
+  - source_manifest
+  - claims
+  - source_quality
+  - omissions
+  - conflicts
+  - schema_issues
+  - quality_check
