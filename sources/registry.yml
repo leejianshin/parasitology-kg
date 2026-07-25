@@ -1,5 +1,134 @@
 schema_version: "1.0"
 
-# Phase 2将在这里登记华支睾吸虫试点的实际来源。
 # 公开仓库不保存受版权保护的教材、课件或题库全文。
-sources: []
+# source_locator只用于在受控Drive中重新定位原文件，不改变其访问权限。
+source_sets:
+  clonorchis_sinensis_pilot_v1:
+    label_zh: 华支睾吸虫试点核心来源集v1
+    status: in_review
+    frozen_on: "2026-07-25"
+    source_ids:
+      - source.pmph_human_parasitology_10e_2024
+      - source.courseware_lesson_04_2025
+      - source.syllabus_clinical_medicine_integrated
+      - source.question_bank_export_2026
+    scope_note: >-
+      本来源集只覆盖华支睾吸虫试点的核心事实、教学重点、课程边界和
+      考核线索。地方流行数字、历史叙述、治理成效、食品产业链措施和
+      更新后的诊疗建议，必须另行登记权威更新来源后才能进入正式知识层。
+
+sources:
+  - source_id: source.pmph_human_parasitology_10e_2024
+    source_type: textbook
+    title: 人体寄生虫学
+    creators:
+      - 苏川
+      - 刘文琪
+    publisher: 人民卫生出版社
+    publication_date: "2024-07-12"
+    edition: "10"
+    isbn: "978-7-117-36252-8"
+    language: zh-CN
+    roles:
+      - core_fact
+    access_level: restricted
+    full_text_status: reviewed_partial
+    source_locator: "gdrive:1-ZfNkR8ig9Rk8-DLMnKma9AR_7TQu570"
+    frozen_file:
+      name: "人体寄生虫学（第十版） (苏川 刘文琪).pdf"
+      size_bytes: 181799575
+      modified_time: "2026-06-15T06:43:35Z"
+    extraction_scope:
+      include: "医学蠕虫学—吸虫—华支睾吸虫"
+      locator_basis: 章节标题
+      exclude: 其他寄生虫章节及附录
+    usage_rule: >-
+      用于形态、生活史、宿主、致病、诊断、治疗、流行与防治的核心事实。
+      逐条入库前仍须回到对应章节核对页码或PDF页序。
+    limitations:
+      - Drive文本抽取仅稳定识别到封面与书目信息，尚未完成目标章节逐页复核。
+      - 不在公开仓库复制教材全文或大段原文。
+
+  - source_id: source.courseware_lesson_04_2025
+    source_type: courseware
+    title: 04 第四课
+    language: zh-CN
+    roles:
+      - teaching_emphasis
+      - one_health_extension
+    access_level: private
+    full_text_status: reviewed_full_text
+    source_locator: "gdrive:1c1UDdeRvwdItFcrflc4AxDAgpfFNTMN7"
+    frozen_file:
+      name: "04 第四课.pdf"
+      size_bytes: 10129863
+      modified_time: "2025-03-21T02:52:05Z"
+      pdf_pages: 124
+    extraction_scope:
+      include: "PDF页序22–89"
+      core_teaching: "PDF页序22–71：形态、生活史、致病、临床、诊断、流行与防治"
+      contextual_extension: "PDF页序72–89：历史、地方文化与翻转课堂材料"
+      boundary: "PDF页序90开始进入布氏姜片吸虫"
+    usage_rule: >-
+      用于教学顺序、案例设计、学生易错点和One Health情境候选提取。
+      第72–89页的历史、地方数据和治理主张默认只作background_only，
+      未经独立权威来源核实不得成为正式事实关系。
+    limitations:
+      - 部分图表、地方数字和历史叙述未给出可复核原始出处。
+      - 课件中的测验答案和治疗表述仍须与教材或更新指南交叉核对。
+
+  - source_id: source.syllabus_clinical_medicine_integrated
+    source_type: syllabus
+    title: 《人体寄生虫学》临床医学本科课程教学大纲（整合修订版）
+    language: zh-CN
+    roles:
+      - curriculum_boundary
+      - one_health_extension
+    access_level: private
+    full_text_status: reviewed_full_text
+    source_locator: "gdrive:1g5UCA0XoB1AuCMg6hmakPyRNpu5ZQnDR"
+    frozen_file:
+      name: "《人体寄生虫学》+临床医学+（30+24）本科课程教学大纲（整合修订版）.docx"
+      size_bytes: 38058
+      modified_time: "2026-06-05T07:55:24Z"
+    extraction_scope:
+      include:
+        - 课程简介
+        - 课程目标
+        - 第十三章“医学蠕虫—吸虫”
+      locator_basis: DOCX标题与条款
+    usage_rule: >-
+      只用于确定本科教学目标、知识深度、能力要求和One Health教学边界，
+      不单独证明寄生虫学事实、诊疗结论或流行病学数字。
+    limitations:
+      - 文件名中的学时信息与正文“学时/学分：3”存在口径疑点，待课程负责人确认。
+      - 大纲对吸虫采用合并表述，不能替代华支睾吸虫专节来源。
+
+  - source_id: source.question_bank_export_2026
+    source_type: question_bank
+    title: 人体寄生虫学题库汇总导出
+    language: zh-CN
+    roles:
+      - assessment
+      - teaching_emphasis
+    access_level: private
+    full_text_status: reviewed_full_text
+    source_locator: "gdrive:1lZPlWGuf4aQ-zQdLIxlvViiv4BWYiOfR"
+    frozen_file:
+      name: "题库.txt"
+      size_bytes: 623398
+      modified_time: "2026-04-26T05:21:03Z"
+    extraction_scope:
+      include_filter: "华支睾|肝吸虫|Clonorchis（不区分大小写）"
+      total_rows: 1613
+      matching_rows: 145
+      unique_item_ids: 92
+      current_2025_2026_matching_rows: 77
+      one_health_tagged_matching_rows: 3
+    usage_rule: >-
+      用于识别考核覆盖、常见干扰项、病例迁移任务和潜在易错点。
+      题干、答案和解析均为待核对象，不能反向作为核心事实的唯一证据。
+    limitations:
+      - 汇总文件包含跨年份、跨专业的重复题和旧题。
+      - 部分题目含未经独立来源支持的治理效果、食品规则或治疗表述。
+      - 关键词命中行不等于独立华支睾吸虫试题数。
