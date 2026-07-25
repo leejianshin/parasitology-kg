@@ -12,6 +12,20 @@ source_sets:
       - source.courseware_lesson_04_2025
       - source.syllabus_clinical_medicine_integrated
       - source.question_bank_export_2026
+      - source.cdc_dpdx_clonorchiasis_2024
+      - source.cdc_clinical_overview_clonorchis_2024
+      - source.who_foodborne_trematode_fact_sheet
+      - source.iarc_clonorchis_group1
+    drive_core_source_ids:
+      - source.pmph_human_parasitology_10e_2024
+      - source.courseware_lesson_04_2025
+      - source.syllabus_clinical_medicine_integrated
+      - source.question_bank_export_2026
+    authority_check_source_ids:
+      - source.cdc_dpdx_clonorchiasis_2024
+      - source.cdc_clinical_overview_clonorchis_2024
+      - source.who_foodborne_trematode_fact_sheet
+      - source.iarc_clonorchis_group1
     scope_note: >-
       本来源集只覆盖华支睾吸虫试点的核心事实、教学重点、课程边界和
       考核线索。地方流行数字、历史叙述、治理成效、食品产业链措施和
@@ -132,3 +146,89 @@ sources:
       - 汇总文件包含跨年份、跨专业的重复题和旧题。
       - 部分题目含未经独立来源支持的治理效果、食品规则或治疗表述。
       - 关键词命中行不等于独立华支睾吸虫试题数。
+
+  - source_id: source.cdc_dpdx_clonorchiasis_2024
+    source_type: official_web
+    title: DPDx - Clonorchiasis
+    organization: U.S. Centers for Disease Control and Prevention
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://www.cdc.gov/dpdx/clonorchiasis/index.html"
+    page_last_reviewed: "2024-11-13"
+    accessed_on: "2026-07-25"
+    extraction_scope:
+      include:
+        - Life Cycle
+        - Hosts
+        - Morphologic Diagnosis
+        - Laboratory Diagnosis
+    usage_rule: >-
+      用于复核生活史、宿主范围、寄生部位、虫卵形态和粪便虫卵检查的边界。
+      特别保留虫卵与Opisthorchis属虫卵高度相似的鉴别限制。
+
+  - source_id: source.cdc_clinical_overview_clonorchis_2024
+    source_type: official_web
+    title: Clinical Overview of Clonorchis
+    organization: U.S. Centers for Disease Control and Prevention
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://www.cdc.gov/liver-flukes/hcp/clinical-overview-clonorchis/index.html"
+    page_date: "2024-02-12"
+    accessed_on: "2026-07-25"
+    extraction_scope:
+      include:
+        - Risk factors
+        - Signs and symptoms
+        - Prevention
+        - Diagnosis
+        - Treatment
+    usage_rule: >-
+      用于复核临床表现、影像学辅助价值、治疗药物层级和食品安全表述。
+      临床页面不替代中国现行诊疗规范，具体处方仍需本地规范和临床判断。
+
+  - source_id: source.who_foodborne_trematode_fact_sheet
+    source_type: official_web
+    title: Foodborne trematode infections
+    organization: World Health Organization
+    language: en
+    roles:
+      - one_health_extension
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://www.who.int/news-room/fact-sheets/detail/foodborne-trematode-infections"
+    accessed_on: "2026-07-25"
+    extraction_scope:
+      include:
+        - Diagnosis
+        - Treatment, prevention and control
+        - One Health approach
+    usage_rule: >-
+      用于复核食源性吸虫病的综合防控框架、预防性化疗边界和One Health原则。
+      WHO对食源性吸虫病的总括性建议不能自动外推为某一地区已经有效的治理措施。
+
+  - source_id: source.iarc_clonorchis_group1
+    source_type: official_web
+    title: IARC Monographs - List of Classifications
+    organization: International Agency for Research on Cancer
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_partial
+    url: "https://monographs.iarc.who.int/list-of-classifications/"
+    accessed_on: "2026-07-25"
+    extraction_scope:
+      include: "Clonorchis sinensis (infection with): Group 1"
+    usage_rule: >-
+      只用于支持“华支睾吸虫感染被列为对人类致癌的Group 1生物因素”。
+      该分组说明危害识别，不表示每名感染者都会发生胆管癌，也不提供个体风险大小。
