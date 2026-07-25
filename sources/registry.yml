@@ -5,9 +5,14 @@ schema_version: "1.0"
 source_sets:
   clonorchis_sinensis_pilot_v1:
     label_zh: 华支睾吸虫试点核心来源集v1
-    status: ready_for_approval
-    frozen_on: null
+    status: frozen
+    frozen_on: "2026-07-25"
     review_ready_on: "2026-07-25"
+    approval:
+      approved_on: "2026-07-25"
+      approved_by_role: subject_teacher
+      pull_request: 3
+      merge_commit: "e659ae53f9187c353a2a215f0c4a1bd06dae29c5"
     source_ids:
       - source.pmph_human_parasitology_10e_2024
       - source.pmph_human_parasitology_8y_4e_2023
