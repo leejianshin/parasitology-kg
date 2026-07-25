@@ -9,6 +9,7 @@ source_sets:
     frozen_on: "2026-07-25"
     source_ids:
       - source.pmph_human_parasitology_10e_2024
+      - source.pmph_human_parasitology_8y_4e_2023
       - source.courseware_lesson_04_2025
       - source.syllabus_clinical_medicine_integrated
       - source.question_bank_export_2026
@@ -21,6 +22,8 @@ source_sets:
       - source.courseware_lesson_04_2025
       - source.syllabus_clinical_medicine_integrated
       - source.question_bank_export_2026
+    supplemental_check_source_ids:
+      - source.pmph_human_parasitology_8y_4e_2023
     authority_check_source_ids:
       - source.cdc_dpdx_clonorchiasis_2024
       - source.cdc_clinical_overview_clonorchis_2024
@@ -56,11 +59,13 @@ sources:
       include: "医学蠕虫学—吸虫—华支睾吸虫"
       locator_basis: 章节标题
       provisional_locator:
-        value: "印刷页码或PDF页序93–98"
-        reported_by: user
+        value: "印刷页码93（华支睾吸虫/Clonorchis sinensis索引起始页）"
+        reported_by: "NotebookLM/Gemini v3，用户转交"
         reported_on: "2026-07-25"
-        status: provisional_unverified
-        verification_needed: "显示华支睾吸虫专节标题与页码的页图，或可提取的PDF第93–98页局部"
+        status: provisional_start_page_only
+        previous_user_estimate: "93–98页"
+        end_page_status: unknown
+        verification_needed: "显示华支睾吸虫专节标题、起止页码的页图，或可提取的对应PDF局部"
       exclude: 其他寄生虫章节及附录
     usage_rule: >-
       用于形态、生活史、宿主、致病、诊断、治疗、流行与防治的核心事实。
@@ -68,6 +73,43 @@ sources:
     limitations:
       - Drive文本抽取仅稳定识别到封面与书目信息，尚未完成目标章节逐页复核。
       - 不在公开仓库复制教材全文或大段原文。
+
+  - source_id: source.pmph_human_parasitology_8y_4e_2023
+    source_type: textbook
+    title: 人体寄生虫学
+    creators:
+      - 吴忠道
+      - 刘佩梅
+    publisher: 人民卫生出版社
+    publication_date: "2023-08"
+    edition: "4"
+    isbn: "978-7-117-34840-9"
+    language: zh-CN
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: restricted
+    full_text_status: reviewed_partial
+    source_locator: "gdrive:1NRvl19gksINWrtnDm9zjA976RXLN0u6U"
+    frozen_file:
+      name: "人体寄生虫学 第4版 (吴忠道).pdf"
+      size_bytes: 94500708
+      modified_time: "2026-06-15T06:40:34Z"
+    extraction_scope:
+      include: "印刷页码128–138：第二章第一节“华支睾吸虫”"
+      confirmed_landmarks:
+        section_start: "印刷页码128"
+        diagnosis: "印刷页码131"
+        next_section: "印刷页码139"
+      locator_basis: "Drive OCR与印刷页眉交叉定位"
+    usage_rule: >-
+      用于第10版正文抽取阻塞期间的补充核查、版本差异识别和候选定位，
+      不替代第10版作为本课程试点的首要教材口径。OCR提取内容必须回看页图后
+      才能用于逐字引文或精细数字。
+    limitations:
+      - 属于八年制及“5+3”一体化临床医学专业教材，与第10版课程教材系列和对象不同。
+      - OCR存在错字、漏字和单位识别错误；不得直接复制OCR作为正式引文。
+      - 具体淡水鱼、虾感染率来自不同地区和年份，不能脱离原调查口径外推。
 
   - source_id: source.courseware_lesson_04_2025
     source_type: courseware
