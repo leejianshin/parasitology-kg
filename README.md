@@ -32,7 +32,7 @@
 
 ## 当前阶段
 
-Phase 0项目治理框架已经冻结。当前处于 **Phase 1：Schema与编辑规范审阅**，正在确定实体类型、受控关系、来源字段、结构化Markdown模板和最小校验规则，尚未开始批量提取语料。
+Phase 0治理框架和Phase 1 Schema与编辑规范已经冻结。当前 **Phase 2：华支睾吸虫来源集冻结** 已完成技术核验并等待教师批准；第10版教材华支睾吸虫专节已确认覆盖印刷页码93–97。尚未开始批量提取语料。
 
 首个试点为：
 
@@ -44,6 +44,14 @@ Phase 0项目治理框架已经冻结。当前处于 **Phase 1：Schema与编辑
 - [系统工作流与阶段目标](docs/WORKFLOW.md)
 - [Schema说明](schema/README.md)
 - [编辑与审核规范](docs/EDITORIAL_GUIDE.md)
+- [华支睾吸虫试点来源冻结记录](sources/clonorchis-sinensis-pilot.md)
+- [第10版教材华支睾吸虫专节页码核验](reviews/clonorchis-sinensis/pmph-10e-page-scope-verification.md)
+- [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
+- [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
+- [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)
+- [Notebook候选提取边界](docs/NOTEBOOK_EXTRACTION_BOUNDARY.md)
+- [NotebookLM/Gemini标准化重跑v3](candidates/clonorchis-sinensis/notebooklm-gemini-v3.md)
+- [NotebookLM/Gemini标准化重跑v3审计](reviews/clonorchis-sinensis/notebooklm-gemini-v3-audit.md)
 - [项目状态](docs/STATUS.md)
 
 ## 历史说明
