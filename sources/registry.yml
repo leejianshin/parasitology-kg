@@ -55,6 +55,12 @@ sources:
     extraction_scope:
       include: "医学蠕虫学—吸虫—华支睾吸虫"
       locator_basis: 章节标题
+      provisional_locator:
+        value: "印刷页码或PDF页序93–98"
+        reported_by: user
+        reported_on: "2026-07-25"
+        status: provisional_unverified
+        verification_needed: "显示华支睾吸虫专节标题与页码的页图，或可提取的PDF第93–98页局部"
       exclude: 其他寄生虫章节及附录
     usage_rule: >-
       用于形态、生活史、宿主、致病、诊断、治疗、流行与防治的核心事实。
@@ -142,10 +148,13 @@ sources:
     usage_rule: >-
       用于识别考核覆盖、常见干扰项、病例迁移任务和潜在易错点。
       题干、答案和解析均为待核对象，不能反向作为核心事实的唯一证据。
+      单条题目必须用“来源文件+来源工作表+题号_文件内+去重ID”复合定位；
+      去重ID不能单独作为证据定位。
     limitations:
       - 汇总文件包含跨年份、跨专业的重复题和旧题。
       - 部分题目含未经独立来源支持的治理效果、食品规则或治疗表述。
       - 关键词命中行不等于独立华支睾吸虫试题数。
+      - Gemini v2引用的14个去重ID在汇总文件中对应30行；D0051实际为卫氏并殖吸虫题，不能支持华支睾吸虫传播命题。
 
   - source_id: source.cdc_dpdx_clonorchiasis_2024
     source_type: official_web
