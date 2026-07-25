@@ -32,7 +32,7 @@
 
 ## 当前阶段
 
-Phase 0项目治理框架已经冻结。当前处于 **Phase 1：Schema与编辑规范审阅**，正在确定实体类型、受控关系、来源字段、结构化Markdown模板和最小校验规则，尚未开始批量提取语料。
+Phase 0治理框架和Phase 1 Schema与编辑规范已经冻结。当前处于 **Phase 2：华支睾吸虫来源集审阅**，正在确认教材、课件、大纲和题库的角色、版本、提取范围与证据边界，尚未开始批量提取语料。
 
 首个试点为：
 
@@ -44,6 +44,7 @@ Phase 0项目治理框架已经冻结。当前处于 **Phase 1：Schema与编辑
 - [系统工作流与阶段目标](docs/WORKFLOW.md)
 - [Schema说明](schema/README.md)
 - [编辑与审核规范](docs/EDITORIAL_GUIDE.md)
+- [华支睾吸虫试点来源冻结记录](sources/clonorchis-sinensis-pilot.md)
 - [项目状态](docs/STATUS.md)
 
 ## 历史说明
