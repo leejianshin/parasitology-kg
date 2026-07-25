@@ -5,8 +5,9 @@ schema_version: "1.0"
 source_sets:
   clonorchis_sinensis_pilot_v1:
     label_zh: 华支睾吸虫试点核心来源集v1
-    status: in_review
-    frozen_on: "2026-07-25"
+    status: ready_for_approval
+    frozen_on: null
+    review_ready_on: "2026-07-25"
     source_ids:
       - source.pmph_human_parasitology_10e_2024
       - source.pmph_human_parasitology_8y_4e_2023
@@ -56,22 +57,23 @@ sources:
       size_bytes: 181799575
       modified_time: "2026-06-15T06:43:35Z"
     extraction_scope:
-      include: "医学蠕虫学—吸虫—华支睾吸虫"
-      locator_basis: 章节标题
-      provisional_locator:
-        value: "印刷页码93（华支睾吸虫/Clonorchis sinensis索引起始页）"
-        reported_by: "NotebookLM/Gemini v3，用户转交"
-        reported_on: "2026-07-25"
-        status: provisional_start_page_only
-        previous_user_estimate: "93–98页"
-        end_page_status: unknown
-        verification_needed: "显示华支睾吸虫专节标题、起止页码的页图，或可提取的对应PDF局部"
+      include: "印刷页码93–97：第三篇第十三章第二节“华支睾吸虫”"
+      confirmed_landmarks:
+        section_start: "印刷页码93：第二节“华支睾吸虫”"
+        morphology_and_life_cycle: "印刷页码94–95"
+        pathogenesis_and_clinical: "印刷页码95–96"
+        diagnosis_and_epidemiology: "印刷页码96–97"
+        prevention_and_section_end: "印刷页码97：防治条目后以“（吴翔）”署名收束"
+      locator_basis: "2026-07-25人工核对用户提供的连续页图（印刷页码92–97）"
+      previous_provisional_estimate: "93–98页"
+      pdf_page_sequence: unknown
       exclude: 其他寄生虫章节及附录
     usage_rule: >-
       用于形态、生活史、宿主、致病、诊断、治疗、流行与防治的核心事实。
       逐条入库前仍须回到对应章节核对页码或PDF页序。
     limitations:
-      - Drive文本抽取仅稳定识别到封面与书目信息，尚未完成目标章节逐页复核。
+      - Drive文本抽取仅稳定识别到封面与书目信息；本专节范围由连续页图人工核定。
+      - 已确认印刷页码，PDF页序仍未知；逐条命题应引用印刷页码。
       - 不在公开仓库复制教材全文或大段原文。
 
   - source_id: source.pmph_human_parasitology_8y_4e_2023
