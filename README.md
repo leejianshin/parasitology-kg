@@ -45,7 +45,9 @@ Phase 0治理框架和Phase 1 Schema与编辑规范已经冻结。当前处于 *
 - [Schema说明](schema/README.md)
 - [编辑与审核规范](docs/EDITORIAL_GUIDE.md)
 - [华支睾吸虫试点来源冻结记录](sources/clonorchis-sinensis-pilot.md)
-- [NotebookLM/Gemini候选语料审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
+- [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
+- [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
+- [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)
 - [项目状态](docs/STATUS.md)
 
 ## 历史说明
