@@ -8,8 +8,8 @@
 |---|---|---|---|
 | Phase 0 | 治理框架冻结 | COMPLETED | 已由PR #1合并 |
 | Phase 1 | Schema与编辑规范 | COMPLETED | 已由PR #2合并 |
-| Phase 2 | 华支睾吸虫来源集冻结 | READY_FOR_APPROVAL | 第10版专节印刷页码93–97已核定；等待教师批准PR #3 |
-| Phase 3 | 双路候选提取 | NOT_STARTED | 等待来源集冻结 |
+| Phase 2 | 华支睾吸虫来源集冻结 | COMPLETED | PR #3已批准并合并；冻结集`clonorchis_sinensis_pilot_v1` |
+| Phase 3 | 双路候选提取 | IN_PROGRESS | 建立同源、同模板、隔离上下文的路线A与路线B |
 | Phase 4 | 对照与教师审核 | NOT_STARTED | 等待候选提取 |
 | Phase 5 | 知识子图入库 | NOT_STARTED | 等待教师批准 |
 | Phase 6 | 学生RAG验收 | NOT_STARTED | 等待子图完成 |
@@ -36,12 +36,11 @@
 
 详细范围和限制见`sources/clonorchis-sinensis-pilot.md`。
 
-## Phase 2待确认事项
+## Phase 2非阻塞后续事项
 
-1. 教师批准来源集、Gemini v1–v3审计和Notebook提取边界；
-2. 第五版教材、长标题第三讲文件和张巧玲论文若要进入正式来源集，须补稳定定位；它们不阻塞共享核心来源的Phase 3提取；
-3. 确认教学大纲的学时口径；
-4. 对题库华支睾吸虫条目使用复合定位去重，并处理已发现的`D0051`实体错引。
+1. 第五版教材、长标题第三讲文件和张巧玲论文若要进入后续来源集，须另行补稳定定位；它们不属于本次冻结集；
+2. 确认教学大纲的学时口径；
+3. 对题库华支睾吸虫条目继续使用复合定位去重，并保留`D0051`跨物种错引警示。
 
 ## Gemini v2审计结果
 
@@ -62,10 +61,10 @@
 - Notebook自检为模型自报，独立验收结论为`FORMAT_PASS_EVIDENCE_FAIL`；
 - 已新增`docs/NOTEBOOK_EXTRACTION_BOUNDARY.md`作为后续虫种统一约束。
 
-## 下一动作
+## Phase 3当前动作
 
-Phase 2来源集批准后：
-
-- 为NotebookLM/Gemini和独立文件提取生成同一份固定任务；
-- 两条路线只使用冻结范围，不自行扩展来源；
-- 输出两份独立候选、复合证据定位和Schema适配问题清单。
+- 使用`phase3/clonorchis-sinensis/extraction-contract.yml`约束两条路线；
+- 路线A只在NotebookLM/Gemini中读取冻结来源；
+- 路线B在不携带Notebook候选与审计结论的新上下文中读取同一冻结来源；
+- 两条路线均输出来源清单、原子命题、缺失项、冲突和Schema适配问题；
+- 任一路线来源清单不完整时停止事实提取，不以其他资料代替。
