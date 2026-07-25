@@ -48,6 +48,9 @@ Phase 0治理框架和Phase 1 Schema与编辑规范已经冻结。当前处于 *
 - [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
 - [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
 - [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)
+- [Notebook候选提取边界](docs/NOTEBOOK_EXTRACTION_BOUNDARY.md)
+- [NotebookLM/Gemini标准化重跑v3](candidates/clonorchis-sinensis/notebooklm-gemini-v3.md)
+- [NotebookLM/Gemini标准化重跑v3审计](reviews/clonorchis-sinensis/notebooklm-gemini-v3-audit.md)
 - [项目状态](docs/STATUS.md)
 
 ## 历史说明
