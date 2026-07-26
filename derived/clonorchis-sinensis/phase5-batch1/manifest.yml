@@ -1,0 +1,25 @@
+manifest_version: '1.0'
+batch_id: P5-B1
+authority: reviewed_structured_markdown
+source_glob: knowledge/**/*.md
+selection_rule: review_status=reviewed and admission.batch_id=P5-B1
+generator: scripts/build_derived_graph.py
+canonical_file_count: 14
+canonical_input_sha256: 6637c5d37a77ba0c880150e2c9525f0fc209a1261ab87ec57ade7ec28773d1ea
+counts:
+  nodes: 14
+  edges: 10
+  triples: 10
+artifacts:
+- path: nodes.jsonl
+  sha256: 32c588c61aa05e5fb0a1f9f24dc3bf6ffd5f24838c89952d865a034373e52d51
+  size_bytes: 7735
+- path: edges.jsonl
+  sha256: 4dd78d7eaa2fa24d7760ff6775421ee055008669bb2660cf9443cda0d87f0cda
+  size_bytes: 7147
+- path: triples.csv
+  sha256: 007757fc97b3c0d8b82994af5aef19ce7904be2ed9a4dcd160a9f8130b0be789
+  size_bytes: 1936
+release_boundary:
+  student_rag_authorized: false
+  later_batches_included: false

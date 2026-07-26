@@ -44,10 +44,27 @@
 - 具体食品处理参数；
 - 教学、课程和题库元数据。
 
+## 派生图与入库验收
+
+第一批正式Markdown已确定性生成以下派生图数据：
+
+- 14个节点：`derived/clonorchis-sinensis/phase5-batch1/nodes.jsonl`；
+- 10条带证据和限定的边：`edges.jsonl`；
+- 10条扁平三元组：`triples.csv`；
+- 记录输入哈希、输出哈希和发布边界的`manifest.yml`。
+
+验收确认节点和命题集合与批准批次完全一致、证据来源均已登记、第二和第三批零
+混入，且派生文件可以从正式Markdown逐字节重建。机器验收见
+[`batch1-intake-validation.yml`](batch1-intake-validation.yml)，人工可读记录见
+[`phase5-batch1-intake-validation.md`](../../reviews/clonorchis-sinensis/phase5-batch1-intake-validation.md)。
+
+Markdown仍是权威主数据；JSONL和CSV不可作为独立事实来源或直接编辑。
+
 ## 审核门
 
 第一批14个实体及10条关系均已标记为`reviewed`，授权由PR #7合并进入正式知识层。该批准的边界是：
 
+- 第一批派生图已经技术验收，但须在独立PR合并后才视为进入主分支；
 - 第二、三批仍未授权写入；
 - 第一批尚未完成面向学生的RAG验收；
 - 地区研究效果、具体食品处理参数和HOLD命题未随本批次准入。
