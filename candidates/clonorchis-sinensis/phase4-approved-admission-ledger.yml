@@ -1,0 +1,132 @@
+schema_version: "1.0"
+ledger_id: "clonorchis_phase4_approved_admission_ledger_20260726"
+parasite: "华支睾吸虫（Clonorchis sinensis）"
+review_date: "2026-07-26"
+status: "ADMISSION_PREPARED_NOT_ADMITTED"
+formal_knowledge_graph_admission: "NOT_AUTHORIZED"
+
+provenance:
+  authority_review_id: "clonorchis_phase4_wave2_authority_review_20260726"
+  authority_review_sha256: "32c0ffff6fdd1730ad938f9af8499216c4551ee79b9f49bdac54f97cc1b13f7d"
+  admission_preparation_sha256: "9ea4186ff3b315f13e07f189090cb81c1c99682fe999bdbf2305b9f4ab3a18ae"
+  privacy_review: "PASS"
+  private_paths_included: false
+  private_full_text_included: false
+  runtime_metadata_included: false
+
+counts:
+  teacher_approved_groups: 14
+  teacher_group_atoms: 28
+  external_evidence_groups: 5
+  external_evidence_atoms: 11
+  atomic_candidates: 39
+  holds: 3
+  metadata_only_boundaries: 10
+  formal_admissions: 0
+
+source_id_map:
+  W2-AUTH-001: "source.who_clonorchiasis_qa_2025"
+  W2-AUTH-002: "source.who_foodborne_trematode_fact_sheet"
+  W2-AUTH-003: "source.who_community_diagnosis_clonorchiasis"
+  W2-AUTH-004: "source.cdc_dpdx_clonorchiasis_2024"
+  W2-AUTH-005: "source.cdc_clinical_overview_clonorchis_2024"
+  W2-AUTH-006: "source.fao_fishborne_trematode_workshop_1999"
+  W2-AUTH-007: "source.xia_liver_fluke_pathology_meta_analysis_2015"
+  W2-AUTH-008: "source.hong_kim_clonorchis_cholangiocarcinoma_review_2016"
+  W2-AUTH-009: "source.kim_hong_clonorchis_cholangiocarcinoma_review_2025"
+  W2-AUTH-010: "source.choi_clonorchiasis_control_strategies_china_2010"
+  W2-AUTH-011: "source.nguyen_health_education_trematodes_vietnam_2024"
+
+approved_group_map:
+  W2-RB024-A: [W2-ATOM-001]
+  W2-RB024-B: [W2-ATOM-002, W2-ATOM-003, W2-ATOM-004]
+  RB-027: [W2-ATOM-005]
+  W2-RB028-A: [W2-ATOM-006]
+  W2-RB028-B: [W2-ATOM-007]
+  RB-015: [W2-ATOM-008, W2-ATOM-009]
+  RB-016: [W2-ATOM-010, W2-ATOM-011]
+  RB-017: [W2-ATOM-012, W2-ATOM-013, W2-ATOM-014, W2-ATOM-015]
+  RB-018: [W2-ATOM-016]
+  RB-019: [W2-ATOM-017, W2-ATOM-018, W2-ATOM-019, W2-ATOM-020]
+  W2-RB020-A: [W2-ATOM-021]
+  RB-022: [W2-ATOM-022]
+  RB-025: [W2-ATOM-023, W2-ATOM-024, W2-ATOM-025]
+  RB-029: [W2-ATOM-026, W2-ATOM-027, W2-ATOM-028]
+
+external_evidence_group_map:
+  W2-EXT-001:
+    approved_layer: public_health_candidate
+    atoms: [W2-ATOM-029, W2-ATOM-030, W2-ATOM-031]
+  W2-EXT-002:
+    approved_layer: supplemental_food_safety_guidance
+    atoms: [W2-ATOM-032, W2-ATOM-033]
+  W2-EXT-003:
+    approved_layer: one_health_recommendation_candidate
+    atoms: [W2-ATOM-034]
+  W2-EXT-004:
+    approved_layer: regional_research_evidence
+    atoms: [W2-ATOM-035, W2-ATOM-036]
+  W2-EXT-005:
+    approved_layer: regional_research_evidence
+    atoms: [W2-ATOM-037, W2-ATOM-038, W2-ATOM-039]
+
+atomic_candidates:
+  - {atom_id: W2-ATOM-001, group_id: W2-RB024-A, layer: candidate_medical_knowledge, type: diagnostic_clue, claim: "在流行地区，生食或未充分加热淡水鱼的经历是华支睾吸虫病的流行病学线索。", subject: "生食或未充分加热淡水鱼的经历", predicate_candidate: serves_as_diagnostic_clue, object: "华支睾吸虫病", qualifiers: ["流行地区"], source_ids: [source.who_community_diagnosis_clonorchiasis, source.cdc_dpdx_clonorchiasis_2024], evidence_strength: HIGH_FOR_FISH, limitations: ["仅为诊断线索，不等于确诊。"]}
+  - {atom_id: W2-ATOM-002, group_id: W2-RB024-B, layer: candidate_medical_knowledge, type: epidemiologic_qualifier, claim: "中国部分淡水虾种可检出华支睾吸虫囊蚴。", subject: "中国部分淡水虾种", predicate_candidate: may_carry, object: "华支睾吸虫囊蚴", qualifiers: ["仅限已报告的部分虾种"], source_ids: [source.cdc_dpdx_clonorchiasis_2024], evidence_strength: MEDIUM_FOR_SHRIMP, limitations: ["不得外推至全部淡水虾种。"]}
+  - {atom_id: W2-ATOM-003, group_id: W2-RB024-B, layer: candidate_medical_knowledge, type: epidemiologic_qualifier, claim: "已报告中国部分淡水虾种中的华支睾吸虫囊蚴流行率低于鲤科鱼。", subject: "部分淡水虾种囊蚴流行率", predicate_candidate: lower_than, object: "鲤科鱼囊蚴流行率", qualifiers: ["中国部分虾种"], source_ids: [source.cdc_dpdx_clonorchiasis_2024], evidence_strength: MEDIUM_FOR_SHRIMP, limitations: ["不得将鱼与虾等权并列。"]}
+  - {atom_id: W2-ATOM-004, group_id: W2-RB024-B, layer: candidate_medical_knowledge, type: epidemiologic_qualifier, claim: "已报告中国部分淡水虾种中的华支睾吸虫囊蚴负荷低于鲤科鱼。", subject: "部分淡水虾种囊蚴负荷", predicate_candidate: lower_than, object: "鲤科鱼囊蚴负荷", qualifiers: ["中国部分虾种"], source_ids: [source.cdc_dpdx_clonorchiasis_2024], evidence_strength: MEDIUM_FOR_SHRIMP, limitations: ["不得将鱼与虾等权并列。"]}
+  - {atom_id: W2-ATOM-005, group_id: RB-027, layer: candidate_medical_knowledge, type: infection_behavior, claim: "在华支睾吸虫流行地区，摄入含活囊蚴的生或未充分加热淡水鱼是关键感染行为。", subject: "摄入含活囊蚴的生或未充分加热淡水鱼", predicate_candidate: transmitted_via, object: "华支睾吸虫感染", qualifiers: ["流行地区", "淡水鱼含活囊蚴"], source_ids: [source.who_clonorchiasis_qa_2025, source.who_foodborne_trematode_fact_sheet, source.cdc_dpdx_clonorchiasis_2024, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: ["保留地区、鱼类、活囊蚴和加热条件。"]}
+  - {atom_id: W2-ATOM-006, group_id: W2-RB028-A, layer: candidate_public_health_guidance, type: prevention_recommendation, claim: "避免食用生或未充分加热的淡水鱼，是预防华支睾吸虫感染的推荐措施。", subject: "避免食用生或未充分加热的淡水鱼", predicate_candidate: controlled_by, object: "华支睾吸虫感染", qualifiers: [], source_ids: [source.who_clonorchiasis_qa_2025, source.cdc_dpdx_clonorchiasis_2024, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH_FOR_FISH, limitations: ["推荐措施不等于量化干预效果。"]}
+  - {atom_id: W2-ATOM-007, group_id: W2-RB028-B, layer: candidate_public_health_guidance, type: prevention_scope_qualifier, claim: "淡水虾相关预防表述应限定于已发现华支睾吸虫囊蚴的中国部分虾种。", subject: "淡水虾相关预防表述", predicate_candidate: must_be_scoped_to, object: "已发现囊蚴的中国部分虾种", qualifiers: ["不得与鲤科鱼证据等权"], source_ids: [source.cdc_dpdx_clonorchiasis_2024], evidence_strength: MEDIUM_FOR_SHRIMP, limitations: ["不适用于全部地区或全部淡水虾种。"]}
+  - {atom_id: W2-ATOM-008, group_id: RB-015, layer: candidate_medical_knowledge, type: anatomical_site, claim: "华支睾吸虫成虫主要居于肝内小、中型胆管。", subject: "华支睾吸虫成虫", predicate_candidate: parasitizes_site, object: "肝内小、中型胆管", qualifiers: ["主要"], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: HIGH, limitations: ["次级胆管只保留为教学口径。"]}
+  - {atom_id: W2-ATOM-009, group_id: RB-015, layer: candidate_medical_knowledge, type: pathology_distribution, claim: "华支睾吸虫感染相关病理改变主要发生于胆道系统。", subject: "感染相关病理改变", predicate_candidate: mainly_occurs_in, object: "胆道系统", qualifiers: ["主要"], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: HIGH, limitations: ["不排除另行标注的异位情况。"]}
+  - {atom_id: W2-ATOM-010, group_id: RB-016, layer: candidate_medical_knowledge, type: pathogenic_mechanism, claim: "华支睾吸虫成虫在胆管内的机械、代谢与炎症作用可造成胆管炎性改变。", subject: "华支睾吸虫感染", predicate_candidate: has_pathological_process, object: "胆管炎性改变", qualifiers: ["机械、代谢与炎症作用"], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: HIGH, limitations: ["不表示每位感染者均出现临床胆管炎。"]}
+  - {atom_id: W2-ATOM-011, group_id: RB-016, layer: candidate_medical_knowledge, type: pathogenic_mechanism, claim: "华支睾吸虫成虫在胆管内的机械、代谢与炎症作用可造成胆管周围炎性改变。", subject: "华支睾吸虫感染", predicate_candidate: has_pathological_process, object: "胆管周围炎性改变", qualifiers: ["机械、代谢与炎症作用"], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: HIGH, limitations: ["不表示每位感染者均出现临床胆管炎。"]}
+  - {atom_id: W2-ATOM-012, group_id: RB-017, layer: candidate_medical_knowledge, type: pathologic_change, claim: "长期或较重的华支睾吸虫感染可伴胆管周围纤维化。", subject: "华支睾吸虫感染", predicate_candidate: has_pathological_process, object: "胆管周围纤维化", qualifiers: ["长期或较重"], source_ids: [source.who_foodborne_trematode_fact_sheet, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: MODERATE_TO_HIGH, limitations: ["不是必然结果。"]}
+  - {atom_id: W2-ATOM-013, group_id: RB-017, layer: candidate_medical_knowledge, type: severity_qualifier, claim: "胆管周围纤维化程度受虫负荷影响。", subject: "胆管周围纤维化程度", predicate_candidate: is_influenced_by, object: "虫负荷", qualifiers: ["华支睾吸虫感染情境"], source_ids: [source.who_foodborne_trematode_fact_sheet, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: MODERATE_TO_HIGH, limitations: ["同时受感染时间和宿主因素影响。"]}
+  - {atom_id: W2-ATOM-014, group_id: RB-017, layer: candidate_medical_knowledge, type: severity_qualifier, claim: "胆管周围纤维化程度受感染时间影响。", subject: "胆管周围纤维化程度", predicate_candidate: is_influenced_by, object: "感染时间", qualifiers: ["华支睾吸虫感染情境"], source_ids: [source.who_foodborne_trematode_fact_sheet, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: MODERATE_TO_HIGH, limitations: ["同时受虫负荷和宿主因素影响。"]}
+  - {atom_id: W2-ATOM-015, group_id: RB-017, layer: candidate_medical_knowledge, type: severity_qualifier, claim: "胆管周围纤维化程度受宿主因素影响。", subject: "胆管周围纤维化程度", predicate_candidate: is_influenced_by, object: "宿主因素", qualifiers: ["华支睾吸虫感染情境"], source_ids: [source.who_foodborne_trematode_fact_sheet, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016, source.kim_hong_clonorchis_cholangiocarcinoma_review_2025], evidence_strength: MODERATE_TO_HIGH, limitations: ["同时受虫负荷和感染时间影响。"]}
+  - {atom_id: W2-ATOM-016, group_id: RB-018, layer: candidate_medical_knowledge, type: complication_association, claim: "华支睾吸虫感染可发生胆管炎等胆道并发症。", subject: "华支睾吸虫感染", predicate_candidate: associated_with_complication, object: "胆管炎", qualifiers: ["并非所有感染者都会发生"], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.xia_liver_fluke_pathology_meta_analysis_2015], evidence_strength: HIGH_FOR_ASSOCIATION, limitations: ["系统评价合并多种肝吸虫且异质性显著。"]}
+  - {atom_id: W2-ATOM-017, group_id: RB-019, layer: candidate_medical_knowledge, type: complication_association, claim: "华支睾吸虫感染与胆石症相关。", subject: "华支睾吸虫感染", predicate_candidate: associated_with, object: "胆石症", qualifiers: [], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.xia_liver_fluke_pathology_meta_analysis_2015], evidence_strength: HIGH_FOR_ASSOCIATION, limitations: ["关联不能写成个体必然因果。"]}
+  - {atom_id: W2-ATOM-018, group_id: RB-019, layer: candidate_medical_knowledge, type: possible_mechanism, claim: "华支睾吸虫虫体可能参与胆石形成。", subject: "华支睾吸虫感染", predicate_candidate: has_pathological_process, object: "虫体参与胆石形成", qualifiers: ["可能"], source_ids: [source.xia_liver_fluke_pathology_meta_analysis_2015, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016], evidence_strength: MODERATE_FOR_MECHANISM, limitations: ["不是已证实的单一因果路径。"]}
+  - {atom_id: W2-ATOM-019, group_id: RB-019, layer: candidate_medical_knowledge, type: possible_mechanism, claim: "华支睾吸虫虫卵可能参与胆石形成。", subject: "华支睾吸虫感染", predicate_candidate: has_pathological_process, object: "虫卵参与胆石形成", qualifiers: ["可能"], source_ids: [source.xia_liver_fluke_pathology_meta_analysis_2015, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016], evidence_strength: MODERATE_FOR_MECHANISM, limitations: ["不是已证实的单一因果路径。"]}
+  - {atom_id: W2-ATOM-020, group_id: RB-019, layer: candidate_medical_knowledge, type: possible_mechanism, claim: "慢性胆道炎症可能参与胆石形成。", subject: "华支睾吸虫感染", predicate_candidate: has_pathological_process, object: "慢性胆道炎症参与胆石形成", qualifiers: ["可能"], source_ids: [source.xia_liver_fluke_pathology_meta_analysis_2015, source.hong_kim_clonorchis_cholangiocarcinoma_review_2016], evidence_strength: MODERATE_FOR_MECHANISM, limitations: ["不是已证实的单一因果路径。"]}
+  - {atom_id: W2-ATOM-021, group_id: W2-RB020-A, layer: candidate_medical_knowledge, type: rare_complication, claim: "胰腺炎是华支睾吸虫感染少见的并发症之一。", subject: "华支睾吸虫感染", predicate_candidate: associated_with_complication, object: "胰腺炎", qualifiers: ["少见"], source_ids: [source.cdc_dpdx_clonorchiasis_2024], evidence_strength: HIGH_FOR_RARE_PANCREATITIS, limitations: ["不得据此准入胰管异位的直接因果。"]}
+  - {atom_id: W2-ATOM-022, group_id: RB-022, layer: candidate_medical_knowledge, type: clinical_frequency, claim: "华支睾吸虫轻虫负荷感染多数可无明显症状。", subject: "华支睾吸虫病", predicate_candidate: manifests_as, object: "无明显症状", qualifiers: ["轻虫负荷", "多数"], source_ids: [source.who_foodborne_trematode_fact_sheet, source.cdc_dpdx_clonorchiasis_2024], evidence_strength: HIGH, limitations: ["无症状不等于无病理改变，也不排除持续排卵。"]}
+  - {atom_id: W2-ATOM-023, group_id: RB-025, layer: candidate_diagnostic_knowledge, type: diagnostic_clue, claim: "超声、CT或MRI表现可作为华支睾吸虫病的辅助诊断线索。", subject: "华支睾吸虫病", predicate_candidate: diagnosed_by, object: "超声、CT或MRI", qualifiers: ["辅助线索"], source_ids: [source.who_foodborne_trematode_fact_sheet, source.who_community_diagnosis_clonorchiasis, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: ["权威来源未给出各影像表现的特异度。"]}
+  - {atom_id: W2-ATOM-024, group_id: RB-025, layer: candidate_diagnostic_knowledge, type: diagnostic_integration, claim: "华支睾吸虫病影像线索应结合暴露史、临床和实验室证据综合判断。", subject: "影像诊断线索", predicate_candidate: requires_integration_with, object: "暴露史、临床和实验室证据", qualifiers: [], source_ids: [source.who_foodborne_trematode_fact_sheet, source.who_community_diagnosis_clonorchiasis, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: ["病原学等证据承担确证角色。"]}
+  - {atom_id: W2-ATOM-025, group_id: RB-025, layer: candidate_diagnostic_knowledge, type: diagnostic_limit, claim: "影像不能单独确诊华支睾吸虫病。", subject: "影像", predicate_candidate: cannot_alone_confirm, object: "华支睾吸虫病", qualifiers: [], source_ids: [source.who_foodborne_trematode_fact_sheet, source.who_community_diagnosis_clonorchiasis, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: []}
+  - {atom_id: W2-ATOM-026, group_id: RB-029, layer: candidate_one_health_mechanism, type: prevention_recommendation, claim: "改善卫生设施是减少粪便污染淡水环境的推荐措施。", subject: "华支睾吸虫感染", predicate_candidate: controlled_by, object: "改善卫生设施", qualifiers: [], source_ids: [source.who_clonorchiasis_qa_2025, source.who_foodborne_trematode_fact_sheet], evidence_strength: HIGH_FOR_RECOMMENDATION, limitations: ["不等于已量化的独立干预效果。"]}
+  - {atom_id: W2-ATOM-027, group_id: RB-029, layer: candidate_one_health_mechanism, type: transmission_mechanism, claim: "减少人粪便污染淡水环境可干预虫卵进入中间宿主水域的传播环节。", subject: "减少人粪便污染淡水环境", predicate_candidate: targets, object: "淡水环境", qualifiers: ["虫卵进入中间宿主水域"], source_ids: [source.who_clonorchiasis_qa_2025, source.who_foodborne_trematode_fact_sheet], evidence_strength: HIGH_FOR_MECHANISM, limitations: ["机制与推荐，不是量化效果。"]}
+  - {atom_id: W2-ATOM-028, group_id: RB-029, layer: candidate_one_health_mechanism, type: transmission_mechanism, claim: "减少动物粪便污染淡水环境可干预虫卵进入中间宿主水域的传播环节。", subject: "减少动物粪便污染淡水环境", predicate_candidate: targets, object: "淡水环境", qualifiers: ["虫卵进入中间宿主水域"], source_ids: [source.who_clonorchiasis_qa_2025, source.who_foodborne_trematode_fact_sheet], evidence_strength: HIGH_FOR_MECHANISM, limitations: ["机制与推荐，不是量化效果。"]}
+  - {atom_id: W2-ATOM-029, group_id: W2-EXT-001, layer: public_health_candidate, type: food_processing_limit, claim: "淡盐淡水鱼仍可能含感染性华支睾吸虫。", subject: "淡盐淡水鱼", predicate_candidate: may_still_contain, object: "感染性华支睾吸虫", qualifiers: [], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: ["不得据此生成具体物种灭活参数。"]}
+  - {atom_id: W2-ATOM-030, group_id: W2-EXT-001, layer: public_health_candidate, type: food_processing_limit, claim: "烟熏淡水鱼仍可能含感染性华支睾吸虫。", subject: "烟熏淡水鱼", predicate_candidate: may_still_contain, object: "感染性华支睾吸虫", qualifiers: [], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: ["不得据此生成具体物种灭活参数。"]}
+  - {atom_id: W2-ATOM-031, group_id: W2-EXT-001, layer: public_health_candidate, type: food_processing_limit, claim: "腌制淡水鱼仍可能含感染性华支睾吸虫。", subject: "腌制淡水鱼", predicate_candidate: may_still_contain, object: "感染性华支睾吸虫", qualifiers: [], source_ids: [source.cdc_dpdx_clonorchiasis_2024, source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH, limitations: ["不得据此生成具体物种灭活参数。"]}
+  - {atom_id: W2-ATOM-032, group_id: W2-EXT-002, layer: supplemental_food_safety_guidance, type: general_food_safety_guidance, claim: "FDA鱼类寄生虫通用安全建议包括鱼肉内部温度至少约63°C。", subject: "鱼肉内部温度至少约63°C", predicate_candidate: general_guidance, object: "鱼类寄生虫食品安全", qualifiers: ["通用建议"], source_ids: [source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH_AS_GENERAL_GUIDANCE, limitations: ["不是华支睾吸虫囊蚴物种专门灭活试验。"]}
+  - {atom_id: W2-ATOM-033, group_id: W2-EXT-002, layer: supplemental_food_safety_guidance, type: general_food_safety_guidance, claim: "FDA鱼类寄生虫通用安全建议包括规定的低温冷冻组合。", subject: "规定的低温冷冻组合", predicate_candidate: general_guidance, object: "鱼类寄生虫食品安全", qualifiers: ["通用建议"], source_ids: [source.cdc_clinical_overview_clonorchis_2024], evidence_strength: HIGH_AS_GENERAL_GUIDANCE, limitations: ["不是华支睾吸虫囊蚴物种专门灭活试验。"]}
+  - {atom_id: W2-ATOM-034, group_id: W2-EXT-003, layer: one_health_recommendation_candidate, type: one_health_recommendation, claim: "WHO建议食源性吸虫病防控采用连接人类、动物和环境的One Health综合方法。", subject: "食源性吸虫病", predicate_candidate: controlled_by, object: "One Health综合方法", qualifiers: ["连接人类、动物和环境"], source_ids: [source.who_foodborne_trematode_fact_sheet], evidence_strength: HIGH_AS_RECOMMENDATION, limitations: ["不能推断固定措施组合在所有地区均有效。"]}
+  - {atom_id: W2-ATOM-035, group_id: W2-EXT-004, layer: regional_research_evidence, type: regional_intervention_effect, claim: "2001至2004年黑龙江特定流行区的重复吡喹酮干预与患病率下降相关。", subject: "重复吡喹酮干预", predicate_candidate: showed_effect_in_context, object: "患病率下降", qualifiers: ["2001至2004年", "黑龙江特定流行区"], source_ids: [source.choi_clonorchiasis_control_strategies_china_2010], evidence_strength: MODERATE, limitations: ["仅适用于研究地区、时期、流行强度和干预方案。"]}
+  - {atom_id: W2-ATOM-036, group_id: W2-EXT-004, layer: regional_research_evidence, type: regional_intervention_effect, claim: "2001至2004年黑龙江特定流行区的重复吡喹酮干预与感染强度下降相关。", subject: "重复吡喹酮干预", predicate_candidate: showed_effect_in_context, object: "感染强度下降", qualifiers: ["2001至2004年", "黑龙江特定流行区"], source_ids: [source.choi_clonorchiasis_control_strategies_china_2010], evidence_strength: MODERATE, limitations: ["仅适用于研究地区、时期、流行强度和干预方案。"]}
+  - {atom_id: W2-ATOM-037, group_id: W2-EXT-005, layer: regional_research_evidence, type: regional_behavior_intervention_effect, claim: "越南四社区研究中，综合健康教育改善了相关知识。", subject: "综合健康教育", predicate_candidate: showed_effect_in_context, object: "相关知识改善", qualifiers: ["越南四社区", "2020至2021年"], source_ids: [source.nguyen_health_education_trematodes_vietnam_2024], evidence_strength: MODERATE, limitations: ["村庄未随机分配；结局不是感染率或疾病负担。"]}
+  - {atom_id: W2-ATOM-038, group_id: W2-EXT-005, layer: regional_research_evidence, type: regional_behavior_intervention_effect, claim: "越南四社区研究中，综合健康教育改善了相关态度。", subject: "综合健康教育", predicate_candidate: showed_effect_in_context, object: "相关态度改善", qualifiers: ["越南四社区", "2020至2021年"], source_ids: [source.nguyen_health_education_trematodes_vietnam_2024], evidence_strength: MODERATE, limitations: ["村庄未随机分配；结局不是感染率或疾病负担。"]}
+  - {atom_id: W2-ATOM-039, group_id: W2-EXT-005, layer: regional_research_evidence, type: regional_behavior_intervention_effect, claim: "越南四社区研究中，综合健康教育减少了自报生鱼摄入。", subject: "综合健康教育", predicate_candidate: showed_effect_in_context, object: "自报生鱼摄入减少", qualifiers: ["越南四社区", "2020至2021年", "自报行为"], source_ids: [source.nguyen_health_education_trematodes_vietnam_2024], evidence_strength: MODERATE, limitations: ["村庄未随机分配；自报行为不等于感染率或疾病负担下降。"]}
+
+holds:
+  - {hold_id: W2-CONFLICT-001, status: HOLD, topic: "受生鱼污染的厨具或手能否传播华支睾吸虫", source_ids: [source.who_clonorchiasis_qa_2025, source.fao_fishborne_trematode_workshop_1999], excluded_from_candidates: true}
+  - {hold_id: W2-RB020-B, status: HOLD, topic: "胰管异位成虫与具体胰腺炎性病变之间的直接因果", source_ids: [source.cdc_dpdx_clonorchiasis_2024], excluded_from_candidates: true}
+  - {hold_id: W2-CONFLICT-002, status: HOLD, topic: "醋、酒及来源条件不一致的物种特异性灭活参数", source_ids: [source.cdc_clinical_overview_clonorchis_2024, source.fao_fishborne_trematode_workshop_1999], excluded_from_candidates: true}
+
+metadata_boundaries:
+  converted_to_medical_fact_count: 0
+  assessment_metadata: [RB-052, RB-055, RB-064, RB-056, RB-058, RB-061, RB-065]
+  teaching_metadata: [C010, RB-036]
+  curriculum_metadata: [RB-044]
+  rule: "教学表达、课程边界和题库内容只保留为元数据，不作为医学事实。"
+
+validation_expectations:
+  atomic_candidate_count: 39
+  teacher_approved_group_count: 14
+  external_evidence_group_count: 5
+  hold_count: 3
+  metadata_to_medical_fact_count: 0
+  formal_knowledge_graph_write_performed: false

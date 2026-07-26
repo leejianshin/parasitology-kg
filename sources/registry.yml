@@ -66,14 +66,14 @@ source_sets:
 
   clonorchis_sinensis_pilot_v1_2:
     label_zh: 华支睾吸虫Phase 3精简同源集v1.2
-    status: frozen_in_pr
+    status: frozen_approved
     prepared_on: "2026-07-26"
     frozen_on: "2026-07-26"
     approval:
       approved_on: "2026-07-26"
       approved_by_role: subject_teacher
       pull_request: 4
-      merge_commit: null
+      merge_commit: "756776b4eb9d02c77aa5f37a75924afb34eb4f65"
     supersedes:
       - clonorchis_sinensis_pilot_v1
       - clonorchis_sinensis_pilot_v1_1
@@ -95,7 +95,7 @@ source_sets:
       manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
       archive_folder_drive_id: 1340Qs6fVx6svVBQoGsK3YrvpeRZ6GfYG
       access_level: private
-      phase_gate: preflight_only_until_pr4_merge_and_teacher_start
+      phase_gate: phase3_completed
       evidence_files:
         - evidence_id: E01
           file_name_exact: E01_10e_printed_92-97_scope_93-97.pdf
@@ -120,6 +120,32 @@ source_sets:
       教学表达角色；旧完整课件副本与核验PDF已移出活动包。第4版教材在补齐
       印刷页128–133页图前仅作待核补充；CDC、WHO、IARC在Phase 4对候选做
       权威复核，不参加Phase 3来源清单硬门。
+
+  clonorchis_sinensis_phase4_authority_v1:
+    label_zh: 华支睾吸虫Phase 4公开权威复核来源集v1
+    status: adjudication_complete_admission_prepared
+    prepared_on: "2026-07-26"
+    teacher_adjudication_complete: true
+    formal_knowledge_admission: NOT_AUTHORIZED
+    phase5_started: false
+    reused_public_source_count: 3
+    new_public_source_count: 8
+    source_ids:
+      - source.who_clonorchiasis_qa_2025
+      - source.who_foodborne_trematode_fact_sheet
+      - source.who_community_diagnosis_clonorchiasis
+      - source.cdc_dpdx_clonorchiasis_2024
+      - source.cdc_clinical_overview_clonorchis_2024
+      - source.fao_fishborne_trematode_workshop_1999
+      - source.xia_liver_fluke_pathology_meta_analysis_2015
+      - source.hong_kim_clonorchis_cholangiocarcinoma_review_2016
+      - source.kim_hong_clonorchis_cholangiocarcinoma_review_2025
+      - source.choi_clonorchiasis_control_strategies_china_2010
+      - source.nguyen_health_education_trematodes_vietnam_2024
+    scope_note: >-
+      用于Phase 4教师裁决、原子候选来源映射与Schema适配评估。公开登记只保存
+      书目信息、稳定URL、证据定位和限制，不保存私有审查文件全文。39条候选
+      仍处于准入准备状态，未写入正式知识图谱。
 
 sources:
   - source_id: source.pmph_human_parasitology_10e_2024
@@ -302,11 +328,12 @@ sources:
     full_text_status: reviewed_full_text
     url: "https://www.cdc.gov/dpdx/clonorchiasis/index.html"
     page_last_reviewed: "2024-11-13"
-    accessed_on: "2026-07-25"
+    accessed_on: "2026-07-26"
     extraction_scope:
       include:
         - Life Cycle
         - Hosts
+        - Clinical Presentation
         - Morphologic Diagnosis
         - Laboratory Diagnosis
     usage_rule: >-
@@ -325,7 +352,7 @@ sources:
     full_text_status: reviewed_full_text
     url: "https://www.cdc.gov/liver-flukes/hcp/clinical-overview-clonorchis/index.html"
     page_date: "2024-02-12"
-    accessed_on: "2026-07-25"
+    accessed_on: "2026-07-26"
     extraction_scope:
       include:
         - Risk factors
@@ -348,9 +375,12 @@ sources:
     access_level: public
     full_text_status: reviewed_full_text
     url: "https://www.who.int/news-room/fact-sheets/detail/foodborne-trematode-infections"
-    accessed_on: "2026-07-25"
+    page_date: "2021-05-17"
+    accessed_on: "2026-07-26"
     extraction_scope:
       include:
+        - Transmission and burden
+        - Symptoms
         - Diagnosis
         - Treatment, prevention and control
         - One Health approach
@@ -375,3 +405,166 @@ sources:
     usage_rule: >-
       只用于支持“华支睾吸虫感染被列为对人类致癌的Group 1生物因素”。
       该分组说明危害识别，不表示每名感染者都会发生胆管癌，也不提供个体风险大小。
+
+  - source_id: source.who_clonorchiasis_qa_2025
+    source_type: official_web
+    title: "Neglected tropical diseases: Clonorchiasis"
+    organization: World Health Organization
+    language: en
+    roles:
+      - update_evidence
+      - one_health_extension
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://www.who.int/news-room/questions-and-answers/item/neglected-tropical-diseases-clonorchiasis"
+    page_date: "2025-08-15"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include:
+        - "How can clonorchiasis be prevented?"
+        - "Can cooking utensils contaminated with raw fish spread clonorchiasis?"
+      locators:
+        - "网页第116–117行"
+        - "网页第97–99行"
+    usage_rule: >-
+      用于当前预防建议和厨具传播冲突的一侧证据。厨具问答未提供原始研究，
+      与FAO 1999年中国专题材料冲突，因此相关命题保持HOLD。
+
+  - source_id: source.who_community_diagnosis_clonorchiasis
+    source_type: official_web
+    title: "Recommendations for community diagnosis"
+    organization: World Health Organization
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://www.who.int/teams/control-of-neglected-tropical-diseases/foodborne-trematode-infections/recommendations-for-community-diagnosis"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include: "Clonorchiasis"
+      locator: "网页第82–94行"
+    usage_rule: >-
+      用于区分暴露史与影像的疑诊线索和粪便检卵等确证证据。
+      页面未给出各影像表现的特异度。
+
+  - source_id: source.fao_fishborne_trematode_workshop_1999
+    source_type: official_document
+    title: "Report of the Regional Workshop on Research into Prevention and Control of Human Fish-Borne Trematode Infections"
+    organization: FAO/APFIC regional workshop
+    publication_date: "1999-03"
+    language: en
+    roles:
+      - one_health_extension
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_partial
+    url: "https://www.fao.org/4/x6949e/x6949e05.htm"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include:
+        - "China country review，附录第952–963行"
+        - "Republic of Korea country review，附录第413–417行"
+    usage_rule: >-
+      仅用于历史背景、厨具传播冲突和加工参数差异。该会议国家材料不是现代
+      系统评价或现行指南，初步灭活参数不得进入核心知识层。
+
+  - source_id: source.xia_liver_fluke_pathology_meta_analysis_2015
+    source_type: peer_reviewed_article
+    title: "Association between Liver Fluke Infection and Hepatobiliary Pathological Changes: A Systematic Review and Meta-Analysis"
+    creators: [Jing Xia, Shi-chen Jiang, Hong-Juan Peng]
+    publication_date: "2015-07-17"
+    doi: "10.1371/journal.pone.0132673"
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4506038/"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include: "Abstract and Results各并发症小节"
+    usage_rule: >-
+      用于肝吸虫感染与肝胆病理改变的关联证据。合并分析包含多种肝吸虫且
+      异质性显著，不得将群体关联写成个体必然因果。
+
+  - source_id: source.hong_kim_clonorchis_cholangiocarcinoma_review_2016
+    source_type: peer_reviewed_article
+    title: "Clonorchis sinensis, an oriental liver fluke, as a human biological agent of cholangiocarcinoma: a brief review"
+    creators: [Sung-Tae Hong, Eun-Min Kim]
+    publication_date: "2016"
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC5346318/"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include: "PATHOGENESIS AND CARCINOGENESIS小节"
+    usage_rule: >-
+      用于机械损伤、炎症和胆管周围纤维化等机制背景。属于叙述性综述，
+      机制证据层级低于系统评价。
+
+  - source_id: source.kim_hong_clonorchis_cholangiocarcinoma_review_2025
+    source_type: peer_reviewed_article
+    title: "Clonorchis sinensis and Cholangiocarcinoma"
+    creators: [Eun-Min Kim, Sung-Tae Hong]
+    publication_date: "2025-04-09"
+    doi: "10.3346/jkms.2025.40.e145"
+    language: en
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12040606/"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include: "Abstract and pathogenesis review"
+    usage_rule: >-
+      用于成虫寄生部位和慢性炎症、纤维化机制更新。该综述以致癌机制为主，
+      不是并发症发生率研究。
+
+  - source_id: source.choi_clonorchiasis_control_strategies_china_2010
+    source_type: peer_reviewed_article
+    title: "Effect of Control Strategies on Prevalence, Incidence and Re-infection of Clonorchiasis in Endemic Areas of China"
+    creators: ["Choi et al."]
+    publication_date: "2010"
+    doi: "10.1371/journal.pntd.0000601"
+    language: en
+    roles:
+      - one_health_extension
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC2821909/"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include: "Results and Discussion；2001–2004年黑龙江7组干预结果"
+    usage_rule: >-
+      仅支持特定地区、时期、流行强度和干预组合下的研究效果，不支持把组合
+      效果归因于单一措施，也不支持未测量的产业治理组合。
+
+  - source_id: source.nguyen_health_education_trematodes_vietnam_2024
+    source_type: peer_reviewed_article
+    title: "Effectiveness of health education in improving knowledge, attitude and practice related to foodborne zoonotic trematodes in Vietnam, with a particular focus on Clonorchis sinensis"
+    creators: ["Nguyen et al."]
+    publication_date: "2024-02-13"
+    doi: "10.1111/tmi.13972"
+    language: en
+    roles:
+      - one_health_extension
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_full_text
+    url: "https://onlinelibrary.wiley.com/doi/full/10.1111/tmi.13972"
+    accessed_on: "2026-07-26"
+    extraction_scope:
+      include: "Abstract, Results and Discussion；2020–2021年越南四社区干预"
+    usage_rule: >-
+      仅支持该研究情境中的知识、态度和自报行为结局。村庄未随机分配，
+      自报行为不得等同感染率或疾病负担下降。

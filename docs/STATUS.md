@@ -8,10 +8,10 @@
 |---|---|---|---|
 | Phase 0 | 治理框架冻结 | COMPLETED | 已由PR #1合并 |
 | Phase 1 | Schema与编辑规范 | COMPLETED | 已由PR #2合并 |
-| Phase 2 | 华支睾吸虫来源集冻结 | REPAIR_IN_REVIEW | v1.1在合并前被E02设计修正继替；v1.2已在PR #4准备 |
-| Phase 3 | 双路候选提取 | PAUSED_PENDING_PR4_MERGE | 合并且教师启动前只做预检，不运行A/B候选抽取 |
-| Phase 4 | 对照与教师审核 | NOT_STARTED | 等待候选提取 |
-| Phase 5 | 知识子图入库 | NOT_STARTED | 等待教师批准 |
+| Phase 2 | 华支睾吸虫来源集冻结 | COMPLETED | v1.2已由PR #4合并并批准 |
+| Phase 3 | 双路候选提取 | COMPLETED | A/B同源隔离提取、审计和盲对照已完成 |
+| Phase 4 | 对照与教师审核 | COMPLETED | 教师裁决、39条原子候选准入准备和公开收口已完成 |
+| Phase 5 | 知识子图入库 | NOT_STARTED | 正式知识写入未授权；等待独立Schema与准入决策 |
 | Phase 6 | 学生RAG验收 | NOT_STARTED | 等待子图完成 |
 | Phase 7 | 发布与扩展 | NOT_STARTED | 等待RAG验收 |
 
@@ -34,7 +34,8 @@
 3. 临床医学本科课程教学大纲：课程边界；
 4. `题库.txt`中华支睾吸虫相关记录：考核与易错点；
 5. 八年制第4版《人体寄生虫学》印刷页128–133：已登记勘误，待补页图；
-6. Phase 3私有包`clonorchis_phase3_private_pack_v1_2`：4个同源证据文件；旧v1.1控制文件和课件核验PDF已移出活动包归档。
+6. Phase 3私有包`clonorchis_phase3_private_pack_v1_2`：4个同源证据文件；旧v1.1控制文件和课件核验PDF已移出活动包归档；PR #4已合并。
+7. Phase 4公开权威来源集：复用3个WHO/CDC来源并新增8个公开来源元数据；不登记私有文件全文。
 
 详细范围和限制见`sources/clonorchis-sinensis-pilot.md`。
 
@@ -63,11 +64,12 @@
 - Notebook自检为模型自报，独立验收结论为`FORMAT_PASS_EVIDENCE_FAIL`；
 - 已新增`docs/NOTEBOOK_EXTRACTION_BOUNDARY.md`作为后续虫种统一约束。
 
-## Phase 3当前动作
+## Phase 3与Phase 4完成状态
 
-- 暂停两条路线；PR #4合并且教师明确启动前只允许`PREFLIGHT_ONLY`，不保存候选；
-- PR #4登记第4版页码勘误、v1.2来源集、E02-v3派生证据和私有包文件身份；
-- 路线A须新建专用Notebook，只导入私有包，不再使用202来源Notebook；
-- 路线B只读取相同`pack_id`，不得访问候选、审计或路线A结果；
-- 两条路线只以E01–E04为Phase 3硬门；E02只允许教学目标、教学重点与讨论题候选，不单独证明医学事实；
-- 第4版页图与CDC/WHO/IARC核查分别留到语料包升级和Phase 4。
+- PR #4已合并，v1.2来源集和私有包身份已冻结；
+- Phase 3路线A与路线B已按同一`pack_id`完成隔离抽取、独立审计和盲对照；
+- Phase 4已完成教师裁决：14组修订命题与5条外部证据拆为39条原子候选；
+- 3项冲突或因果边界保持HOLD，未进入候选；
+- 教学、课程和题库内容继续只作为元数据，不转为医学事实；
+- 39条候选已完成Schema适配分类，但尚未写入`knowledge/`；
+- Phase 5尚未开始，正式知识图谱写入仍未授权。

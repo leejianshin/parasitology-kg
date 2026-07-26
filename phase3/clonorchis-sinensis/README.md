@@ -1,16 +1,23 @@
 # Phase 3：华支睾吸虫双路候选提取
 
-状态：`PAUSED_PENDING_PR4_MERGE`  
-待冻结来源集：`clonorchis_sinensis_pilot_v1_2`  
-唯一私有语料包：`clonorchis_phase3_private_pack_v1_2`  
+状态：`COMPLETED`
+
+冻结来源集：`clonorchis_sinensis_pilot_v1_2`
+
+唯一私有语料包：`clonorchis_phase3_private_pack_v1_2`
+
 Phase 2批准记录：PR #3，合并提交
 `e659ae53f9187c353a2a215f0c4a1bd06dae29c5`
+Phase 2/3修订记录：PR #4，合并提交
+`756776b4eb9d02c77aa5f37a75924afb34eb4f65`
 
 ## 目标
 
 路线A和路线B使用同一组物理文件、相同来源范围、相同字段与相同准入规则，
 分别生成候选语料。
 本阶段只发现事实、遗漏、冲突和Schema问题，不把候选写入正式知识目录。
+两条路线及其独立审计、盲对照已经完成；Phase 4教师裁决和准入准备也已完成。
+Phase 5尚未开始，正式知识写入仍未授权。
 
 ## 两条路线
 
@@ -24,7 +31,7 @@ Phase 2批准记录：PR #3，合并提交
 
 ## 固定执行顺序
 
-1. PR #4合并且教师明确启动前，只允许执行来源预检，不运行候选抽取。
+1. PR #4已合并，教师已授权并完成本阶段抽取；以下顺序作为完成记录保留。
 2. 两条路线分别核对相同`pack_id`和E01–E04的文件名、Drive ID与范围。
 3. 任一必需证据文件不可访问或观察到身份不一致，输出`SOURCE_MANIFEST_FAIL`并停止；运行环境看不到Drive ID或SHA256时标记`not_observable`，不得谎报已确认。
 4. 待补第4版和Phase 4权威来源不属于本阶段硬门，不因其缺失而停止。
