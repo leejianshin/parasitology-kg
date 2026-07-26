@@ -32,3 +32,7 @@ jobs:
         run: python scripts/build_derived_graph.py --check
       - name: Validate Phase 5 Batch 1 intake
         run: python scripts/validate_phase5_batch1_intake.py
+      - name: Check Phase 6 allowlisted RAG corpus
+        run: python scripts/build_phase6_rag_corpus.py --check
+      - name: Validate Phase 6 student RAG protocol
+        run: python scripts/validate_phase6_protocol.py

@@ -1,0 +1,83 @@
+catalog_version: '1.0'
+scope: P5-B1_RELATION_EVIDENCE_ONLY
+source_count: 6
+sources:
+- source_id: source.cdc_clinical_overview_clonorchis_2024
+  source_type: official_web
+  title: Clinical Overview of Clonorchis
+  organization: U.S. Centers for Disease Control and Prevention
+  creators: []
+  publication_date: '2024-02-12'
+  url: https://www.cdc.gov/liver-flukes/hcp/clinical-overview-clonorchis/index.html
+  allowed_evidence_types:
+  - direct_statement
+  allowed_locators:
+  - Diagnosis
+  - Prevention
+- source_id: source.cdc_dpdx_clonorchiasis_2024
+  source_type: official_web
+  title: DPDx - Clonorchiasis
+  organization: U.S. Centers for Disease Control and Prevention
+  creators: []
+  publication_date: '2024-11-13'
+  url: https://www.cdc.gov/dpdx/clonorchiasis/index.html
+  allowed_evidence_types:
+  - direct_statement
+  allowed_locators:
+  - Clinical Presentation
+  - Life Cycle
+- source_id: source.hong_kim_clonorchis_cholangiocarcinoma_review_2016
+  source_type: peer_reviewed_article
+  title: 'Clonorchis sinensis, an oriental liver fluke, as a human biological agent
+    of cholangiocarcinoma: a brief review'
+  organization: null
+  creators:
+  - Sung-Tae Hong
+  - Eun-Min Kim
+  publication_date: '2016'
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC5346318/
+  allowed_evidence_types:
+  - direct_statement
+  allowed_locators:
+  - PATHOGENESIS AND CARCINOGENESIS
+- source_id: source.who_clonorchiasis_qa_2025
+  source_type: official_web
+  title: 'Neglected tropical diseases: Clonorchiasis'
+  organization: World Health Organization
+  creators: []
+  publication_date: '2025-08-15'
+  url: https://www.who.int/news-room/questions-and-answers/item/neglected-tropical-diseases-clonorchiasis
+  allowed_evidence_types:
+  - direct_statement
+  - supported_inference
+  allowed_locators:
+  - Are pets or livestock at risk of spreading clonorchiasis?，网页第94–96行
+  - How can clonorchiasis be prevented?，网页第116–117行
+- source_id: source.who_community_diagnosis_clonorchiasis
+  source_type: official_web
+  title: Recommendations for community diagnosis
+  organization: World Health Organization
+  creators: []
+  publication_date: null
+  url: https://www.who.int/teams/control-of-neglected-tropical-diseases/foodborne-trematode-infections/recommendations-for-community-diagnosis
+  allowed_evidence_types:
+  - direct_statement
+  allowed_locators:
+  - Clonorchiasis，网页第82–94行
+- source_id: source.who_foodborne_trematode_fact_sheet
+  source_type: official_web
+  title: Foodborne trematode infections
+  organization: World Health Organization
+  creators: []
+  publication_date: '2021-05-17'
+  url: https://www.who.int/news-room/fact-sheets/detail/foodborne-trematode-infections
+  allowed_evidence_types:
+  - direct_statement
+  - supported_inference
+  allowed_locators:
+  - Diagnosis
+  - One Health approach
+  - Symptoms
+  - Transmission and burden
+  - Treatment, prevention and control
+boundary: 只登记P5-B1关系实际引用的来源与定位；不得从来源总表或网页扩展未进入正式知识层的命题。

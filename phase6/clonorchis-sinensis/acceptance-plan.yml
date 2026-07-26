@@ -1,0 +1,91 @@
+plan_version: "1.0"
+plan_id: "clonorchis_phase6_student_rag_acceptance_20260726"
+status: "READY_FOR_REVIEW"
+prepared_on: "2026-07-26"
+
+knowledge_baseline:
+  repository: "leejianshin/parasitology-kg"
+  main_commit: "bf021d5af95042c1cda009f4230690008b94897e"
+  admitted_batch_id: "P5-B1"
+  canonical_input_sha256: "6637c5d37a77ba0c880150e2c9525f0fc209a1261ab87ec57ade7ec28773d1ea"
+  artifact_manifest: "derived/clonorchis-sinensis/phase5-batch1/manifest.yml"
+  rag_corpus_manifest: "derived/clonorchis-sinensis/phase6-rag-corpus/manifest.yml"
+  node_count: 14
+  edge_count: 10
+
+authority:
+  canonical_knowledge: "knowledge/**/*.md"
+  derived_graph: "derived/clonorchis-sinensis/phase5-batch1"
+  test_suite: "phase6/clonorchis-sinensis/test-cases.yml"
+  teacher_rubric: "phase6/clonorchis-sinensis/teacher-rubric.yml"
+  answer_contract: "templates/phase6-rag-run-template.yml"
+
+execution_design:
+  comparison: "paired_baseline_vs_rag"
+  same_model_required: true
+  same_model_version_required: true
+  same_answer_instruction_required: true
+  same_question_order_required: true
+  clean_session_per_case: true
+  web_access: "DISABLED"
+  external_memory: "DISABLED"
+  baseline_context: "NO_REPOSITORY_OR_DERIVED_FILES"
+  rag_context: "PHASE6_ALLOWLIST_CORPUS_ONLY"
+  rag_corpus_files:
+    - "derived/clonorchis-sinensis/phase6-rag-corpus/corpus.md"
+    - "derived/clonorchis-sinensis/phase6-rag-corpus/source-catalog.yml"
+  language: "zh-CN"
+  required_modes:
+    - baseline
+    - rag
+  prohibited_shortcuts:
+    - "不得在baseline中附加仓库文件或人工补充答案"
+    - "不得在rag模式中调用网页搜索或模型外部记忆补足语料缺口"
+    - "不得把整个GitHub仓库、来源总表、候选稿、评审记录或Phase 6题集载入RAG"
+    - "不得根据基线表现修改固定问题、评分标准或答案合同"
+    - "不得把人工标准答案放入RAG检索语料"
+
+evaluation_layers:
+  machine_contract:
+    validates:
+      - "问题覆盖完整性"
+      - "回答、部分回答与拒答状态"
+      - "实体、关系原子命题与来源ID可解析性"
+      - "后续批次零混入"
+      - "来源追溯和私有路径边界"
+  teacher_review:
+    validates:
+      - "事实准确性"
+      - "限定与拒答是否恰当"
+      - "One Health关系是否夸大因果"
+      - "学生可理解性"
+      - "RAG相对baseline是否产生实质改善"
+
+pass_gate:
+  hard_fail_conditions:
+    - "核心事实或关系出现严重错误"
+    - "把影像学线索写成单独确诊依据"
+    - "把条件性传播写成必然感染"
+    - "把防控建议写成已量化效果或彻底阻断"
+    - "对当前语料未覆盖问题使用模型常识作确定回答"
+    - "引用未登记来源、私有路径或后续批次命题"
+  thresholds:
+    rag_answerable_case_pass_rate_min: 0.90
+    rag_boundary_abstention_rate_min: 1.00
+    rag_traceability_rate_min: 1.00
+    rag_mean_teacher_score_min_of_10: 8.50
+    one_health_causal_overstatement_max: 0
+    unregistered_source_count_max: 0
+    rag_minus_baseline_total_score_min_points: 10
+  score_normalization: "mean_teacher_score / 10 * 100"
+  allowed_conclusions:
+    - PASS
+    - FAIL
+    - INCONCLUSIVE
+
+authorization:
+  protocol_merge: "PENDING_REVIEW"
+  paired_run_execution: "NOT_AUTHORIZED_UNTIL_PROTOCOL_MERGE"
+  teacher_release_decision: "NOT_STARTED"
+  student_rag_release: "NOT_AUTHORIZED"
+  phase5_batch_2_and_3_write: "NOT_AUTHORIZED"

@@ -1,0 +1,65 @@
+rubric_version: "1.0"
+rubric_id: "clonorchis_phase6_teacher_rubric_v1"
+status: "FIXED_PENDING_REVIEW"
+maximum_score_per_case: 10
+
+criteria:
+  factual_accuracy:
+    points: 2
+    full_score: "回答与当前正式知识及关系限定一致。"
+    zero_score: "出现事实错误、关系方向错误或使用未准入知识作确定结论。"
+  boundary_control:
+    points: 2
+    full_score: "正确区分回答、部分回答和拒答，不用模型常识补齐语料缺口。"
+    zero_score: "遗漏关键限定，或对边界题作无保留确定回答。"
+  provenance:
+    points: 2
+    full_score: "结论所用source_id已登记，并能对应所用关系原子命题。"
+    zero_score: "无来源、来源不可解析，或引用不能支撑对应结论。"
+  relation_reasoning:
+    points: 2
+    full_score: "能正确解释实体和关系，不把线索、条件、建议写成确诊、必然因果或已证效果。"
+    zero_score: "出现关系层级混淆或One Health因果夸大。"
+  student_clarity:
+    points: 2
+    full_score: "表述简洁、可理解，并把限制紧邻相关结论。"
+    zero_score: "表述含混、堆砌术语或隐藏关键限制。"
+
+case_pass_rule:
+  minimum_score: 8
+  hard_fail_must_be_absent: true
+
+hard_fail_labels:
+  - "CRITICAL_FACT_ERROR"
+  - "DIAGNOSTIC_CLUE_AS_CONFIRMATION"
+  - "CONDITIONAL_TRANSMISSION_AS_CERTAINTY"
+  - "INTERVENTION_RECOMMENDATION_AS_PROVEN_EFFECT"
+  - "UNSUPPORTED_CORPUS_GAP_FILL"
+  - "UNREGISTERED_OR_PRIVATE_SOURCE"
+  - "LATER_BATCH_LEAKAGE"
+
+paired_comparison:
+  compare_same_case: true
+  dimensions:
+    - "case_pass_rate"
+    - "mean_teacher_score"
+    - "traceability_rate"
+    - "boundary_abstention_rate"
+    - "critical_error_count"
+  interpretation_rule: >-
+    只有RAG达到全部绝对门槛，且总分较baseline提高至少10个百分点，
+    才能支持“当前知识子图改善学生AI回答”的结论。
+
+teacher_decision:
+  required_fields:
+    - reviewer_role
+    - reviewed_on
+    - baseline_summary
+    - rag_summary
+    - hard_fail_count
+    - conclusion
+    - release_recommendation
+  allowed_release_recommendations:
+    - "APPROVE_PILOT_RELEASE"
+    - "REVISE_AND_RETEST"
+    - "REJECT_RELEASE"
