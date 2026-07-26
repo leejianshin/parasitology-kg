@@ -1,0 +1,72 @@
+schema_version: "1.0"
+review_id: "clonorchis_phase4_schema_fit_gap_20260726"
+ledger: "candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml"
+status: "SCHEMA_FIT_REVIEW_COMPLETE"
+formal_knowledge_graph_admission: "NOT_AUTHORIZED"
+relation_schema_modified: false
+
+classification_counts:
+  direct_relation_candidate: 16
+  qualifier_or_narrative: 11
+  requires_schema_extension: 5
+  supplemental_only: 2
+  research_layer_only: 5
+  total: 39
+
+existing_schema:
+  entity_types_reviewed: "schema/entity-types.yml@1.0"
+  relation_types_reviewed: "schema/relation-types.yml@1.0"
+  policy: "本文件只提出映射建议；任何relation-types.yml变化必须由独立PR处理。"
+
+candidate_fit:
+  - {atom_id: W2-ATOM-001, classification: requires_schema_extension, entity_types: [behavior, disease], existing_relation: null, proposed_relation: serves_as_diagnostic_clue, recommendation: "新增暴露或发现作为疾病诊断线索的有方向关系。"}
+  - {atom_id: W2-ATOM-002, classification: direct_relation_candidate, entity_types: [parasite, host], existing_relation: has_second_intermediate_host, proposed_relation: null, recommendation: "规范方向改为寄生虫指向虾宿主；囊蚴阶段与中国部分物种写入限定。"}
+  - {atom_id: W2-ATOM-003, classification: qualifier_or_narrative, entity_types: [host, life_cycle_stage], existing_relation: null, proposed_relation: null, recommendation: "作为虾宿主证据权重和比较流行率限定，不单独建正式边。"}
+  - {atom_id: W2-ATOM-004, classification: qualifier_or_narrative, entity_types: [host, life_cycle_stage], existing_relation: null, proposed_relation: null, recommendation: "作为虾宿主证据权重和囊蚴负荷限定，不单独建正式边。"}
+  - {atom_id: W2-ATOM-005, classification: direct_relation_candidate, entity_types: [parasite, behavior], existing_relation: transmitted_via, proposed_relation: null, recommendation: "以流行地区、活囊蚴和未充分加热作为关系限定。"}
+  - {atom_id: W2-ATOM-006, classification: direct_relation_candidate, entity_types: [disease, intervention], existing_relation: controlled_by, proposed_relation: null, recommendation: "建立避免生或未熟淡水鱼的干预实体；标记为推荐而非效果。"}
+  - {atom_id: W2-ATOM-007, classification: qualifier_or_narrative, entity_types: [host, intervention], existing_relation: null, proposed_relation: null, recommendation: "保留为淡水虾预防表述的物种和证据权重限定。"}
+  - {atom_id: W2-ATOM-008, classification: direct_relation_candidate, entity_types: [life_cycle_stage, anatomical_site], existing_relation: parasitizes_site, proposed_relation: null, recommendation: "成虫阶段指向肝内小、中型胆管。"}
+  - {atom_id: W2-ATOM-009, classification: requires_schema_extension, entity_types: [pathological_process, anatomical_site], existing_relation: null, proposed_relation: occurs_in, recommendation: "现有schema缺少病理过程发生部位关系。"}
+  - {atom_id: W2-ATOM-010, classification: direct_relation_candidate, entity_types: [disease, pathological_process], existing_relation: has_pathological_process, proposed_relation: null, recommendation: "机械、代谢与炎症作用保留为限定。"}
+  - {atom_id: W2-ATOM-011, classification: direct_relation_candidate, entity_types: [disease, pathological_process], existing_relation: has_pathological_process, proposed_relation: null, recommendation: "胆管周围部位保留在病理过程实体或限定中。"}
+  - {atom_id: W2-ATOM-012, classification: direct_relation_candidate, entity_types: [disease, pathological_process], existing_relation: has_pathological_process, proposed_relation: null, recommendation: "长期或较重作为限定，避免必然因果。"}
+  - {atom_id: W2-ATOM-013, classification: qualifier_or_narrative, entity_types: [pathological_process], existing_relation: null, proposed_relation: null, recommendation: "虫负荷作为纤维化关系的严重度限定。"}
+  - {atom_id: W2-ATOM-014, classification: qualifier_or_narrative, entity_types: [pathological_process], existing_relation: null, proposed_relation: null, recommendation: "感染时间作为纤维化关系的时程限定。"}
+  - {atom_id: W2-ATOM-015, classification: qualifier_or_narrative, entity_types: [pathological_process], existing_relation: null, proposed_relation: null, recommendation: "宿主因素作为纤维化关系的个体差异限定。"}
+  - {atom_id: W2-ATOM-016, classification: requires_schema_extension, entity_types: [disease, disease], existing_relation: null, proposed_relation: associated_with_complication, recommendation: "现有manifests_as不能准确承载疾病到并发症疾病的关联。"}
+  - {atom_id: W2-ATOM-017, classification: requires_schema_extension, entity_types: [disease, disease], existing_relation: null, proposed_relation: associated_with, recommendation: "需要不夸大因果的疾病关联关系；不得使用causes。"}
+  - {atom_id: W2-ATOM-018, classification: direct_relation_candidate, entity_types: [disease, pathological_process], existing_relation: has_pathological_process, proposed_relation: null, recommendation: "可能性与机制证据强度写入限定。"}
+  - {atom_id: W2-ATOM-019, classification: direct_relation_candidate, entity_types: [disease, pathological_process], existing_relation: has_pathological_process, proposed_relation: null, recommendation: "可能性与机制证据强度写入限定。"}
+  - {atom_id: W2-ATOM-020, classification: direct_relation_candidate, entity_types: [disease, pathological_process], existing_relation: has_pathological_process, proposed_relation: null, recommendation: "可能性与机制证据强度写入限定。"}
+  - {atom_id: W2-ATOM-021, classification: requires_schema_extension, entity_types: [disease, disease], existing_relation: null, proposed_relation: associated_with_complication, recommendation: "复用拟议并发症关系并保留少见限定；HOLD直接因果。"}
+  - {atom_id: W2-ATOM-022, classification: direct_relation_candidate, entity_types: [disease, clinical_manifestation], existing_relation: manifests_as, proposed_relation: null, recommendation: "无明显症状作为临床表现，轻虫负荷和多数作为限定。"}
+  - {atom_id: W2-ATOM-023, classification: direct_relation_candidate, entity_types: [disease, diagnostic_method], existing_relation: diagnosed_by, proposed_relation: null, recommendation: "影像方法以辅助线索限定，不赋予确诊能力。"}
+  - {atom_id: W2-ATOM-024, classification: qualifier_or_narrative, entity_types: [diagnostic_method], existing_relation: diagnosed_by, proposed_relation: null, recommendation: "作为影像诊断关系的证据整合限定。"}
+  - {atom_id: W2-ATOM-025, classification: qualifier_or_narrative, entity_types: [diagnostic_method], existing_relation: diagnosed_by, proposed_relation: null, recommendation: "作为影像诊断关系的否定限定：不能单独确诊。"}
+  - {atom_id: W2-ATOM-026, classification: direct_relation_candidate, entity_types: [disease, intervention], existing_relation: controlled_by, proposed_relation: null, recommendation: "卫生设施作为干预实体，标记推荐而非量化效果。"}
+  - {atom_id: W2-ATOM-027, classification: direct_relation_candidate, entity_types: [intervention, environment], existing_relation: targets, proposed_relation: null, recommendation: "干预指向淡水环境；虫卵进入水域写入机制限定。"}
+  - {atom_id: W2-ATOM-028, classification: direct_relation_candidate, entity_types: [intervention, environment], existing_relation: targets, proposed_relation: null, recommendation: "干预指向淡水环境；动物粪便来源写入限定。"}
+  - {atom_id: W2-ATOM-029, classification: qualifier_or_narrative, entity_types: [behavior, intervention], existing_relation: risk_increased_by, proposed_relation: null, recommendation: "作为加工方式不能保证安全的风险限定，不单独建物种灭活边。"}
+  - {atom_id: W2-ATOM-030, classification: qualifier_or_narrative, entity_types: [behavior, intervention], existing_relation: risk_increased_by, proposed_relation: null, recommendation: "作为加工方式不能保证安全的风险限定，不单独建物种灭活边。"}
+  - {atom_id: W2-ATOM-031, classification: qualifier_or_narrative, entity_types: [behavior, intervention], existing_relation: risk_increased_by, proposed_relation: null, recommendation: "作为加工方式不能保证安全的风险限定，不单独建物种灭活边。"}
+  - {atom_id: W2-ATOM-032, classification: supplemental_only, entity_types: [intervention], existing_relation: null, proposed_relation: null, recommendation: "只保留为FDA鱼类寄生虫通用食品安全补充建议，不进入物种核心知识。"}
+  - {atom_id: W2-ATOM-033, classification: supplemental_only, entity_types: [intervention], existing_relation: null, proposed_relation: null, recommendation: "只保留为FDA鱼类寄生虫通用食品安全补充建议，不进入物种核心知识。"}
+  - {atom_id: W2-ATOM-034, classification: direct_relation_candidate, entity_types: [disease, intervention], existing_relation: controlled_by, proposed_relation: null, recommendation: "One Health综合方法作为干预；不得外推固定组合效果。"}
+  - {atom_id: W2-ATOM-035, classification: research_layer_only, entity_types: [intervention], existing_relation: null, proposed_relation: showed_effect_in_context, recommendation: "仅进入地区研究证据层；未来关系须强制地区、时期、人群、结局和设计限定。"}
+  - {atom_id: W2-ATOM-036, classification: research_layer_only, entity_types: [intervention], existing_relation: null, proposed_relation: showed_effect_in_context, recommendation: "仅进入地区研究证据层；未来关系须强制地区、时期、人群、结局和设计限定。"}
+  - {atom_id: W2-ATOM-037, classification: research_layer_only, entity_types: [intervention], existing_relation: null, proposed_relation: showed_effect_in_context, recommendation: "仅进入地区研究证据层；不得外推感染率或疾病负担效果。"}
+  - {atom_id: W2-ATOM-038, classification: research_layer_only, entity_types: [intervention], existing_relation: null, proposed_relation: showed_effect_in_context, recommendation: "仅进入地区研究证据层；不得外推感染率或疾病负担效果。"}
+  - {atom_id: W2-ATOM-039, classification: research_layer_only, entity_types: [intervention], existing_relation: null, proposed_relation: showed_effect_in_context, recommendation: "仅进入地区研究证据层；自报行为不得等同感染结局。"}
+
+proposed_schema_extensions_for_separate_pr:
+  - {relation: serves_as_diagnostic_clue, subject_types: [behavior, clinical_manifestation, diagnostic_method], object_types: [disease], rationale: "承载暴露史、发现或检查作为非确诊线索。"}
+  - {relation: occurs_in, subject_types: [pathological_process], object_types: [anatomical_site], rationale: "表达病理过程的主要发生部位。"}
+  - {relation: associated_with_complication, subject_types: [disease], object_types: [disease], rationale: "表达并发症关联并允许频率限定。"}
+  - {relation: associated_with, subject_types: [disease], object_types: [disease], rationale: "表达非因果性疾病关联。"}
+  - {relation: showed_effect_in_context, subject_types: [intervention], object_types: [clinical_manifestation, behavior, pathological_process], required_qualifiers: [region, study_period, population, outcome, study_design], rationale: "仅供地区研究效果层，需独立schema PR论证。"}
+
+validation_expectations:
+  every_atom_classified_once: true
+  classification_total: 39
+  relation_types_file_changed: false
