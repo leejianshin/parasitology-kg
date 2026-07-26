@@ -1,6 +1,6 @@
 # 项目状态
 
-最后更新：2026-07-25
+最后更新：2026-07-26
 
 ## 当前状态
 
@@ -8,8 +8,8 @@
 |---|---|---|---|
 | Phase 0 | 治理框架冻结 | COMPLETED | 已由PR #1合并 |
 | Phase 1 | Schema与编辑规范 | COMPLETED | 已由PR #2合并 |
-| Phase 2 | 华支睾吸虫来源集冻结 | COMPLETED | PR #3已批准并合并；冻结集`clonorchis_sinensis_pilot_v1` |
-| Phase 3 | 双路候选提取 | IN_PROGRESS | 建立同源、同模板、隔离上下文的路线A与路线B |
+| Phase 2 | 华支睾吸虫来源集冻结 | REPAIR_IN_REVIEW | v1有范围错误；v1.1与私有语料包已在PR #4准备 |
+| Phase 3 | 双路候选提取 | PAUSED_SOURCE_REPAIR | PR #4合并前不运行A/B；之后两路只读同一pack |
 | Phase 4 | 对照与教师审核 | NOT_STARTED | 等待候选提取 |
 | Phase 5 | 知识子图入库 | NOT_STARTED | 等待教师批准 |
 | Phase 6 | 学生RAG验收 | NOT_STARTED | 等待子图完成 |
@@ -23,16 +23,18 @@
 - One Health作为知识关系的总体组织框架；
 - 华支睾吸虫作为首个端到端试点；
 - NotebookLM/Gemini提取和独立文件提取构成两条候选语料路线；
+- 两条路线必须读取同一私有语料包，不得各自检索或拼装来源；
 - 教师审核是正式入库的必要条件；
 - 网站与大规模自动化推迟到试点验收之后。
 
 ## Phase 2已登记来源
 
 1. 第10版《人体寄生虫学》：核心事实；
-2. `04 第四课.pdf` PDF页序22–89：教学重点与One Health情境；
+2. `04 第四课.pdf` PDF页序22–71：教学重点与One Health情境；
 3. 临床医学本科课程教学大纲：课程边界；
 4. `题库.txt`中华支睾吸虫相关记录：考核与易错点；
-5. 八年制第4版《人体寄生虫学》印刷页128–138：补充核查和版本对照。
+5. 八年制第4版《人体寄生虫学》印刷页128–133：已登记勘误，待补页图；
+6. Phase 3私有包`clonorchis_phase3_private_pack_v1_1`：4个同源证据文件。
 
 详细范围和限制见`sources/clonorchis-sinensis-pilot.md`。
 
@@ -63,8 +65,9 @@
 
 ## Phase 3当前动作
 
-- 使用`phase3/clonorchis-sinensis/extraction-contract.yml`约束两条路线；
-- 路线A只在NotebookLM/Gemini中读取冻结来源；
-- 路线B在不携带Notebook候选与审计结论的新上下文中读取同一冻结来源；
-- 两条路线均输出来源清单、原子命题、缺失项、冲突和Schema适配问题；
-- 任一路线来源清单不完整时停止事实提取，不以其他资料代替。
+- 暂停两条路线，不保存前两次`SOURCE_MANIFEST_FAIL`为候选结果；
+- PR #4登记第4版页码勘误、v1.1来源集和私有包文件身份；
+- 路线A须新建专用Notebook，只导入私有包，不再使用202来源Notebook；
+- 路线B只读取相同`pack_id`，不得访问候选、审计或路线A结果；
+- 两条路线只以E01–E04为Phase 3硬门；
+- 第4版页图与CDC/WHO/IARC核查分别留到语料包升级和Phase 4。
