@@ -10,7 +10,7 @@ one_health_domains:
   - human_health
   - animal_health
 summary: 华支睾吸虫感染相关病理改变主要发生于胆道系统。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -20,7 +20,7 @@ relations:
   - predicate: occurs_in
     object: anatomy.biliary_system
     statement_zh: 华支睾吸虫感染相关病理改变主要发生于胆道系统。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.cdc_dpdx_clonorchiasis_2024
         locator: "Clinical Presentation"
@@ -34,8 +34,8 @@ relations:
       ectopic_exclusion: false
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 华支睾吸虫感染相关胆道病理改变

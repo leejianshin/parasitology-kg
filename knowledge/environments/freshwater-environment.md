@@ -11,7 +11,7 @@ one_health_domains:
   - animal_health
   - environmental_health
 summary: 淡水环境是华支睾吸虫虫卵接触中间宿主的传播环境，也是人和动物粪便污染干预的直接对象。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -21,8 +21,8 @@ admission:
 relations: []
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 淡水环境

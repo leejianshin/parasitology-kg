@@ -11,7 +11,7 @@ one_health_domains:
   - environmental_health
   - cross_sector_governance
 summary: 减少动物粪便污染淡水环境可针对虫卵进入中间宿主水域的传播环节。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -21,7 +21,7 @@ relations:
   - predicate: targets
     object: environment.freshwater_environment
     statement_zh: 减少动物粪便污染淡水环境可针对虫卵进入中间宿主水域的传播环节。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_clonorchiasis_qa_2025
         locator: "Are pets or livestock at risk of spreading clonorchiasis?，网页第94–96行"
@@ -35,8 +35,8 @@ relations:
       evidence_scope: mechanism_and_recommendation
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 减少动物粪便污染淡水环境

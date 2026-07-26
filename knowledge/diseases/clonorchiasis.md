@@ -12,7 +12,7 @@ one_health_domains:
   - environmental_health
   - cross_sector_governance
 summary: 华支睾吸虫病是华支睾吸虫感染所致疾病；本批次收录其暴露史和影像学线索、轻虫负荷时的临床频率边界及基础防控措施。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -26,7 +26,7 @@ relations:
   - predicate: has_diagnostic_clue
     object: behavior.raw_undercooked_freshwater_fish_consumption
     statement_zh: 在流行地区，生食或未充分加热淡水鱼的经历可作为华支睾吸虫病的流行病学线索。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_community_diagnosis_clonorchiasis
         locator: "Clonorchiasis，网页第82–94行"
@@ -42,7 +42,7 @@ relations:
   - predicate: controlled_by
     object: intervention.avoid_raw_undercooked_freshwater_fish
     statement_zh: 避免食用生或未充分加热的淡水鱼是预防华支睾吸虫感染的推荐措施。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_clonorchiasis_qa_2025
         locator: "How can clonorchiasis be prevented?，网页第116–117行"
@@ -56,7 +56,7 @@ relations:
   - predicate: manifests_as
     object: manifestation.asymptomatic_light_infection
     statement_zh: 华支睾吸虫轻虫负荷感染多数可无明显症状。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_foodborne_trematode_fact_sheet
         locator: "Symptoms"
@@ -71,7 +71,7 @@ relations:
   - predicate: has_diagnostic_clue
     object: diagnostic.biliary_imaging
     statement_zh: 超声、CT或MRI表现可作为华支睾吸虫病的辅助诊断线索。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_foodborne_trematode_fact_sheet
         locator: "Diagnosis"
@@ -89,7 +89,7 @@ relations:
   - predicate: controlled_by
     object: intervention.improved_sanitation
     statement_zh: 改善卫生设施是减少粪便污染淡水环境的推荐防控措施。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_clonorchiasis_qa_2025
         locator: "How can clonorchiasis be prevented?，网页第116–117行"
@@ -102,8 +102,8 @@ relations:
       evidence_scope: recommendation_not_quantified_effect
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 华支睾吸虫病

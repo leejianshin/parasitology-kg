@@ -10,7 +10,7 @@ aliases:
 one_health_domains:
   - human_health
 summary: 华支睾吸虫轻虫负荷感染多数可无明显症状；这一频率判断不等于感染或病理改变不存在。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -19,8 +19,8 @@ admission:
 relations: []
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 轻虫负荷感染无明显症状

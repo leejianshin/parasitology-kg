@@ -12,7 +12,7 @@ one_health_domains:
   - environmental_health
   - cross_sector_governance
 summary: 改善卫生设施是减少粪便污染淡水环境、参与华支睾吸虫病防控的推荐措施。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -21,8 +21,8 @@ admission:
 relations: []
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 改善卫生设施

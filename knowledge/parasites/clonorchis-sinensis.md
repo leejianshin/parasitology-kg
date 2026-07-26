@@ -12,7 +12,7 @@ one_health_domains:
   - animal_health
   - environmental_health
 summary: 华支睾吸虫是一种食源性吸虫；人摄入含活囊蚴的生或未充分加热淡水鱼可获得感染。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -22,7 +22,7 @@ relations:
   - predicate: transmitted_via
     object: behavior.raw_undercooked_freshwater_fish_consumption
     statement_zh: 华支睾吸虫可因摄入含活囊蚴的生或未充分加热淡水鱼而感染人。
-    relation_status: in_review
+    relation_status: reviewed
     evidence:
       - source_id: source.who_foodborne_trematode_fact_sheet
         locator: "Transmission and burden"
@@ -36,8 +36,8 @@ relations:
       condition: live_metacercariae_in_raw_or_undercooked_freshwater_fish
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 华支睾吸虫

@@ -10,7 +10,7 @@ aliases:
 one_health_domains:
   - human_health
 summary: 超声、CT或MRI可提供华支睾吸虫病的辅助诊断线索，但不能单独确诊。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -21,8 +21,8 @@ admission:
 relations: []
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 胆道影像学检查

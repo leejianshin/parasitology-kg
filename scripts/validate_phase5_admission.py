@@ -82,6 +82,13 @@ def main() -> int:
         batch_1 = next(
             batch for batch in plan["batches"] if batch["batch_id"] == "P5-B1"
         )
+        expected_review_status = batch_1["formal_review_status"]
+        if batch_1["status"] != "APPROVED":
+            fail("P5-B1 must be APPROVED")
+        if plan["approval_gate"]["batch_1_teacher_review"] != "APPROVED":
+            fail("P5-B1 teacher approval is not recorded")
+        if plan["approval_gate"]["batch_2_and_3_write"] != "NOT_AUTHORIZED":
+            fail("later batches must remain unauthorized")
         expected_entities = set(batch_1["entity_ids"])
         documents: dict[str, dict[str, Any]] = {}
         implemented_atoms: list[str] = []
@@ -98,12 +105,23 @@ def main() -> int:
             admission = metadata.get("admission")
             if not isinstance(admission, dict) or admission.get("batch_id") != "P5-B1":
                 fail(f"{entity_id} missing P5-B1 admission metadata")
-            if metadata["review_status"] != "in_review":
-                fail(f"{entity_id} must remain in_review before teacher approval")
+            if metadata["review_status"] != expected_review_status:
+                fail(
+                    f"{entity_id} must have review_status "
+                    f"{expected_review_status}"
+                )
+            review = metadata["review"]
+            if review.get("reviewed_by") != "subject_teacher":
+                fail(f"{entity_id} missing subject_teacher review")
+            if not review.get("last_reviewed"):
+                fail(f"{entity_id} missing last_reviewed")
 
             for relation in metadata["relations"]:
-                if relation["relation_status"] != "in_review":
-                    fail(f"{entity_id} relation must remain in_review")
+                if relation["relation_status"] != expected_review_status:
+                    fail(
+                        f"{entity_id} relation must have status "
+                        f"{expected_review_status}"
+                    )
                 source_atom_id = relation["qualifiers"].get("source_atom_id")
                 if not source_atom_id:
                     fail(f"{entity_id} relation missing source_atom_id")

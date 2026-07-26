@@ -10,7 +10,7 @@ one_health_domains:
   - human_health
   - cross_sector_governance
 summary: 避免食用生或未充分加热淡水鱼是预防华支睾吸虫感染的推荐措施。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -19,8 +19,8 @@ admission:
 relations: []
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 避免食用生或未充分加热淡水鱼

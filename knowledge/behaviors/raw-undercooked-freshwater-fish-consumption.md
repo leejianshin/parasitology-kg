@@ -11,7 +11,7 @@ one_health_domains:
   - human_health
   - animal_health
 summary: 生食或未充分加热淡水鱼是一种与华支睾吸虫感染相关的食物暴露行为；传播成立还要求鱼体含有活囊蚴。
-review_status: in_review
+review_status: reviewed
 admission:
   batch_id: P5-B1
   source_ledger: candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml
@@ -21,8 +21,8 @@ admission:
 relations: []
 review:
   extracted_by: phase5_structuring
-  reviewed_by: null
-  last_reviewed: null
+  reviewed_by: subject_teacher
+  last_reviewed: "2026-07-26"
 ---
 
 # 生食或未充分加热淡水鱼

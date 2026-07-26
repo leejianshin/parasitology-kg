@@ -126,8 +126,16 @@ source_sets:
     status: adjudication_complete_admission_prepared
     prepared_on: "2026-07-26"
     teacher_adjudication_complete: true
-    formal_knowledge_admission: BATCH_1_IN_REVIEW
+    formal_knowledge_admission: BATCH_1_APPROVED
     phase5_started: true
+    phase5_batch_1:
+      status: approved
+      approved_on: "2026-07-26"
+      approved_by_role: subject_teacher
+      pull_request: 7
+      entity_count: 14
+      relation_count: 10
+      later_batches_authorized: false
     reused_public_source_count: 3
     new_public_source_count: 8
     source_ids:
