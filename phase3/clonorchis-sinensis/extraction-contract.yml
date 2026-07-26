@@ -1,32 +1,52 @@
-schema_version: "1.1"
-task_id: phase3_clonorchis_dual_extraction_v1_1
-source_set_id: clonorchis_sinensis_pilot_v1_1
-source_set_status_required: frozen
-source_pack_id: clonorchis_phase3_private_pack_v1_1
+schema_version: "1.2"
+task_id: phase3_clonorchis_dual_extraction_v1_2
+source_set_id: clonorchis_sinensis_pilot_v1_2
+source_set_status_required: frozen_in_pr
+source_pack_id: clonorchis_phase3_private_pack_v1_2
 source_pack_manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
 source_pack_root_drive_folder_id: 10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh
 candidate_only: true
-phase3_status: paused_until_pr4_merge
+phase3_status: paused_until_pr4_merge_and_teacher_start
+
+execution_modes:
+  PREFLIGHT_ONLY:
+    allowed_before_pr4_merge: true
+    output_sections:
+      - source_manifest
+      - preflight_conclusion
+    claims_must_be_empty: true
+  EXTRACTION:
+    allowed_before_pr4_merge: false
+    release_condition: "PR #4 merged and subject teacher explicitly starts one route"
 
 evidence_scope:
   - evidence_id: E01
     source_id: source.pmph_human_parasitology_10e_2024
     file_name_exact: E01_10e_printed_92-97_scope_93-97.pdf
     drive_file_id: 1suGdo3M1sn4SZsC9Twp3HqBddrbQ5g6E
+    sha256: daadc5cb268edbcb96748afedafcf94e769776c8f9e3ae35cffdc514bcc6f8ba
     required: true
     evidence_role: core_fact
     allowed_scope: "印刷页码93–97；印刷页码92仅作边界见证"
   - evidence_id: E02
     source_id: source.courseware_lesson_04_2025
-    file_name_exact: E02_courseware_04_FULL_scope_pdf22-71.pdf
-    drive_file_id: 1O_-o5j5tNcOq26RcX5wikYApfp7s9wfU
+    file_name_exact: E02_courseware_clonorchis_teaching-expressions-v3.md
+    drive_file_id: 1ZQwHRX_hMni6njSeoUDknA-Hvlm4SaAh
+    sha256: 73c69c5198865d4b112a2012f8516a6b28d078db45fd206cca582a1466757867
     required: true
     evidence_role: teaching_expression
-    allowed_scope: "PDF页序22–71；其他页不得作为证据"
+    evidence_form: curated_derivative
+    allowed_scope: "完整派生文件；TE-001、TE-002、TE-003"
+    allowed_candidate_types:
+      - learning_objective
+      - teaching_emphasis
+      - discussion_prompt
+    support_limit: "不得单独证明医学事实、诊疗建议、地方流行数据或干预效果"
   - evidence_id: E03
     source_id: source.syllabus_clinical_medicine_integrated
     file_name_exact: E03_syllabus_clinical_relevant.md
     drive_file_id: 1hZj4UwUMjiappsA7SWsys7QMOB7HrUtg
+    sha256: ea8cb35bb83ad47200b1bdb4cf5010f2c7f5781ae43a217b59c0eba996e77a12
     required: true
     evidence_role: curriculum_boundary
     allowed_scope: "完整派生文件"
@@ -34,11 +54,17 @@ evidence_scope:
     source_id: source.question_bank_export_2026
     file_name_exact: E04_qbank_clonorchis_direct_dedup.txt
     drive_file_id: 1TwXZ-CHfg6VD_4_-MLIVGCLRQtTZa2Up
+    sha256: 8712111c5b618ab31b4d1870b9517ff7995b816ddbe70fc96a4ded91d20974e0
     required: true
     evidence_role: assessment_clue
     allowed_scope: "53条去重记录；必须使用复合定位"
 
 excluded_from_phase3_gate:
+  archive_folder_drive_id: 1340Qs6fVx6svVBQoGsK3YrvpeRZ6GfYG
+  archive_files:
+    - ARCHIVE_E02_courseware_04_FULL_scope_pdf22-71.pdf
+    - E02_courseware_04_verification-copy_70p.pdf
+    - "v1.1控制文件副本"
   supplemental_pending:
     - source.pmph_human_parasitology_8y_4e_2023
   phase4_authority_checks:
@@ -50,17 +76,22 @@ excluded_from_phase3_gate:
 route_isolation:
   route_a:
     engine: NotebookLM/Gemini
-    required_input: clonorchis_phase3_private_pack_v1_1
+    required_input: clonorchis_phase3_private_pack_v1_2
+    expected_notebook_source_count: 8
+    required_controls:
+      - CONTROL_source-pack-manifest-v1.2.md
+      - CONTROL_extraction-protocol-v1.2.md
+      - CONTROL_candidate-template-v1.2.md
+      - CONTROL_route-a-prompt-v1.2.md
     forbidden_inputs:
-      - "candidates/clonorchis-sinensis/notebooklm-gemini-v1.md"
-      - "candidates/clonorchis-sinensis/notebooklm-gemini-v2.md"
-      - "candidates/clonorchis-sinensis/notebooklm-gemini-v3.md"
+      - "candidates/clonorchis-sinensis/"
       - "reviews/clonorchis-sinensis/"
       - "当前202来源Notebook"
+      - "Route B prompt"
       - "私有语料包以外的Notebook来源"
   route_b:
     engine: clean_context_independent_extractor
-    required_input: clonorchis_phase3_private_pack_v1_1
+    required_input: clonorchis_phase3_private_pack_v1_2
     forbidden_inputs:
       - "candidates/"
       - "reviews/"
@@ -68,20 +99,24 @@ route_isolation:
       - "本对话历史中的Notebook候选答案"
 
 hard_gates:
+  - id: phase_gate
+    rule: "PR #4合并且教师明确启动前只允许PREFLIGHT_ONLY，claims必须为空"
   - id: source_manifest
-    rule: "pack_id、4个证据文件的精确文件名、Drive ID及限定范围全部一致；否则停止"
+    rule: "pack_id、4个证据文件的精确文件名、可观察身份、角色及限定范围一致；否则停止"
+  - id: runtime_observability
+    rule: "运行环境不可观察Drive ID或SHA256时标记not_observable，不得声称confirmed或mismatch"
   - id: atomicity
     rule: "每条命题只有一个主关系"
   - id: evidence_role
-    rule: "题库和课件不得单独证明医学事实、最新诊疗或干预效果"
+    rule: "题库、课件与大纲不得单独证明医学事实、最新诊疗或干预效果"
   - id: traceability
-    rule: "每条命题至少有一个数字页码、PDF页序、条款或稳定URL"
+    rule: "E01用印刷页码；E02用TE编号；E03用条款；E04用复合定位"
   - id: no_source_substitution
-    rule: "不同版次、相近文件、网页和Notebook额外来源不得替代私有语料包文件"
+    rule: "归档PDF、其他版次、网页、相近文件和Notebook额外来源不得替代E01–E04"
   - id: no_candidate_admission
     rule: "本阶段输出不得写入正式知识目录"
 
-required_outputs:
+required_outputs_after_release:
   - source_manifest
   - claims
   - source_quality
