@@ -1,21 +1,35 @@
+# YAML template stored as Markdown-compatible plain text for NotebookLM import.
 schema_version: "1.1"
-task_id: phase3_clonorchis_dual_extraction_v1_1
-pack_id: clonorchis_phase3_private_pack_v1_1
+control_version: "1.2"
+task_id: phase3_clonorchis_dual_extraction_v1_2
+pack_id: clonorchis_phase3_private_pack_v1_2
 route: A_or_B
+execution_scope: PREFLIGHT_ONLY_or_EXTRACTION
 execution_id: null
 executed_at: null
 
 source_manifest:
-  status: PASS_or_FAIL
+  status: PASS_or_PASS_WITH_NOT_OBSERVABLE_FIELDS_or_FAIL
   pack_id_confirmed: false
+  control_files:
+    - file_name_exact: null
+      available: false
+      readable: false
+      identity_check: confirmed_or_not_observable_or_mismatch
+      notes: null
   evidence_files:
     - evidence_id: null
       file_name_exact: null
       available: false
-      digest_confirmed: false
+      readable: false
+      digest_or_drive_id_check: confirmed_or_not_observable_or_mismatch
       scope_confirmed: false
       observed_locator: null
       notes: null
+  out_of_pack_sources_found: []
+  not_observable_in_runtime: []
+  mismatches: []
+  blocking_issues: []
 
 claims:
   - claim_id: null
@@ -37,7 +51,7 @@ claims:
     evidence:
       - evidence_id: null
         file_name_exact: null
-        locator_type: printed_page_or_pdf_page_or_section_or_question_locator
+        locator_type: printed_page_or_section_or_te_id_or_question_locator
         locator_value: null
         evidence_basis: null
         support_type: direct_or_supported_inference
@@ -53,13 +67,13 @@ schema_issues: []
 
 quality_check:
   source_manifest_complete: FAIL
-  every_claim_is_atomic: FAIL
-  every_candidate_has_eligible_direct_evidence: FAIL
-  every_claim_has_stable_locator: FAIL
+  every_claim_is_atomic: FAIL_or_NOT_APPLICABLE
+  every_candidate_has_eligible_direct_evidence: FAIL_or_NOT_APPLICABLE
+  every_claim_has_stable_locator: FAIL_or_NOT_APPLICABLE
   no_out_of_scope_source_used: FAIL
-  question_bank_role_respected: FAIL
-  teaching_source_role_respected: FAIL
-  infective_and_pathogenic_stages_separated: FAIL
-  association_and_causation_separated: FAIL
-  intervention_effects_require_effect_evidence: FAIL
-  source_quality_removed_from_claims: FAIL
+  question_bank_role_respected: FAIL_or_NOT_APPLICABLE
+  teaching_source_role_respected: FAIL_or_NOT_APPLICABLE
+  infective_and_pathogenic_stages_separated: FAIL_or_NOT_APPLICABLE
+  association_and_causation_separated: FAIL_or_NOT_APPLICABLE
+  intervention_effects_require_effect_evidence: FAIL_or_NOT_APPLICABLE
+  source_quality_removed_from_claims: FAIL_or_NOT_APPLICABLE
