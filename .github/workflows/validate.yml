@@ -26,3 +26,5 @@ jobs:
           --source-registry tests/fixtures/source-registry.yml
       - name: Validate relation schema decisions
         run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Validate Phase 5 admission plan
+        run: python scripts/validate_phase5_admission.py

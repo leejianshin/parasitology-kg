@@ -34,8 +34,9 @@
 
 Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和Phase 3双路
 候选提取已经完成；Phase 2/3修订由PR #4合并。Phase 4已经完成双路对照、教师
-裁决和39条原子候选的正式准入准备。**Phase 5尚未开始，正式知识图谱写入仍未
-授权**。本仓库当前只公开去隐私化的裁决账本、来源元数据和Schema适配缺口。
+裁决和39条原子候选的正式准入准备。Phase 5已完成39条候选的四类重分；第一批
+10条关系和14个实体已经学科教师批准为`reviewed`并进入正式知识层。第二、三批
+仍未授权，面向学生的RAG发布须另行通过Phase 6验收。
 
 首个试点为：
 
@@ -53,6 +54,7 @@ Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和P
 - [Phase 4最终裁决与公开收口](reviews/clonorchis-sinensis/phase4-final-adjudication.md)
 - [Phase 4批准候选账本](candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml)
 - [Phase 4 Schema适配缺口](reviews/clonorchis-sinensis/phase4-schema-fit-gap.yml)
+- [Phase 5正式准入方案](phase5/clonorchis-sinensis/README.md)
 - [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
 - [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
 - [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)

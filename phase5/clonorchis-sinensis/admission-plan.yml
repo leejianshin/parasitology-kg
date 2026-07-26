@@ -1,0 +1,179 @@
+plan_version: "1.0"
+plan_id: "clonorchis_phase5_admission_plan_20260726"
+status: "BATCH_1_APPROVED"
+base_commit: "bde11856acc553c9ed18cfb033696f9547e27c7b"
+input_ledger: "candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml"
+schema_catalog: "schema/relation-types.yml@1.1"
+
+classification:
+  edge_ready:
+    count: 21
+    atom_ids:
+      - W2-ATOM-001
+      - W2-ATOM-002
+      - W2-ATOM-005
+      - W2-ATOM-006
+      - W2-ATOM-008
+      - W2-ATOM-009
+      - W2-ATOM-010
+      - W2-ATOM-011
+      - W2-ATOM-012
+      - W2-ATOM-016
+      - W2-ATOM-017
+      - W2-ATOM-018
+      - W2-ATOM-019
+      - W2-ATOM-020
+      - W2-ATOM-021
+      - W2-ATOM-022
+      - W2-ATOM-023
+      - W2-ATOM-026
+      - W2-ATOM-027
+      - W2-ATOM-028
+      - W2-ATOM-034
+
+  qualifier_only:
+    count: 6
+    atom_ids:
+      - W2-ATOM-003
+      - W2-ATOM-004
+      - W2-ATOM-007
+      - W2-ATOM-013
+      - W2-ATOM-014
+      - W2-ATOM-015
+
+  narrative_only:
+    count: 7
+    atom_ids:
+      - W2-ATOM-024
+      - W2-ATOM-025
+      - W2-ATOM-029
+      - W2-ATOM-030
+      - W2-ATOM-031
+      - W2-ATOM-032
+      - W2-ATOM-033
+
+  research_layer_retained:
+    count: 5
+    atom_ids:
+      - W2-ATOM-035
+      - W2-ATOM-036
+      - W2-ATOM-037
+      - W2-ATOM-038
+      - W2-ATOM-039
+
+classification_rules:
+  edge_ready: "主客体可落入现有实体类型，谓词已进入Schema 1.1，且命题可作为独立关系表达。"
+  qualifier_only: "只限制范围、频率、严重度或证据权重，不单独建立关系。"
+  narrative_only: "用于解释诊断边界或食品安全背景，不生成独立三元组。"
+  research_layer_retained: "仅代表特定研究情境中的观察结果，不进入当前正式知识关系层。"
+
+normalization_decisions:
+  - atom_id: W2-ATOM-001
+    decision: "将候选的自然语言方向规范为 disease.clonorchiasis --has_diagnostic_clue--> behavior.raw_undercooked_freshwater_fish_consumption。"
+    reason: "Schema规定has_diagnostic_clue以疾病为主语，且该暴露史只承担线索角色。"
+  - atom_id: W2-ATOM-006
+    decision: "将候选的自然语言方向规范为 disease.clonorchiasis --controlled_by--> intervention.avoid_raw_undercooked_freshwater_fish。"
+    reason: "Schema规定controlled_by以疾病或寄生虫为主语、干预为宾语。"
+  - atom_id: W2-ATOM-023
+    decision: "将Phase 4候选谓词diagnosed_by改为has_diagnostic_clue。"
+    reason: "证据只支持超声、CT或MRI作为辅助线索；W2-ATOM-024和025明确要求综合判断且不能单独确诊。"
+  - atom_id: W2-ATOM-027
+    decision: "以targets表达对淡水环境传播环节的直接作用对象，并将证据标为supported_inference。"
+    reason: "只表达机制和推荐，不声称已量化干预效果。"
+  - atom_id: W2-ATOM-028
+    decision: "以targets表达对淡水环境传播环节的直接作用对象，并将证据标为supported_inference。"
+    reason: "只表达机制和推荐，不声称已量化干预效果。"
+
+batches:
+  - batch_id: "P5-B1"
+    title: "核心感染、寄生部位、诊断线索与One Health基础干预"
+    status: "APPROVED"
+    formal_review_status: "reviewed"
+    approval:
+      approved_on: "2026-07-26"
+      approved_by_role: "subject_teacher"
+      pull_request: 7
+      approved_scope: "10条关系和14个实体"
+    edge_atom_ids:
+      - W2-ATOM-001
+      - W2-ATOM-005
+      - W2-ATOM-006
+      - W2-ATOM-008
+      - W2-ATOM-009
+      - W2-ATOM-022
+      - W2-ATOM-023
+      - W2-ATOM-026
+      - W2-ATOM-027
+      - W2-ATOM-028
+    supporting_narrative_atom_ids:
+      - W2-ATOM-024
+      - W2-ATOM-025
+    entity_ids:
+      - parasite.clonorchis_sinensis
+      - disease.clonorchiasis
+      - behavior.raw_undercooked_freshwater_fish_consumption
+      - intervention.avoid_raw_undercooked_freshwater_fish
+      - stage.clonorchis_adult
+      - anatomy.intrahepatic_small_medium_bile_ducts
+      - pathology.clonorchis_related_biliary_pathology
+      - anatomy.biliary_system
+      - manifestation.asymptomatic_light_infection
+      - diagnostic.biliary_imaging
+      - intervention.improved_sanitation
+      - intervention.reduce_human_fecal_contamination
+      - intervention.reduce_animal_fecal_contamination
+      - environment.freshwater_environment
+    rationale:
+      - "均由公开WHO、CDC或已登记同行评议综述支持。"
+      - "不包含并发症因果、胆石形成机制、虾宿主权重或地区干预效果。"
+      - "同时形成寄生虫—行为—疾病—环境—干预的最小One Health连通结构。"
+
+  - batch_id: "P5-B2"
+    title: "致病过程、纤维化、并发症与非因果疾病关联"
+    status: "PLANNED_NOT_AUTHORIZED"
+    edge_atom_ids:
+      - W2-ATOM-010
+      - W2-ATOM-011
+      - W2-ATOM-012
+      - W2-ATOM-016
+      - W2-ATOM-017
+      - W2-ATOM-018
+      - W2-ATOM-019
+      - W2-ATOM-020
+      - W2-ATOM-021
+    qualifier_atom_ids:
+      - W2-ATOM-013
+      - W2-ATOM-014
+      - W2-ATOM-015
+
+  - batch_id: "P5-B3"
+    title: "淡水虾宿主边界与食源性吸虫病One Health总括关系"
+    status: "PLANNED_NOT_AUTHORIZED"
+    edge_atom_ids:
+      - W2-ATOM-002
+      - W2-ATOM-034
+    qualifier_atom_ids:
+      - W2-ATOM-003
+      - W2-ATOM-004
+      - W2-ATOM-007
+
+retained_outside_formal_edges:
+  narrative_atom_ids:
+    - W2-ATOM-029
+    - W2-ATOM-030
+    - W2-ATOM-031
+    - W2-ATOM-032
+    - W2-ATOM-033
+  research_atom_ids:
+    - W2-ATOM-035
+    - W2-ATOM-036
+    - W2-ATOM-037
+    - W2-ATOM-038
+    - W2-ATOM-039
+
+approval_gate:
+  batch_1_teacher_review: "APPROVED"
+  merge_to_main: "AUTHORIZED_BY_SUBJECT_TEACHER"
+  batch_2_and_3_write: "NOT_AUTHORIZED"
+  student_rag_release: "NOT_AUTHORIZED_PENDING_PHASE6"
+  required_next_action: "合并PR #7；后续另行裁定第一批派生图数据和Phase 6学生RAG验收。"
