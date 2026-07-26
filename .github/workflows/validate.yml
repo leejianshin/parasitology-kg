@@ -24,3 +24,5 @@ jobs:
           python scripts/validate_knowledge.py
           --knowledge-dir tests/fixtures/knowledge
           --source-registry tests/fixtures/source-registry.yml
+      - name: Validate relation schema decisions
+        run: python -m unittest discover -s tests -p "test_*.py"
