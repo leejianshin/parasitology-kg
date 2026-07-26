@@ -1,51 +1,66 @@
-schema_version: "1.0"
-task_id: phase3_clonorchis_dual_extraction_v1
-source_set_id: clonorchis_sinensis_pilot_v1
+schema_version: "1.1"
+task_id: phase3_clonorchis_dual_extraction_v1_1
+source_set_id: clonorchis_sinensis_pilot_v1_1
 source_set_status_required: frozen
+source_pack_id: clonorchis_phase3_private_pack_v1_1
+source_pack_manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
+source_pack_root_drive_folder_id: 10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh
 candidate_only: true
+phase3_status: paused_until_pr4_merge
 
-source_scope:
-  - source_id: source.pmph_human_parasitology_10e_2024
+evidence_scope:
+  - evidence_id: E01
+    source_id: source.pmph_human_parasitology_10e_2024
+    file_name_exact: E01_10e_printed_92-97_scope_93-97.pdf
+    drive_file_id: 1suGdo3M1sn4SZsC9Twp3HqBddrbQ5g6E
     required: true
-    allowed_scope: "印刷页码93–97"
-  - source_id: source.pmph_human_parasitology_8y_4e_2023
+    evidence_role: core_fact
+    allowed_scope: "印刷页码93–97；印刷页码92仅作边界见证"
+  - evidence_id: E02
+    source_id: source.courseware_lesson_04_2025
+    file_name_exact: E02_courseware_04_FULL_scope_pdf22-71.pdf
+    drive_file_id: 1O_-o5j5tNcOq26RcX5wikYApfp7s9wfU
     required: true
-    allowed_scope: "印刷页码128–138"
-  - source_id: source.courseware_lesson_04_2025
+    evidence_role: teaching_expression
+    allowed_scope: "PDF页序22–71；其他页不得作为证据"
+  - evidence_id: E03
+    source_id: source.syllabus_clinical_medicine_integrated
+    file_name_exact: E03_syllabus_clinical_relevant.md
+    drive_file_id: 1hZj4UwUMjiappsA7SWsys7QMOB7HrUtg
     required: true
-    allowed_scope: "PDF页序22–89"
-    background_only_scope: "PDF页序72–89"
-  - source_id: source.syllabus_clinical_medicine_integrated
+    evidence_role: curriculum_boundary
+    allowed_scope: "完整派生文件"
+  - evidence_id: E04
+    source_id: source.question_bank_export_2026
+    file_name_exact: E04_qbank_clonorchis_direct_dedup.txt
+    drive_file_id: 1TwXZ-CHfg6VD_4_-MLIVGCLRQtTZa2Up
     required: true
-    allowed_scope: "课程简介、课程目标、第十三章医学蠕虫—吸虫"
-  - source_id: source.question_bank_export_2026
-    required: true
-    allowed_scope: "华支睾吸虫相关记录"
     evidence_role: assessment_clue
-  - source_id: source.cdc_dpdx_clonorchiasis_2024
-    required: true
-    allowed_scope: "冻结网页全文"
-  - source_id: source.cdc_clinical_overview_clonorchis_2024
-    required: true
-    allowed_scope: "冻结网页全文"
-  - source_id: source.who_foodborne_trematode_fact_sheet
-    required: true
-    allowed_scope: "冻结网页全文"
-  - source_id: source.iarc_clonorchis_group1
-    required: true
-    allowed_scope: "华支睾吸虫感染分类记录"
+    allowed_scope: "53条去重记录；必须使用复合定位"
+
+excluded_from_phase3_gate:
+  supplemental_pending:
+    - source.pmph_human_parasitology_8y_4e_2023
+  phase4_authority_checks:
+    - source.cdc_dpdx_clonorchiasis_2024
+    - source.cdc_clinical_overview_clonorchis_2024
+    - source.who_foodborne_trematode_fact_sheet
+    - source.iarc_clonorchis_group1
 
 route_isolation:
   route_a:
     engine: NotebookLM/Gemini
+    required_input: clonorchis_phase3_private_pack_v1_1
     forbidden_inputs:
       - "candidates/clonorchis-sinensis/notebooklm-gemini-v1.md"
       - "candidates/clonorchis-sinensis/notebooklm-gemini-v2.md"
       - "candidates/clonorchis-sinensis/notebooklm-gemini-v3.md"
       - "reviews/clonorchis-sinensis/"
-      - "冻结集以外的Notebook来源"
+      - "当前202来源Notebook"
+      - "私有语料包以外的Notebook来源"
   route_b:
     engine: clean_context_independent_extractor
+    required_input: clonorchis_phase3_private_pack_v1_1
     forbidden_inputs:
       - "candidates/"
       - "reviews/"
@@ -54,7 +69,7 @@ route_isolation:
 
 hard_gates:
   - id: source_manifest
-    rule: "9个来源全部可识别且限定范围一致；否则停止"
+    rule: "pack_id、4个证据文件的精确文件名、Drive ID及限定范围全部一致；否则停止"
   - id: atomicity
     rule: "每条命题只有一个主关系"
   - id: evidence_role
@@ -62,7 +77,7 @@ hard_gates:
   - id: traceability
     rule: "每条命题至少有一个数字页码、PDF页序、条款或稳定URL"
   - id: no_source_substitution
-    rule: "不同版次、相近文件和Notebook额外来源不得替代冻结来源"
+    rule: "不同版次、相近文件、网页和Notebook额外来源不得替代私有语料包文件"
   - id: no_candidate_admission
     rule: "本阶段输出不得写入正式知识目录"
 
