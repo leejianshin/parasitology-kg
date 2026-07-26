@@ -14,7 +14,7 @@ source_sets:
       pull_request: 3
       merge_commit: "e659ae53f9187c353a2a215f0c4a1bd06dae29c5"
     superseded_on: "2026-07-26"
-    superseded_by: clonorchis_sinensis_pilot_v1_1
+    superseded_by: clonorchis_sinensis_pilot_v1_2
     errata:
       - source_id: source.pmph_human_parasitology_8y_4e_2023
         previous_scope: "印刷页码128–138"
@@ -49,7 +49,24 @@ source_sets:
 
   clonorchis_sinensis_pilot_v1_1:
     label_zh: 华支睾吸虫Phase 3精简同源集v1.1
-    status: frozen
+    status: superseded_before_merge
+    prepared_on: "2026-07-26"
+    superseded_on: "2026-07-26"
+    superseded_by: clonorchis_sinensis_pilot_v1_2
+    pull_request: 4
+    merge_commit: null
+    reason: >-
+      v1.1使用完整课件副本并依赖页序范围，Notebook运行与人工维护成本过高；
+      在PR #4合并前改为经人工核验、带TE稳定定位的E02-v3派生证据。
+    private_source_pack:
+      pack_id: clonorchis_phase3_private_pack_v1_1
+      drive_root_folder_id: 10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh
+      manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
+      archived_control_folder_id: 1c5a1eaoucaA-3o_SRTU0mnGnMn3zs_xY
+
+  clonorchis_sinensis_pilot_v1_2:
+    label_zh: 华支睾吸虫Phase 3精简同源集v1.2
+    status: frozen_in_pr
     prepared_on: "2026-07-26"
     frozen_on: "2026-07-26"
     approval:
@@ -57,7 +74,9 @@ source_sets:
       approved_by_role: subject_teacher
       pull_request: 4
       merge_commit: null
-    supersedes: clonorchis_sinensis_pilot_v1
+    supersedes:
+      - clonorchis_sinensis_pilot_v1
+      - clonorchis_sinensis_pilot_v1_1
     phase3_source_ids:
       - source.pmph_human_parasitology_10e_2024
       - source.courseware_lesson_04_2025
@@ -71,27 +90,36 @@ source_sets:
       - source.who_foodborne_trematode_fact_sheet
       - source.iarc_clonorchis_group1
     private_source_pack:
-      pack_id: clonorchis_phase3_private_pack_v1_1
+      pack_id: clonorchis_phase3_private_pack_v1_2
       drive_root_folder_id: 10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh
       manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
+      archive_folder_drive_id: 1340Qs6fVx6svVBQoGsK3YrvpeRZ6GfYG
       access_level: private
+      phase_gate: preflight_only_until_pr4_merge_and_teacher_start
       evidence_files:
         - evidence_id: E01
+          file_name_exact: E01_10e_printed_92-97_scope_93-97.pdf
           drive_file_id: 1suGdo3M1sn4SZsC9Twp3HqBddrbQ5g6E
           sha256: daadc5cb268edbcb96748afedafcf94e769776c8f9e3ae35cffdc514bcc6f8ba
         - evidence_id: E02
-          drive_file_id: 1O_-o5j5tNcOq26RcX5wikYApfp7s9wfU
-          copied_from_drive_file_id: 1c1UDdeRvwdItFcrflc4AxDAgpfFNTMN7
+          file_name_exact: E02_courseware_clonorchis_teaching-expressions-v3.md
+          drive_file_id: 1ZQwHRX_hMni6njSeoUDknA-Hvlm4SaAh
+          sha256: 73c69c5198865d4b112a2012f8516a6b28d078db45fd206cca582a1466757867
+          evidence_role: teaching_expression
+          allowed_scope: "完整派生文件；TE-001、TE-002、TE-003"
         - evidence_id: E03
+          file_name_exact: E03_syllabus_clinical_relevant.md
           drive_file_id: 1hZj4UwUMjiappsA7SWsys7QMOB7HrUtg
           sha256: ea8cb35bb83ad47200b1bdb4cf5010f2c7f5781ae43a217b59c0eba996e77a12
         - evidence_id: E04
+          file_name_exact: E04_qbank_clonorchis_direct_dedup.txt
           drive_file_id: 1TwXZ-CHfg6VD_4_-MLIVGCLRQtTZa2Up
           sha256: 8712111c5b618ab31b4d1870b9517ff7995b816ddbe70fc96a4ded91d20974e0
     scope_note: >-
-      Phase 3两条路线必须只读取同一个私有语料包的4个证据文件。第4版教材
-      在补齐印刷页128–133页图前仅作待核补充；CDC、WHO、IARC在Phase 4
-      对候选做权威复核，不参加Phase 3来源清单硬门。
+      Phase 3两条路线必须只读取同一个私有语料包的4个证据文件。E02只承担
+      教学表达角色；旧完整课件副本与核验PDF已移出活动包。第4版教材在补齐
+      印刷页128–133页图前仅作待核补充；CDC、WHO、IARC在Phase 4对候选做
+      权威复核，不参加Phase 3来源清单硬门。
 
 sources:
   - source_id: source.pmph_human_parasitology_10e_2024
