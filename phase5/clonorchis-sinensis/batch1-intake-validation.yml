@@ -34,6 +34,6 @@ checks:
   private_path_scan: "PASS"
 
 release_boundary:
-  formal_graph_intake: "READY_PENDING_PR_MERGE"
+  formal_graph_intake: "MERGED_PR_8"
   batch_2_and_3_write: "NOT_AUTHORIZED"
   student_rag_release: "NOT_AUTHORIZED_PENDING_PHASE6"

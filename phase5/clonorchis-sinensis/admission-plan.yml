@@ -1,6 +1,6 @@
 plan_version: "1.0"
 plan_id: "clonorchis_phase5_admission_plan_20260726"
-status: "BATCH_1_DERIVED_INTAKE_VALIDATED"
+status: "BATCH_1_DERIVED_INTAKE_MERGED"
 base_commit: "bde11856acc553c9ed18cfb033696f9547e27c7b"
 input_ledger: "candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml"
 schema_catalog: "schema/relation-types.yml@1.1"
@@ -175,7 +175,9 @@ approval_gate:
   batch_1_teacher_review: "APPROVED"
   merge_to_main: "COMPLETED_PR_7"
   batch_1_derived_graph:
-    status: "VALIDATED_PENDING_MERGE"
+    status: "MERGED_PR_8"
+    pull_request: 8
+    merge_commit: "bf021d5af95042c1cda009f4230690008b94897e"
     artifact_directory: "derived/clonorchis-sinensis/phase5-batch1"
     validation_record: "phase5/clonorchis-sinensis/batch1-intake-validation.yml"
     node_count: 14
@@ -183,4 +185,4 @@ approval_gate:
     triple_count: 10
   batch_2_and_3_write: "NOT_AUTHORIZED"
   student_rag_release: "NOT_AUTHORIZED_PENDING_PHASE6"
-  required_next_action: "审阅并合并第一批派生图数据PR；合并后再决定是否进入Phase 6学生RAG验收。"
+  required_next_action: "审阅Phase 6固定题集、回答合同和教师评分门槛；协议合并前不执行baseline或RAG。"

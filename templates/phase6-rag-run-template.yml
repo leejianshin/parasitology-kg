@@ -1,0 +1,36 @@
+run_schema_version: "1.0"
+run_id: ""
+suite_id: "clonorchis_phase6_fixed_questions_v1"
+mode: "baseline|rag"
+status: "NOT_RUN"
+
+run_metadata:
+  model_provider: ""
+  model_name: ""
+  model_version: ""
+  interface_or_tool: ""
+  generated_at: null
+  knowledge_commit: "bf021d5af95042c1cda009f4230690008b94897e"
+  web_access: "DISABLED"
+  external_memory: "DISABLED"
+  session_isolation: "one_clean_session_per_case"
+  question_order: "as_listed_in_suite"
+
+responses:
+  - case_id: ""
+    disposition: "answered|partial|abstained"
+    answer_text: ""
+    retrieved_entity_ids: []
+    used_relation_atom_ids: []
+    cited_source_ids: []
+    reason_code: null
+    missing_coverage: []
+
+teacher_evaluation:
+  status: "NOT_REVIEWED"
+  reviewer_role: null
+  reviewed_on: null
+  case_scores: []
+  hard_fail_labels: []
+  summary: null
+  release_recommendation: null

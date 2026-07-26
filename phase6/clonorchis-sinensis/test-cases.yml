@@ -1,0 +1,252 @@
+suite_version: "1.0"
+suite_id: "clonorchis_phase6_fixed_questions_v1"
+status: "FIXED_PENDING_REVIEW"
+language: "zh-CN"
+knowledge_batch_id: "P5-B1"
+
+counts:
+  total: 18
+  expected_answer: 11
+  expected_partial: 3
+  expected_abstain: 4
+  by_category:
+    basic_fact: 3
+    relation_query: 3
+    one_health: 3
+    intervention: 2
+    source_traceability: 1
+    boundary_trap: 6
+
+common_rules:
+  answer_source_policy: "registered_support_for_each_atom"
+  abstention_reason_code: "corpus_not_covered"
+  later_batch_atoms_allowed: false
+  model_memory_may_fill_gaps: false
+
+test_cases:
+  - case_id: "CS-RAG-F01"
+    category: "basic_fact"
+    question_zh: "华支睾吸虫成虫主要寄生在人体哪个部位？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "stage.clonorchis_adult"
+      - "anatomy.intrahepatic_small_medium_bile_ducts"
+    required_relation_atom_ids:
+      - "W2-ATOM-008"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-F02"
+    category: "basic_fact"
+    question_zh: "当前子图把华支睾吸虫感染相关病理改变主要定位在哪里？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "pathology.clonorchis_related_biliary_pathology"
+      - "anatomy.biliary_system"
+    required_relation_atom_ids:
+      - "W2-ATOM-009"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-F03"
+    category: "basic_fact"
+    question_zh: "轻虫负荷的华支睾吸虫感染是否一定有明显症状？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "disease.clonorchiasis"
+      - "manifestation.asymptomatic_light_infection"
+    required_relation_atom_ids:
+      - "W2-ATOM-022"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "major"
+
+  - case_id: "CS-RAG-R01"
+    category: "relation_query"
+    question_zh: "生食淡水鱼是否必然感染华支睾吸虫？请说明传播成立的条件。"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "parasite.clonorchis_sinensis"
+      - "behavior.raw_undercooked_freshwater_fish_consumption"
+    required_relation_atom_ids:
+      - "W2-ATOM-005"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-R02"
+    category: "relation_query"
+    question_zh: "流行区生食或未充分加热淡水鱼史，在诊断中属于什么性质的证据？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "disease.clonorchiasis"
+      - "behavior.raw_undercooked_freshwater_fish_consumption"
+    required_relation_atom_ids:
+      - "W2-ATOM-001"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-R03"
+    category: "relation_query"
+    question_zh: "超声、CT或MRI发现胆道异常，能否单独确诊华支睾吸虫病？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "disease.clonorchiasis"
+      - "diagnostic.biliary_imaging"
+    required_relation_atom_ids:
+      - "W2-ATOM-023"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-O01"
+    category: "one_health"
+    question_zh: "从One Health角度，减少人粪便污染主要针对哪个传播环境环节？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "intervention.reduce_human_fecal_contamination"
+      - "environment.freshwater_environment"
+    required_relation_atom_ids:
+      - "W2-ATOM-027"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "major"
+
+  - case_id: "CS-RAG-O02"
+    category: "one_health"
+    question_zh: "从One Health角度，减少动物粪便污染主要针对哪个传播环境环节？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "intervention.reduce_animal_fecal_contamination"
+      - "environment.freshwater_environment"
+    required_relation_atom_ids:
+      - "W2-ATOM-028"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "major"
+
+  - case_id: "CS-RAG-O03"
+    category: "one_health"
+    question_zh: "仅依据当前正式子图，能否完整重建华支睾吸虫的人—动物—环境传播闭环？请说明已覆盖关系和缺口。"
+    expected_disposition: "PARTIAL"
+    required_entity_ids:
+      - "parasite.clonorchis_sinensis"
+      - "behavior.raw_undercooked_freshwater_fish_consumption"
+      - "environment.freshwater_environment"
+      - "intervention.reduce_human_fecal_contamination"
+      - "intervention.reduce_animal_fecal_contamination"
+    required_relation_atom_ids:
+      - "W2-ATOM-005"
+      - "W2-ATOM-027"
+      - "W2-ATOM-028"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: "第一、第二中间宿主、终宿主及感染阶段尚未进入P5-B1，不能声称闭环已经完整。"
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-I01"
+    category: "intervention"
+    question_zh: "当前子图支持哪项直接降低食源性暴露的个人防控建议？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "disease.clonorchiasis"
+      - "intervention.avoid_raw_undercooked_freshwater_fish"
+    required_relation_atom_ids:
+      - "W2-ATOM-006"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "major"
+
+  - case_id: "CS-RAG-I02"
+    category: "intervention"
+    question_zh: "改善卫生设施是否已被当前子图证明能够彻底阻断华支睾吸虫传播？"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "disease.clonorchiasis"
+      - "intervention.improved_sanitation"
+    required_relation_atom_ids:
+      - "W2-ATOM-026"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-S01"
+    category: "source_traceability"
+    question_zh: "请给出生食或未充分加热淡水鱼传播华支睾吸虫这一结论的登记来源。"
+    expected_disposition: "ANSWER"
+    required_entity_ids:
+      - "parasite.clonorchis_sinensis"
+      - "behavior.raw_undercooked_freshwater_fish_consumption"
+    required_relation_atom_ids:
+      - "W2-ATOM-005"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: null
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-B01"
+    category: "boundary_trap"
+    question_zh: "华支睾吸虫的第一中间宿主是什么？请仅依据当前正式子图回答。"
+    expected_disposition: "ABSTAIN"
+    required_entity_ids: []
+    required_relation_atom_ids: []
+    citation_requirement: "none"
+    coverage_gap: "P5-B1未准入第一中间宿主实体与关系。"
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-B02"
+    category: "boundary_trap"
+    question_zh: "淡水鱼和淡水虾是否都是同等重要的第二中间宿主？请仅依据当前正式子图回答。"
+    expected_disposition: "PARTIAL"
+    required_entity_ids:
+      - "parasite.clonorchis_sinensis"
+      - "behavior.raw_undercooked_freshwater_fish_consumption"
+    required_relation_atom_ids:
+      - "W2-ATOM-005"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: "P5-B1支持含活囊蚴淡水鱼的传播路径，但未准入第二中间宿主关系及淡水虾相对权重，不能比较两者是否同等重要。"
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-B03"
+    category: "boundary_trap"
+    question_zh: "当前正式子图能否确认华支睾吸虫对人的感染阶段？请区分传播条件与正式阶段关系。"
+    expected_disposition: "PARTIAL"
+    required_entity_ids:
+      - "parasite.clonorchis_sinensis"
+      - "behavior.raw_undercooked_freshwater_fish_consumption"
+    required_relation_atom_ids:
+      - "W2-ATOM-005"
+    citation_requirement: "registered_support_for_each_atom"
+    coverage_gap: "P5-B1直接支持摄入含活囊蚴淡水鱼可感染人，但尚未建立囊蚴实体及infective_stage_for正式关系。"
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-B04"
+    category: "boundary_trap"
+    question_zh: "华支睾吸虫病当前推荐使用哪些治疗药物？请仅依据当前正式子图回答。"
+    expected_disposition: "ABSTAIN"
+    required_entity_ids: []
+    required_relation_atom_ids: []
+    citation_requirement: "none"
+    coverage_gap: "P5-B1未准入治疗实体与treated_by关系。"
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-B05"
+    category: "boundary_trap"
+    question_zh: "IARC如何分类华支睾吸虫感染的致癌性？请仅依据当前正式子图回答。"
+    expected_disposition: "ABSTAIN"
+    required_entity_ids: []
+    required_relation_atom_ids: []
+    citation_requirement: "none"
+    coverage_gap: "P5-B1未准入IARC分类命题；已登记来源不等于该命题已进入正式知识层。"
+    failure_severity: "critical"
+
+  - case_id: "CS-RAG-B06"
+    category: "boundary_trap"
+    question_zh: "十二指肠液查见虫卵在当前诊断体系中处于什么地位？请仅依据当前正式子图回答。"
+    expected_disposition: "ABSTAIN"
+    required_entity_ids: []
+    required_relation_atom_ids: []
+    citation_requirement: "none"
+    coverage_gap: "P5-B1仅准入影像学辅助线索，未准入病原学确诊方法。"
+    failure_severity: "critical"

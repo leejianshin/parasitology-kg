@@ -1,0 +1,32 @@
+manifest_version: '1.0'
+corpus_id: clonorchis_phase6_rag_corpus_v1
+batch_id: P5-B1
+authority: derived_from_reviewed_structured_markdown
+generator: scripts/build_phase6_rag_corpus.py
+canonical_input_sha256: 6637c5d37a77ba0c880150e2c9525f0fc209a1261ab87ec57ade7ec28773d1ea
+counts:
+  documents: 14
+  nodes: 14
+  edges: 10
+  sources: 6
+allowed_runtime_files:
+- corpus.md
+- source-catalog.yml
+excluded_runtime_inputs:
+- 整个GitHub仓库
+- sources/registry.yml
+- candidates/
+- reviews/
+- phase6/固定题集与评分规则
+- Phase 5第二、三批内容
+artifacts:
+- path: corpus.md
+  sha256: f4d5b3073446b673c4c5a033c41205e8f5c5e8d3a3aa9acc78f5bbf26879026c
+  size_bytes: 25722
+- path: source-catalog.yml
+  sha256: ecba78f369b601879a20be683faa95eaeb26c69b49e9da36f6d58395db666385
+  size_bytes: 3049
+release_boundary:
+  evaluation_only: true
+  student_release_authorized: false
+  later_batches_included: false
