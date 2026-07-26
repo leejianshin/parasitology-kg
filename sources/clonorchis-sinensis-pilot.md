@@ -1,7 +1,8 @@
 # 华支睾吸虫试点来源冻结与修复记录
 
 历史冻结版本：`clonorchis_sinensis_pilot_v1`（已由勘误继替）  
-当前修订版本：`clonorchis_sinensis_pilot_v1_1`  
+合并前继替版本：`clonorchis_sinensis_pilot_v1_1`（未进入主分支）  
+当前修订版本：`clonorchis_sinensis_pilot_v1_2`  
 登记日期：2026-07-25  
 修复日期：2026-07-26  
 审核状态：`frozen_in_pr`
@@ -16,7 +17,7 @@ Phase 3不再要求Notebook与独立提取器分别拼装9个来源。两条路�
 | source_id | 核心角色 | 冻结范围 | 可直接承担 | 不得单独承担 |
 |---|---|---|---|---|
 | `source.pmph_human_parasitology_10e_2024` | 核心事实 | 医学蠕虫学—吸虫—华支睾吸虫 | 基础形态、生活史、宿主、致病、诊断、治疗、流行与防治 | 地方最新数据、政策成效、未核对页码的逐字引文 |
-| `source.courseware_lesson_04_2025` | 教学重点、One Health情境 | PDF页序22–71 | 教学顺序、案例、易错点、本地问题线索 | 未给出处的地方数字、历史事实、治理效果 |
+| `source.courseware_lesson_04_2025` | 教学表达 | E02-v3完整派生文件；TE-001～TE-003 | 学习目标、教学重点、课堂讨论问题 | 医学事实、诊疗建议、地方数字、干预效果 |
 | `source.syllabus_clinical_medicine_integrated` | 课程边界 | 课程简介、课程目标、第十三章“医学蠕虫—吸虫” | 本科教学目标、能力要求、One Health教学定位 | 具体寄生虫事实、诊疗依据 |
 | `source.question_bank_export_2026` | 考核与易错点 | 题干直接命中81行，按ID去重后53行 | 覆盖度、干扰项、病例迁移和错误模式 | 核心事实或更新结论的唯一证据 |
 
@@ -37,10 +38,11 @@ Phase 3不再要求Notebook与独立提取器分别拼装9个来源。两条路�
 
 ## Phase 3私有语料包
 
-- pack_id：`clonorchis_phase3_private_pack_v1_1`
+- pack_id：`clonorchis_phase3_private_pack_v1_2`
 - Drive根目录：
   `https://drive.google.com/drive/folders/10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh`
 - manifest文件ID：`1GIlXXid63SMXXW2APwonmxVrlK9T1W2n`
+- 历史归档目录：`https://drive.google.com/drive/folders/1340Qs6fVx6svVBQoGsK3YrvpeRZ6GfYG`
 - 证据文件数：4
 - 路线要求：A、B均按精确文件名和Drive ID读取同一包；不得各自从大资料库
   检索或补齐来源。
@@ -57,21 +59,18 @@ Phase 3不再要求Notebook与独立提取器分别拼装9个来源。两条路�
 私有包保留受版权保护的页图、课件和题库切片；公开仓库只登记文件身份、范围、
 Drive ID和校验摘要，不复制其正文。
 
-## 课件页序审计
+## E02派生证据审计
 
-- PDF页序22–24：华支睾吸虫专节与学习目标；
-- PDF页序25–39：形态和生活史；
-- PDF页序40–61：致病、临床、诊断、病例与阶段小结；
-- PDF页序62–71：流行、防治与小结；
-- PDF页序72–89：历史、地方文化、翻转课堂与测验；不进入v1.1提取范围；
-- PDF页序90：布氏姜片吸虫专节开始。
-
-页序均指PDF文件页序，不等同于课件内部幻灯片编号或印刷页码。
+- Phase 3唯一课件输入：`E02_courseware_clonorchis_teaching-expressions-v3.md`；
+- 稳定定位：`TE-001`形态学习目标、`TE-002`生活史教学重点、`TE-003` One Health讨论题；
+- 角色：`teaching_expression`，仅允许学习目标、教学重点和讨论题候选；
+- 人工核验PDF与旧完整课件副本已移到包外历史目录，只作来源追溯，不进入Notebook或Phase 3硬门；
+- E02不得单独证明医学事实、诊疗建议、地方流行数据或干预效果。
 
 ## 证据使用规则
 
 1. `core_fact`关系优先由第10版教材直接支持，并补齐章节页码或PDF页序。
-2. 课件可补充课堂表达和教学情境，但其地方数字、历史叙述和治理结论默认记为`background_only`。
+2. E02只记录课堂表达和教学情境；其内容不得单独升级为`core_fact`，也不得以课件与题库相互印证替代教材或权威来源。
 3. 大纲只决定“教什么、教到什么程度”，不承担事实证明。
 4. 题库只用于发现考点、干扰项和错误模式；答案必须回查教材或更新来源。
 5. 相同陈述同时出现在课件和题库中，不视为两个独立来源。
@@ -138,6 +137,6 @@ Drive ID和校验摘要，不复制其正文。
 ## 冻结边界
 
 本次修复只冻结来源身份、角色、派生规则和提取范围，不把任何来源内容直接批准
-为正式知识。`clonorchis_sinensis_pilot_v1_1`已在PR #4中冻结，但PR合并前
-Phase 3保持暂停；合并后才能让两条路线分别运行。
+为正式知识。`clonorchis_sinensis_pilot_v1_2`已在PR #4中冻结，但PR合并且
+教师明确启动前，Phase 3只允许来源预检，不得运行候选抽取。
 新增来源、替换文件或扩大范围必须发布新的`pack_id`并经过PR审阅。
