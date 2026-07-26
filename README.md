@@ -32,7 +32,10 @@
 
 ## 当前阶段
 
-Phase 0治理框架和Phase 1 Schema与编辑规范已经冻结。当前 **Phase 2：华支睾吸虫来源集冻结** 已完成技术核验并等待教师批准；第10版教材华支睾吸虫专节已确认覆盖印刷页码93–97。尚未开始批量提取语料。
+Phase 0治理框架和Phase 1 Schema与编辑规范已经完成。Phase 2原冻结来源集发现范围与课件输入设计错误，现由PR #4准备v1.2精简
+私有语料包；**Phase 3暂缓运行**。PR #4合并且教师明确启动前只允许来源预检，
+不运行候选抽取。恢复后，路线A与路线B必须读取同一`pack_id`、同一组物理文件
+和同一模板。
 
 首个试点为：
 
@@ -46,6 +49,7 @@ Phase 0治理框架和Phase 1 Schema与编辑规范已经冻结。当前 **Phase
 - [编辑与审核规范](docs/EDITORIAL_GUIDE.md)
 - [华支睾吸虫试点来源冻结记录](sources/clonorchis-sinensis-pilot.md)
 - [第10版教材华支睾吸虫专节页码核验](reviews/clonorchis-sinensis/pmph-10e-page-scope-verification.md)
+- [Phase 3华支睾吸虫双路候选提取](phase3/clonorchis-sinensis/README.md)
 - [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
 - [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
 - [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)

@@ -5,9 +5,21 @@ schema_version: "1.0"
 source_sets:
   clonorchis_sinensis_pilot_v1:
     label_zh: 华支睾吸虫试点核心来源集v1
-    status: ready_for_approval
-    frozen_on: null
+    status: superseded_with_erratum
+    frozen_on: "2026-07-25"
     review_ready_on: "2026-07-25"
+    approval:
+      approved_on: "2026-07-25"
+      approved_by_role: subject_teacher
+      pull_request: 3
+      merge_commit: "e659ae53f9187c353a2a215f0c4a1bd06dae29c5"
+    superseded_on: "2026-07-26"
+    superseded_by: clonorchis_sinensis_pilot_v1_2
+    errata:
+      - source_id: source.pmph_human_parasitology_8y_4e_2023
+        previous_scope: "印刷页码128–138"
+        corrected_scope: "印刷页码128–133；第133页在“第二节 布氏姜片吸虫”页内标题前结束"
+        reason: "Drive OCR重新核对发现下一节在印刷页133页内开始"
     source_ids:
       - source.pmph_human_parasitology_10e_2024
       - source.pmph_human_parasitology_8y_4e_2023
@@ -34,6 +46,80 @@ source_sets:
       本来源集只覆盖华支睾吸虫试点的核心事实、教学重点、课程边界和
       考核线索。地方流行数字、历史叙述、治理成效、食品产业链措施和
       更新后的诊疗建议，必须另行登记权威更新来源后才能进入正式知识层。
+
+  clonorchis_sinensis_pilot_v1_1:
+    label_zh: 华支睾吸虫Phase 3精简同源集v1.1
+    status: superseded_before_merge
+    prepared_on: "2026-07-26"
+    superseded_on: "2026-07-26"
+    superseded_by: clonorchis_sinensis_pilot_v1_2
+    pull_request: 4
+    merge_commit: null
+    reason: >-
+      v1.1使用完整课件副本并依赖页序范围，Notebook运行与人工维护成本过高；
+      在PR #4合并前改为经人工核验、带TE稳定定位的E02-v3派生证据。
+    private_source_pack:
+      pack_id: clonorchis_phase3_private_pack_v1_1
+      drive_root_folder_id: 10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh
+      manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
+      archived_control_folder_id: 1c5a1eaoucaA-3o_SRTU0mnGnMn3zs_xY
+
+  clonorchis_sinensis_pilot_v1_2:
+    label_zh: 华支睾吸虫Phase 3精简同源集v1.2
+    status: frozen_in_pr
+    prepared_on: "2026-07-26"
+    frozen_on: "2026-07-26"
+    approval:
+      approved_on: "2026-07-26"
+      approved_by_role: subject_teacher
+      pull_request: 4
+      merge_commit: null
+    supersedes:
+      - clonorchis_sinensis_pilot_v1
+      - clonorchis_sinensis_pilot_v1_1
+    phase3_source_ids:
+      - source.pmph_human_parasitology_10e_2024
+      - source.courseware_lesson_04_2025
+      - source.syllabus_clinical_medicine_integrated
+      - source.question_bank_export_2026
+    supplemental_pending_source_ids:
+      - source.pmph_human_parasitology_8y_4e_2023
+    phase4_authority_check_source_ids:
+      - source.cdc_dpdx_clonorchiasis_2024
+      - source.cdc_clinical_overview_clonorchis_2024
+      - source.who_foodborne_trematode_fact_sheet
+      - source.iarc_clonorchis_group1
+    private_source_pack:
+      pack_id: clonorchis_phase3_private_pack_v1_2
+      drive_root_folder_id: 10dZDxrgI0oZhhGhrWq6swSJvO-KrNvXh
+      manifest_drive_file_id: 1GIlXXid63SMXXW2APwonmxVrlK9T1W2n
+      archive_folder_drive_id: 1340Qs6fVx6svVBQoGsK3YrvpeRZ6GfYG
+      access_level: private
+      phase_gate: preflight_only_until_pr4_merge_and_teacher_start
+      evidence_files:
+        - evidence_id: E01
+          file_name_exact: E01_10e_printed_92-97_scope_93-97.pdf
+          drive_file_id: 1suGdo3M1sn4SZsC9Twp3HqBddrbQ5g6E
+          sha256: daadc5cb268edbcb96748afedafcf94e769776c8f9e3ae35cffdc514bcc6f8ba
+        - evidence_id: E02
+          file_name_exact: E02_courseware_clonorchis_teaching-expressions-v3.md
+          drive_file_id: 1ZQwHRX_hMni6njSeoUDknA-Hvlm4SaAh
+          sha256: 73c69c5198865d4b112a2012f8516a6b28d078db45fd206cca582a1466757867
+          evidence_role: teaching_expression
+          allowed_scope: "完整派生文件；TE-001、TE-002、TE-003"
+        - evidence_id: E03
+          file_name_exact: E03_syllabus_clinical_relevant.md
+          drive_file_id: 1hZj4UwUMjiappsA7SWsys7QMOB7HrUtg
+          sha256: ea8cb35bb83ad47200b1bdb4cf5010f2c7f5781ae43a217b59c0eba996e77a12
+        - evidence_id: E04
+          file_name_exact: E04_qbank_clonorchis_direct_dedup.txt
+          drive_file_id: 1TwXZ-CHfg6VD_4_-MLIVGCLRQtTZa2Up
+          sha256: 8712111c5b618ab31b4d1870b9517ff7995b816ddbe70fc96a4ded91d20974e0
+    scope_note: >-
+      Phase 3两条路线必须只读取同一个私有语料包的4个证据文件。E02只承担
+      教学表达角色；旧完整课件副本与核验PDF已移出活动包。第4版教材在补齐
+      印刷页128–133页图前仅作待核补充；CDC、WHO、IARC在Phase 4对候选做
+      权威复核，不参加Phase 3来源清单硬门。
 
 sources:
   - source_id: source.pmph_human_parasitology_10e_2024
@@ -98,12 +184,13 @@ sources:
       size_bytes: 94500708
       modified_time: "2026-06-15T06:40:34Z"
     extraction_scope:
-      include: "印刷页码128–138：第二章第一节“华支睾吸虫”"
+      include: "印刷页码128–133：第二章第一节“华支睾吸虫”"
       confirmed_landmarks:
         section_start: "印刷页码128"
         diagnosis: "印刷页码131"
-        next_section: "印刷页码139"
-      locator_basis: "Drive OCR与印刷页眉交叉定位"
+        section_end: "印刷页码133页内，以“（吕志跃）”署名收束"
+        next_section: "印刷页码133页内开始“第二节 布氏姜片吸虫”"
+      locator_basis: "2026-07-26 Drive OCR重新核对节起止；页图仍待人工核验"
     usage_rule: >-
       用于第10版正文抽取阻塞期间的补充核查、版本差异识别和候选定位，
       不替代第10版作为本课程试点的首要教材口径。OCR提取内容必须回看页图后
@@ -112,6 +199,7 @@ sources:
       - 属于八年制及“5+3”一体化临床医学专业教材，与第10版课程教材系列和对象不同。
       - OCR存在错字、漏字和单位识别错误；不得直接复制OCR作为正式引文。
       - 具体淡水鱼、虾感染率来自不同地区和年份，不能脱离原调查口径外推。
+      - Phase 3暂不使用；须补齐并人工核验印刷页128–133页图后再发布新语料包版本。
 
   - source_id: source.courseware_lesson_04_2025
     source_type: courseware
@@ -183,12 +271,14 @@ sources:
       size_bytes: 623398
       modified_time: "2026-04-26T05:21:03Z"
     extraction_scope:
-      include_filter: "华支睾|肝吸虫|Clonorchis（不区分大小写）"
+      source_keyword_filter: "华支睾|肝吸虫|Clonorchis（不区分大小写）"
       total_rows: 1613
-      matching_rows: 145
-      unique_item_ids: 92
-      current_2025_2026_matching_rows: 77
-      one_health_tagged_matching_rows: 3
+      broad_keyword_matching_rows: 145
+      broad_keyword_unique_item_ids: 92
+      phase3_direct_filter: "题干或规范化题干直接匹配“华支睾吸虫|肝吸虫”"
+      phase3_direct_rows_before_dedup: 81
+      phase3_rows_after_dedup: 53
+      phase3_dedup_rule: "每个dedup_id保留首次出现的一条复合定位记录"
     usage_rule: >-
       用于识别考核覆盖、常见干扰项、病例迁移任务和潜在易错点。
       题干、答案和解析均为待核对象，不能反向作为核心事实的唯一证据。
