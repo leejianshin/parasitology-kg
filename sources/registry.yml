@@ -126,8 +126,8 @@ source_sets:
     status: adjudication_complete_admission_prepared
     prepared_on: "2026-07-26"
     teacher_adjudication_complete: true
-    formal_knowledge_admission: NOT_AUTHORIZED
-    phase5_started: false
+    formal_knowledge_admission: BATCH_1_IN_REVIEW
+    phase5_started: true
     reused_public_source_count: 3
     new_public_source_count: 8
     source_ids:
@@ -422,13 +422,16 @@ sources:
     extraction_scope:
       include:
         - "How can clonorchiasis be prevented?"
+        - "Are pets or livestock at risk of spreading clonorchiasis?"
         - "Can cooking utensils contaminated with raw fish spread clonorchiasis?"
       locators:
         - "网页第116–117行"
+        - "网页第94–96行"
         - "网页第97–99行"
     usage_rule: >-
-      用于当前预防建议和厨具传播冲突的一侧证据。厨具问答未提供原始研究，
-      与FAO 1999年中国专题材料冲突，因此相关命题保持HOLD。
+      用于当前预防建议、动物粪便污染水体机制和厨具传播冲突的一侧证据。
+      厨具问答未提供原始研究，与FAO 1999年中国专题材料冲突，因此相关
+      命题保持HOLD。
 
   - source_id: source.who_community_diagnosis_clonorchiasis
     source_type: official_web
