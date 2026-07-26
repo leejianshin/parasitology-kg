@@ -28,3 +28,7 @@ jobs:
         run: python -m unittest discover -s tests -p "test_*.py"
       - name: Validate Phase 5 admission plan
         run: python scripts/validate_phase5_admission.py
+      - name: Check deterministic derived graph
+        run: python scripts/build_derived_graph.py --check
+      - name: Validate Phase 5 Batch 1 intake
+        run: python scripts/validate_phase5_batch1_intake.py

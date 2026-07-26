@@ -1,0 +1,39 @@
+validation_version: "1.0"
+validation_id: "clonorchis_phase5_batch1_intake_20260726"
+batch_id: "P5-B1"
+status: "PASS"
+validated_on: "2026-07-26"
+
+authority:
+  canonical_format: "reviewed_structured_markdown"
+  canonical_glob: "knowledge/**/*.md"
+  derived_directory: "derived/clonorchis-sinensis/phase5-batch1"
+  direct_edit_of_derived_files: "PROHIBITED"
+
+counts:
+  reviewed_entities: 14
+  reviewed_relations: 10
+  derived_nodes: 14
+  derived_edges: 10
+  derived_triples: 10
+
+hashes:
+  canonical_input_sha256: "6637c5d37a77ba0c880150e2c9525f0fc209a1261ab87ec57ade7ec28773d1ea"
+  nodes_jsonl_sha256: "32c588c61aa05e5fb0a1f9f24dc3bf6ffd5f24838c89952d865a034373e52d51"
+  edges_jsonl_sha256: "4dd78d7eaa2fa24d7760ff6775421ee055008669bb2660cf9443cda0d87f0cda"
+  triples_csv_sha256: "007757fc97b3c0d8b82994af5aef19ce7904be2ed9a4dcd160a9f8130b0be789"
+
+checks:
+  deterministic_rebuild: "PASS"
+  node_set_matches_approved_batch: "PASS"
+  edge_atom_set_matches_approved_batch: "PASS"
+  all_statuses_reviewed: "PASS"
+  evidence_sources_registered: "PASS"
+  triples_match_edges: "PASS"
+  no_later_batch_leakage: "PASS"
+  private_path_scan: "PASS"
+
+release_boundary:
+  formal_graph_intake: "READY_PENDING_PR_MERGE"
+  batch_2_and_3_write: "NOT_AUTHORIZED"
+  student_rag_release: "NOT_AUTHORIZED_PENDING_PHASE6"
