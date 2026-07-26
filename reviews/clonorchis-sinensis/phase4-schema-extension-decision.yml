@@ -1,0 +1,104 @@
+decision_version: "1.0"
+decision_id: "clonorchis_phase4_schema_extension_gate_20260726"
+status: "SCHEMA_GATE_DECIDED"
+base_commit: "9caa4f39421612c540b2de5ec8962cd592346e1f"
+input_review: "reviews/clonorchis-sinensis/phase4-schema-fit-gap.yml"
+input_ledger: "candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml"
+
+scope:
+  requested_relation_classes: 5
+  admitted_relation_classes: 4
+  deferred_relation_classes: 1
+  formal_knowledge_graph_admission: "NOT_AUTHORIZED"
+  knowledge_files_changed: 0
+
+decisions:
+  - request_relation: "serves_as_diagnostic_clue"
+    decision: "APPROVE_WITH_REVISION"
+    admitted_relation: "has_diagnostic_clue"
+    canonical_direction:
+      subject_types: [disease]
+      object_types: [behavior, clinical_manifestation, diagnostic_method]
+    affected_atoms: [W2-ATOM-001]
+    rationale:
+      - "疾病指向诊断线索与现有disease→diagnostic_method、disease→clinical_manifestation方向一致。"
+      - "该关系只承载暴露史、非特异表现或辅助检查线索，不承担确诊含义。"
+    admission_boundary:
+      - "后续正式关系必须保留地区、暴露条件和非确诊限定。"
+      - "确诊方法继续使用diagnosed_by，不得与本关系混用。"
+
+  - request_relation: "occurs_in"
+    decision: "APPROVE"
+    admitted_relation: "occurs_in"
+    canonical_direction:
+      subject_types: [pathological_process]
+      object_types: [anatomical_site]
+    affected_atoms: [W2-ATOM-009]
+    rationale:
+      - "现有parasitizes_site表达寄生部位，不能替代病理过程的发生部位。"
+    admission_boundary:
+      - "主要、局限、异位等范围信息必须写入限定。"
+
+  - request_relation: "associated_with_complication"
+    decision: "APPROVE_WITH_REVISION"
+    admitted_relation: "has_complication"
+    canonical_direction:
+      subject_types: [disease]
+      object_types: [disease]
+    affected_atoms: [W2-ATOM-016, W2-ATOM-021]
+    rationale:
+      - "胆管炎和胰腺炎在候选中承担并发症疾病角色，不能使用manifests_as。"
+      - "has_complication比associated_with_complication更明确地固定规范方向。"
+    admission_boundary:
+      - "频率、少见和证据局限必须写入限定。"
+      - "该关系不表示每名患者都会发生，也不自动证明直接因果。"
+      - "W2-RB020-B的胰管异位直接因果继续保持HOLD。"
+
+  - request_relation: "associated_with"
+    decision: "APPROVE_WITH_REVISION"
+    admitted_relation: "epidemiologically_associated_with"
+    canonical_direction:
+      subject_types: [disease]
+      object_types: [disease]
+    affected_atoms: [W2-ATOM-017]
+    rationale:
+      - "associated_with过于宽泛，容易退化为编辑规范禁止的万能关系。"
+      - "收窄为流行病学关联可以保留非因果边界，并与causes明确区分。"
+    admission_boundary:
+      - "正式关系必须记录适用人群或研究情境、证据强度和关键限制。"
+      - "不得从关联关系生成个体必然因果表述。"
+
+  - request_relation: "showed_effect_in_context"
+    decision: "DEFER"
+    admitted_relation: null
+    canonical_direction: null
+    affected_atoms: [W2-ATOM-035, W2-ATOM-036, W2-ATOM-037, W2-ATOM-038, W2-ATOM-039]
+    rationale:
+      - "现有实体类型不能统一承载患病率、感染强度、知识、态度和自报行为等研究结局。"
+      - "现有校验器不能强制地区、研究时期、人群、结局和研究设计等限定。"
+      - "showed_effect措辞可能把非随机或观察性结果夸大为干预因果效果。"
+    unblock_requirements:
+      - "建立研究、研究人群、研究结局和效应估计的最小数据模型。"
+      - "在Schema中定义并由校验器强制研究情境字段。"
+      - "分别表达观察到的变化、统计关联和因果效果。"
+    holding_layer: "regional_research_evidence"
+
+controlled_vocabulary_changes:
+  relation_catalog_from: "1.0"
+  relation_catalog_to: "1.1"
+  added:
+    - has_diagnostic_clue
+    - occurs_in
+    - has_complication
+    - epidemiologically_associated_with
+  explicitly_not_added:
+    - serves_as_diagnostic_clue
+    - associated_with_complication
+    - associated_with
+    - showed_effect_in_context
+
+phase_gate:
+  phase4_schema_gate: "READY_FOR_REVIEW"
+  phase5_formal_admission: "BLOCKED_PENDING_SCHEMA_PR_MERGE_AND_EXPLICIT_AUTHORIZATION"
+  hold_count_unchanged: 3
+  metadata_to_medical_fact_count: 0

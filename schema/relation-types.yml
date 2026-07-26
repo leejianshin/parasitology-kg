@@ -1,4 +1,4 @@
-schema_version: "1.0"
+schema_version: "1.1"
 
 relation_statuses:
   - draft
@@ -106,6 +106,13 @@ relations:
     object_types: [pathological_process]
     description: 连接疾病与其病理机制或病理改变。
 
+  occurs_in:
+    label_zh: 发生于
+    inverse_label_zh: 是其发生部位
+    subject_types: [pathological_process]
+    object_types: [anatomical_site]
+    description: 表达病理过程发生的解剖部位；“主要”“局限”等范围信息写入限定，不由关系本身推断。
+
   manifests_as:
     label_zh: 表现为
     inverse_label_zh: 可见于
@@ -113,12 +120,33 @@ relations:
     object_types: [clinical_manifestation]
     description: 表达疾病与临床表现之间的关系，不表示该表现具有特异性。
 
+  has_complication:
+    label_zh: 可伴有并发症
+    inverse_label_zh: 可作为其并发症
+    subject_types: [disease]
+    object_types: [disease]
+    description: 表达来源明确识别的疾病并发症；不表示每名患者都会发生，也不自动声明已经证明直接因果。
+
+  epidemiologically_associated_with:
+    label_zh: 与其存在流行病学关联
+    inverse_label_zh: 与其存在流行病学关联
+    subject_types: [disease]
+    object_types: [disease]
+    description: 表达人群研究支持的疾病间非因果关联；不得替代causes，适用人群、地区、时期和证据强度写入限定。
+
   diagnosed_by:
     label_zh: 可通过其诊断
     inverse_label_zh: 可用于诊断
     subject_types: [disease]
     object_types: [diagnostic_method]
     description: 表达疾病与适用诊断方法的关系。
+
+  has_diagnostic_clue:
+    label_zh: 具有诊断线索
+    inverse_label_zh: 可作为其诊断线索
+    subject_types: [disease]
+    object_types: [behavior, clinical_manifestation, diagnostic_method]
+    description: 表达暴露史、非特异性表现或辅助检查可作为疾病诊断线索；该关系不承担确诊含义。
 
   treated_by:
     label_zh: 可通过其治疗
