@@ -1,14 +1,18 @@
-schema_version: "1.0"
-task_id: phase3_clonorchis_dual_extraction_v1
+schema_version: "1.1"
+task_id: phase3_clonorchis_dual_extraction_v1_1
+pack_id: clonorchis_phase3_private_pack_v1_1
 route: A_or_B
 execution_id: null
 executed_at: null
 
 source_manifest:
   status: PASS_or_FAIL
-  sources:
-    - source_id: null
+  pack_id_confirmed: false
+  evidence_files:
+    - evidence_id: null
+      file_name_exact: null
       available: false
+      digest_confirmed: false
       scope_confirmed: false
       observed_locator: null
       notes: null
@@ -31,8 +35,9 @@ claims:
       time_period: null
       condition: null
     evidence:
-      - source_id: null
-        locator_type: printed_page_or_pdf_page_or_section_or_url
+      - evidence_id: null
+        file_name_exact: null
+        locator_type: printed_page_or_pdf_page_or_section_or_question_locator
         locator_value: null
         evidence_basis: null
         support_type: direct_or_supported_inference
