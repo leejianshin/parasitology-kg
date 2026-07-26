@@ -1,4 +1,4 @@
-# 路线B：独立文件提取任务
+# 路线B：同包独立文件提取任务
 
 ## 隔离前提
 
@@ -11,20 +11,21 @@
 
 允许读取的只有：
 
-- `sources/registry.yml`
-- `schema/`
-- `docs/PROJECT_SCOPE.md`
-- `docs/EDITORIAL_GUIDE.md`
-- `docs/NOTEBOOK_EXTRACTION_BOUNDARY.md`
-- 本目录的`extraction-contract.yml`与`candidate-template.yml`
-- 9个冻结原始来源及其限定范围
+- 私有Drive语料包`clonorchis_phase3_private_pack_v1_1`
+- 包内`00_CONTROL`控制文件
+- 包内`01_EVIDENCE`的4个证据文件
+- 仓库的`schema/`、`docs/PROJECT_SCOPE.md`和`docs/EDITORIAL_GUIDE.md`
+
+不得读取`02_SUPPLEMENTAL_PENDING`、`03_PHASE4_AUTHORITY`或包外原始来源。
 
 ## 执行指令
 
-从9个冻结来源中独立抽取华支睾吸虫候选命题。先核对来源清单；任一必需来源
-不可访问或范围不一致时，输出`SOURCE_MANIFEST_FAIL`并停止。
+先读取Drive文件`CONTROL_source-pack-manifest-v1.1.md`
+（ID `1GIlXXid63SMXXW2APwonmxVrlK9T1W2n`）。核对`pack_id`、4个证据文件的
+精确文件名、Drive ID和限定范围；任一不一致时输出`SOURCE_MANIFEST_FAIL`
+并停止。不得把故意延后的补充来源或Phase 4权威核查当成缺失来源。
 
-通过后严格按`candidate-template.yml`生成结果，执行与路线A相同的十项规则：
+通过后严格按包内共享协议和模板生成结果，执行与路线A相同的十项规则：
 
 1. 一个命题只含一个主关系；
 2. 不预设数量，不为填满类别而补写；
