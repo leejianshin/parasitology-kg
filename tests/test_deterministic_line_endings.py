@@ -6,15 +6,30 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-GENERATED_TEXT_SUFFIXES = {".md", ".yml", ".jsonl", ".csv"}
+CONTROLLED_TEXT_SUFFIXES = {
+    ".csv",
+    ".json",
+    ".jsonl",
+    ".md",
+    ".py",
+    ".txt",
+    ".yaml",
+    ".yml",
+}
 
 
 class DeterministicLineEndingTests(unittest.TestCase):
-    def test_generated_text_artifacts_are_forced_to_lf(self) -> None:
+    def test_controlled_text_files_are_forced_to_lf(self) -> None:
+        tracked = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout.decode("utf-8").split("\0")
         paths = sorted(
-            path.relative_to(ROOT).as_posix()
-            for path in (ROOT / "derived").rglob("*")
-            if path.is_file() and path.suffix in GENERATED_TEXT_SUFFIXES
+            path
+            for path in tracked
+            if path and Path(path).suffix in CONTROLLED_TEXT_SUFFIXES
         )
         self.assertTrue(paths)
 

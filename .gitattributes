@@ -1,7 +1,4 @@
-# Deterministic generated text artifacts are compared byte-for-byte.
-# Keep their canonical LF bytes on every operating system.
-derived/**/*.md text eol=lf
-derived/**/*.yml text eol=lf
-derived/**/*.jsonl text eol=lf
-derived/**/*.csv text eol=lf
-
+# Repository text is parsed or hashed as canonical input and some generated
+# artifacts are compared byte-for-byte. Keep all detected text as LF on every
+# operating system; binary files remain auto-detected and untouched.
+* text=auto eol=lf
