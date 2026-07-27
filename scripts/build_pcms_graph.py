@@ -20,6 +20,7 @@ try:
     from .build_derived_graph import (
         ROOT,
         build_graph,
+        canonical_text_bytes,
         jsonl_bytes,
         parse_front_matter,
         sha256_bytes,
@@ -30,6 +31,7 @@ except ImportError:
     from build_derived_graph import (
         ROOT,
         build_graph,
+        canonical_text_bytes,
         jsonl_bytes,
         parse_front_matter,
         sha256_bytes,
@@ -314,13 +316,13 @@ def build_pcms_graph(
     for path, _metadata in pcms_documents + extensions:
         hasher.update(path.relative_to(root).as_posix().encode())
         hasher.update(b"\0")
-        hasher.update(path.read_bytes())
+        hasher.update(canonical_text_bytes(path))
         hasher.update(b"\0")
     for path in (
         root / "schema" / "entity-types.yml",
         root / "schema" / "relation-types.yml",
     ):
-        hasher.update(path.read_bytes())
+        hasher.update(canonical_text_bytes(path))
         hasher.update(b"\0")
 
     details = {

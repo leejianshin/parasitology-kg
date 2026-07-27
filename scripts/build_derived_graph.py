@@ -22,6 +22,11 @@ DEFAULT_OUTPUT_DIR = (
 )
 
 
+def canonical_text_bytes(path: Path) -> bytes:
+    """Return UTF-8 text with platform line endings normalized to LF."""
+    return path.read_text(encoding="utf-8").encode("utf-8")
+
+
 def parse_front_matter(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     marker = "\n---\n"
@@ -66,7 +71,7 @@ def build_graph(
         relative_path = path.relative_to(root).as_posix()
         canonical_hasher.update(relative_path.encode("utf-8"))
         canonical_hasher.update(b"\0")
-        canonical_hasher.update(path.read_bytes())
+        canonical_hasher.update(canonical_text_bytes(path))
         canonical_hasher.update(b"\0")
 
         admission = metadata["admission"]
