@@ -1,0 +1,137 @@
+report_version: '1.0'
+suite_id: clonorchis_pcms_regression_v1
+status: PASS
+canonical_graph_sha256: 3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f
+counts:
+  cases: 16
+  passed: 16
+  failed: 0
+case_results:
+- case_id: PCMS-T01
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-001
+  - PCMS-002
+  - PCMS-003
+  - PCMS-004
+  - PCMS-005
+  - PCMS-006
+  missing_claim_ids: []
+- case_id: PCMS-T02
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-014
+  - PCMS-015
+  - PCMS-016
+  - PCMS-017
+  - PCMS-018
+  - PCMS-019
+  missing_claim_ids: []
+- case_id: PCMS-T03
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-020
+  - PCMS-021
+  - PCMS-022
+  - PCMS-023
+  missing_claim_ids: []
+- case_id: PCMS-T04
+  expected_disposition: PARTIAL
+  result: PASS
+  required_claim_ids:
+  - PCMS-021
+  missing_claim_ids: []
+- case_id: PCMS-T05
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-025
+  - PCMS-026
+  missing_claim_ids: []
+- case_id: PCMS-T06
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - W2-ATOM-001
+  - W2-ATOM-023
+  - PCMS-028
+  missing_claim_ids: []
+- case_id: PCMS-T07
+  expected_disposition: PARTIAL
+  result: PASS
+  required_claim_ids:
+  - PCMS-029
+  missing_claim_ids: []
+- case_id: PCMS-T08
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - W2-ATOM-023
+  - W2-ATOM-024
+  - W2-ATOM-025
+  missing_claim_ids: []
+- case_id: PCMS-T09
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-030
+  missing_claim_ids: []
+- case_id: PCMS-T10
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-031
+  missing_claim_ids: []
+- case_id: PCMS-T11
+  expected_disposition: ABSTAIN
+  result: PASS
+  required_claim_ids: []
+  missing_claim_ids: []
+- case_id: PCMS-T12
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-032
+  missing_claim_ids: []
+- case_id: PCMS-T13
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-032
+  missing_claim_ids: []
+- case_id: PCMS-T14
+  expected_disposition: ANSWER
+  result: PASS
+  required_claim_ids:
+  - PCMS-020
+  - PCMS-021
+  - PCMS-024
+  - PCMS-033
+  - PCMS-034
+  - PCMS-035
+  - W2-ATOM-005
+  missing_claim_ids: []
+- case_id: PCMS-T15
+  expected_disposition: ABSTAIN
+  result: PASS
+  required_claim_ids: []
+  missing_claim_ids: []
+- case_id: PCMS-T16
+  expected_disposition: PARTIAL
+  result: PASS
+  required_claim_ids:
+  - PCMS-014
+  - PCMS-030
+  - PCMS-032
+  missing_claim_ids: []
+boundary_checks:
+  required_qualifiers: PASS
+  tribendimidine_excluded: PASS
+  student_release_authorized: false
+  student_roster_included: false
+  raw_score_data_included: false
+failures: []
+interpretation_boundary: 本报告验证正式图的命题覆盖、关系限定和固定测试契约，不替代尚未开始的学生试用，也不把结构回归通过解释为教学效果已经得到证明。

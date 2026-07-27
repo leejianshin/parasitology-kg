@@ -1,0 +1,45 @@
+schema_version: "1.0"
+closeout_id: "clonorchis_pcms_v1_closeout"
+status: "PASS_NOT_STUDENT_RELEASED"
+base_commit: "4f02f09902a336e42210c2791bfb96f80967c940"
+branch: "agent/phase7-clonorchis-pcms"
+closed_on: "2026-07-27"
+
+authority:
+  course_lead_decision: "APPROVED"
+  approved_groups: 9
+  special_decisions: 5
+  collaborative_reviewer: "陈海英老师"
+  collaborative_review_status: "PENDING"
+
+formal_knowledge:
+  total_entities: 31
+  total_relations: 40
+  pcms_new_entities: 17
+  pcms_relation_claims: 30
+  pcms_narrative_claims: 6
+  extension_documents: 3
+  frozen_p5_entity_files_modified: false
+
+validation:
+  formal_knowledge: "PASS"
+  frozen_phase5_derived_graph: "PASS"
+  frozen_phase6_rag_corpus: "PASS"
+  pcms_aggregate_graph: "PASS"
+  pcms_fixed_regression: "PASS_16_OF_16"
+  python_tests: "PASS_19_TESTS_38_SUBTESTS"
+
+artifact_hashes:
+  entity_schema_sha256: "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e"
+  relation_schema_sha256: "4d5c56c9a9df8c65a49705b91c8c8081b43f17d8096a471398ae234fdb0584c5"
+  aggregate_manifest_sha256: "325d3b545282a5128dc8eef788257709829ab371d98620b241352eafea4faeeb"
+  regression_report_sha256: "fb0fe2f69ff5f84ac8da57d4881bf54a0d46a4dfc6edaa4547e4b6628546ca89"
+  admission_record_sha256: "b0cd244584dc1711dd5eca904468a6115c0de32e905d4ff29933e0fd764eb662"
+
+release_boundary:
+  learning_platform_drafts_created: true
+  student_release_authorized: false
+  student_roster_included: false
+  raw_score_data_included: false
+  raw_model_answers_included: false
+  raw_model_reasoning_included: false

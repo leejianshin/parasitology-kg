@@ -1,4 +1,4 @@
-schema_version: "1.1"
+schema_version: "1.2"
 
 relation_statuses:
   - draft
@@ -71,6 +71,13 @@ relations:
     object_types: [host]
     description: 表达对特定宿主具有感染性的生活史阶段。
 
+  pathogenic_stage_for:
+    label_zh: 是其主要致病阶段
+    inverse_label_zh: 主要由该阶段致病
+    subject_types: [life_cycle_stage]
+    object_types: [disease]
+    description: 表达来源支持的阶段—疾病致病角色；不表示该阶段是唯一致病因素。
+
   diagnostic_stage_for:
     label_zh: 是其诊断阶段
     inverse_label_zh: 可通过该阶段获得病原学证据
@@ -141,6 +148,13 @@ relations:
     object_types: [diagnostic_method]
     description: 表达疾病与适用诊断方法的关系。
 
+  classified_as:
+    label_zh: 被分类为
+    inverse_label_zh: 是其危害分类
+    subject_types: [disease]
+    object_types: [hazard_classification]
+    description: 表达权威机构的危害分类；不得据此推导个体必然患病或风险大小。
+
   has_diagnostic_clue:
     label_zh: 具有诊断线索
     inverse_label_zh: 可作为其诊断线索
@@ -182,6 +196,20 @@ relations:
     subject_types: [parasite, disease]
     object_types: [intervention, institution_policy]
     description: 表达针对寄生虫传播或疾病负担的防控措施。
+
+  sheds_stage:
+    label_zh: 可排出该阶段
+    inverse_label_zh: 可由该宿主排出
+    subject_types: [host]
+    object_types: [life_cycle_stage]
+    description: 表达感染宿主可经限定途径排出某生活史阶段；感染状态和排出途径必须写入限定。
+
+  present_in_environment:
+    label_zh: 可存在于该环境
+    inverse_label_zh: 可含有该阶段
+    subject_types: [life_cycle_stage]
+    object_types: [environment]
+    description: 表达生活史阶段在限定环境中的存在；不表示该阶段可从环境直接感染人。
 
   targets:
     label_zh: 针对

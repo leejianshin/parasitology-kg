@@ -1,0 +1,133 @@
+schema_version: "1.0"
+suite_id: "clonorchis_pcms_regression_v1"
+status: "EXECUTED_PASS"
+student_execution: "NOT_APPLICABLE_BEFORE_TERM"
+purpose: "在PCMS正式写入后验证事实、边界、关系路径和拒答行为。"
+
+counts:
+  total: 16
+  answer: 11
+  partial: 3
+  abstain: 2
+
+test_cases:
+  - case_id: PCMS-T01
+    category: morphology
+    question_zh: "华支睾吸虫成虫和虫卵有哪些识别要点？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-001, PCMS-002, PCMS-003, PCMS-004, PCMS-005, PCMS-006]
+    boundary: "虫卵宽度须说明来源口径差异。"
+
+  - case_id: PCMS-T02
+    category: life_cycle
+    question_zh: "按顺序说明华支睾吸虫从虫卵到成虫的主要发育阶段。"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-014, PCMS-015, PCMS-016, PCMS-017, PCMS-018, PCMS-019]
+    boundary: "不得省略螺和鱼的阶段条件。"
+
+  - case_id: PCMS-T03
+    category: host_roles
+    question_zh: "华支睾吸虫的第一、第二中间宿主和终宿主分别是什么？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-020, PCMS-021, PCMS-022, PCMS-023]
+    boundary: "不得把淡水鱼写成第一中间宿主。"
+
+  - case_id: PCMS-T04
+    category: host_boundary
+    question_zh: "淡水鱼和淡水虾在华支睾吸虫传播中的权重是否相同？"
+    expected_disposition: PARTIAL
+    required_claim_ids: [PCMS-021]
+    coverage_gap: "最低关系集不建立全部淡水虾宿主边，只允许说明部分中国虾种为次要、地区限定补充。"
+
+  - case_id: PCMS-T05
+    category: stage_distinction
+    question_zh: "华支睾吸虫对人的感染阶段和主要致病阶段分别是什么？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-025, PCMS-026]
+    boundary: "感染阶段与致病阶段不得合并。"
+
+  - case_id: PCMS-T06
+    category: diagnosis
+    question_zh: "生食鱼史、影像学和粪便检卵在诊断中分别承担什么角色？"
+    expected_disposition: ANSWER
+    required_claim_ids: [W2-ATOM-001, W2-ATOM-023, PCMS-028]
+    boundary: "暴露史和影像是线索；粪便检卵承担病原学确证。"
+
+  - case_id: PCMS-T07
+    category: diagnosis
+    question_zh: "十二指肠液检卵是否应当作为所有患者的常规首选检查？"
+    expected_disposition: PARTIAL
+    required_claim_ids: [PCMS-029]
+    coverage_gap: "来源支持其确证价值，但最低集不提供所有临床情境的检查顺位。"
+
+  - case_id: PCMS-T08
+    category: diagnostic_boundary
+    question_zh: "只凭一张胆道影像能否确诊华支睾吸虫病？"
+    expected_disposition: ANSWER
+    required_claim_ids: [W2-ATOM-023, W2-ATOM-024, W2-ATOM-025]
+    boundary: "必须明确否定单凭影像确诊。"
+
+  - case_id: PCMS-T09
+    category: treatment
+    question_zh: "WHO当前推荐什么药物治疗华支睾吸虫病？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-030]
+    boundary: "回答吡喹酮；不把阿苯达唑写成WHO推荐。"
+
+  - case_id: PCMS-T10
+    category: treatment
+    question_zh: "阿苯达唑在本知识集中的治疗地位是什么？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-031]
+    boundary: "仅为CDC临床页面所列替代药物，并保留时点和管辖语境。"
+
+  - case_id: PCMS-T11
+    category: treatment_boundary
+    question_zh: "三苯双脒是否已经在本知识集被批准为华支睾吸虫病标准治疗？"
+    expected_disposition: ABSTAIN
+    required_claim_ids: []
+    coverage_gap: "三苯双脒未进入PCMS，需另行权威核查。"
+
+  - case_id: PCMS-T12
+    category: carcinogenic_hazard
+    question_zh: "IARC如何分类华支睾吸虫感染？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-032]
+    boundary: "对象须为infection with Clonorchis sinensis。"
+
+  - case_id: PCMS-T13
+    category: carcinogenic_boundary
+    question_zh: "既然是Group 1，是否每位感染者都会患胆管癌？"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-032]
+    boundary: "必须否定；危害分类不等于个体发病概率或必然因果。"
+
+  - case_id: PCMS-T14
+    category: one_health
+    question_zh: "说明华支睾吸虫传播中人、动物和淡水环境怎样相互连接。"
+    expected_disposition: ANSWER
+    required_claim_ids: [PCMS-020, PCMS-021, PCMS-024, PCMS-033, PCMS-034, PCMS-035, W2-ATOM-005]
+    boundary: "必须逐段说明，不得以抽象‘闭环’代替具体关系。"
+
+  - case_id: PCMS-T15
+    category: intervention_boundary
+    question_zh: "改善卫生和兽医措施是否已经证明能在所有地区彻底消除华支睾吸虫病？"
+    expected_disposition: ABSTAIN
+    required_claim_ids: []
+    coverage_gap: "来源只支持机制和综合建议，不支持所有地区的彻底消除效果。"
+
+  - case_id: PCMS-T16
+    category: source_traceability
+    question_zh: "分别指出生活史、当前治疗和致癌分类应回查哪类权威来源。"
+    expected_disposition: PARTIAL
+    required_claim_ids: [PCMS-014, PCMS-030, PCMS-032]
+    coverage_gap: "只能返回PCMS登记的教材、CDC、WHO和IARC来源，不补充未登记来源。"
+
+execution_gate:
+  teacher_adjudication: "APPROVED_BY_COURSE_LEAD"
+  collaborative_review: "CHEN_HAIYING_PENDING"
+  schema_patch: "APPLIED"
+  formal_knowledge_build: "PASS"
+  regression_run: "PASS_16_OF_16"
+  learning_platform_drafts: "AUTHORIZED_DRAFT_ONLY"
+  student_release: "NOT_AUTHORIZED"

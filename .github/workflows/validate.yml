@@ -36,3 +36,9 @@ jobs:
         run: python scripts/build_phase6_rag_corpus.py --check
       - name: Validate Phase 6 student RAG protocol
         run: python scripts/validate_phase6_protocol.py
+      - name: Validate PCMS authority and adjudication bundle
+        run: python scripts/validate_pcms.py
+      - name: Check PCMS aggregate graph
+        run: python scripts/build_pcms_graph.py --check
+      - name: Check PCMS fixed regression report
+        run: python scripts/validate_pcms_regression.py --check

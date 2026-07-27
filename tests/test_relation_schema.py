@@ -30,7 +30,7 @@ class RelationSchemaTests(unittest.TestCase):
     def test_relation_catalog_structure(self) -> None:
         entity_types = set(self.entity_catalog["entity_types"])
         relations = self.relation_catalog["relations"]
-        self.assertEqual(self.relation_catalog["schema_version"], "1.1")
+        self.assertEqual(self.relation_catalog["schema_version"], "1.2")
         self.assertTrue(relations)
 
         required = {
@@ -76,6 +76,35 @@ class RelationSchemaTests(unittest.TestCase):
             "showed_effect_in_context",
         }
         self.assertTrue(excluded.isdisjoint(relations))
+
+    def test_pcms_schema_extensions_have_strict_directions(self) -> None:
+        relations = self.relation_catalog["relations"]
+        expected = {
+            "pathogenic_stage_for": (
+                ["life_cycle_stage"],
+                ["disease"],
+            ),
+            "classified_as": (
+                ["disease"],
+                ["hazard_classification"],
+            ),
+            "sheds_stage": (
+                ["host"],
+                ["life_cycle_stage"],
+            ),
+            "present_in_environment": (
+                ["life_cycle_stage"],
+                ["environment"],
+            ),
+        }
+        self.assertIn(
+            "hazard_classification",
+            self.entity_catalog["entity_types"],
+        )
+        for name, (subjects, objects) in expected.items():
+            with self.subTest(relation=name):
+                self.assertEqual(relations[name]["subject_types"], subjects)
+                self.assertEqual(relations[name]["object_types"], objects)
 
     def test_five_requests_are_decided_once(self) -> None:
         decisions = self.decision["decisions"]

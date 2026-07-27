@@ -1,0 +1,45 @@
+manifest_version: '1.0'
+aggregate_id: clonorchis_pcms_v1
+base_batch_id: P5-B1
+admission_batch_id: P7-PCMS
+authority: reviewed_markdown_plus_reviewed_batch_extensions
+generator: scripts/build_pcms_graph.py
+canonical_input_sha256: 3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f
+counts:
+  base_nodes: 14
+  base_edges: 10
+  pcms_nodes: 17
+  pcms_edges: 30
+  extension_documents: 3
+  narrative_claims: 6
+  nodes: 31
+  edges: 40
+  triples: 40
+narrative_claims:
+- claim_id: PCMS-001
+  entity_id: stage.clonorchis_adult
+- claim_id: PCMS-002
+  entity_id: stage.clonorchis_adult
+- claim_id: PCMS-003
+  entity_id: stage.clonorchis_egg
+- claim_id: PCMS-004
+  entity_id: stage.clonorchis_egg
+- claim_id: PCMS-005
+  entity_id: stage.clonorchis_egg
+- claim_id: PCMS-006
+  entity_id: stage.clonorchis_egg
+artifacts:
+- path: nodes.jsonl
+  sha256: 959d6fac2b38c6356dd4ac8647ea2ebd3d2ed1f354af4f1e04e020c5cea2d340
+  size_bytes: 16272
+- path: edges.jsonl
+  sha256: 4a05b86547b91d2bf77cdb6773f8171567f95c0b89d39582fa09eafe777f9045
+  size_bytes: 25528
+- path: triples.csv
+  sha256: 6a5903f7b8126635d84b99d3079595b6e59a1bf3c1965377d4c94fb4a26791ae
+  size_bytes: 6492
+release_boundary:
+  student_release_authorized: false
+  student_roster_included: false
+  raw_score_data_included: false
+  collaborative_review: CHEN_HAIYING_PENDING

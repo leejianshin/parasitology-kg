@@ -153,7 +153,29 @@ source_sets:
     scope_note: >-
       用于Phase 4教师裁决、原子候选来源映射与Schema适配评估。公开登记只保存
       书目信息、稳定URL、证据定位和限制，不保存私有审查文件全文。39条候选
-      仍处于准入准备状态，未写入正式知识图谱。
+      在该来源集冻结时仍处于准入准备状态，尚未写入正式知识图谱。
+
+  clonorchis_sinensis_pcms_v1:
+    label_zh: 华支睾吸虫临床班试点最小内容集v1
+    status: formally_admitted_not_student_released
+    approved_on: "2026-07-27"
+    approved_by_role: course_lead
+    collaborative_review:
+      reviewer: "陈海英老师"
+      status: pending
+    student_release: not_authorized
+    source_ids:
+      - source.pmph_human_parasitology_10e_2024
+      - source.cdc_dpdx_clonorchiasis_2024
+      - source.cdc_clinical_overview_clonorchis_2024
+      - source.who_community_diagnosis_clonorchiasis
+      - source.who_clonorchiasis_qa_2025
+      - source.who_foodborne_trematode_fact_sheet
+      - source.iarc_clonorchis_group1
+      - source.nhc_ws309_2009
+    boundary: >-
+      只支持PCMS-G01—G09及五项教师特殊决定。学生名单、原始评分数据、
+      学生发布状态和三苯双脒治疗主张均不在本来源集内。
 
 sources:
   - source_id: source.pmph_human_parasitology_10e_2024
@@ -579,3 +601,24 @@ sources:
     usage_rule: >-
       仅支持该研究情境中的知识、态度和自报行为结局。村庄未随机分配，
       自报行为不得等同感染率或疾病负担下降。
+
+  - source_id: source.nhc_ws309_2009
+    source_type: guideline_standard
+    title: "华支睾吸虫病诊断标准（WS 309—2009）"
+    organization: 中华人民共和国原卫生部
+    publication_date: "2009"
+    language: zh
+    roles:
+      - core_fact
+      - update_evidence
+    access_level: public
+    full_text_status: reviewed_partial
+    url: "https://www.nhc.gov.cn/wjw/s9499/200908/42174.shtml"
+    accessed_on: "2026-07-27"
+    extraction_scope:
+      include:
+        - "诊断标准及附录中的病原学证据"
+        - "2016-12-28转为推荐性标准的状态说明"
+    usage_rule: >-
+      仅与第10版教材共同支持十二指肠液检卵作为中国教材和推荐性标准
+      语境下的病原学确证取材方式之一；不得据此写成所有患者的常规首选。

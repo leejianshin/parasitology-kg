@@ -1,4 +1,4 @@
-schema_version: "1.0"
+schema_version: "1.1"
 
 id_pattern: "^[a-z][a-z0-9_]*\\.[a-z0-9][a-z0-9_]*$"
 
@@ -84,3 +84,8 @@ entity_types:
     id_prefix: policy
     label_zh: 制度与政策
     description: 与寄生虫病治理相关的规范、政策或跨部门机制。
+
+  hazard_classification:
+    id_prefix: hazard
+    label_zh: 危害分类
+    description: 权威机构对致癌性等固有危害所作的分类；不直接表示个体风险大小。

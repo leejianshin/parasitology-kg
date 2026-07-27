@@ -1,0 +1,302 @@
+schema_version: "1.0"
+review_id: "clonorchis_pcms_authority_review_20260727"
+title: "华支睾吸虫PILOT_CONTENT_MINIMUM_SET权威核查"
+status: "APPROVED_FOR_FORMAL_ADMISSION_CONSTRUCTION"
+formal_knowledge_admission: "COMPLETED_PCMS_G01_G09"
+student_release: "NOT_AUTHORIZED"
+review_date: "2026-07-27"
+teacher_adjudication:
+  decided_by_role: "课程负责人"
+  decision: "APPROVE_ALL_RECOMMENDATIONS"
+  decided_on: "2026-07-27"
+  collaborative_reviewer: "陈海英老师"
+  collaborative_review_status: "PENDING"
+  prohibited_data:
+    - "学生名单"
+    - "原始评分数据"
+
+purpose:
+  target_course: "2026—2027学年第1学期临床医学本科班"
+  current_reviewers:
+    - "课程负责人：最终裁决人"
+    - "陈海英老师：协作复核人"
+  unavailable_activity:
+    - "学生测试尚未开始"
+    - "不得把未来学生试点写成已完成"
+    - "不得把陈海英老师尚未给出的意见写成已同意"
+  minimum_set_rule: >-
+    只纳入能够支撑临床班基础学习、病例判断和RAG边界控制的内容。
+    不以“覆盖全部华支睾吸虫知识”为目标。
+
+authority_sources:
+  - source_id: source.pmph_human_parasitology_10e_2024
+    authority_role: "current_course_textbook"
+    locator: "印刷页93–97，重点为94–97"
+    public_full_text_allowed: false
+  - source_id: source.cdc_dpdx_clonorchiasis_2024
+    authority_role: "life_cycle_hosts_morphology_laboratory_diagnosis"
+    locator: "Life Cycle; Hosts; Image Gallery; Laboratory Diagnosis"
+    url: "https://www.cdc.gov/dpdx/clonorchiasis/"
+  - source_id: source.cdc_clinical_overview_clonorchis_2024
+    authority_role: "clinical_diagnosis_and_treatment"
+    locator: "Diagnosis; Treatment and recovery"
+    url: "https://www.cdc.gov/liver-flukes/hcp/clinical-overview-clonorchis/index.html"
+  - source_id: source.who_community_diagnosis_clonorchiasis
+    authority_role: "current_WHO_diagnosis_and_treatment"
+    locator: "Clonorchiasis，网页第88–94行"
+    url: "https://www.who.int/teams/control-of-neglected-tropical-diseases/foodborne-trematode-infections/recommendations-for-community-diagnosis"
+  - source_id: source.who_clonorchiasis_qa_2025
+    authority_role: "current_One_Health_transmission_context"
+    locator: "网页第83–117行"
+    url: "https://www.who.int/news-room/questions-and-answers/item/neglected-tropical-diseases-clonorchiasis"
+  - source_id: source.who_foodborne_trematode_fact_sheet
+    authority_role: "current_One_Health_control_framework"
+    locator: "Treatment, prevention and control"
+    url: "https://www.who.int/news-room/fact-sheets/detail/foodborne-trematode-infections"
+  - source_id: source.iarc_clonorchis_group1
+    authority_role: "carcinogenic_hazard_classification"
+    locator: "Clonorchis sinensis (infection with), Group 1, Volumes 61 and 100B"
+    url: "https://monographs.iarc.who.int/list-of-classifications/"
+  - source_id: source.nhc_ws309_2009
+    authority_role: "China_recommended_diagnostic_standard"
+    locator: "WS 309—2009；自2016-12-28转为推荐性"
+    url: "https://www.nhc.gov.cn/wjw/s9499/200908/42174.shtml"
+    registry_status: "REGISTERED_BY_PCMS_IMPLEMENTATION"
+
+schema_fit_summary:
+  proposed_atomic_claims: 36
+  proposed_relation_claims: 30
+  proposed_narrative_claims: 6
+  existing_schema_relation_claims: 25
+  relation_claims_needing_schema_extension: 5
+  new_relation_types_proposed:
+    - pathogenic_stage_for
+    - sheds_stage
+    - present_in_environment
+    - classified_as
+  new_entity_types_proposed:
+    - hazard_classification
+  rejected_schema_shortcuts:
+    - "不为形态数字创建虚假的实体—关系边"
+    - "不以causes表达IARC Group 1分类"
+    - "不以treated_by本身暗示首选或替代顺位"
+
+candidate_groups:
+  - group_id: PCMS-G01
+    title: "成虫与虫卵形态"
+    recommendation: "APPROVE_AS_NARRATIVE_FACTS"
+    schema_mode: "structured_narrative"
+    claims:
+      - claim_id: PCMS-001
+        claim: "华支睾吸虫成虫背腹扁平，呈狭长或披针形。"
+        claim_role: narrative_fact
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}
+          - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Image Gallery—C. sinensis adults"}
+      - claim_id: PCMS-002
+        claim: "华支睾吸虫成虫大小约为10–25 mm × 3–5 mm。"
+        claim_role: narrative_fact
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}
+          - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Life Cycle; Image Gallery—C. sinensis adults"}
+      - claim_id: PCMS-003
+        claim: "第10版教材记载华支睾吸虫虫卵约为27–35 μm × 12–20 μm；CDC形态页宽度口径为11–20 μm。"
+        claim_role: narrative_fact
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}
+          - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Image Gallery—Clonorchis sinensis eggs"}
+        qualifier: "正式教学正文采用教材12–20 μm，并在证据注释保留CDC 11–20 μm。"
+      - claim_id: PCMS-004
+        claim: "华支睾吸虫虫卵较窄端有卵盖及肩峰样结构。"
+        claim_role: narrative_fact
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}
+          - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Image Gallery—Clonorchis sinensis eggs"}
+      - claim_id: PCMS-005
+        claim: "华支睾吸虫虫卵无盖端常可见小疣或小突起。"
+        claim_role: narrative_fact
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}
+          - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Image Gallery—Clonorchis sinensis eggs"}
+      - claim_id: PCMS-006
+        claim: "排出的华支睾吸虫虫卵内可见已发育的毛蚴。"
+        claim_role: narrative_fact
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}
+          - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Life Cycle; Image Gallery—Clonorchis sinensis eggs"}
+    boundary: "“人体蠕虫卵中最小”暂不作为跨物种绝对排序写入正式关系。"
+
+  - group_id: PCMS-G02
+    title: "生活史阶段组成"
+    recommendation: "APPROVE"
+    schema_mode: "existing_relations"
+    claims:
+      - {claim_id: PCMS-007, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_egg, claim: "华支睾吸虫具有虫卵阶段。"}
+      - {claim_id: PCMS-008, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_miracidium, claim: "华支睾吸虫具有毛蚴阶段。"}
+      - {claim_id: PCMS-009, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_sporocyst, claim: "华支睾吸虫具有胞蚴阶段。"}
+      - {claim_id: PCMS-010, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_redia, claim: "华支睾吸虫具有雷蚴阶段。"}
+      - {claim_id: PCMS-011, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_cercaria, claim: "华支睾吸虫具有尾蚴阶段。"}
+      - {claim_id: PCMS-012, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_metacercaria, claim: "华支睾吸虫具有囊蚴阶段。"}
+      - {claim_id: PCMS-013, subject: parasite.clonorchis_sinensis, predicate: has_life_cycle_stage, object: stage.clonorchis_adult, claim: "华支睾吸虫具有成虫阶段。"}
+    common_evidence:
+      - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94–95【生活史】"}
+      - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Life Cycle"}
+
+  - group_id: PCMS-G03
+    title: "生活史发育顺序"
+    recommendation: "APPROVE_WITH_CONTEXT_QUALIFIERS"
+    schema_mode: "existing_relations"
+    claims:
+      - {claim_id: PCMS-014, subject: stage.clonorchis_egg, predicate: develops_into, object: stage.clonorchis_miracidium, claim: "虫卵被适宜螺宿主摄入后释放毛蚴。", condition: "within_suitable_snail_host"}
+      - {claim_id: PCMS-015, subject: stage.clonorchis_miracidium, predicate: develops_into, object: stage.clonorchis_sporocyst, claim: "毛蚴在适宜螺宿主体内发育为胞蚴。", condition: "within_suitable_snail_host"}
+      - {claim_id: PCMS-016, subject: stage.clonorchis_sporocyst, predicate: develops_into, object: stage.clonorchis_redia, claim: "胞蚴在适宜螺宿主体内发育为雷蚴。", condition: "within_suitable_snail_host"}
+      - {claim_id: PCMS-017, subject: stage.clonorchis_redia, predicate: develops_into, object: stage.clonorchis_cercaria, claim: "雷蚴在适宜螺宿主体内发育为尾蚴。", condition: "within_suitable_snail_host"}
+      - {claim_id: PCMS-018, subject: stage.clonorchis_cercaria, predicate: develops_into, object: stage.clonorchis_metacercaria, claim: "尾蚴离开螺后侵入淡水鱼并形成囊蚴。", condition: "within_freshwater_fish"}
+      - {claim_id: PCMS-019, subject: stage.clonorchis_metacercaria, predicate: develops_into, object: stage.clonorchis_adult, claim: "终宿主摄入活囊蚴后，幼虫进入胆道并发育为成虫。", condition: "after_ingestion_by_definitive_host"}
+    common_evidence:
+      - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94–95【生活史】"}
+      - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Life Cycle"}
+
+  - group_id: PCMS-G04
+    title: "宿主角色"
+    recommendation: "APPROVE_WITH_HOST_CLASS_BOUNDARIES"
+    schema_mode: "existing_relations"
+    claims:
+      - {claim_id: PCMS-020, subject: parasite.clonorchis_sinensis, predicate: has_first_intermediate_host, object: host.freshwater_snails_suitable_for_clonorchis, claim: "适宜淡水螺类是华支睾吸虫的第一中间宿主。"}
+      - {claim_id: PCMS-021, subject: parasite.clonorchis_sinensis, predicate: has_second_intermediate_host, object: host.freshwater_fish, claim: "淡水鱼是华支睾吸虫的第二中间宿主，许多种属于鲤科。"}
+      - {claim_id: PCMS-022, subject: parasite.clonorchis_sinensis, predicate: has_definitive_host, object: host.human, claim: "人是华支睾吸虫的终宿主。"}
+      - {claim_id: PCMS-023, subject: parasite.clonorchis_sinensis, predicate: has_definitive_host, object: host.piscivorous_mammals, claim: "犬科、猫科、猪、鼬科及其他食鱼哺乳动物可作为终宿主。"}
+      - {claim_id: PCMS-024, subject: parasite.clonorchis_sinensis, predicate: has_reservoir_host, object: host.domestic_dogs_cats_pigs, claim: "犬、猫和猪可作为保虫宿主。"}
+    common_evidence:
+      - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Hosts"}
+      - {source_id: source.who_clonorchiasis_qa_2025, locator: "Are pets or livestock at risk of spreading clonorchiasis?"}
+    boundary: "部分中国淡水虾种继续作为次要、地区限定补充，不与淡水鱼等权进入最低关系集。"
+
+  - group_id: PCMS-G05
+    title: "感染阶段与主要致病阶段"
+    recommendation: "APPROVE"
+    schema_mode: "one_existing_one_new_relation"
+    claims:
+      - {claim_id: PCMS-025, subject: stage.clonorchis_metacercaria, predicate: infective_stage_for, object: host.human, claim: "囊蚴是华支睾吸虫对人的感染阶段。"}
+      - {claim_id: PCMS-026, subject: stage.clonorchis_adult, predicate: pathogenic_stage_for, object: disease.clonorchiasis, claim: "成虫是华支睾吸虫病的主要致病阶段。"}
+    common_evidence:
+      - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94–95【生活史】【致病】"}
+      - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Life Cycle; Clinical Presentation"}
+    boundary: "感染阶段与致病阶段必须作为两条不同关系。"
+
+  - group_id: PCMS-G06
+    title: "确诊证据与检查边界"
+    recommendation: "APPROVE_STOOL; TEACHER_DECIDE_DUODENAL_FLUID"
+    schema_mode: "existing_relations"
+    claims:
+      - {claim_id: PCMS-027, subject: stage.clonorchis_egg, predicate: diagnostic_stage_for, object: host.human, claim: "虫卵是慢性期病原学检查的诊断阶段。"}
+      - {claim_id: PCMS-028, subject: disease.clonorchiasis, predicate: diagnosed_by, object: diagnostic.stool_egg_microscopy, claim: "粪便标本中检出华支睾吸虫卵可用于确证华支睾吸虫病。"}
+      - claim_id: PCMS-029
+        subject: disease.clonorchiasis
+        predicate: diagnosed_by
+        object: diagnostic.duodenal_fluid_egg_microscopy
+        claim: "十二指肠液中检出华支睾吸虫卵可作为病原学确证证据。"
+        decision_flag: "TEACHER_DECISION_REQUIRED"
+        evidence:
+          - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页96【实验诊断】"}
+          - {source_id: source.nhc_ws309_2009, locator: "诊断标准及附录；标准自2016-12-28转为推荐性"}
+        limitation: "WHO当前社区诊断页面重点列粪便检卵，未陈述十二指肠液检查的常规推荐顺位。"
+    common_evidence:
+      - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Laboratory Diagnosis"}
+      - {source_id: source.who_community_diagnosis_clonorchiasis, locator: "Clonorchiasis，网页第88–91行"}
+    boundary:
+      - "影像和暴露史仍是线索，不承担单独确诊。"
+      - "虫卵与Opisthorchis spp.形态高度相似，物种鉴别存在局限。"
+
+  - group_id: PCMS-G07
+    title: "当前治疗顺位"
+    recommendation: "APPROVE_WITH_AUTHORITY_AND_TIME_QUALIFIERS"
+    schema_mode: "existing_relation_with_required_qualifiers"
+    claims:
+      - claim_id: PCMS-030
+        subject: disease.clonorchiasis
+        predicate: treated_by
+        object: treatment.praziquantel
+        claim: "WHO当前推荐吡喹酮治疗华支睾吸虫病。"
+        qualifiers: {authority: WHO, recommendation_role: recommended, as_of: "2026-07-27"}
+      - claim_id: PCMS-031
+        subject: disease.clonorchiasis
+        predicate: treated_by
+        object: treatment.albendazole
+        claim: "CDC临床页面将阿苯达唑列为华支睾吸虫病的替代药物。"
+        qualifiers: {authority: US_CDC, recommendation_role: alternative, jurisdiction: US_clinical_reference, as_of: "2026-07-27"}
+    evidence:
+      - {source_id: source.who_community_diagnosis_clonorchiasis, locator: "Clonorchiasis，网页第92行"}
+      - {source_id: source.cdc_clinical_overview_clonorchis_2024, locator: "Treatment and recovery"}
+    boundary:
+      - "不得把阿苯达唑写成WHO当前推荐药物。"
+      - "三苯双脒不进入本最低集；需另行完成指南地位和适应证核查。"
+      - "学生材料不提供个体化处方建议。"
+
+  - group_id: PCMS-G08
+    title: "IARC致癌危害分类与个体风险边界"
+    recommendation: "APPROVE_WITH_NEW_CLASSIFICATION_MODEL"
+    schema_mode: "new_entity_type_and_relation"
+    claims:
+      - {claim_id: PCMS-032, subject: disease.clonorchiasis, predicate: classified_as, object: hazard.iarc_group_1_carcinogenic_to_humans, claim: "IARC将华支睾吸虫感染列为Group 1（对人类致癌）。"}
+    evidence:
+      - {source_id: source.iarc_clonorchis_group1, locator: "Clonorchis sinensis (infection with), Group 1, Volumes 61 and 100B"}
+    mandatory_narrative_boundary:
+      - "分类对象是infection with Clonorchis sinensis，不是单独的虫体名称。"
+      - "Group 1属于致癌危害识别，不给出某个感染者的发病概率。"
+      - "不得生成“感染者必然发生胆管癌”的表述。"
+
+  - group_id: PCMS-G09
+    title: "One Health传播闭环最小机制"
+    recommendation: "APPROVE_WITH_MECHANISM_NOT_EFFECT_BOUNDARY"
+    schema_mode: "three_new_relations_one_existing_relation"
+    claims:
+      - {claim_id: PCMS-033, subject: host.human, predicate: sheds_stage, object: stage.clonorchis_egg, claim: "感染者可经粪便排出华支睾吸虫卵。"}
+      - {claim_id: PCMS-034, subject: host.domestic_dogs_cats_pigs, predicate: sheds_stage, object: stage.clonorchis_egg, claim: "感染犬、猫和猪可经粪便排出华支睾吸虫卵。"}
+      - {claim_id: PCMS-035, subject: stage.clonorchis_egg, predicate: present_in_environment, object: environment.freshwater_environment, claim: "随粪便进入淡水环境的虫卵可进入华支睾吸虫生活史。"}
+      - {claim_id: PCMS-036, subject: disease.clonorchiasis, predicate: controlled_by, object: intervention.one_health_integrated_control, claim: "WHO建议以连接人类、动物和环境的综合方法防控食源性吸虫病。"}
+    evidence:
+      - {source_id: source.cdc_dpdx_clonorchiasis_2024, locator: "Life Cycle"}
+      - {source_id: source.who_clonorchiasis_qa_2025, locator: "网页第83–117行，尤其第94–96、116–117行"}
+      - {source_id: source.who_foodborne_trematode_fact_sheet, locator: "Treatment, prevention and control"}
+    boundary:
+      - "只表达传播机制和WHO建议，不声称某一组合在本校或某地区已测得效果。"
+      - "闭环必须通过宿主、虫卵、淡水环境、螺、鱼和食物暴露逐段构建，不得以一个抽象箭头替代。"
+
+teacher_decision_required:
+  required_group_decisions:
+    - PCMS-G01
+    - PCMS-G02
+    - PCMS-G03
+    - PCMS-G04
+    - PCMS-G05
+    - PCMS-G06
+    - PCMS-G07
+    - PCMS-G08
+    - PCMS-G09
+  special_decisions:
+    - decision_id: PCMS-D01
+      question: "虫卵宽度是否在教学正文采用教材12–20 μm，并在证据注释保留CDC 11–20 μm？"
+      recommendation: "YES"
+    - decision_id: PCMS-D02
+      question: "十二指肠液检卵是否作为中国教材/推荐性标准下的确证方法纳入，并明确非常规首选？"
+      recommendation: "YES_WITH_SCOPE"
+    - decision_id: PCMS-D03
+      question: "阿苯达唑是否仅以CDC替代药物身份纳入，不标为WHO推荐？"
+      recommendation: "YES"
+    - decision_id: PCMS-D04
+      question: "IARC中文教学正文是否采用“1类致癌物（危害分类）”，并强制附个体风险边界？"
+      recommendation: "YES"
+    - decision_id: PCMS-D05
+      question: "三苯双脒是否继续排除在本最低集之外？"
+      recommendation: "YES"
+
+admission_gate:
+  authority_review: "PASS"
+  schema_fit: "APPROVED_FOR_IMPLEMENTATION"
+  teacher_adjudication: "APPROVED_BY_COURSE_LEAD"
+  collaborative_review: "CHEN_HAIYING_PENDING"
+  knowledge_write: "COMPLETED_PCMS_G01_G09"
+  regression_execution: "PASS_16_OF_16"
+  learning_platform_materials: "AUTHORIZED_DRAFT_ONLY"
+  student_release: "NOT_AUTHORIZED"
