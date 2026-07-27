@@ -1,0 +1,107 @@
+schema_version: "1.0"
+review_id: "clonorchis_pcms_schema_fit_20260727"
+status: "APPROVED_FOR_IMPLEMENTATION"
+input: "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml"
+current_schema:
+  entity_catalog: "schema/entity-types.yml@1.0"
+  relation_catalog: "schema/relation-types.yml@1.1"
+
+decisions:
+  - requirement: "形态数字与形态特征"
+    fit: "NARRATIVE_NOT_EDGE"
+    decision: >-
+      保存为实体Markdown中的结构化事实段，不创建“10–25 mm”等伪实体。
+      后续多虫种确有数值检索需求时，再单独设计属性模型。
+
+  - requirement: "生活史阶段及阶段顺序"
+    fit: "EXISTING_SCHEMA"
+    relations: [has_life_cycle_stage, develops_into]
+    required_qualifiers: [host_context, environment_context]
+
+  - requirement: "第一、第二中间宿主，终宿主和保虫宿主"
+    fit: "EXISTING_SCHEMA"
+    relations:
+      - has_first_intermediate_host
+      - has_second_intermediate_host
+      - has_definitive_host
+      - has_reservoir_host
+
+  - requirement: "感染阶段"
+    fit: "EXISTING_SCHEMA"
+    relation: infective_stage_for
+
+  - requirement: "主要致病阶段"
+    fit: "SCHEMA_EXTENSION"
+    proposed_relation:
+      id: pathogenic_stage_for
+      label_zh: "是其主要致病阶段"
+      subject_types: [life_cycle_stage]
+      object_types: [disease]
+      boundary: "只表达来源支持的阶段—疾病致病角色，不表示该阶段是唯一致病因素。"
+
+  - requirement: "病原学确证方法"
+    fit: "EXISTING_SCHEMA"
+    relations: [diagnostic_stage_for, diagnosed_by]
+    boundary: "确证方法与诊断线索分别使用diagnosed_by和has_diagnostic_clue。"
+
+  - requirement: "首选或替代治疗顺位"
+    fit: "EXISTING_RELATION_WITH_REQUIRED_QUALIFIERS"
+    relation: treated_by
+    required_qualifiers:
+      - authority
+      - recommendation_role
+      - as_of
+      - jurisdiction_when_needed
+    boundary: "谓词只表示可用于治疗；顺位由限定字段承担。"
+
+  - requirement: "IARC Group 1危害分类"
+    fit: "SCHEMA_EXTENSION"
+    proposed_entity_type:
+      id: hazard_classification
+      id_prefix: hazard
+      label_zh: "危害分类"
+    proposed_relation:
+      id: classified_as
+      label_zh: "被分类为"
+      subject_types: [disease]
+      object_types: [hazard_classification]
+      boundary: "不得由分类关系推导个体必然因果或风险大小。"
+
+  - requirement: "人和动物排出虫卵"
+    fit: "SCHEMA_EXTENSION"
+    proposed_relation:
+      id: sheds_stage
+      label_zh: "可排出该阶段"
+      subject_types: [host]
+      object_types: [life_cycle_stage]
+      boundary: "宿主感染状态、排出途径和地区条件写入限定。"
+
+  - requirement: "虫卵进入淡水环境"
+    fit: "SCHEMA_EXTENSION"
+    proposed_relation:
+      id: present_in_environment
+      label_zh: "可存在于该环境"
+      subject_types: [life_cycle_stage]
+      object_types: [environment]
+      boundary: "不表示环境中的该阶段可直接感染人。"
+
+  - requirement: "One Health综合防控"
+    fit: "EXISTING_SCHEMA"
+    relation: controlled_by
+    boundary: "综合建议不等于本地干预效果已经测得。"
+
+validation_requirements:
+  - "pathogenic_stage_for的主语必须是life_cycle_stage，宾语必须是disease。"
+  - "classified_as的宾语必须是hazard_classification。"
+  - "sheds_stage的主语必须是host，宾语必须是life_cycle_stage。"
+  - "present_in_environment不得生成‘虫卵直接感染人’推论。"
+  - "treated_by若用于PCMS，必须含authority、recommendation_role和as_of。"
+  - "IARC Group 1关系必须同时存在hazard_not_individual_probability边界。"
+
+implementation_gate:
+  schema_patch: "APPLIED_ENTITY_1_1_RELATION_1_2"
+  teacher_approval: "APPROVED_BY_COURSE_LEAD"
+  collaborative_review: "CHEN_HAIYING_PENDING"
+  knowledge_write: "COMPLETED_PCMS_G01_G09"
+  regression: "PASS_16_OF_16"
+  student_release: "NOT_AUTHORIZED"

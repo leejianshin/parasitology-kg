@@ -36,8 +36,10 @@ Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和P
 候选提取已经完成；Phase 2/3修订由PR #4合并。Phase 4已经完成双路对照、教师
 裁决和39条原子候选的正式准入准备。Phase 5已完成39条候选的四类重分；第一批
 10条关系和14个实体已经学科教师批准为`reviewed`并进入正式知识层，其派生图
-已通过确定性重建与入库验收并由PR #8合并。Phase 6固定问题集、回答合同和教师
-评分门槛正在审阅；第二、三批仍未授权，面向学生的RAG尚未发布。
+已通过确定性重建与入库验收并由PR #8合并。Phase 6已完成同模型baseline—RAG
+成对测试、独立复核和确认性测试，结论为可进入有限学生试点准备，但尚未向学生
+发布。Phase 7已完成华支睾吸虫`PILOT_CONTENT_MINIMUM_SET`的权威核查、Schema
+适配、课程负责人裁决、正式准入和16项结构回归；陈海英老师协作复核待补。
 
 首个试点为：
 
@@ -58,6 +60,8 @@ Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和P
 - [Phase 5正式准入方案](phase5/clonorchis-sinensis/README.md)
 - [Phase 5第一批派生图入库验收](reviews/clonorchis-sinensis/phase5-batch1-intake-validation.md)
 - [Phase 6学生RAG验收协议](phase6/clonorchis-sinensis/README.md)
+- [Phase 7 PCMS正式准入](phase7/clonorchis-sinensis/pilot-content-minimum-set-admission.yml)
+- [学习通教学材料草案](docs/learning-platform/README.md)
 - [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
 - [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
 - [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)

@@ -23,7 +23,8 @@ Schema需要同时满足：
 | `templates/entity-template.md` | 单个实体的结构化Markdown模板 |
 | `sources/registry.yml` | 实际使用来源的登记表 |
 
-当前受控关系目录版本为`relation-types.yml@1.1`。
+当前实体目录版本为`entity-types.yml@1.1`，受控关系目录版本为
+`relation-types.yml@1.2`。
 
 ## 3. 实体ID
 
@@ -138,3 +139,30 @@ relations:
 情境化干预效果关系暂未进入受控词表。患病率、感染强度、知识、态度和自报行为等
 研究结局需要独立的研究证据模型，并需要对地区、时期、人群、结局和研究设计实施
 结构化校验；在该模型建立前只保留在研究证据层。
+
+## 10. 增量批次扩展
+
+已经进入冻结派生图或RAG基线的实体文档不得因后续批次而原地改写。后续新增关系
+写入`knowledge-extensions/`中的批次化扩展文档，由聚合构建器与原实体合并。
+
+扩展文档必须包含：
+
+- 唯一的`extension_id`；
+- 被扩展的既有实体`extends_entity`；
+- 独立的`admission.batch_id`和命题ID；
+- 只允许`reviewed`关系；
+- 与普通实体关系相同的证据和限定字段。
+
+该机制用于保持旧批次输入哈希和历史RAG基线不变。扩展文档不是第二个同名实体，
+不得改变原实体ID或覆盖原实体正文。
+
+## 11. PCMS新增边界
+
+`relation-types.yml@1.2`增加：
+
+- `pathogenic_stage_for`：生活史阶段指向疾病，不表示唯一致病因素；
+- `classified_as`：疾病指向危害分类，不表示个体风险或必然因果；
+- `sheds_stage`：感染宿主可排出某阶段，感染状态与途径写入限定；
+- `present_in_environment`：阶段存在于环境，不表示可从环境直接感染人。
+
+`treated_by`用于PCMS时必须以限定字段记录权威机构、推荐地位和核查日期。

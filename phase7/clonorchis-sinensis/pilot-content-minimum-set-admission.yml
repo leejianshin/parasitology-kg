@@ -1,0 +1,59 @@
+schema_version: "1.0"
+admission_id: "clonorchis_pcms_v1"
+batch_id: "P7-PCMS"
+status: "FORMALLY_ADMITTED_REVIEWED_NOT_STUDENT_RELEASED"
+approved_on: "2026-07-27"
+approved_by_role: "课程负责人"
+collaborative_review:
+  reviewer: "陈海英老师"
+  status: "PENDING"
+
+scope:
+  approved_groups:
+    - PCMS-G01
+    - PCMS-G02
+    - PCMS-G03
+    - PCMS-G04
+    - PCMS-G05
+    - PCMS-G06
+    - PCMS-G07
+    - PCMS-G08
+    - PCMS-G09
+  atomic_claims: 36
+  relation_claims: 30
+  narrative_claims: 6
+  new_entities: 17
+  extension_documents: 3
+
+special_decisions:
+  PCMS-D01: "教材正文采用虫卵宽度12–20 μm；CDC 11–20 μm保留在证据注释。"
+  PCMS-D02: "十二指肠液检卵按中国教材和推荐性标准范围准入；不写成常规首选。"
+  PCMS-D03: "阿苯达唑仅为美国CDC页面所列替代药物；不写成WHO推荐。"
+  PCMS-D04: "采用1类致癌物（Group 1，危害分类）；不推导个体风险或必然患癌。"
+  PCMS-D05: "三苯双脒不进入PCMS。"
+
+versioning_strategy:
+  frozen_base_batch: "P5-B1"
+  frozen_base_files_modified: false
+  incremental_relations: "knowledge-extensions/clonorchis-sinensis/*.md"
+  aggregate_output: "derived/clonorchis-sinensis/pcms-v1"
+  rationale: >-
+    后续正式关系以批次化扩展文档附着到既有实体，避免改写Phase 5冻结主数据
+    和Phase 6既有RAG评价基线。
+
+release_boundary:
+  student_release_authorized: false
+  learning_platform_publish_authorized: false
+  student_roster_authorized: false
+  raw_score_data_authorized: false
+  future_target_class: "2024临床医学2班"
+  student_count_recorded_here: null
+
+validation:
+  formal_knowledge_entities: 31
+  aggregate_relations: 40
+  pcms_new_entities: 17
+  pcms_relation_claims: 30
+  pcms_narrative_claims: 6
+  fixed_regression_cases: 16
+  fixed_regression_result: "PASS_16_OF_16"

@@ -1,0 +1,4 @@
+# Repository text is parsed or hashed as canonical input and some generated
+# artifacts are compared byte-for-byte. Keep all detected text as LF on every
+# operating system; binary files remain auto-detected and untouched.
+* text=auto eol=lf

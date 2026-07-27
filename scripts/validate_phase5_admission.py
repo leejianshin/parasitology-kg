@@ -97,14 +97,19 @@ def main() -> int:
             if path.name == "README.md":
                 continue
             metadata = parse_front_matter(path)
+            admission = metadata.get("admission")
+            if (
+                not isinstance(admission, dict)
+                or admission.get("batch_id") != "P5-B1"
+            ):
+                # Later reviewed batches are validated by their own admission
+                # checks. They must not change the frozen P5-B1 inventory.
+                continue
             entity_id = metadata["id"]
             if entity_id in documents:
                 fail(f"duplicate formal entity: {entity_id}")
             documents[entity_id] = metadata
 
-            admission = metadata.get("admission")
-            if not isinstance(admission, dict) or admission.get("batch_id") != "P5-B1":
-                fail(f"{entity_id} missing P5-B1 admission metadata")
             if metadata["review_status"] != expected_review_status:
                 fail(
                     f"{entity_id} must have review_status "
