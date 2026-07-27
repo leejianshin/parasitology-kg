@@ -12,8 +12,10 @@ import yaml
 
 try:
     from .build_pcms_graph import ROOT, build_pcms_graph
+    from .build_derived_graph import canonical_text_bytes
 except ImportError:
     from build_pcms_graph import ROOT, build_pcms_graph
+    from build_derived_graph import canonical_text_bytes
 
 
 SUITE_PATH = (
@@ -53,6 +55,14 @@ def load(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path} must contain a YAML mapping")
     return data
+
+
+def report_matches(path: Path, expected_content: bytes) -> bool:
+    """Compare a text report canonically while preserving all non-EOL bytes."""
+    return (
+        path.exists()
+        and canonical_text_bytes(path) == expected_content
+    )
 
 
 def evaluate(root: Path = ROOT) -> dict[str, Any]:
@@ -167,7 +177,7 @@ def main() -> int:
             report_path.write_bytes(content)
             action = "WRITE"
         else:
-            if not report_path.exists() or report_path.read_bytes() != content:
+            if not report_matches(report_path, content):
                 raise ValueError("PCMS regression report is missing or stale")
             action = "CHECK"
         print(

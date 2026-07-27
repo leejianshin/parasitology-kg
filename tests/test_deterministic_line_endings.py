@@ -8,6 +8,7 @@ from pathlib import Path
 
 from scripts.build_derived_graph import build_graph
 from scripts.build_pcms_graph import build_pcms_graph
+from scripts.validate_pcms_regression import report_matches
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,6 +84,23 @@ class DeterministicLineEndingTests(unittest.TestCase):
 
         self.assertEqual(actual_base, expected_base)
         self.assertEqual(actual_pcms, expected_pcms)
+
+    def test_regression_report_ignores_only_line_ending_style(self) -> None:
+        expected = (
+            b"report_version: '1.0'\n"
+            b"status: PASS\n"
+            b"counts:\n"
+            b"  cases: 16\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            report_path = Path(temporary_directory) / "report.yml"
+            report_path.write_bytes(expected.replace(b"\n", b"\r\n"))
+            self.assertTrue(report_matches(report_path, expected))
+
+            report_path.write_bytes(
+                expected.replace(b"status: PASS", b"status: FAIL")
+            )
+            self.assertFalse(report_matches(report_path, expected))
 
 
 if __name__ == "__main__":
