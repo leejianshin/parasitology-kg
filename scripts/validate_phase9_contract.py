@@ -189,7 +189,9 @@ def git_revision_value(root: Path, revision: str) -> str:
     return completed.stdout.strip()
 
 
-def verify_runtime_bundle(root: Path = ROOT) -> dict[str, Any]:
+def verify_runtime_bundle(
+    root: Path = ROOT, verify_source_commit: bool = True
+) -> dict[str, Any]:
     manifest_path = (
         root
         / "phase9"
@@ -216,9 +218,12 @@ def verify_runtime_bundle(root: Path = ROOT) -> dict[str, Any]:
     entries = manifest["files"]
     if [item["path"] for item in entries] != ALLOWED_RUNTIME_INPUTS:
         raise ValueError("runtime bundle file list changed")
-    actual_tree = git_revision_value(root, f"{SOURCE_COMMIT}^{{tree}}")
-    if actual_tree != SOURCE_TREE_SHA1:
-        raise ValueError("source commit tree does not match runtime bundle")
+    if verify_source_commit:
+        actual_tree = git_revision_value(root, f"{SOURCE_COMMIT}^{{tree}}")
+        if actual_tree != SOURCE_TREE_SHA1:
+            raise ValueError(
+                "source commit tree does not match runtime bundle"
+            )
     for entry in entries:
         relative_path = entry["path"]
         path = root / relative_path
@@ -233,13 +238,15 @@ def verify_runtime_bundle(root: Path = ROOT) -> dict[str, Any]:
             raise ValueError(
                 f"runtime bundle Git blob mismatch: {relative_path}"
             )
-        source_blob = git_revision_value(
-            root, f"{SOURCE_COMMIT}:{relative_path}"
-        )
-        if source_blob != entry["source_blob_sha1"]:
-            raise ValueError(
-                f"runtime bundle source-commit mismatch: {relative_path}"
+        if verify_source_commit:
+            source_blob = git_revision_value(
+                root, f"{SOURCE_COMMIT}:{relative_path}"
             )
+            if source_blob != entry["source_blob_sha1"]:
+                raise ValueError(
+                    "runtime bundle source-commit mismatch: "
+                    f"{relative_path}"
+                )
     return manifest
 
 

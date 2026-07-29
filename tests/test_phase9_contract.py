@@ -92,7 +92,6 @@ class Phase9ContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             temp_root = Path(temporary) / "repo"
             temp_root.mkdir()
-            shutil.copy2(ROOT / ".git", temp_root / ".git")
             paths = [*ALLOWED_RUNTIME_INPUTS]
             paths.append(
                 str(BUNDLE_MANIFEST_PATH.relative_to(ROOT))
@@ -105,7 +104,9 @@ class Phase9ContractTests(unittest.TestCase):
             tampered = temp_root / ALLOWED_RUNTIME_INPUTS[2]
             tampered.write_bytes(tampered.read_bytes() + b"\n")
             with self.assertRaisesRegex(ValueError, "size mismatch"):
-                verify_runtime_bundle(temp_root)
+                verify_runtime_bundle(
+                    temp_root, verify_source_commit=False
+                )
 
     def test_backend_trace_cannot_replace_student_visible_sources(
         self,
