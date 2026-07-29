@@ -1,0 +1,31 @@
+schema_version: "1.3"
+audit_id: "P9A-AUDIT-UNVERIFIED-001"
+request_schema_version: "1.0"
+request_id: "P9A-FIXTURE-UNVERIFIED-001"
+request_sha256: "6a0ca6cf1c89572637869314e2d51a10c005947f232c18db44686c3790038ffb"
+response_schema_version: "1.2"
+response_sha256: null
+started_at: "2026-07-29T12:00:00Z"
+completed_at: "2026-07-29T12:00:00Z"
+knowledge_authority:
+  knowledge_version: "clonorchis_pcms_v1"
+  source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+  canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
+  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  hash_verified: false
+retrieval:
+  candidate_claim_ids: []
+  admitted_claim_ids: []
+  excluded_candidates: []
+decision:
+  disposition: "ABSTAIN"
+  reason_codes: ["HARD_GATE_FAILED"]
+  material_claim_ids: []
+  coverage_gaps: ["Authority bundle hash verification failed."]
+output_validation:
+  result: "FAIL_CLOSED"
+  hard_fail_codes: ["AUTHORITY_BUNDLE_MISMATCH"]
+  student_visible_citation_count: 0
+privacy:
+  student_identifier_logged: false
+  public_export_allowed: false

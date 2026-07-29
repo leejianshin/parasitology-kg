@@ -40,6 +40,10 @@ Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和P
 成对测试、独立复核和确认性测试，结论为可进入有限学生试点准备，但尚未向学生
 发布。Phase 7已完成华支睾吸虫`PILOT_CONTENT_MINIMUM_SET`的权威核查、Schema
 适配、课程负责人裁决、正式准入和16项结构回归；陈海英老师协作复核待补。
+Phase 8已完成学习通教师端、固定题目、知识点抽题和学生端最小验证：普通作业
+可以承载审核后的固定题目，但平台知识库与思维阶梯不能提供可审计、关闭式失败的
+受控RAG。Phase 9-A因此开始冻结独立学生端RAG的运行、引用、拒答、审计和发布
+合同；学习通只保留为未来的链接与作业外壳。
 
 首个试点为：
 
@@ -61,6 +65,7 @@ Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和P
 - [Phase 5第一批派生图入库验收](reviews/clonorchis-sinensis/phase5-batch1-intake-validation.md)
 - [Phase 6学生RAG验收协议](phase6/clonorchis-sinensis/README.md)
 - [Phase 7 PCMS正式准入](phase7/clonorchis-sinensis/pilot-content-minimum-set-admission.yml)
+- [Phase 9-A受控RAG运行合同](phase9/clonorchis-sinensis/README.md)
 - [学习通教学材料草案](docs/learning-platform/README.md)
 - [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
 - [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)

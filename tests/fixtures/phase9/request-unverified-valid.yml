@@ -1,0 +1,5 @@
+schema_version: "1.0"
+request_id: "P9A-FIXTURE-UNVERIFIED-001"
+knowledge_version: "clonorchis_pcms_v1"
+locale: "zh-CN"
+query_text: "运行证据包未通过校验时，能否继续回答？"

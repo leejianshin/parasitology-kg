@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -42,3 +44,5 @@ jobs:
         run: python scripts/build_pcms_graph.py --check
       - name: Check PCMS fixed regression report
         run: python scripts/validate_pcms_regression.py --check
+      - name: Validate Phase 9 controlled RAG contract
+        run: python scripts/validate_phase9_contract.py

@@ -1,0 +1,213 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/response-schema-v1.2"
+title: "P9-A controlled RAG student-visible response"
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - request_id
+  - knowledge_version
+  - source_commit
+  - runtime_bundle_sha256
+  - disposition
+  - answer_units
+  - answer_text
+  - material_claims
+  - citations
+  - coverage_gaps
+  - validation
+properties:
+  schema_version:
+    const: "1.2"
+  request_id:
+    type: string
+    minLength: 1
+  knowledge_version:
+    const: "clonorchis_pcms_v1"
+  source_commit:
+    const: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+  runtime_bundle_sha256:
+    const: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  disposition:
+    enum: ["ANSWER", "PARTIAL", "ABSTAIN"]
+  answer_units:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [unit_id, unit_type]
+      properties:
+        unit_id:
+          type: string
+          pattern: "^UNIT-[0-9]{3}$"
+        unit_type:
+          enum: ["MATERIAL_CLAIM", "COVERAGE_GAP"]
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        citation_ids:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        gap_code:
+          enum:
+            - "NOT_COVERED"
+            - "PARTIALLY_COVERED"
+            - "QUALIFIER_UNRESOLVED"
+            - "SOURCE_UNRESOLVED"
+            - "AUTHORITY_MISMATCH"
+      allOf:
+        - if:
+            properties: {unit_type: {const: "MATERIAL_CLAIM"}}
+          then:
+            required: [claim_id, citation_ids]
+            not:
+              required: [gap_code]
+        - if:
+            properties: {unit_type: {const: "COVERAGE_GAP"}}
+          then:
+            required: [gap_code]
+            not:
+              anyOf:
+                - required: [claim_id]
+                - required: [citation_ids]
+  answer_text:
+    type: string
+    minLength: 1
+  material_claims:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [claim_id, entity_ids, qualifiers]
+      properties:
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        entity_ids:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        qualifiers:
+          type: object
+          additionalProperties:
+            type: [string, number, boolean]
+  citations:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - citation_id
+        - claim_id
+        - source_id
+        - source_label
+        - locator
+        - visible_to_student
+      properties:
+        citation_id: {type: string, minLength: 1}
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        source_id: {type: string, pattern: "^source\\."}
+        source_label: {type: string, minLength: 1}
+        locator: {type: string, minLength: 1}
+        visible_to_student: {const: true}
+  coverage_gaps:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [gap_code]
+      properties:
+        gap_code:
+          enum:
+            - "NOT_COVERED"
+            - "PARTIALLY_COVERED"
+            - "QUALIFIER_UNRESOLVED"
+            - "SOURCE_UNRESOLVED"
+            - "AUTHORITY_MISMATCH"
+  validation:
+    type: object
+    additionalProperties: false
+    required: [result, checked_contract_id, hard_fail_codes]
+    properties:
+      result: {enum: ["PASS", "FAIL_CLOSED"]}
+      checked_contract_id: {const: "clonorchis_p9a_controlled_rag_v1"}
+      hard_fail_codes:
+        type: array
+        uniqueItems: true
+        items:
+          enum:
+            - "AUTHORITY_BUNDLE_MISMATCH"
+            - "NO_SAFE_ADMITTED_ANSWER"
+            - "UNREGISTERED_SOURCE"
+            - "UNKNOWN_ENTITY_ID"
+            - "UNKNOWN_CLAIM_ID"
+            - "UNREVIEWED_CLAIM"
+            - "MISSING_REQUIRED_QUALIFIER"
+            - "HIDDEN_STUDENT_CITATION"
+            - "CITATION_CLAIM_MISMATCH"
+            - "CITATION_LOCATOR_MISMATCH"
+            - "DIAGNOSTIC_CLUE_PROMOTED_TO_CONFIRMATION"
+            - "ASSOCIATION_PROMOTED_TO_CAUSALITY"
+            - "MODEL_MEMORY_GAP_FILL"
+            - "EXTERNAL_WEB_GAP_FILL"
+            - "STUDENT_DATA_IN_PUBLIC_ARTIFACT"
+allOf:
+  - if:
+      properties: {disposition: {const: "ANSWER"}}
+    then:
+      properties:
+        answer_units:
+          contains:
+            properties: {unit_type: {const: "MATERIAL_CLAIM"}}
+          minContains: 1
+        material_claims: {minItems: 1}
+        citations: {minItems: 1}
+        coverage_gaps: {maxItems: 0}
+        validation:
+          properties:
+            result: {const: "PASS"}
+            hard_fail_codes: {maxItems: 0}
+  - if:
+      properties: {disposition: {const: "PARTIAL"}}
+    then:
+      properties:
+        answer_units:
+          allOf:
+            - contains:
+                properties: {unit_type: {const: "MATERIAL_CLAIM"}}
+              minContains: 1
+            - contains:
+                properties: {unit_type: {const: "COVERAGE_GAP"}}
+              minContains: 1
+        material_claims: {minItems: 1}
+        citations: {minItems: 1}
+        coverage_gaps: {minItems: 1}
+        validation:
+          properties:
+            result: {const: "PASS"}
+            hard_fail_codes: {maxItems: 0}
+  - if:
+      properties: {disposition: {const: "ABSTAIN"}}
+    then:
+      properties:
+        answer_units:
+          items:
+            properties:
+              unit_type: {const: "COVERAGE_GAP"}
+        material_claims: {maxItems: 0}
+        citations: {maxItems: 0}
+        coverage_gaps: {minItems: 1}
+        validation:
+          properties:
+            result: {const: "FAIL_CLOSED"}
+            hard_fail_codes: {minItems: 1}

@@ -1,0 +1,19 @@
+schema_version: "1.2"
+request_id: "P9A-FIXTURE-ABSTAIN-001"
+knowledge_version: "clonorchis_pcms_v1"
+source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+disposition: "ABSTAIN"
+answer_units:
+  - unit_id: "UNIT-001"
+    unit_type: "COVERAGE_GAP"
+    gap_code: "NOT_COVERED"
+answer_text: "当前知识库未覆盖所请求的结论，不能给出确定回答。"
+material_claims: []
+citations: []
+coverage_gaps:
+  - gap_code: "NOT_COVERED"
+validation:
+  result: "FAIL_CLOSED"
+  checked_contract_id: "clonorchis_p9a_controlled_rag_v1"
+  hard_fail_codes: ["NO_SAFE_ADMITTED_ANSWER"]

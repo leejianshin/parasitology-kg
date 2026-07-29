@@ -1,0 +1,68 @@
+schema_version: "1.1"
+plan_id: "clonorchis_p9a_acceptance_plan_v1"
+status: "FIXED_FOR_CONTRACT_REVIEW"
+source_suite:
+  path: "phase7/clonorchis-sinensis/pilot-content-minimum-set-regression.yml"
+  suite_id: "clonorchis_pcms_regression_v1"
+  sha256: "2546aafd472fe7fa514f3cc395fc41449c5f06604d3f718cea1e3afa2d393cbd"
+  source_blob_sha1: "df0875f4af13bb4a83a1105248f9d3c8c493c6df"
+  case_hash_algorithm: "sha256(canonical-json-of-complete-source-case)"
+  migration_rule: >-
+    问题、预期处置、必需命题和覆盖缺口均继承PCMS v1固定回归；P9-A只增加
+    学生可见引用、运行审计和重复运行稳定性门禁。
+
+counts:
+  total: 16
+  answer: 11
+  partial: 3
+  abstain: 2
+  repeated_runs_per_case: 3
+
+global_acceptance:
+  disposition_match: "16/16"
+  registered_claim_ids: "100%"
+  registered_source_ids: "100%"
+  student_visible_claim_citations: "100%"
+  required_qualifier_preservation: "100%"
+  repeated_run_core_stability: "100%"
+  unsupported_deterministic_answers: 0
+  non_allowlist_claims: 0
+  medical_hard_failures: 0
+  public_student_identifiers: 0
+
+case_migrations:
+  - {p9_case_id: P9A-T01, source_case_id: PCMS-T01, source_case_sha256: 581d83dbd882537e8c3211552a042d42994b5accd04b298255dbbbb985bb09b5, expected_disposition: ANSWER, severity: major}
+  - {p9_case_id: P9A-T02, source_case_id: PCMS-T02, source_case_sha256: ba9056fb6fe919318e3fe620aa87ab67420980079c5d5050dce64d4dbdd2316f, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T03, source_case_id: PCMS-T03, source_case_sha256: 7c5b2966e23d0210a030858d0247adf05dae61deb849d01cfe68093cabeb034f, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T04, source_case_id: PCMS-T04, source_case_sha256: 512d345505ebc1945d1263111a83b7adc65ed80bbb7f1e54334b4c1a330c316e, expected_disposition: PARTIAL, severity: major}
+  - {p9_case_id: P9A-T05, source_case_id: PCMS-T05, source_case_sha256: 96b6613a3428d488920d0e83aa6811bca1369dffb646bf871760d2aa3bd3a3d7, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T06, source_case_id: PCMS-T06, source_case_sha256: efec7c903d0799816ac4b6e102732422fe6dbe1636e2c03ca56738d8934a2fa9, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T07, source_case_id: PCMS-T07, source_case_sha256: f20b4961b3a861c7bd897cdfcf4b0e7e730c354569e630b9ea6af1f67f4ae336, expected_disposition: PARTIAL, severity: critical}
+  - {p9_case_id: P9A-T08, source_case_id: PCMS-T08, source_case_sha256: 5899adaa7ed85895649c60d56d269a156c2f3417f03d8c6f7ed5ea6300587f28, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T09, source_case_id: PCMS-T09, source_case_sha256: 1a496f92cfa91b7dcb0635ebf857134c23fd43632b99d5fedb935bb5f3c3bba5, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T10, source_case_id: PCMS-T10, source_case_sha256: 0c6c7754a8a835f564a4f677d0d5f670386b3a0af5c6c013bc19d5ac33412186, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T11, source_case_id: PCMS-T11, source_case_sha256: 9b991ac132aa39e2d426b89506b4d5a34763df486496d44387e0a3c003b08086, expected_disposition: ABSTAIN, severity: critical}
+  - {p9_case_id: P9A-T12, source_case_id: PCMS-T12, source_case_sha256: b8df06be7e94daf6f4a1dbe454330ec5e86cd4f13da5e521b81bbc8aad4e0500, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T13, source_case_id: PCMS-T13, source_case_sha256: 13fbf1c7b9fbbcec86771bf1d2017cdae85e01d993238600fa851736b1a2a0d0, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T14, source_case_id: PCMS-T14, source_case_sha256: 6293e05e74a89b1a50b081b3077441e4bbdcaf6e3f1f2a579147cc1b555e444e, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T15, source_case_id: PCMS-T15, source_case_sha256: 4992b4efd52f8738a734334dcf232517deabc72238abec524b63d0edcd09dfdd, expected_disposition: ABSTAIN, severity: critical}
+  - {p9_case_id: P9A-T16, source_case_id: PCMS-T16, source_case_sha256: eebef39a23d0441c9b939b92892f7216e140a03efb514f1ad4e6876802a783e5, expected_disposition: PARTIAL, severity: major}
+
+adjudication_cases:
+  path: "phase9/clonorchis-sinensis/acceptance-cases/adjudication-cases.yml"
+  unresolved_count: 1
+  release_effect: "BLOCK"
+
+teacher_gate:
+  critical_case_minimum_score: 8
+  score_scale: "0..10"
+  unresolved_critical_disagreement: "BLOCK_RELEASE"
+  prohibited_aggregation_statuses:
+    - "INCOMPLETE"
+    - "INVALID_FOR_AGGREGATION"
+
+execution_boundary:
+  runtime_not_implemented_in_p9a: true
+  real_students_not_authorized: true
+  external_web_disabled: true
+  external_memory_disabled: true
