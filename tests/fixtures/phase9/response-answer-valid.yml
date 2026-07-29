@@ -1,13 +1,17 @@
-schema_version: "1.1"
+schema_version: "1.2"
 request_id: "P9A-FIXTURE-ANSWER-001"
 knowledge_version: "clonorchis_pcms_v1"
 source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
 runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
 disposition: "ANSWER"
-answer_text: "流行地区生食或未充分加热淡水鱼的经历属于流行病学线索，不能单独确诊。"
+answer_units:
+  - unit_id: "UNIT-001"
+    unit_type: "MATERIAL_CLAIM"
+    claim_id: "W2-ATOM-001"
+    citation_ids: ["CIT-001"]
+answer_text: "在流行地区，生食或未充分加热淡水鱼的经历可作为华支睾吸虫病的流行病学线索。"
 material_claims:
   - claim_id: "W2-ATOM-001"
-    sentence_indexes: [0]
     entity_ids:
       - "disease.clonorchiasis"
       - "behavior.raw_undercooked_freshwater_fish_consumption"

@@ -142,7 +142,10 @@
   消解；
 - 当前只授权合同、Schema、验证器、测试和Draft PR；模型调用、运行时开发、
   网页部署、真实学生试点和发布仍未授权。
-- PR #11首轮独立只读复审结论为`CHANGES_REQUIRED / NOT_READY`；修订原子补充
+- PR #11首轮独立只读复审结论为`CHANGES_REQUIRED / NOT_READY`；第一修订补充
   逐文件运行证据包哈希、响应与审计语义校验、教师回件规范枚举、16例完整内容
-  哈希和`CS-RAG-F03`独立裁决合同。当前状态为
-  `P9A_REVISED_PENDING_REREVIEW`，仍不得启动正式P9-B1。
+  哈希和`CS-RAG-F03`独立裁决合同。第二轮独立复审仍为
+  `CHANGES_REQUIRED / NOT_READY`；第二修订进一步取消自由最终答案，采用结构化
+  `answer_units`和确定性展示文本，强制响应—审计对象绑定，并收紧F03裁决类型与
+  结果的条件约束。当前状态为`P9A_SECOND_REVISION_PENDING_REREVIEW`，等待第三
+  轮独立只读复审，仍不得启动正式P9-B1。

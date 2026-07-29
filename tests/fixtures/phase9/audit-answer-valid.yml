@@ -1,9 +1,9 @@
-schema_version: "1.1"
+schema_version: "1.2"
 audit_id: "P9A-AUDIT-ANSWER-001"
 request_id: "P9A-FIXTURE-ANSWER-001"
 request_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
-response_schema_version: "1.1"
-response_sha256: "3b4200fff39b0cf29e3edc0ae659651e2309c94737c28e9ab842386d00382c2e"
+response_schema_version: "1.2"
+response_sha256: "d23cddf0264a99c0f47eead125843c8abfbc880d0589ae5b6a00f78f2cbd1343"
 started_at: "2026-07-29T12:00:00Z"
 completed_at: "2026-07-29T12:00:01Z"
 knowledge_authority:

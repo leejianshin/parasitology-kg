@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/response-schema-v1.1"
+$id: "https://example.invalid/parasitology-kg/phase9/response-schema-v1.2"
 title: "P9-A controlled RAG student-visible response"
 type: object
 additionalProperties: false
@@ -10,6 +10,7 @@ required:
   - source_commit
   - runtime_bundle_sha256
   - disposition
+  - answer_units
   - answer_text
   - material_claims
   - citations
@@ -17,7 +18,7 @@ required:
   - validation
 properties:
   schema_version:
-    const: "1.1"
+    const: "1.2"
   request_id:
     type: string
     minLength: 1
@@ -29,6 +30,50 @@ properties:
     const: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
   disposition:
     enum: ["ANSWER", "PARTIAL", "ABSTAIN"]
+  answer_units:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [unit_id, unit_type]
+      properties:
+        unit_id:
+          type: string
+          pattern: "^UNIT-[0-9]{3}$"
+        unit_type:
+          enum: ["MATERIAL_CLAIM", "COVERAGE_GAP"]
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        citation_ids:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        gap_code:
+          enum:
+            - "NOT_COVERED"
+            - "PARTIALLY_COVERED"
+            - "QUALIFIER_UNRESOLVED"
+            - "SOURCE_UNRESOLVED"
+            - "AUTHORITY_MISMATCH"
+      allOf:
+        - if:
+            properties: {unit_type: {const: "MATERIAL_CLAIM"}}
+          then:
+            required: [claim_id, citation_ids]
+            not:
+              required: [gap_code]
+        - if:
+            properties: {unit_type: {const: "COVERAGE_GAP"}}
+          then:
+            required: [gap_code]
+            not:
+              anyOf:
+                - required: [claim_id]
+                - required: [citation_ids]
   answer_text:
     type: string
     minLength: 1
@@ -38,16 +83,11 @@ properties:
     items:
       type: object
       additionalProperties: false
-      required: [claim_id, sentence_indexes, entity_ids, qualifiers]
+      required: [claim_id, entity_ids, qualifiers]
       properties:
         claim_id:
           type: string
           pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
-        sentence_indexes:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items: {type: integer, minimum: 0}
         entity_ids:
           type: array
           minItems: 1
@@ -85,7 +125,7 @@ properties:
     items:
       type: object
       additionalProperties: false
-      required: [gap_code, description]
+      required: [gap_code]
       properties:
         gap_code:
           enum:
@@ -94,7 +134,6 @@ properties:
             - "QUALIFIER_UNRESOLVED"
             - "SOURCE_UNRESOLVED"
             - "AUTHORITY_MISMATCH"
-        description: {type: string, minLength: 1}
   validation:
     type: object
     additionalProperties: false
@@ -127,6 +166,10 @@ allOf:
       properties: {disposition: {const: "ANSWER"}}
     then:
       properties:
+        answer_units:
+          contains:
+            properties: {unit_type: {const: "MATERIAL_CLAIM"}}
+          minContains: 1
         material_claims: {minItems: 1}
         citations: {minItems: 1}
         coverage_gaps: {maxItems: 0}
@@ -138,6 +181,14 @@ allOf:
       properties: {disposition: {const: "PARTIAL"}}
     then:
       properties:
+        answer_units:
+          allOf:
+            - contains:
+                properties: {unit_type: {const: "MATERIAL_CLAIM"}}
+              minContains: 1
+            - contains:
+                properties: {unit_type: {const: "COVERAGE_GAP"}}
+              minContains: 1
         material_claims: {minItems: 1}
         citations: {minItems: 1}
         coverage_gaps: {minItems: 1}
@@ -149,6 +200,10 @@ allOf:
       properties: {disposition: {const: "ABSTAIN"}}
     then:
       properties:
+        answer_units:
+          items:
+            properties:
+              unit_type: {const: "COVERAGE_GAP"}
         material_claims: {maxItems: 0}
         citations: {maxItems: 0}
         coverage_gaps: {minItems: 1}

@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/adjudication-record-schema-v1"
+$id: "https://example.invalid/parasitology-kg/phase9/adjudication-record-schema-v1.1"
 title: "P9-A critical disagreement adjudication record"
 type: object
 additionalProperties: false
@@ -15,7 +15,7 @@ required:
   - rationale
   - decided_at
 properties:
-  schema_version: {const: "1.0"}
+  schema_version: {const: "1.1"}
   adjudication_id: {type: string, minLength: 1}
   adjudication_case_id: {const: "P9A-ADJ-001"}
   legacy_case_id: {const: "CS-RAG-F03"}
@@ -29,5 +29,33 @@ properties:
       - "EXCLUDE_WITH_JUSTIFICATION"
   resulting_disposition:
     enum: ["ANSWER", "PARTIAL", "ABSTAIN", "EXCLUDED"]
+  revised_contract_version:
+    type: string
+    pattern: "^clonorchis_p9a_controlled_rag_v[0-9]+(\\.[0-9]+)?$"
   rationale: {type: string, minLength: 1}
   decided_at: {type: string, format: date-time}
+allOf:
+  - if:
+      properties:
+        decision: {const: "CONFIRM_CURRENT_CONTRACT"}
+    then:
+      properties:
+        resulting_disposition: {const: "ANSWER"}
+      not:
+        required: [revised_contract_version]
+  - if:
+      properties:
+        decision: {const: "EXCLUDE_WITH_JUSTIFICATION"}
+    then:
+      properties:
+        resulting_disposition: {const: "EXCLUDED"}
+      not:
+        required: [revised_contract_version]
+  - if:
+      properties:
+        decision: {const: "REVISE_CONTRACT"}
+    then:
+      required: [revised_contract_version]
+      properties:
+        resulting_disposition:
+          enum: ["ANSWER", "PARTIAL", "ABSTAIN"]

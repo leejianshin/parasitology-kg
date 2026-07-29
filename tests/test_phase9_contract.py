@@ -18,6 +18,8 @@ from scripts.validate_phase9_contract import (
     RUNTIME_PATH,
     canonical_sha256,
     load_yaml,
+    render_response_text,
+    validate_adjudication_record_instance,
     validate_audit_instance,
     validate_contract_data,
     validate_response_instance,
@@ -45,6 +47,15 @@ class Phase9ContractTests(unittest.TestCase):
         )
         self.unverified_audit = load_yaml(
             fixture_dir / "audit-unverified-valid.yml"
+        )
+        self.adjudication_confirm = load_yaml(
+            fixture_dir / "adjudication-confirm-valid.yml"
+        )
+        self.adjudication_exclude = load_yaml(
+            fixture_dir / "adjudication-exclude-valid.yml"
+        )
+        self.adjudication_revise = load_yaml(
+            fixture_dir / "adjudication-revise-valid.yml"
         )
 
     def validate(self) -> dict[str, int]:
@@ -240,13 +251,13 @@ class Phase9ContractTests(unittest.TestCase):
         response = copy.deepcopy(self.answer_response)
         response["material_claims"][0] = {
             "claim_id": "PCMS-029",
-            "sentence_indexes": [0],
             "entity_ids": [
                 "disease.clonorchiasis",
                 "diagnostic.duodenal_fluid_egg_microscopy",
             ],
             "qualifiers": {},
         }
+        response["answer_units"][0]["claim_id"] = "PCMS-029"
         response["citations"][0] = {
             "citation_id": "CIT-001",
             "claim_id": "PCMS-029",
@@ -264,15 +275,76 @@ class Phase9ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "schema validation failed"):
             validate_response_instance(response, ROOT)
 
+    def test_wrong_free_answer_text_is_rejected(self) -> None:
+        response = copy.deepcopy(self.answer_response)
+        response["answer_text"] = "生食史可以直接确诊华支睾吸虫病。"
+        with self.assertRaisesRegex(
+            ValueError, "deterministic rendering"
+        ):
+            validate_response_instance(response, ROOT)
+
+    def test_abstain_cannot_leak_medical_conclusion_in_text(self) -> None:
+        response = copy.deepcopy(self.abstain_response)
+        response["answer_text"] = (
+            "当前知识库未覆盖，但根据常识可以直接确诊。"
+        )
+        with self.assertRaisesRegex(
+            ValueError, "deterministic rendering"
+        ):
+            validate_response_instance(response, ROOT)
+
+    def test_answer_unit_cannot_carry_free_text(self) -> None:
+        response = copy.deepcopy(self.answer_response)
+        response["answer_units"][0]["text"] = "未经验证的自由文本"
+        with self.assertRaisesRegex(ValueError, "schema validation failed"):
+            validate_response_instance(response, ROOT)
+
+    def test_material_claim_requires_exactly_one_answer_unit(self) -> None:
+        response = copy.deepcopy(self.answer_response)
+        response["answer_units"] = [
+            {
+                "unit_id": "UNIT-001",
+                "unit_type": "COVERAGE_GAP",
+                "gap_code": "NOT_COVERED",
+            }
+        ]
+        with self.assertRaisesRegex(
+            ValueError,
+            "schema validation failed|material claim exactly once",
+        ):
+            validate_response_instance(response, ROOT)
+
+    def test_answer_unit_citation_must_support_bound_claim(self) -> None:
+        response = copy.deepcopy(self.answer_response)
+        response["answer_units"][0]["claim_id"] = "PCMS-030"
+        with self.assertRaisesRegex(
+            ValueError,
+            "material claim exactly once|does not support",
+        ):
+            validate_response_instance(response, ROOT)
+
+    def test_fixture_answer_text_is_deterministically_rendered(self) -> None:
+        self.assertEqual(
+            render_response_text(self.answer_response, ROOT),
+            self.answer_response["answer_text"],
+        )
+
     def test_partial_cannot_report_fail_closed(self) -> None:
         response = copy.deepcopy(self.answer_response)
         response["disposition"] = "PARTIAL"
         response["coverage_gaps"] = [
             {
                 "gap_code": "PARTIALLY_COVERED",
-                "description": "fixture gap",
             }
         ]
+        response["answer_units"].append(
+            {
+                "unit_id": "UNIT-002",
+                "unit_type": "COVERAGE_GAP",
+                "gap_code": "PARTIALLY_COVERED",
+            }
+        )
+        response["answer_text"] = render_response_text(response, ROOT)
         response["validation"] = {
             "result": "FAIL_CLOSED",
             "checked_contract_id": "clonorchis_p9a_controlled_rag_v1",
@@ -286,6 +358,22 @@ class Phase9ContractTests(unittest.TestCase):
             self.answer_audit, ROOT, response=self.answer_response
         )
         validate_audit_instance(self.unverified_audit, ROOT)
+
+    def test_answer_audit_requires_actual_response_object(self) -> None:
+        with self.assertRaisesRegex(ValueError, "actual response object"):
+            validate_audit_instance(self.answer_audit, ROOT)
+
+    def test_non_null_abstain_hash_requires_actual_response_object(
+        self,
+    ) -> None:
+        audit = copy.deepcopy(self.unverified_audit)
+        audit["knowledge_authority"]["hash_verified"] = True
+        audit["response_sha256"] = "a" * 64
+        audit["output_validation"]["hard_fail_codes"] = [
+            "NO_SAFE_ADMITTED_ANSWER"
+        ]
+        with self.assertRaisesRegex(ValueError, "actual response object"):
+            validate_audit_instance(audit, ROOT)
 
     def test_unverified_authority_cannot_log_answer(self) -> None:
         audit = copy.deepcopy(self.answer_audit)
@@ -328,6 +416,38 @@ class Phase9ContractTests(unittest.TestCase):
             canonical_sha256(self.answer_response),
             self.answer_audit["response_sha256"],
         )
+
+    def test_valid_f03_adjudication_records_pass(self) -> None:
+        for record in (
+            self.adjudication_confirm,
+            self.adjudication_exclude,
+            self.adjudication_revise,
+        ):
+            validate_adjudication_record_instance(record, ROOT)
+
+    def test_f03_confirm_cannot_result_in_exclusion(self) -> None:
+        record = copy.deepcopy(self.adjudication_confirm)
+        record["resulting_disposition"] = "EXCLUDED"
+        with self.assertRaisesRegex(ValueError, "schema validation failed"):
+            validate_adjudication_record_instance(record, ROOT)
+
+    def test_f03_exclusion_cannot_result_in_answer(self) -> None:
+        record = copy.deepcopy(self.adjudication_exclude)
+        record["resulting_disposition"] = "ANSWER"
+        with self.assertRaisesRegex(ValueError, "schema validation failed"):
+            validate_adjudication_record_instance(record, ROOT)
+
+    def test_f03_revision_requires_contract_version(self) -> None:
+        record = copy.deepcopy(self.adjudication_revise)
+        record.pop("revised_contract_version")
+        with self.assertRaisesRegex(ValueError, "schema validation failed"):
+            validate_adjudication_record_instance(record, ROOT)
+
+    def test_f03_revision_cannot_result_in_exclusion(self) -> None:
+        record = copy.deepcopy(self.adjudication_revise)
+        record["resulting_disposition"] = "EXCLUDED"
+        with self.assertRaisesRegex(ValueError, "schema validation failed"):
+            validate_adjudication_record_instance(record, ROOT)
 
 
 if __name__ == "__main__":

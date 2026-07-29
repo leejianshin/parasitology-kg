@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/audit-log-schema-v1.1"
+$id: "https://example.invalid/parasitology-kg/phase9/audit-log-schema-v1.2"
 title: "P9-A controlled RAG private audit record"
 type: object
 additionalProperties: false
@@ -17,11 +17,11 @@ required:
   - output_validation
   - privacy
 properties:
-  schema_version: {const: "1.1"}
+  schema_version: {const: "1.2"}
   audit_id: {type: string, minLength: 1}
   request_id: {type: string, minLength: 1}
   request_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
-  response_schema_version: {const: "1.1"}
+  response_schema_version: {const: "1.2"}
   response_sha256:
     oneOf:
       - {type: string, pattern: "^[0-9a-f]{64}$"}

@@ -1,6 +1,6 @@
-contract_version: "1.1"
+contract_version: "1.2"
 contract_id: "clonorchis_p9a_controlled_rag_v1"
-status: "P9A_REVISED_PENDING_REREVIEW"
+status: "P9A_SECOND_REVISION_PENDING_REREVIEW"
 language: "zh-CN"
 
 authority:
@@ -39,6 +39,9 @@ execution:
   unverified_runtime_state: "REFUSE_TO_SERVE"
   schema_validation_required_before_semantic_validation: true
   semantic_post_validation_required_before_serving: true
+  structured_answer_units_required: true
+  student_display_text_generation: "DETERMINISTIC_FROM_VALIDATED_ANSWER_UNITS"
+  free_form_final_answer: "PROHIBITED"
 
 claim_admission:
   admitted_status: "reviewed"
@@ -76,6 +79,9 @@ disposition_policy:
 student_visible_provenance:
   hard_gate: true
   backend_trace_is_not_sufficient: true
+  each_material_answer_unit_must_bind:
+    - "claim_id"
+    - "citation_ids"
   each_material_claim_must_show:
     - "claim_id"
     - "source_id"
@@ -139,6 +145,8 @@ determinism:
     - "disposition"
     - "material_claim_ids"
     - "core_source_ids"
+    - "answer_units"
+    - "answer_text"
   repeated_run_count_for_acceptance: 3
-  stylistic_variation_allowed: true
+  stylistic_variation_allowed: false
   factual_or_provenance_drift_allowed: false

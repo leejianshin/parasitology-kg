@@ -115,6 +115,29 @@ EXPECTED_REQUIRED_QUALIFIERS = {
     "PCMS-035": {"direct_human_infectivity": False},
     "PCMS-036": {"universal_elimination_claim": False},
 }
+REQUIRED_QUALIFIER_DISPLAY = {
+    "PCMS-029": (
+        "限定：该结论适用于中国第10版教材及WS 309—2009语境；"
+        "取材较复杂；不等同于所有患者的常规首选检查。"
+    ),
+    "PCMS-030": "限定：这是WHO的推荐用药表述。",
+    "PCMS-031": "限定：这是美国CDC的替代药物表述。",
+    "PCMS-032": (
+        "限定：该分类表示致癌危害，不表示个体必然患癌或"
+        "给出个体患癌概率。"
+    ),
+    "PCMS-035": "限定：进入淡水环境的虫卵不能直接感染人。",
+    "PCMS-036": (
+        "限定：综合防控建议不等同于在所有场景下必然消除传播。"
+    ),
+}
+GAP_DISPLAY_TEXT = {
+    "NOT_COVERED": "当前知识库未覆盖所请求的结论，不能给出确定回答。",
+    "PARTIALLY_COVERED": "当前知识库仅部分覆盖所请求的结论。",
+    "QUALIFIER_UNRESOLVED": "必要限定条件尚未解决，不能扩展现有结论。",
+    "SOURCE_UNRESOLVED": "合法来源尚未解决，不能给出该结论。",
+    "AUTHORITY_MISMATCH": "运行证据包未通过校验，当前拒绝回答。",
+}
 EXPECTED_REVIEW_RECORDS = {
     "P6-INDEPENDENT-R02": {
         "sha256": (
@@ -365,18 +388,21 @@ def contract_context(root: Path = ROOT) -> dict[str, Any]:
             "entity_ids": {edge["subject"], edge["object"]},
             "evidence": edge["evidence"],
             "qualifiers": edge["qualifiers"],
+            "render_text": edge["statement_zh"],
         }
     for claim_id, claim in narrative_by_claim.items():
         claim_records[claim_id] = {
             "entity_ids": {narrative_entities[claim_id]},
             "evidence": claim["evidence"],
             "qualifiers": {},
+            "render_text": claim["claim"],
         }
     for claim_id, edge in supporting_narrative_by_claim.items():
         claim_records[claim_id] = {
             "entity_ids": {edge["subject"], edge["object"]},
             "evidence": edge["evidence"],
             "qualifiers": {},
+            "render_text": edge["statement_zh"],
         }
 
     return {
@@ -392,6 +418,31 @@ def contract_context(root: Path = ROOT) -> dict[str, Any]:
         "registered_sources": registered_sources,
         "suite": suite,
     }
+
+
+def render_response_text(
+    instance: dict[str, Any],
+    root: Path = ROOT,
+    context: dict[str, Any] | None = None,
+) -> str:
+    """Render student-visible text only from validated structured units."""
+    authority = context or contract_context(root)
+    rendered: list[str] = []
+    for unit in instance["answer_units"]:
+        if unit["unit_type"] == "MATERIAL_CLAIM":
+            claim_id = unit["claim_id"]
+            record = authority["claim_records"].get(claim_id)
+            if record is None:
+                raise ValueError(
+                    f"answer unit references unknown claim: {claim_id}"
+                )
+            rendered.append(record["render_text"])
+            qualifier_notice = REQUIRED_QUALIFIER_DISPLAY.get(claim_id)
+            if qualifier_notice is not None:
+                rendered.append(qualifier_notice)
+        else:
+            rendered.append(GAP_DISPLAY_TEXT[unit["gap_code"]])
+    return "\n".join(rendered)
 
 
 def validate_response_instance(
@@ -434,7 +485,9 @@ def validate_response_instance(
             )
 
     citations_by_claim: dict[str, list[dict[str, Any]]] = {}
+    citation_ids: list[str] = []
     for citation in instance["citations"]:
+        citation_ids.append(citation["citation_id"])
         claim_id = citation["claim_id"]
         if claim_id not in material_ids:
             raise ValueError(
@@ -468,6 +521,59 @@ def validate_response_instance(
             "material claims lack student-visible citations: "
             f"{sorted(missing_citations)}"
         )
+    if len(set(citation_ids)) != len(citation_ids):
+        raise ValueError("response contains duplicate citation IDs")
+
+    units = instance["answer_units"]
+    unit_ids = [unit["unit_id"] for unit in units]
+    if len(set(unit_ids)) != len(unit_ids):
+        raise ValueError("response contains duplicate answer unit IDs")
+    claim_units = [
+        unit for unit in units if unit["unit_type"] == "MATERIAL_CLAIM"
+    ]
+    unit_claim_ids = [unit["claim_id"] for unit in claim_units]
+    if Counter(unit_claim_ids) != Counter(material_ids):
+        raise ValueError(
+            "answer units do not bind every material claim exactly once"
+        )
+    citations_by_id = {
+        citation["citation_id"]: citation for citation in instance["citations"]
+    }
+    bound_citation_ids: list[str] = []
+    for unit in claim_units:
+        claim_id = unit["claim_id"]
+        for citation_id in unit["citation_ids"]:
+            citation = citations_by_id.get(citation_id)
+            if citation is None:
+                raise ValueError(
+                    f"answer unit references unknown citation: {citation_id}"
+                )
+            if citation["claim_id"] != claim_id:
+                raise ValueError(
+                    "answer unit citation does not support its bound claim"
+                )
+            bound_citation_ids.append(citation_id)
+    if Counter(bound_citation_ids) != Counter(citation_ids):
+        raise ValueError(
+            "answer units do not bind every citation exactly once"
+        )
+
+    gap_units = [
+        unit for unit in units if unit["unit_type"] == "COVERAGE_GAP"
+    ]
+    unit_gap_codes = [unit["gap_code"] for unit in gap_units]
+    declared_gap_codes = [
+        item["gap_code"] for item in instance["coverage_gaps"]
+    ]
+    if Counter(unit_gap_codes) != Counter(declared_gap_codes):
+        raise ValueError(
+            "answer units do not bind every coverage gap exactly once"
+        )
+    rendered_text = render_response_text(instance, root, context)
+    if instance["answer_text"] != rendered_text:
+        raise ValueError(
+            "answer text is not the deterministic rendering of answer units"
+        )
 
 
 def validate_audit_instance(
@@ -500,6 +606,13 @@ def validate_audit_instance(
         raise ValueError("audit material claims are not admitted claims")
 
     disposition = instance["decision"]["disposition"]
+    if response is None and (
+        disposition in {"ANSWER", "PARTIAL"}
+        or instance["response_sha256"] is not None
+    ):
+        raise ValueError(
+            "audit requires the actual response object for binding"
+        )
     citation_count = instance["output_validation"][
         "student_visible_citation_count"
     ]
@@ -530,6 +643,23 @@ def validate_audit_instance(
             raise ValueError("audit and response runtime bundles differ")
 
 
+def validate_adjudication_record_instance(
+    instance: dict[str, Any],
+    root: Path = ROOT,
+    schema: dict[str, Any] | None = None,
+) -> None:
+    adjudication_schema = schema or load_yaml(
+        root
+        / "phase9"
+        / "clonorchis-sinensis"
+        / "acceptance-cases"
+        / "adjudication-record-schema.yml"
+    )
+    validate_schema_instance(
+        instance, adjudication_schema, "adjudication record"
+    )
+
+
 def validate_contract_data(
     runtime: dict[str, Any],
     response_schema: dict[str, Any],
@@ -543,7 +673,7 @@ def validate_contract_data(
     manifest = context["manifest"]
     runtime_bundle = verify_runtime_bundle(root)
 
-    if runtime["status"] != "P9A_REVISED_PENDING_REREVIEW":
+    if runtime["status"] != "P9A_SECOND_REVISION_PENDING_REREVIEW":
         raise ValueError("P9-A runtime contract has an invalid status")
     authority = runtime["authority"]
     if authority["knowledge_version"] != "clonorchis_pcms_v1":
@@ -602,6 +732,14 @@ def validate_contract_data(
         is not True
     ):
         raise ValueError("semantic validation must precede serving")
+    if execution["structured_answer_units_required"] is not True:
+        raise ValueError("structured answer units must remain mandatory")
+    if execution["student_display_text_generation"] != (
+        "DETERMINISTIC_FROM_VALIDATED_ANSWER_UNITS"
+    ):
+        raise ValueError("student display text must be deterministic")
+    if execution["free_form_final_answer"] != "PROHIBITED":
+        raise ValueError("free-form final answer must remain prohibited")
 
     disposition = runtime["disposition_policy"]
     if disposition["allowed"] != ["ANSWER", "PARTIAL", "ABSTAIN"]:
@@ -611,6 +749,11 @@ def validate_contract_data(
         raise ValueError("student-visible provenance must be a hard gate")
     if visible["backend_trace_is_not_sufficient"] is not True:
         raise ValueError("backend trace cannot substitute for visible sources")
+    if set(visible["each_material_answer_unit_must_bind"]) != {
+        "claim_id",
+        "citation_ids",
+    }:
+        raise ValueError("material answer-unit bindings changed")
     if set(visible["each_material_claim_must_show"]) != {
         "claim_id",
         "source_id",
@@ -642,6 +785,12 @@ def validate_contract_data(
         raise ValueError("all semantic boundaries must remain enabled")
     if runtime["determinism"]["repeated_run_count_for_acceptance"] != 3:
         raise ValueError("acceptance must use three repeated runs")
+    if runtime["determinism"]["stylistic_variation_allowed"] is not False:
+        raise ValueError("validated display text cannot vary stylistically")
+    if not {"answer_units", "answer_text"}.issubset(
+        runtime["determinism"]["same_request_and_authority_must_preserve"]
+    ):
+        raise ValueError("deterministic response fields are not frozen")
 
     if len(context["nodes"]) != 31 or len(context["edges"]) != 40:
         raise ValueError("PCMS graph counts changed")
@@ -695,8 +844,10 @@ def validate_contract_data(
     validate_schema_definition(adjudication_schema, "adjudication record")
 
     response_props = response_schema["properties"]
-    if response_props["schema_version"].get("const") != "1.1":
+    if response_props["schema_version"].get("const") != "1.2":
         raise ValueError("response schema version is not frozen")
+    if "answer_units" not in response_schema["required"]:
+        raise ValueError("response schema does not require answer units")
     if response_props["knowledge_version"].get("const") != (
         "clonorchis_pcms_v1"
     ):
@@ -723,8 +874,10 @@ def validate_contract_data(
         raise ValueError("response citations omit required visible fields")
 
     audit_props = audit_schema["properties"]
-    if audit_props["schema_version"].get("const") != "1.1":
+    if audit_props["schema_version"].get("const") != "1.2":
         raise ValueError("audit schema version is not frozen")
+    if audit_props["response_schema_version"].get("const") != "1.2":
+        raise ValueError("audit response schema version is not frozen")
     if audit_props["knowledge_authority"]["properties"][
         "source_commit"
     ].get("const") != SOURCE_COMMIT:
@@ -1028,12 +1181,21 @@ def validate_contract_data(
     unverified_audit = load_yaml(
         fixture_dir / "audit-unverified-valid.yml"
     )
+    adjudication_fixtures = [
+        load_yaml(fixture_dir / "adjudication-confirm-valid.yml"),
+        load_yaml(fixture_dir / "adjudication-exclude-valid.yml"),
+        load_yaml(fixture_dir / "adjudication-revise-valid.yml"),
+    ]
     validate_response_instance(valid_response, root, response_schema)
     validate_response_instance(abstain_response, root, response_schema)
     validate_audit_instance(
         answer_audit, root, audit_schema, valid_response
     )
     validate_audit_instance(unverified_audit, root, audit_schema)
+    for record in adjudication_fixtures:
+        validate_adjudication_record_instance(
+            record, root, adjudication_schema
+        )
 
     return {
         "entities": len(context["nodes"]),
