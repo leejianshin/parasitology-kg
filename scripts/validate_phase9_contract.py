@@ -21,6 +21,7 @@ from jsonschema.exceptions import SchemaError, ValidationError
 ROOT = Path(__file__).resolve().parents[1]
 P9_DIR = ROOT / "phase9" / "clonorchis-sinensis"
 RUNTIME_PATH = P9_DIR / "runtime-contract.yml"
+REQUEST_PATH = P9_DIR / "request-schema.yml"
 RESPONSE_PATH = P9_DIR / "response-schema.yml"
 AUDIT_PATH = P9_DIR / "audit-log-schema.yml"
 REVIEW_PATH = P9_DIR / "reviewer-evidence-admission.yml"
@@ -445,6 +446,20 @@ def render_response_text(
     return "\n".join(rendered)
 
 
+def validate_request_instance(
+    instance: dict[str, Any],
+    root: Path = ROOT,
+    schema: dict[str, Any] | None = None,
+) -> None:
+    request_schema = schema or load_yaml(
+        root
+        / "phase9"
+        / "clonorchis-sinensis"
+        / "request-schema.yml"
+    )
+    validate_schema_instance(instance, request_schema, "request")
+
+
 def validate_response_instance(
     instance: dict[str, Any],
     root: Path = ROOT,
@@ -580,6 +595,7 @@ def validate_audit_instance(
     instance: dict[str, Any],
     root: Path = ROOT,
     schema: dict[str, Any] | None = None,
+    request: dict[str, Any] | None = None,
     response: dict[str, Any] | None = None,
 ) -> None:
     audit_schema = schema or load_yaml(
@@ -589,6 +605,15 @@ def validate_audit_instance(
         / "audit-log-schema.yml"
     )
     validate_schema_instance(instance, audit_schema, "audit")
+    if request is None:
+        raise ValueError(
+            "audit requires the actual request object for binding"
+        )
+    validate_request_instance(request, root)
+    if instance["request_sha256"] != canonical_sha256(request):
+        raise ValueError("audit request hash does not match request")
+    if instance["request_id"] != request["request_id"]:
+        raise ValueError("audit and request IDs differ")
     context = contract_context(root)
 
     retrieval = instance["retrieval"]
@@ -627,6 +652,8 @@ def validate_audit_instance(
         validate_response_instance(response, root)
         if instance["response_sha256"] != canonical_sha256(response):
             raise ValueError("audit response hash does not match response")
+        if response["request_id"] != request["request_id"]:
+            raise ValueError("response and request IDs differ")
         if instance["request_id"] != response["request_id"]:
             raise ValueError("audit and response request IDs differ")
         if disposition != response["disposition"]:
@@ -662,6 +689,7 @@ def validate_adjudication_record_instance(
 
 def validate_contract_data(
     runtime: dict[str, Any],
+    request_schema: dict[str, Any],
     response_schema: dict[str, Any],
     audit_schema: dict[str, Any],
     review: dict[str, Any],
@@ -673,7 +701,9 @@ def validate_contract_data(
     manifest = context["manifest"]
     runtime_bundle = verify_runtime_bundle(root)
 
-    if runtime["status"] != "P9A_SECOND_REVISION_PENDING_REREVIEW":
+    if runtime["status"] != (
+        "P9A_REQUEST_AUDIT_BINDING_PENDING_FINAL_REVIEW"
+    ):
         raise ValueError("P9-A runtime contract has an invalid status")
     authority = runtime["authority"]
     if authority["knowledge_version"] != "clonorchis_pcms_v1":
@@ -718,6 +748,17 @@ def validate_contract_data(
         raise ValueError("web access must remain disabled")
     if execution["external_memory"] != "DISABLED":
         raise ValueError("external memory must remain disabled")
+    if (
+        execution["request_schema_validation_required_before_retrieval"]
+        is not True
+    ):
+        raise ValueError("request schema must be validated before retrieval")
+    if execution["every_audit_must_bind_actual_request"] is not True:
+        raise ValueError("every audit must bind the actual request")
+    if execution["request_hash_canonicalization"] != (
+        "SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE"
+    ):
+        raise ValueError("request hash canonicalization changed")
     if execution["retrieval_mode"] != "ALLOWLIST_ONLY":
         raise ValueError("retrieval must remain allowlist-only")
     if execution["unverified_runtime_state"] != "REFUSE_TO_SERVE":
@@ -822,6 +863,7 @@ def validate_contract_data(
                 raise ValueError(f"{claim_id} has evidence without locator")
 
     for schema_name, schema in {
+        "request": request_schema,
         "response": response_schema,
         "audit": audit_schema,
     }.items():
@@ -842,6 +884,24 @@ def validate_contract_data(
         / "adjudication-record-schema.yml"
     )
     validate_schema_definition(adjudication_schema, "adjudication record")
+
+    request_props = request_schema["properties"]
+    if request_props["schema_version"].get("const") != "1.0":
+        raise ValueError("request schema version is not frozen")
+    if request_props["knowledge_version"].get("const") != (
+        "clonorchis_pcms_v1"
+    ):
+        raise ValueError("request knowledge version is not frozen")
+    if request_props["locale"].get("const") != "zh-CN":
+        raise ValueError("request locale is not frozen")
+    if set(request_schema["required"]) != {
+        "schema_version",
+        "request_id",
+        "knowledge_version",
+        "locale",
+        "query_text",
+    }:
+        raise ValueError("request required fields changed")
 
     response_props = response_schema["properties"]
     if response_props["schema_version"].get("const") != "1.2":
@@ -874,8 +934,10 @@ def validate_contract_data(
         raise ValueError("response citations omit required visible fields")
 
     audit_props = audit_schema["properties"]
-    if audit_props["schema_version"].get("const") != "1.2":
+    if audit_props["schema_version"].get("const") != "1.3":
         raise ValueError("audit schema version is not frozen")
+    if audit_props["request_schema_version"].get("const") != "1.0":
+        raise ValueError("audit request schema version is not frozen")
     if audit_props["response_schema_version"].get("const") != "1.2":
         raise ValueError("audit response schema version is not frozen")
     if audit_props["knowledge_authority"]["properties"][
@@ -1171,6 +1233,12 @@ def validate_contract_data(
         raise ValueError("unapproved adjudication record was introduced")
 
     fixture_dir = root / "tests" / "fixtures" / "phase9"
+    answer_request = load_yaml(
+        fixture_dir / "request-answer-valid.yml"
+    )
+    unverified_request = load_yaml(
+        fixture_dir / "request-unverified-valid.yml"
+    )
     valid_response = load_yaml(
         fixture_dir / "response-answer-valid.yml"
     )
@@ -1186,12 +1254,25 @@ def validate_contract_data(
         load_yaml(fixture_dir / "adjudication-exclude-valid.yml"),
         load_yaml(fixture_dir / "adjudication-revise-valid.yml"),
     ]
+    validate_request_instance(answer_request, root, request_schema)
+    validate_request_instance(
+        unverified_request, root, request_schema
+    )
     validate_response_instance(valid_response, root, response_schema)
     validate_response_instance(abstain_response, root, response_schema)
     validate_audit_instance(
-        answer_audit, root, audit_schema, valid_response
+        answer_audit,
+        root,
+        audit_schema,
+        request=answer_request,
+        response=valid_response,
     )
-    validate_audit_instance(unverified_audit, root, audit_schema)
+    validate_audit_instance(
+        unverified_audit,
+        root,
+        audit_schema,
+        request=unverified_request,
+    )
     for record in adjudication_fixtures:
         validate_adjudication_record_instance(
             record, root, adjudication_schema
@@ -1210,6 +1291,7 @@ def validate(root: Path = ROOT) -> dict[str, int]:
     p9_dir = root / "phase9" / "clonorchis-sinensis"
     return validate_contract_data(
         load_yaml(p9_dir / "runtime-contract.yml"),
+        load_yaml(p9_dir / "request-schema.yml"),
         load_yaml(p9_dir / "response-schema.yml"),
         load_yaml(p9_dir / "audit-log-schema.yml"),
         load_yaml(p9_dir / "reviewer-evidence-admission.yml"),

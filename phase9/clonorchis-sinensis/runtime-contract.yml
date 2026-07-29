@@ -1,6 +1,6 @@
-contract_version: "1.2"
+contract_version: "1.3"
 contract_id: "clonorchis_p9a_controlled_rag_v1"
-status: "P9A_SECOND_REVISION_PENDING_REREVIEW"
+status: "P9A_REQUEST_AUDIT_BINDING_PENDING_FINAL_REVIEW"
 language: "zh-CN"
 
 authority:
@@ -35,6 +35,9 @@ execution:
   external_memory: "DISABLED"
   generation_temperature_policy: "IMPLEMENTATION_MUST_FREEZE"
   one_request_one_audit_record: true
+  request_schema_validation_required_before_retrieval: true
+  every_audit_must_bind_actual_request: true
+  request_hash_canonicalization: "SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE"
   runtime_must_verify_authority_hash_before_serving: true
   unverified_runtime_state: "REFUSE_TO_SERVE"
   schema_validation_required_before_semantic_validation: true

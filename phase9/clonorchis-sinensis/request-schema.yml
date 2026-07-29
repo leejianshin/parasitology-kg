@@ -1,0 +1,25 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/request-schema-v1.0"
+title: "P9-A controlled RAG request"
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - request_id
+  - knowledge_version
+  - locale
+  - query_text
+properties:
+  schema_version:
+    const: "1.0"
+  request_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  knowledge_version:
+    const: "clonorchis_pcms_v1"
+  locale:
+    const: "zh-CN"
+  query_text:
+    type: string
+    minLength: 1
+    maxLength: 2000

@@ -11,6 +11,7 @@ from scripts.validate_phase9_contract import (
     AUDIT_PATH,
     BUNDLE_MANIFEST_PATH,
     PLAN_PATH,
+    REQUEST_PATH,
     RELEASE_PATH,
     RESPONSE_PATH,
     REVIEW_PATH,
@@ -22,6 +23,7 @@ from scripts.validate_phase9_contract import (
     validate_adjudication_record_instance,
     validate_audit_instance,
     validate_contract_data,
+    validate_request_instance,
     validate_response_instance,
     verify_runtime_bundle,
 )
@@ -30,12 +32,19 @@ from scripts.validate_phase9_contract import (
 class Phase9ContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.runtime = load_yaml(RUNTIME_PATH)
+        self.request = load_yaml(REQUEST_PATH)
         self.response = load_yaml(RESPONSE_PATH)
         self.audit = load_yaml(AUDIT_PATH)
         self.review = load_yaml(REVIEW_PATH)
         self.release = load_yaml(RELEASE_PATH)
         self.plan = load_yaml(PLAN_PATH)
         fixture_dir = ROOT / "tests" / "fixtures" / "phase9"
+        self.answer_request = load_yaml(
+            fixture_dir / "request-answer-valid.yml"
+        )
+        self.unverified_request = load_yaml(
+            fixture_dir / "request-unverified-valid.yml"
+        )
         self.answer_response = load_yaml(
             fixture_dir / "response-answer-valid.yml"
         )
@@ -61,6 +70,7 @@ class Phase9ContractTests(unittest.TestCase):
     def validate(self) -> dict[str, int]:
         return validate_contract_data(
             self.runtime,
+            self.request,
             self.response,
             self.audit,
             self.review,
@@ -354,14 +364,72 @@ class Phase9ContractTests(unittest.TestCase):
             validate_response_instance(response, ROOT)
 
     def test_valid_answer_and_unverified_audits_pass(self) -> None:
+        validate_request_instance(self.answer_request, ROOT)
+        validate_request_instance(self.unverified_request, ROOT)
         validate_audit_instance(
-            self.answer_audit, ROOT, response=self.answer_response
+            self.answer_audit,
+            ROOT,
+            request=self.answer_request,
+            response=self.answer_response,
         )
-        validate_audit_instance(self.unverified_audit, ROOT)
+        validate_audit_instance(
+            self.unverified_audit,
+            ROOT,
+            request=self.unverified_request,
+        )
 
     def test_answer_audit_requires_actual_response_object(self) -> None:
         with self.assertRaisesRegex(ValueError, "actual response object"):
-            validate_audit_instance(self.answer_audit, ROOT)
+            validate_audit_instance(
+                self.answer_audit,
+                ROOT,
+                request=self.answer_request,
+            )
+
+    def test_audit_requires_actual_request_object(self) -> None:
+        with self.assertRaisesRegex(ValueError, "actual request object"):
+            validate_audit_instance(
+                self.answer_audit,
+                ROOT,
+                response=self.answer_response,
+            )
+
+    def test_tampered_request_is_rejected(self) -> None:
+        request = copy.deepcopy(self.answer_request)
+        request["query_text"] += "（被篡改）"
+        with self.assertRaisesRegex(ValueError, "request hash"):
+            validate_audit_instance(
+                self.answer_audit,
+                ROOT,
+                request=request,
+                response=self.answer_response,
+            )
+
+    def test_audit_request_id_must_match_actual_request(self) -> None:
+        request = copy.deepcopy(self.answer_request)
+        request["request_id"] = "P9A-FIXTURE-DIFFERENT-001"
+        audit = copy.deepcopy(self.answer_audit)
+        audit["request_sha256"] = canonical_sha256(request)
+        with self.assertRaisesRegex(ValueError, "audit and request IDs"):
+            validate_audit_instance(
+                audit,
+                ROOT,
+                request=request,
+                response=self.answer_response,
+            )
+
+    def test_response_request_id_must_match_actual_request(self) -> None:
+        response = copy.deepcopy(self.answer_response)
+        response["request_id"] = "P9A-FIXTURE-DIFFERENT-001"
+        audit = copy.deepcopy(self.answer_audit)
+        audit["response_sha256"] = canonical_sha256(response)
+        with self.assertRaisesRegex(ValueError, "response and request IDs"):
+            validate_audit_instance(
+                audit,
+                ROOT,
+                request=self.answer_request,
+                response=response,
+            )
 
     def test_non_null_abstain_hash_requires_actual_response_object(
         self,
@@ -373,13 +441,19 @@ class Phase9ContractTests(unittest.TestCase):
             "NO_SAFE_ADMITTED_ANSWER"
         ]
         with self.assertRaisesRegex(ValueError, "actual response object"):
-            validate_audit_instance(audit, ROOT)
+            validate_audit_instance(
+                audit,
+                ROOT,
+                request=self.unverified_request,
+            )
 
     def test_unverified_authority_cannot_log_answer(self) -> None:
         audit = copy.deepcopy(self.answer_audit)
         audit["knowledge_authority"]["hash_verified"] = False
         with self.assertRaisesRegex(ValueError, "schema validation failed"):
-            validate_audit_instance(audit, ROOT)
+            validate_audit_instance(
+                audit, ROOT, request=self.answer_request
+            )
 
     def test_answer_audit_cannot_have_zero_visible_citations(self) -> None:
         audit = copy.deepcopy(self.answer_audit)
@@ -387,7 +461,9 @@ class Phase9ContractTests(unittest.TestCase):
             "student_visible_citation_count"
         ] = 0
         with self.assertRaisesRegex(ValueError, "schema validation failed"):
-            validate_audit_instance(audit, ROOT)
+            validate_audit_instance(
+                audit, ROOT, request=self.answer_request
+            )
 
     def test_audit_cannot_admit_unknown_claim(self) -> None:
         audit = copy.deepcopy(self.answer_audit)
@@ -395,21 +471,38 @@ class Phase9ContractTests(unittest.TestCase):
         audit["retrieval"]["admitted_claim_ids"] = ["PCMS-999"]
         audit["decision"]["material_claim_ids"] = ["PCMS-999"]
         with self.assertRaisesRegex(ValueError, "unknown claim"):
-            validate_audit_instance(audit, ROOT)
+            validate_audit_instance(
+                audit, ROOT, request=self.answer_request
+            )
 
     def test_audit_material_claim_must_be_admitted(self) -> None:
         audit = copy.deepcopy(self.answer_audit)
         audit["retrieval"]["admitted_claim_ids"] = []
         with self.assertRaisesRegex(ValueError, "not admitted"):
-            validate_audit_instance(audit, ROOT)
+            validate_audit_instance(
+                audit, ROOT, request=self.answer_request
+            )
 
     def test_audit_response_hash_must_match(self) -> None:
         audit = copy.deepcopy(self.answer_audit)
         audit["response_sha256"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "response hash"):
             validate_audit_instance(
-                audit, ROOT, response=self.answer_response
+                audit,
+                ROOT,
+                request=self.answer_request,
+                response=self.answer_response,
             )
+
+    def test_fixture_request_hashes_are_canonical(self) -> None:
+        self.assertEqual(
+            canonical_sha256(self.answer_request),
+            self.answer_audit["request_sha256"],
+        )
+        self.assertEqual(
+            canonical_sha256(self.unverified_request),
+            self.unverified_audit["request_sha256"],
+        )
 
     def test_fixture_response_hash_is_canonical(self) -> None:
         self.assertEqual(

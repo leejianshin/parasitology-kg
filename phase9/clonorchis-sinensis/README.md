@@ -19,6 +19,7 @@ P9-A只冻结学生端受控RAG的接口、证据、拒答、审计和发布门�
 - `runtime-contract.yml`：运行状态机、证据白名单、回答处置和硬失败；
 - `runtime-bundle-manifest.yml`：逐文件冻结运行证据包的大小、SHA256、
   Git blob和来源提交；
+- `request-schema.yml`：进入检索前必须验证并冻结哈希的请求对象；
 - `response-schema.yml`：学生可见回答信封；
 - `audit-log-schema.yml`：逐次运行的机器审计记录；
 - `reviewer-evidence-admission.yml`：去标识化复核证据的准入与排除；
@@ -46,9 +47,12 @@ P9-A只冻结学生端受控RAG的接口、证据、拒答、审计和发布门�
    学生可见`answer_text`由系统从正式主张文本和固定边界语句确定性生成。
 10. `ANSWER`、`PARTIAL`及任何带非空响应哈希的审计记录必须同时提交实际响应
     对象进行跨对象校验，禁止仅凭格式合法的哈希形成孤立审计记录。
+11. 每一条审计记录（包括关闭式拒答）都必须同时提交实际请求对象；系统先按
+    冻结请求Schema校验，再以排序UTF-8 JSON、无无意义空白的规范形式计算
+    `request_sha256`，并同时核对请求、响应与审计中的`request_id`。
 
 ## 当前边界
 
-状态为`P9A_SECOND_REVISION_PENDING_REREVIEW`。这表示合同已按第二轮独立复审
-意见完成第二修订，正等待第三轮独立只读复审；不表示P9-A已经关闭，不表示运行
-时已经实现，也不表示任何学生试点或发布已经获准。
+状态为`P9A_REQUEST_AUDIT_BINDING_PENDING_FINAL_REVIEW`。这表示合同已按第三轮
+独立复审意见补齐请求—审计对象绑定，正等待最终独立只读复验；不表示P9-A已经
+关闭，不表示运行时已经实现，也不表示任何学生试点或发布已经获准。

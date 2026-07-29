@@ -147,5 +147,8 @@
   哈希和`CS-RAG-F03`独立裁决合同。第二轮独立复审仍为
   `CHANGES_REQUIRED / NOT_READY`；第二修订进一步取消自由最终答案，采用结构化
   `answer_units`和确定性展示文本，强制响应—审计对象绑定，并收紧F03裁决类型与
-  结果的条件约束。当前状态为`P9A_SECOND_REVISION_PENDING_REREVIEW`，等待第三
-  轮独立只读复审，仍不得启动正式P9-B1。
+  结果的条件约束。第三轮独立复审只剩请求—审计对象绑定缺口；第三修订新增冻结
+  请求Schema，强制所有审计记录绑定实际请求对象，并核对规范化请求哈希以及
+  请求、响应、审计三方`request_id`。当前状态为
+  `P9A_REQUEST_AUDIT_BINDING_PENDING_FINAL_REVIEW`，等待最终独立只读复验，
+  仍不得启动正式P9-B1。
