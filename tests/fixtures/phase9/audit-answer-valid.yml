@@ -1,0 +1,30 @@
+schema_version: "1.1"
+audit_id: "P9A-AUDIT-ANSWER-001"
+request_id: "P9A-FIXTURE-ANSWER-001"
+request_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+response_schema_version: "1.1"
+response_sha256: "3b4200fff39b0cf29e3edc0ae659651e2309c94737c28e9ab842386d00382c2e"
+started_at: "2026-07-29T12:00:00Z"
+completed_at: "2026-07-29T12:00:01Z"
+knowledge_authority:
+  knowledge_version: "clonorchis_pcms_v1"
+  source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+  canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
+  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  hash_verified: true
+retrieval:
+  candidate_claim_ids: ["W2-ATOM-001"]
+  admitted_claim_ids: ["W2-ATOM-001"]
+  excluded_candidates: []
+decision:
+  disposition: "ANSWER"
+  reason_codes: ["FULLY_COVERED"]
+  material_claim_ids: ["W2-ATOM-001"]
+  coverage_gaps: []
+output_validation:
+  result: "PASS"
+  hard_fail_codes: []
+  student_visible_citation_count: 1
+privacy:
+  student_identifier_logged: false
+  public_export_allowed: false

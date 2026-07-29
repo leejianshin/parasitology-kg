@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/response-schema-v1"
+$id: "https://example.invalid/parasitology-kg/phase9/response-schema-v1.1"
 title: "P9-A controlled RAG student-visible response"
 type: object
 additionalProperties: false
@@ -8,6 +8,7 @@ required:
   - request_id
   - knowledge_version
   - source_commit
+  - runtime_bundle_sha256
   - disposition
   - answer_text
   - material_claims
@@ -16,7 +17,7 @@ required:
   - validation
 properties:
   schema_version:
-    const: "1.0"
+    const: "1.1"
   request_id:
     type: string
     minLength: 1
@@ -24,17 +25,20 @@ properties:
     const: "clonorchis_pcms_v1"
   source_commit:
     const: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+  runtime_bundle_sha256:
+    const: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
   disposition:
     enum: ["ANSWER", "PARTIAL", "ABSTAIN"]
   answer_text:
     type: string
+    minLength: 1
   material_claims:
     type: array
     uniqueItems: true
     items:
       type: object
       additionalProperties: false
-      required: [claim_id, sentence_indexes, entity_ids]
+      required: [claim_id, sentence_indexes, entity_ids, qualifiers]
       properties:
         claim_id:
           type: string
@@ -49,6 +53,10 @@ properties:
           minItems: 1
           uniqueItems: true
           items: {type: string, minLength: 1}
+        qualifiers:
+          type: object
+          additionalProperties:
+            type: [string, number, boolean]
   citations:
     type: array
     uniqueItems: true
@@ -97,7 +105,23 @@ properties:
       hard_fail_codes:
         type: array
         uniqueItems: true
-        items: {type: string}
+        items:
+          enum:
+            - "AUTHORITY_BUNDLE_MISMATCH"
+            - "NO_SAFE_ADMITTED_ANSWER"
+            - "UNREGISTERED_SOURCE"
+            - "UNKNOWN_ENTITY_ID"
+            - "UNKNOWN_CLAIM_ID"
+            - "UNREVIEWED_CLAIM"
+            - "MISSING_REQUIRED_QUALIFIER"
+            - "HIDDEN_STUDENT_CITATION"
+            - "CITATION_CLAIM_MISMATCH"
+            - "CITATION_LOCATOR_MISMATCH"
+            - "DIAGNOSTIC_CLUE_PROMOTED_TO_CONFIRMATION"
+            - "ASSOCIATION_PROMOTED_TO_CAUSALITY"
+            - "MODEL_MEMORY_GAP_FILL"
+            - "EXTERNAL_WEB_GAP_FILL"
+            - "STUDENT_DATA_IN_PUBLIC_ARTIFACT"
 allOf:
   - if:
       properties: {disposition: {const: "ANSWER"}}
@@ -107,7 +131,9 @@ allOf:
         citations: {minItems: 1}
         coverage_gaps: {maxItems: 0}
         validation:
-          properties: {result: {const: "PASS"}}
+          properties:
+            result: {const: "PASS"}
+            hard_fail_codes: {maxItems: 0}
   - if:
       properties: {disposition: {const: "PARTIAL"}}
     then:
@@ -115,8 +141,18 @@ allOf:
         material_claims: {minItems: 1}
         citations: {minItems: 1}
         coverage_gaps: {minItems: 1}
+        validation:
+          properties:
+            result: {const: "PASS"}
+            hard_fail_codes: {maxItems: 0}
   - if:
       properties: {disposition: {const: "ABSTAIN"}}
     then:
       properties:
+        material_claims: {maxItems: 0}
+        citations: {maxItems: 0}
         coverage_gaps: {minItems: 1}
+        validation:
+          properties:
+            result: {const: "FAIL_CLOSED"}
+            hard_fail_codes: {minItems: 1}

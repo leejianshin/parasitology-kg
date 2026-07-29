@@ -1,0 +1,24 @@
+manifest_version: "1.0"
+bundle_id: "clonorchis_pcms_v1_runtime_bundle"
+knowledge_version: "clonorchis_pcms_v1"
+source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+source_tree_sha1: "b0e3ac1e4a40e541d0c621f98521b28b689989d6"
+digest_algorithm: "sha256(canonical-json-without-bundle_sha256)"
+bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+files:
+  - path: "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
+    size_bytes: 16272
+    sha256: "959d6fac2b38c6356dd4ac8647ea2ebd3d2ed1f354af4f1e04e020c5cea2d340"
+    source_blob_sha1: "e60694c9441327bcebc31ec1bc59217d031035f7"
+  - path: "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
+    size_bytes: 25528
+    sha256: "4a05b86547b91d2bf77cdb6773f8171567f95c0b89d39582fa09eafe777f9045"
+    source_blob_sha1: "f61a67a43d1eca10fbad2f647284077fc53a20d2"
+  - path: "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml"
+    size_bytes: 18985
+    sha256: "2d9e42bda6960a9d2db11fee6f59ce6b41e3c5910a94ec8b4654dcf0b960e39c"
+    source_blob_sha1: "61d7190f0c4f8cbc206be87ef741de8fd821208e"
+  - path: "sources/registry.yml"
+    size_bytes: 26993
+    sha256: "815ecc39888a5cdcf0a8ac76571876f4ec66dffd9912ea89f1b58ede4718f2f1"
+    source_blob_sha1: "df07cfcbf14afd8de42369b61acaaa97609d9a6d"

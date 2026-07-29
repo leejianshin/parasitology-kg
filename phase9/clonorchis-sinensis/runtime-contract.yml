@@ -1,12 +1,17 @@
-contract_version: "1.0"
+contract_version: "1.1"
 contract_id: "clonorchis_p9a_controlled_rag_v1"
-status: "P9A_CONTRACT_READY_FOR_REVIEW"
+status: "P9A_REVISED_PENDING_REREVIEW"
 language: "zh-CN"
 
 authority:
   knowledge_version: "clonorchis_pcms_v1"
   source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
   canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
+  runtime_bundle_manifest:
+    path: "phase9/clonorchis-sinensis/runtime-bundle-manifest.yml"
+    sha256: "67a57cc7791006c277e778a518d0c12f30aaf8ee9849fdef46932e412feb3ca8"
+    bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+    startup_verification: "REQUIRED_BEFORE_ANY_RETRIEVAL"
   expected_counts:
     entities: 31
     relation_claims: 40
@@ -32,6 +37,8 @@ execution:
   one_request_one_audit_record: true
   runtime_must_verify_authority_hash_before_serving: true
   unverified_runtime_state: "REFUSE_TO_SERVE"
+  schema_validation_required_before_semantic_validation: true
+  semantic_post_validation_required_before_serving: true
 
 claim_admission:
   admitted_status: "reviewed"
@@ -111,12 +118,16 @@ semantic_boundaries:
   missing_coverage_must_not_be_filled_from_model_knowledge: true
 
 hard_fail_conditions:
+  - "AUTHORITY_BUNDLE_MISMATCH"
+  - "NO_SAFE_ADMITTED_ANSWER"
   - "UNREGISTERED_SOURCE"
   - "UNKNOWN_ENTITY_ID"
   - "UNKNOWN_CLAIM_ID"
   - "UNREVIEWED_CLAIM"
   - "MISSING_REQUIRED_QUALIFIER"
   - "HIDDEN_STUDENT_CITATION"
+  - "CITATION_CLAIM_MISMATCH"
+  - "CITATION_LOCATOR_MISMATCH"
   - "DIAGNOSTIC_CLUE_PROMOTED_TO_CONFIRMATION"
   - "ASSOCIATION_PROMOTED_TO_CAUSALITY"
   - "MODEL_MEMORY_GAP_FILL"

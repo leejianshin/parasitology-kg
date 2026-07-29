@@ -1,4 +1,4 @@
-schema_version: "1.0"
+schema_version: "1.1"
 status: "DEIDENTIFIED_PROCESS_EVIDENCE_ONLY"
 purpose: >-
   记录Phase 6后到达的独立教师回件能支持哪些P9-A设计决定；不保存教师姓名、
@@ -7,7 +7,12 @@ purpose: >-
 review_records:
   - reviewer_id: "P6-INDEPENDENT-R02"
     private_workbook_sha256: "306f43902ecd83d14342155a99e3cd91cab1307df534bbff6812ff235dfd6048"
-    completion_status: "PROVISIONAL_INDEPENDENT_SENSITIVITY_REVIEW"
+    completion_status: "PROVISIONAL"
+    completion_detail: "INDEPENDENT_SENSITIVITY_REVIEW"
+    top_level_conclusion: "PENDING"
+    release_recommendation: "PENDING"
+    metadata_valid: false
+    all_required_case_scores_present: true
     quantitative_aggregation: "NOT_AUTHORIZED"
     completed_cells:
       baseline_case_scores: 18
@@ -40,7 +45,12 @@ review_records:
 
   - reviewer_id: "P6-INDEPENDENT-R03"
     private_workbook_sha256: "e4f54438153a13cc86c0900eb038221d3fa5d3604a912faed62094779efc3d4e"
-    completion_status: "INCOMPLETE_NOT_FOR_QUANTITATIVE_AGGREGATION"
+    completion_status: "INCOMPLETE"
+    completion_detail: "NOT_FOR_QUANTITATIVE_AGGREGATION"
+    top_level_conclusion: "PENDING"
+    release_recommendation: "PENDING"
+    metadata_valid: false
+    all_required_case_scores_present: false
     quantitative_aggregation: "PROHIBITED"
     completed_cells:
       baseline_case_scores: 0
@@ -58,16 +68,32 @@ review_records:
       - "RELEASE_RECOMMENDATION_PENDING"
 
 review_intake_contract:
-  accepted_completion_statuses:
+  completion_status_enum:
     - "COMPLETE"
     - "PROVISIONAL"
     - "INCOMPLETE"
     - "INVALID_FOR_AGGREGATION"
+  top_level_conclusion_enum:
+    - "PASS"
+    - "CHANGES_REQUIRED"
+    - "FAIL"
+    - "PENDING"
+  release_recommendation_enum:
+    - "RECOMMEND_RELEASE"
+    - "DO_NOT_RELEASE"
+    - "PENDING"
   aggregation_requires:
-    - "ALL_REQUIRED_CASE_SCORES_PRESENT"
-    - "TOP_LEVEL_CONCLUSION_ENUM_VALID"
-    - "RELEASE_RECOMMENDATION_ENUM_VALID"
-    - "NO_MALFORMED_METADATA"
+    completion_status: "COMPLETE"
+    all_required_case_scores_present: true
+    top_level_conclusion_allowed:
+      - "PASS"
+      - "CHANGES_REQUIRED"
+      - "FAIL"
+    release_recommendation_allowed:
+      - "RECOMMEND_RELEASE"
+      - "DO_NOT_RELEASE"
+    metadata_valid: true
+    unresolved_critical_disagreement: false
   unresolved_critical_disagreement:
     release_effect: "BLOCK"
     resolution: "COURSE_LEAD_CASE_LEVEL_ADJUDICATION_REQUIRED"

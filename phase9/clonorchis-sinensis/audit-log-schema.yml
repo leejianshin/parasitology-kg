@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/audit-log-schema-v1"
+$id: "https://example.invalid/parasitology-kg/phase9/audit-log-schema-v1.1"
 title: "P9-A controlled RAG private audit record"
 type: object
 additionalProperties: false
@@ -8,6 +8,8 @@ required:
   - audit_id
   - request_id
   - request_sha256
+  - response_schema_version
+  - response_sha256
   - started_at
   - knowledge_authority
   - retrieval
@@ -15,22 +17,34 @@ required:
   - output_validation
   - privacy
 properties:
-  schema_version: {const: "1.0"}
+  schema_version: {const: "1.1"}
   audit_id: {type: string, minLength: 1}
   request_id: {type: string, minLength: 1}
   request_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+  response_schema_version: {const: "1.1"}
+  response_sha256:
+    oneOf:
+      - {type: string, pattern: "^[0-9a-f]{64}$"}
+      - {type: "null"}
   started_at: {type: string, format: date-time}
   completed_at: {type: [string, "null"], format: date-time}
   knowledge_authority:
     type: object
     additionalProperties: false
-    required: [knowledge_version, source_commit, canonical_input_sha256, hash_verified]
+    required:
+      - knowledge_version
+      - source_commit
+      - canonical_input_sha256
+      - runtime_bundle_sha256
+      - hash_verified
     properties:
       knowledge_version: {const: "clonorchis_pcms_v1"}
       source_commit:
         const: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
       canonical_input_sha256:
         const: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
+      runtime_bundle_sha256:
+        const: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
       hash_verified: {type: boolean}
   retrieval:
     type: object
@@ -40,11 +54,15 @@ properties:
       candidate_claim_ids:
         type: array
         uniqueItems: true
-        items: {type: string}
+        items:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
       admitted_claim_ids:
         type: array
         uniqueItems: true
-        items: {type: string}
+        items:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
       excluded_candidates:
         type: array
         items:
@@ -69,11 +87,18 @@ properties:
       reason_codes:
         type: array
         uniqueItems: true
-        items: {type: string}
+        items:
+          enum:
+            - "FULLY_COVERED"
+            - "PARTIALLY_COVERED"
+            - "NOT_COVERED"
+            - "HARD_GATE_FAILED"
       material_claim_ids:
         type: array
         uniqueItems: true
-        items: {type: string}
+        items:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
       coverage_gaps:
         type: array
         uniqueItems: true
@@ -87,7 +112,23 @@ properties:
       hard_fail_codes:
         type: array
         uniqueItems: true
-        items: {type: string}
+        items:
+          enum:
+            - "AUTHORITY_BUNDLE_MISMATCH"
+            - "NO_SAFE_ADMITTED_ANSWER"
+            - "UNREGISTERED_SOURCE"
+            - "UNKNOWN_ENTITY_ID"
+            - "UNKNOWN_CLAIM_ID"
+            - "UNREVIEWED_CLAIM"
+            - "MISSING_REQUIRED_QUALIFIER"
+            - "HIDDEN_STUDENT_CITATION"
+            - "CITATION_CLAIM_MISMATCH"
+            - "CITATION_LOCATOR_MISMATCH"
+            - "DIAGNOSTIC_CLUE_PROMOTED_TO_CONFIRMATION"
+            - "ASSOCIATION_PROMOTED_TO_CAUSALITY"
+            - "MODEL_MEMORY_GAP_FILL"
+            - "EXTERNAL_WEB_GAP_FILL"
+            - "STUDENT_DATA_IN_PUBLIC_ARTIFACT"
       student_visible_citation_count: {type: integer, minimum: 0}
   privacy:
     type: object
@@ -96,3 +137,57 @@ properties:
     properties:
       student_identifier_logged: {const: false}
       public_export_allowed: {const: false}
+allOf:
+  - if:
+      properties:
+        knowledge_authority:
+          properties:
+            hash_verified: {const: false}
+    then:
+      properties:
+        response_sha256: {type: "null"}
+        decision:
+          properties:
+            disposition: {const: "ABSTAIN"}
+            material_claim_ids: {maxItems: 0}
+        output_validation:
+          properties:
+            result: {const: "FAIL_CLOSED"}
+            hard_fail_codes:
+              minItems: 1
+              contains: {const: "AUTHORITY_BUNDLE_MISMATCH"}
+            student_visible_citation_count: {const: 0}
+  - if:
+      properties:
+        decision:
+          properties:
+            disposition: {enum: ["ANSWER", "PARTIAL"]}
+    then:
+      properties:
+        response_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+        knowledge_authority:
+          properties:
+            hash_verified: {const: true}
+        decision:
+          properties:
+            material_claim_ids: {minItems: 1}
+        output_validation:
+          properties:
+            result: {const: "PASS"}
+            hard_fail_codes: {maxItems: 0}
+            student_visible_citation_count: {minimum: 1}
+  - if:
+      properties:
+        decision:
+          properties:
+            disposition: {const: "ABSTAIN"}
+    then:
+      properties:
+        decision:
+          properties:
+            material_claim_ids: {maxItems: 0}
+        output_validation:
+          properties:
+            result: {const: "FAIL_CLOSED"}
+            hard_fail_codes: {minItems: 1}
+            student_visible_citation_count: {const: 0}

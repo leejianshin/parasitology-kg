@@ -1,0 +1,22 @@
+schema_version: "1.0"
+status: "UNRESOLVED_COURSE_LEAD_ADJUDICATION_REQUIRED"
+source_suite:
+  path: "phase6/clonorchis-sinensis/test-cases.yml"
+  sha256: "152b2162dd0667cec324068ed15a2b454f182371526cfde52a3866e756456150"
+  source_blob_sha1: "2ee737e69dd4303e1dc94bd3bd08505207f82654"
+record_schema:
+  path: "phase9/clonorchis-sinensis/acceptance-cases/adjudication-record-schema.yml"
+cases:
+  - adjudication_case_id: "P9A-ADJ-001"
+    legacy_case_id: "CS-RAG-F03"
+    source_case_sha256: "5cfeeeee90808f07fc90a16a4549ba07ee35d441d4544a46fea6461f77d6a258"
+    question_zh: "轻虫负荷的华支睾吸虫感染是否一定有明显症状？"
+    current_expected_disposition: "ANSWER"
+    required_claim_ids: ["W2-ATOM-022"]
+    required_entity_ids:
+      - "disease.clonorchiasis"
+      - "manifestation.asymptomatic_light_infection"
+    disagreement_status: "UNRESOLVED_REQUIRES_ADJUDICATION"
+    decision_authority: "COURSE_LEAD"
+    adjudication_record_status: "NOT_CREATED"
+    release_effect: "BLOCK"
