@@ -1,0 +1,98 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/audit-log-schema-v1"
+title: "P9-A controlled RAG private audit record"
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - audit_id
+  - request_id
+  - request_sha256
+  - started_at
+  - knowledge_authority
+  - retrieval
+  - decision
+  - output_validation
+  - privacy
+properties:
+  schema_version: {const: "1.0"}
+  audit_id: {type: string, minLength: 1}
+  request_id: {type: string, minLength: 1}
+  request_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+  started_at: {type: string, format: date-time}
+  completed_at: {type: [string, "null"], format: date-time}
+  knowledge_authority:
+    type: object
+    additionalProperties: false
+    required: [knowledge_version, source_commit, canonical_input_sha256, hash_verified]
+    properties:
+      knowledge_version: {const: "clonorchis_pcms_v1"}
+      source_commit:
+        const: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+      canonical_input_sha256:
+        const: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
+      hash_verified: {type: boolean}
+  retrieval:
+    type: object
+    additionalProperties: false
+    required: [candidate_claim_ids, admitted_claim_ids, excluded_candidates]
+    properties:
+      candidate_claim_ids:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+      admitted_claim_ids:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+      excluded_candidates:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [candidate_id, reason]
+          properties:
+            candidate_id: {type: string}
+            reason:
+              enum:
+                - "UNKNOWN_CLAIM_ID"
+                - "UNREVIEWED_CLAIM"
+                - "UNREGISTERED_SOURCE"
+                - "MISSING_REQUIRED_QUALIFIER"
+                - "OUTSIDE_RUNTIME_ALLOWLIST"
+  decision:
+    type: object
+    additionalProperties: false
+    required: [disposition, reason_codes, material_claim_ids, coverage_gaps]
+    properties:
+      disposition: {enum: ["ANSWER", "PARTIAL", "ABSTAIN"]}
+      reason_codes:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+      material_claim_ids:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+      coverage_gaps:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+  output_validation:
+    type: object
+    additionalProperties: false
+    required: [result, hard_fail_codes, student_visible_citation_count]
+    properties:
+      result: {enum: ["PASS", "FAIL_CLOSED"]}
+      hard_fail_codes:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+      student_visible_citation_count: {type: integer, minimum: 0}
+  privacy:
+    type: object
+    additionalProperties: false
+    required: [student_identifier_logged, public_export_allowed]
+    properties:
+      student_identifier_logged: {const: false}
+      public_export_allowed: {const: false}

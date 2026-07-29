@@ -1,0 +1,60 @@
+schema_version: "1.0"
+plan_id: "clonorchis_p9a_acceptance_plan_v1"
+status: "FIXED_FOR_CONTRACT_REVIEW"
+source_suite:
+  path: "phase7/clonorchis-sinensis/pilot-content-minimum-set-regression.yml"
+  suite_id: "clonorchis_pcms_regression_v1"
+  migration_rule: >-
+    问题、预期处置、必需命题和覆盖缺口均继承PCMS v1固定回归；P9-A只增加
+    学生可见引用、运行审计和重复运行稳定性门禁。
+
+counts:
+  total: 16
+  answer: 11
+  partial: 3
+  abstain: 2
+  repeated_runs_per_case: 3
+
+global_acceptance:
+  disposition_match: "16/16"
+  registered_claim_ids: "100%"
+  registered_source_ids: "100%"
+  student_visible_claim_citations: "100%"
+  required_qualifier_preservation: "100%"
+  repeated_run_core_stability: "100%"
+  unsupported_deterministic_answers: 0
+  non_allowlist_claims: 0
+  medical_hard_failures: 0
+  public_student_identifiers: 0
+
+case_migrations:
+  - {p9_case_id: P9A-T01, source_case_id: PCMS-T01, expected_disposition: ANSWER, severity: major}
+  - {p9_case_id: P9A-T02, source_case_id: PCMS-T02, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T03, source_case_id: PCMS-T03, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T04, source_case_id: PCMS-T04, expected_disposition: PARTIAL, severity: major}
+  - {p9_case_id: P9A-T05, source_case_id: PCMS-T05, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T06, source_case_id: PCMS-T06, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T07, source_case_id: PCMS-T07, expected_disposition: PARTIAL, severity: critical}
+  - {p9_case_id: P9A-T08, source_case_id: PCMS-T08, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T09, source_case_id: PCMS-T09, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T10, source_case_id: PCMS-T10, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T11, source_case_id: PCMS-T11, expected_disposition: ABSTAIN, severity: critical}
+  - {p9_case_id: P9A-T12, source_case_id: PCMS-T12, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T13, source_case_id: PCMS-T13, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T14, source_case_id: PCMS-T14, expected_disposition: ANSWER, severity: critical}
+  - {p9_case_id: P9A-T15, source_case_id: PCMS-T15, expected_disposition: ABSTAIN, severity: critical}
+  - {p9_case_id: P9A-T16, source_case_id: PCMS-T16, expected_disposition: PARTIAL, severity: major}
+
+teacher_gate:
+  critical_case_minimum_score: 8
+  score_scale: "0..10"
+  unresolved_critical_disagreement: "BLOCK_RELEASE"
+  prohibited_aggregation_statuses:
+    - "INCOMPLETE"
+    - "INVALID_FOR_AGGREGATION"
+
+execution_boundary:
+  runtime_not_implemented_in_p9a: true
+  real_students_not_authorized: true
+  external_web_disabled: true
+  external_memory_disabled: true

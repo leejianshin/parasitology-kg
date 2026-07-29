@@ -1,0 +1,122 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/response-schema-v1"
+title: "P9-A controlled RAG student-visible response"
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - request_id
+  - knowledge_version
+  - source_commit
+  - disposition
+  - answer_text
+  - material_claims
+  - citations
+  - coverage_gaps
+  - validation
+properties:
+  schema_version:
+    const: "1.0"
+  request_id:
+    type: string
+    minLength: 1
+  knowledge_version:
+    const: "clonorchis_pcms_v1"
+  source_commit:
+    const: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
+  disposition:
+    enum: ["ANSWER", "PARTIAL", "ABSTAIN"]
+  answer_text:
+    type: string
+  material_claims:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [claim_id, sentence_indexes, entity_ids]
+      properties:
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        sentence_indexes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: integer, minimum: 0}
+        entity_ids:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+  citations:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - citation_id
+        - claim_id
+        - source_id
+        - source_label
+        - locator
+        - visible_to_student
+      properties:
+        citation_id: {type: string, minLength: 1}
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        source_id: {type: string, pattern: "^source\\."}
+        source_label: {type: string, minLength: 1}
+        locator: {type: string, minLength: 1}
+        visible_to_student: {const: true}
+  coverage_gaps:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [gap_code, description]
+      properties:
+        gap_code:
+          enum:
+            - "NOT_COVERED"
+            - "PARTIALLY_COVERED"
+            - "QUALIFIER_UNRESOLVED"
+            - "SOURCE_UNRESOLVED"
+            - "AUTHORITY_MISMATCH"
+        description: {type: string, minLength: 1}
+  validation:
+    type: object
+    additionalProperties: false
+    required: [result, checked_contract_id, hard_fail_codes]
+    properties:
+      result: {enum: ["PASS", "FAIL_CLOSED"]}
+      checked_contract_id: {const: "clonorchis_p9a_controlled_rag_v1"}
+      hard_fail_codes:
+        type: array
+        uniqueItems: true
+        items: {type: string}
+allOf:
+  - if:
+      properties: {disposition: {const: "ANSWER"}}
+    then:
+      properties:
+        material_claims: {minItems: 1}
+        citations: {minItems: 1}
+        coverage_gaps: {maxItems: 0}
+        validation:
+          properties: {result: {const: "PASS"}}
+  - if:
+      properties: {disposition: {const: "PARTIAL"}}
+    then:
+      properties:
+        material_claims: {minItems: 1}
+        citations: {minItems: 1}
+        coverage_gaps: {minItems: 1}
+  - if:
+      properties: {disposition: {const: "ABSTAIN"}}
+    then:
+      properties:
+        coverage_gaps: {minItems: 1}

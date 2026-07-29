@@ -1,0 +1,75 @@
+schema_version: "1.0"
+status: "DEIDENTIFIED_PROCESS_EVIDENCE_ONLY"
+purpose: >-
+  记录Phase 6后到达的独立教师回件能支持哪些P9-A设计决定；不保存教师姓名、
+  原始回答或可识别身份信息，也不把未完成回件解释为发布批准。
+
+review_records:
+  - reviewer_id: "P6-INDEPENDENT-R02"
+    private_workbook_sha256: "306f43902ecd83d14342155a99e3cd91cab1307df534bbff6812ff235dfd6048"
+    completion_status: "PROVISIONAL_INDEPENDENT_SENSITIVITY_REVIEW"
+    quantitative_aggregation: "NOT_AUTHORIZED"
+    completed_cells:
+      baseline_case_scores: 18
+      rag_case_scores: 18
+    descriptive_results:
+      baseline_mean: 7.1667
+      rag_mean: 9.0
+      baseline_pass: "13/18"
+      rag_pass: "17/18"
+      rag_traceability: "13/14"
+      boundary_abstention: "4/4"
+    admissible_uses:
+      - "SENSITIVITY_ANALYSIS"
+      - "DESIGN_REQUIREMENT_FOR_STUDENT_VISIBLE_PROVENANCE"
+      - "DISAGREEMENT_CASE_IDENTIFICATION"
+    not_admissible_as:
+      - "FORMAL_RELEASE_APPROVAL"
+      - "COURSE_LEAD_ADJUDICATION"
+      - "AGGREGATED_EFFECT_ESTIMATE"
+    defects:
+      - "TOP_LEVEL_CONCLUSION_PENDING"
+      - "RELEASE_RECOMMENDATION_PENDING"
+      - "MALFORMED_REPEATED_NUMERIC_METADATA"
+    critical_disagreement:
+      legacy_case_id: "CS-RAG-F03"
+      issue: >-
+        轻虫负荷无明显症状题在课程负责人和本复核者之间出现RAG通过/失败分歧。
+      status: "UNRESOLVED_REQUIRES_ADJUDICATION"
+      aggregation_rule: "MUST_NOT_AVERAGE_AWAY"
+
+  - reviewer_id: "P6-INDEPENDENT-R03"
+    private_workbook_sha256: "e4f54438153a13cc86c0900eb038221d3fa5d3604a912faed62094779efc3d4e"
+    completion_status: "INCOMPLETE_NOT_FOR_QUANTITATIVE_AGGREGATION"
+    quantitative_aggregation: "PROHIBITED"
+    completed_cells:
+      baseline_case_scores: 0
+      rag_case_scores: 0
+    admissible_uses:
+      - "REVIEW_WORKBOOK_USABILITY_EVIDENCE"
+      - "COMPLETION_VALIDATOR_REQUIREMENT"
+    not_admissible_as:
+      - "CASE_SCORE"
+      - "NINE_OF_TEN_SCORE"
+      - "FORMAL_RELEASE_APPROVAL"
+    defects:
+      - "REPEATED_NUMERIC_VALUES_IN_METADATA_FIELDS"
+      - "TOP_LEVEL_CONCLUSION_PENDING"
+      - "RELEASE_RECOMMENDATION_PENDING"
+
+review_intake_contract:
+  accepted_completion_statuses:
+    - "COMPLETE"
+    - "PROVISIONAL"
+    - "INCOMPLETE"
+    - "INVALID_FOR_AGGREGATION"
+  aggregation_requires:
+    - "ALL_REQUIRED_CASE_SCORES_PRESENT"
+    - "TOP_LEVEL_CONCLUSION_ENUM_VALID"
+    - "RELEASE_RECOMMENDATION_ENUM_VALID"
+    - "NO_MALFORMED_METADATA"
+  unresolved_critical_disagreement:
+    release_effect: "BLOCK"
+    resolution: "COURSE_LEAD_CASE_LEVEL_ADJUDICATION_REQUIRED"
+  public_identity_policy: "DEIDENTIFIED_REVIEWER_IDS_ONLY"
+  raw_workbook_policy: "PRIVATE_ONLY"

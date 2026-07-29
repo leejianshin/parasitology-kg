@@ -1,0 +1,40 @@
+# Phase 9-A：受控RAG运行合同设计原子
+
+P9-A只冻结学生端受控RAG的接口、证据、拒答、审计和发布门禁，不实现模型调用、
+检索服务、网页、学习通集成或真实学生发布。
+
+## 权威输入
+
+- Git基线：`9a9ff5a17de0fc6d32595730f10dfbebd55d9897`
+- 正式知识：`derived/clonorchis-sinensis/pcms-v1/`
+- 正式来源登记：`sources/registry.yml`
+- 结构化叙述证据：
+  `phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml`
+
+运行时不得读取候选稿、教师原始回件、平台自动生成内容、学生数据、外部网页或
+模型既有记忆来补齐答案。
+
+## 本原子交付
+
+- `runtime-contract.yml`：运行状态机、证据白名单、回答处置和硬失败；
+- `response-schema.yml`：学生可见回答信封；
+- `audit-log-schema.yml`：逐次运行的机器审计记录；
+- `reviewer-evidence-admission.yml`：去标识化复核证据的准入与排除；
+- `release-boundary.yml`：实现、试用和发布授权边界；
+- `acceptance-cases/plan.yml`：从PCMS v1回归迁移的固定验收用例；
+- `scripts/validate_phase9_contract.py`及单元测试：自动门禁。
+
+## 核心规则
+
+1. 只允许`ANSWER`、`PARTIAL`、`ABSTAIN`三种处置。
+2. 每项学生可见医学主张都必须绑定已审核`claim_id`，并显示登记的
+   `source_id`和定位信息。
+3. 后端日志中存在来源ID不等于学生已经获得可见来源。
+4. 线索不得升级为确证，关联不得升级为因果，推荐不得升级为量化疗效。
+5. 缺少知识覆盖、必要限定语、合法来源或有效ID时必须关闭式失败。
+6. 任何医学硬失败、未裁决关键分歧或学生数据泄漏都阻止发布。
+
+## 当前边界
+
+状态为`P9A_CONTRACT_READY_FOR_REVIEW`。这表示合同可以接受代码审查，不表示
+运行时已经实现，也不表示任何学生试点或发布已经获准。

@@ -1,0 +1,49 @@
+schema_version: "1.0"
+phase: "P9-A"
+status: "DESIGN_ONLY_NOT_IMPLEMENTED"
+
+authorized:
+  contract_design: true
+  schema_design: true
+  deidentified_review_evidence_admission: true
+  validator_and_unit_tests: true
+  draft_pull_request: true
+
+not_authorized:
+  runtime_implementation: true
+  model_api_calls: true
+  web_deployment: true
+  learning_platform_integration: true
+  real_student_testing: true
+  student_release: true
+  changes_to_formal_pcms_knowledge: true
+  public_raw_teacher_workbooks: true
+  public_student_data: true
+
+release_gates:
+  - gate_id: "P9-G01"
+    requirement: "P9-A contract merged after review"
+    current: "PENDING"
+  - gate_id: "P9-G02"
+    requirement: "Independent runtime implementation passes all fixed cases"
+    current: "NOT_STARTED"
+  - gate_id: "P9-G03"
+    requirement: "Student-visible claim-level citations pass at 100%"
+    current: "NOT_STARTED"
+  - gate_id: "P9-G04"
+    requirement: "Medical hard failures equal zero"
+    current: "NOT_STARTED"
+  - gate_id: "P9-G05"
+    requirement: "Critical teacher-review disagreements adjudicated"
+    current: "BLOCKED_BY_CS-RAG-F03"
+  - gate_id: "P9-G06"
+    requirement: "Separate course-lead authorization for limited student pilot"
+    current: "NOT_AUTHORIZED"
+
+learning_platform_role:
+  allowed_future_role: "LMS_LINK_AND_ASSIGNMENT_SHELL"
+  prohibited_role: "SOURCE_OF_CONTROLLED_RAG_MEDICAL_GENERATION"
+
+interpretation_boundary: >-
+  P9-A设计通过只说明接口和门禁可被实现，不证明RAG运行时有效，不证明教学效果，
+  也不授权向任何真实学生提供服务。
