@@ -1,6 +1,6 @@
 contract_version: "1.3"
 contract_id: "clonorchis_p9a_controlled_rag_v1"
-status: "P9A_REQUEST_AUDIT_BINDING_PENDING_FINAL_REVIEW"
+status: "P9A_CLOSED"
 language: "zh-CN"
 
 authority:

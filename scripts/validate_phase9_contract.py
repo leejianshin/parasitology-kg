@@ -701,9 +701,7 @@ def validate_contract_data(
     manifest = context["manifest"]
     runtime_bundle = verify_runtime_bundle(root)
 
-    if runtime["status"] != (
-        "P9A_REQUEST_AUDIT_BINDING_PENDING_FINAL_REVIEW"
-    ):
+    if runtime["status"] != "P9A_CLOSED":
         raise ValueError("P9-A runtime contract has an invalid status")
     authority = runtime["authority"]
     if authority["knowledge_version"] != "clonorchis_pcms_v1":
