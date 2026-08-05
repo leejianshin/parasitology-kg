@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import shutil
 import subprocess
@@ -135,6 +136,26 @@ class P9B1RetrievalTests(unittest.TestCase):
         self.assertEqual(canonical_sha256(self.request), self.result["request_sha256"])
         self.assertEqual(build_index(ROOT).index_sha256, self.result["index_sha256"])
 
+    def test_acceptance_record_hashes_and_example_result_are_current(self) -> None:
+        acceptance = yaml.safe_load(
+            (
+                ROOT
+                / "phase9/clonorchis-sinensis/p9b1-local-acceptance.yml"
+            ).read_text(encoding="utf-8")
+        )
+        for artifact, declaration in acceptance["frozen_artifacts"].items():
+            if not isinstance(declaration, dict) or "path" not in declaration:
+                continue
+            with self.subTest(artifact=artifact):
+                actual = hashlib.sha256(
+                    (ROOT / declaration["path"]).read_bytes()
+                ).hexdigest()
+                self.assertEqual(declaration["sha256"], actual)
+        self.assertEqual(
+            acceptance["acceptance_results"]["example_result_sha256"],
+            canonical_sha256(self.result),
+        )
+
     def test_relation_direction_is_preserved(self) -> None:
         result = retrieve(
             request("华支睾吸虫经历哪些生活史环节，各阶段如何衔接？"),
@@ -215,6 +236,84 @@ class P9B1RetrievalTests(unittest.TestCase):
                 )
                 retrieved = {item["claim_id"] for item in result["candidates"]}
                 self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_revision_3_blind_suite_is_now_public_regression(self) -> None:
+        path = (
+            ROOT
+            / "phase9/clonorchis-sinensis/acceptance-cases"
+            / "p9b1-revision3-blind-disclosed-regression.yml"
+        )
+        suite = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "DISCLOSED_AFTER_REVISION_3_COMMIT_PUBLIC_REGRESSION",
+            suite["status"],
+        )
+        self.assertEqual(8, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_formal_entity_types_and_semantic_roles_drive_query_plan(self) -> None:
+        index = build_index(ROOT)
+        records = {item.claim_id: item for item in index.records}
+        self.assertEqual(
+            ("diagnostic_method", "disease"),
+            records["PCMS-028"].entity_types,
+        )
+        self.assertIn(
+            "parasitological_confirmation",
+            records["PCMS-028"].semantic_roles,
+        )
+        self.assertIn(
+            "diagnostic_confirmation_limit",
+            records["W2-ATOM-025"].semantic_roles,
+        )
+
+        plan = analyze_query(
+            "超声提示胆道异常但没有检出虫卵，能否确诊？",
+            index,
+        )
+        self.assertIn("diagnostic_method", plan.entity_types)
+        self.assertIn("auxiliary", plan.semantic_roles)
+        self.assertIn("parasitological_confirmation", plan.semantic_roles)
+        self.assertIn("pathogen_confirmation", plan.negated_evidence_roles)
+        self.assertEqual(("diagnosis",), plan.topic_scopes)
+
+        detection_phrases = {
+            "粪便镜检见虫卵，这属于哪类证据？": False,
+            "便检未见虫卵，能否排除感染？": True,
+            "粪样查到虫卵，能支持到什么程度？": False,
+        }
+        for query, is_negated in detection_phrases.items():
+            with self.subTest(query=query):
+                detection_plan = analyze_query(query, index)
+                self.assertIn(
+                    "parasitological_confirmation",
+                    detection_plan.semantic_roles,
+                )
+                self.assertIn(
+                    "pathogen_confirmation", detection_plan.evidence_roles
+                )
+                self.assertEqual(
+                    is_negated,
+                    "pathogen_confirmation"
+                    in detection_plan.negated_evidence_roles,
+                )
+
+        source = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        for prefix in ("stage.", "host.", "treatment.", "hazard."):
+            self.assertNotIn(f'startswith("{prefix}")', source)
 
     def test_query_plan_separates_entities_roles_intents_and_scope(self) -> None:
         index = build_index(ROOT)

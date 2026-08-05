@@ -1,6 +1,6 @@
-contract_version: "1.3"
+contract_version: "1.4"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_3_PENDING_BLIND_INDEPENDENT_REVIEW"
+status: "REVISION_4_PENDING_BLIND_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
@@ -60,11 +60,15 @@ result_validation:
 query_planning:
   mode: "DETERMINISTIC_STRUCTURED_GRAPH_QUERY_PLAN"
   entity_alias_authority: "REVIEWED_RUNTIME_ENTITIES_NAME_AND_ALIASES"
+  typed_compositional_aliases: "DERIVED_FROM_ENTITY_TYPE_AND_FORMAL_LABELS_NO_RUNTIME_FACTS"
   ordinary_language_normalization_role: "QUERY_SURFACE_ONLY_NO_NEW_FACTS"
   required_dimensions:
     - "entity_ids"
+    - "entity_types"
     - "relation_intents"
+    - "semantic_roles"
     - "evidence_roles"
+    - "negated_evidence_roles"
     - "topic_scopes"
     - "coverage_groups"
   case_id_branch: "PROHIBITED"
@@ -73,7 +77,10 @@ query_planning:
 
 coverage_retrieval:
   graph_neighborhood_binding: "ENTITY_ID_INTERSECTION"
-  semantic_group_binding: "PREDICATE_ENTITY_TYPE_AND_SEMANTIC_ROLE"
+  entity_type_source: "REVIEWED_NODE_ENTITY_TYPE"
+  semantic_role_source: "ADMITTED_CLAIM_QUALIFIERS_AND_AUTHORIZED_PROJECTION"
+  semantic_group_binding: "PREDICATE_ENTITY_TYPE_AND_FORMAL_SEMANTIC_ROLE"
+  negated_diagnostic_evidence_role: "RETRIEVE_REQUIRED_CONFIRMATION_CONTRAST"
   complete_group_precedes_lexical_fallback: true
   lexical_similarity_role: "SECONDARY_RANKING_ONLY"
   top_k_limit_remains_enforced: true
@@ -112,6 +119,22 @@ revision_3_acceptance:
     frozen_at: "2026-08-05T18:07:00+09:00"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_3_LOCAL_COMMIT"
+
+revision_4_acceptance:
+  revision_3_blind_disclosed_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision3-blind-disclosed-regression.yml"
+    sha256: "d8539a306c736afff9a49a96fd485bcc846b4e7caf0ee90d585c8d5d2376f93f"
+    cases: 8
+    prior_blind_result_on_c07c7be: "5/8 PASS"
+    role_from_revision_4: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision4_blind_heldout_v1"
+    cases: 15
+    canonical_content_sha256: "fc38df6ebb0876aa5ac8c5f23e9b6b0285f476069dd5fb2107aef0cae9c6dd81"
+    frozen_at: "2026-08-05T09:30:03Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_4_LOCAL_COMMIT"
 
 scope_boundary:
   model_call: false

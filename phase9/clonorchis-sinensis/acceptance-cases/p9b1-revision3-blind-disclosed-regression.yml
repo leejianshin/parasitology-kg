@@ -1,0 +1,86 @@
+schema_version: "1.0"
+suite_id: "clonorchis_p9b1_revision3_blind_disclosed_regression_v1"
+status: "DISCLOSED_AFTER_REVISION_3_COMMIT_PUBLIC_REGRESSION"
+origin: "P9-B1_REVISION_3_INDEPENDENT_BLIND_READ_ONLY_REVIEW"
+original_blind_suite_id: "clonorchis_p9b1_revision3_blind_heldout_v1"
+original_blind_commitment_sha256: "01e4d49b2323c51b57402304db9266f6266f5f6c1a00a7cdb6d8385b90a34394"
+disclosed_after_commit: "c07c7bee412c48dda10eba4bef74f156a2a03bde"
+purpose: >-
+  本套件在第三修订提交形成后才披露，对c07c7be构成有效盲测；自第四修订起
+  已降级为公开回归，不得再次作为held-out或独立泛化证据。第四修订必须通过
+  正式实体类型、主张语义角色、否定语境和检测行为规划解决，不得为题号、题干
+  或required claim建立专用分支。
+top_k: 12
+cases:
+  - case_id: "P9B1-BH-01"
+    category: "life_cycle_order"
+    query_zh: "请把华支睾吸虫从随粪排出的卵到胆管内成虫所经过的虫期按时间先后串起来。"
+    required_claim_ids:
+      - "PCMS-014"
+      - "PCMS-015"
+      - "PCMS-016"
+      - "PCMS-017"
+      - "PCMS-018"
+      - "PCMS-019"
+  - case_id: "P9B1-BH-02"
+    category: "diagnostic_evidence_roles"
+    query_zh: "有生食淡水鱼经历、超声提示胆道异常、粪便镜检见虫卵时，三类证据分别能支持到什么程度？"
+    required_claim_ids:
+      - "W2-ATOM-001"
+      - "W2-ATOM-023"
+      - "W2-ATOM-024"
+      - "W2-ATOM-025"
+      - "PCMS-028"
+  - case_id: "P9B1-BH-03"
+    category: "one_health_transmission_chain"
+    query_zh: "从感染者和犬猫排卵开始，说明虫卵如何进入淡水、借助螺和鱼延续，最后因饮食回到人或食鱼动物。"
+    required_claim_ids:
+      - "PCMS-020"
+      - "PCMS-021"
+      - "PCMS-024"
+      - "PCMS-033"
+      - "PCMS-034"
+      - "PCMS-035"
+      - "W2-ATOM-005"
+  - case_id: "P9B1-BH-04"
+    category: "infective_and_pathogenic_stages"
+    query_zh: "人吃下含虫体的鱼时，真正具有传染性的是哪个虫期？进入胆道后主要造成病变的又是什么虫期？"
+    required_claim_ids:
+      - "PCMS-025"
+      - "PCMS-026"
+  - case_id: "P9B1-BH-05"
+    category: "host_roles"
+    query_zh: "请区分淡水螺、淡水鱼、人以及犬猫猪在华支睾吸虫寄生周期里的宿主身份。"
+    required_claim_ids:
+      - "PCMS-020"
+      - "PCMS-021"
+      - "PCMS-022"
+      - "PCMS-023"
+      - "PCMS-024"
+  - case_id: "P9B1-BH-06"
+    category: "cross_topic_source_traceability"
+    query_zh: "若要核对虫期衔接、首选用药和致癌危害等级，分别应回到哪些已登记权威资料？"
+    required_claim_ids:
+      - "PCMS-014"
+      - "PCMS-030"
+      - "PCMS-032"
+  - case_id: "P9B1-BH-07"
+    category: "negative_diagnostic_boundary"
+    query_zh: "体检超声发现胆管异常但没有检出虫卵，是否足以确诊？还需怎样综合判断？"
+    required_claim_ids:
+      - "W2-ATOM-023"
+      - "W2-ATOM-024"
+      - "W2-ATOM-025"
+      - "PCMS-028"
+  - case_id: "P9B1-BH-08"
+    category: "knowledge_scope_boundary"
+    query_zh: "淡水虾和淡水鱼能否依据当前最低知识集按同样分量认定为第二中间宿主？"
+    required_claim_ids:
+      - "PCMS-021"
+acceptance:
+  required_claim_recall: "ALL_REQUIRED_IDS_PRESENT"
+  suite_role_from_revision_4: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+  forbidden_implementation_shortcuts:
+    - "CASE_ID_BRANCH"
+    - "FULL_QUERY_LITERAL_BRANCH"
+    - "REQUIRED_CLAIM_ID_BRANCH"
