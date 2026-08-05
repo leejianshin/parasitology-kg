@@ -287,6 +287,125 @@ class P9B1RetrievalTests(unittest.TestCase):
                 retrieved = {item["claim_id"] for item in result["candidates"]}
                 self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
 
+    def test_revision_5_blind_suite_is_now_public_regression(self) -> None:
+        path = (
+            ROOT
+            / "phase9/clonorchis-sinensis/acceptance-cases"
+            / "p9b1-revision5-blind-disclosed-regression.yml"
+        )
+        suite = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "DISCLOSED_AFTER_REVISION_5_COMMIT_PUBLIC_REGRESSION",
+            suite["status"],
+        )
+        self.assertEqual(16, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_mixed_polarity_is_bound_to_each_diagnostic_method(self) -> None:
+        index = build_index(ROOT)
+        for query_text in (
+            "十二指肠引流液查卵未报阳性，粪便涂片随后寻获虫卵。",
+            "十二指肠液检卵和粪便镜检结果分别阴性和阳性。",
+        ):
+            with self.subTest(query=query_text):
+                plan = analyze_query(query_text, index)
+                observations = {
+                    item.evidence_entity_id: item.polarity
+                    for item in plan.evidence_observations
+                }
+                self.assertEqual(
+                    "negative",
+                    observations["diagnostic.duodenal_fluid_egg_microscopy"],
+                )
+                self.assertEqual(
+                    "positive",
+                    observations["diagnostic.stool_egg_microscopy"],
+                )
+                self.assertIn(
+                    "pathogen_confirmation", plan.negated_evidence_roles
+                )
+
+    def test_negative_detection_and_morphology_disambiguation(self) -> None:
+        index = build_index(ROOT)
+        for query_text in (
+            "便涂片没有观察见虫卵，能否排除感染？",
+            "粪便检查没能观察见卵，可以从鉴别中拿掉吗？",
+        ):
+            with self.subTest(query=query_text):
+                plan = analyze_query(query_text, index)
+                self.assertEqual(
+                    "negative", plan.evidence_observations[0].polarity
+                )
+                self.assertNotIn("morphology", plan.topic_scopes)
+
+        morphology = analyze_query(
+            "如何依据卵盖和肩峰鉴别这种虫卵的形态？", index
+        )
+        self.assertIn("morphology", morphology.topic_scopes)
+
+    def test_implicit_host_stage_events_trigger_complete_life_cycle(self) -> None:
+        index = build_index(ROOT)
+        queries = (
+            "螺内幼体转换、入鱼形成包囊、在终宿主体内成熟，接通关系。",
+            "解释螺和鱼的中间宿主分工及支撑它的虫态转换。",
+            "感染人的包囊幼体由哪些前序虫态形成，之后变成成虫？",
+        )
+        for number, query_text in enumerate(queries, 1):
+            with self.subTest(query=query_text):
+                plan = analyze_query(query_text, index)
+                self.assertIn("life_cycle", plan.topic_scopes)
+                result = retrieve(
+                    request(query_text, f"P9B1-R6-LC-{number:02d}"),
+                    root=ROOT,
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue({
+                    "PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017",
+                    "PCMS-018", "PCMS-019",
+                } <= retrieved)
+
+    def test_all_nonconfirmatory_roles_require_pathogen_contrast(self) -> None:
+        index = build_index(ROOT)
+        for query_text in (
+            "长期吃生淡水鱼只是流行病学线索，确认边界是什么？",
+            "MRI只能提供辅助线索，怎样形成最终判断？",
+            "来自流行区只能算线索，确诊还缺什么？",
+        ):
+            with self.subTest(query=query_text):
+                plan = analyze_query(query_text, index)
+                self.assertIn(
+                    "pathogen_confirmation", plan.required_evidence_roles
+                )
+                self.assertIn(
+                    "diagnostic_evidence_roles", plan.coverage_groups
+                )
+
+    def test_formal_control_roles_are_exposed_in_query_plan(self) -> None:
+        plan = analyze_query(
+            "社区排污、犬猫猪粪便和改厕措施的靶点及外推边界是什么？",
+            build_index(ROOT),
+        )
+        self.assertIn("control", plan.topic_scopes)
+        self.assertTrue({
+            "interrupt_egg_entry_to_intermediate_host_waters",
+            "mechanism_and_recommendation",
+            "recommendation_not_local_effect",
+            "recommendation_not_quantified_effect",
+            "universal_elimination_claim_false",
+        } <= set(plan.control_semantic_roles))
+        self.assertFalse(plan.evidence_observations)
+
     def test_negative_polarity_is_compositional_and_does_not_negate_conclusions(self) -> None:
         index = build_index(ROOT)
         negated_queries = (

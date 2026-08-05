@@ -1,6 +1,6 @@
-contract_version: "1.5"
+contract_version: "1.6"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_5_PENDING_BLIND_INDEPENDENT_REVIEW"
+status: "REVISION_6_PENDING_BLIND_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
@@ -69,6 +69,9 @@ query_planning:
     - "semantic_roles"
     - "evidence_roles"
     - "negated_evidence_roles"
+    - "required_evidence_roles"
+    - "evidence_observations"
+    - "control_semantic_roles"
     - "topic_scopes"
     - "coverage_groups"
   case_id_branch: "PROHIBITED"
@@ -156,6 +159,29 @@ revision_5_acceptance:
     frozen_at: "2026-08-05T10:01:00Z"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_5_LOCAL_COMMIT"
+
+revision_6_acceptance:
+  revision_5_blind_disclosed_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision5-blind-disclosed-regression.yml"
+    sha256: "1d8b08110ded74b0c392876d4e0593eb21f7a37c683803394d7600c6c9f0644b"
+    cases: 16
+    prior_recall_on_12554f2: "11/16 PASS_CHANGES_REQUIRED"
+    prior_complete_plan_assertions_on_12554f2: "5/16 PASS_CHANGES_REQUIRED"
+    role_from_revision_6: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+  query_semantics:
+    evidence_polarity_binding: "EVIDENCE_EVENT_OR_REVIEWED_DIAGNOSTIC_METHOD"
+    clinical_morphology_disambiguation: "CONTEXTUAL_INTENT_SEPARATION"
+    implicit_life_cycle: "REVIEWED_HOST_STAGE_GRAPH_EVENT_COMPOSITION"
+    nonconfirmatory_contrast: "ALL_FORMAL_NONCONFIRMATORY_ROLES_REQUIRE_PATHOGEN_CONFIRMATION"
+    control_roles: "FORMAL_CONTROL_QUALIFIERS_IN_QUERY_PLAN"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision6_blind_heldout_v1"
+    cases: 18
+    canonical_content_sha256: "074636eaaf4b7d301c6f55645d33fe858f58eba3abb4c0caaf9b741b72b0a698"
+    frozen_at: "2026-08-05T11:33:18Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_6_LOCAL_COMMIT"
 
 scope_boundary:
   model_call: false

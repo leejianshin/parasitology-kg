@@ -1,5 +1,5 @@
-schema_version: "1.5"
-acceptance_id: "clonorchis_p9b1_revision_5_local_acceptance"
+schema_version: "1.6"
+acceptance_id: "clonorchis_p9b1_revision_6_local_acceptance"
 status: "LOCAL_TESTS_PASS_PENDING_BLIND_INDEPENDENT_READ_ONLY_REVIEW"
 scope: "P9-B1_LOCAL_EVIDENCE_RETRIEVAL_CORE"
 
@@ -21,6 +21,9 @@ recovery_provenance:
   revision_4_commit: "b71d08cb34b027c206fe6411077de57543c6a8a4"
   revision_4_review_result: "CHANGES_REQUIRED_12_OF_15_BLIND_CASES_PASS"
   revision_5_trigger: "COMPOSITIONAL_NEGATION_FORMAL_DIAGNOSTIC_GROUP_LIFE_CYCLE_CONTROL_AND_NEW_BLIND_HELD_OUT"
+  revision_5_commit: "12554f2c84933ec427f491e6af724a796b66894d"
+  revision_5_review_result: "CHANGES_REQUIRED_11_OF_16_RECALL_5_OF_16_COMPLETE_PLAN"
+  revision_6_trigger: "METHOD_BOUND_POLARITY_IMPLICIT_GRAPH_EVENTS_ALL_NONCONFIRMATORY_CONTRAST_CONTROL_ROLES_AND_NEW_BLIND_HELD_OUT"
 
 authority:
   runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
@@ -34,7 +37,7 @@ authority:
 frozen_artifacts:
   retrieval_contract:
     path: "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
-    sha256: "12e78a7416c0a675b1a6e7a3033b8ca449281a36b5d104d0e12502332491db77"
+    sha256: "9a9d39f60cc34f9acae4adcb3faa717e50bb90878804da1e930e72c36b230e15"
   runtime_contract:
     path: "phase9/clonorchis-sinensis/runtime-contract.yml"
     sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
@@ -95,12 +98,23 @@ frozen_artifacts:
     frozen_at: "2026-08-05T10:01:00Z"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_5_LOCAL_COMMIT"
+  revision_5_blind_disclosed_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision5-blind-disclosed-regression.yml"
+    sha256: "1d8b08110ded74b0c392876d4e0593eb21f7a37c683803394d7600c6c9f0644b"
+    status: "PUBLIC_REGRESSION_NOT_HELD_OUT_FROM_REVISION_6"
+  revision_6_blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision6_blind_heldout_v1"
+    cases: 18
+    canonical_content_sha256: "074636eaaf4b7d301c6f55645d33fe858f58eba3abb4c0caaf9b741b72b0a698"
+    frozen_at: "2026-08-05T11:33:18Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_6_LOCAL_COMMIT"
   implementation:
     path: "scripts/p9b1_local_retrieval.py"
-    sha256: "59e2b5f85cbfc6d0f627072f35ee4b48f2f3ca412eabf3d7c38083c2bc55efd8"
+    sha256: "7cebd453d6065e5866fe1aef26e82815601602fd87f99d969ab396e416db616d"
   tests:
     path: "tests/test_p9b1_retrieval.py"
-    sha256: "3ade8c03a4aa77949f164769b7d0a577f1c4095da74351867be840f7a94cb1cd"
+    sha256: "66030d443d01e53424df574940eec5f2b4bbbc1fb017ba0293a996a629708b98"
   p9a_validator:
     path: "scripts/validate_phase9_contract.py"
     sha256: "c7b5dfc99f3e0730fa356db928e8ad9626ea5c626f3455d70184bc9839213715"
@@ -109,8 +123,8 @@ frozen_artifacts:
     sha256: "37c76c82d334e74933cc0d5de2ad09654cd6b20fa10e9a91cae03e6a5ece8c9f"
 
 acceptance_results:
-  p9b1_unit_tests: "28/28 PASS"
-  repository_runnable_tests: "46/46 PASS"
+  p9b1_unit_tests: "34/34 PASS"
+  repository_runnable_tests: "52/52 PASS"
   fixed_regression_required_claim_recall_top12: "16/16 PASS"
   paraphrase_required_claim_recall_top12: "8/8 PASS"
   independent_review_held_out_recall_top12: "4/4 PASS"
@@ -119,7 +133,10 @@ acceptance_results:
   revision_3_disclosed_public_regression_recall_top12: "8/8 PASS"
   blind_revision_4_held_out_on_b71d08c: "12/15 PASS_CHANGES_REQUIRED"
   revision_4_disclosed_public_regression_recall_top12: "15/15 PASS"
-  blind_revision_5_held_out_recall_top12: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
+  blind_revision_5_held_out_on_12554f2: "11/16 PASS_CHANGES_REQUIRED"
+  blind_revision_5_complete_plan_on_12554f2: "5/16 PASS_CHANGES_REQUIRED"
+  revision_5_disclosed_public_regression_recall_top12: "16/16 PASS"
+  blind_revision_6_held_out_recall_top12: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
   structured_query_plan_dimensions:
     formal_entity_alias_recognition: "PASS"
     reviewed_entity_type_binding: "PASS"
@@ -127,11 +144,15 @@ acceptance_results:
     admitted_claim_semantic_role_binding: "PASS"
     evidence_role: "PASS"
     negated_evidence_role: "PASS"
+    method_or_event_bound_polarity: "PASS"
+    required_evidence_role: "PASS"
+    clinical_morphology_disambiguation: "PASS"
     compositional_negative_polarity: "PASS"
     topic_scope: "PASS"
     formal_diagnostic_group_trigger: "PASS"
     life_cycle_composition: "PASS"
     typed_control_composition: "PASS"
+    formal_control_semantic_roles: "PASS"
   graph_coverage:
     relation_neighborhood: "PASS"
     complete_claim_group_before_lexical_fallback: "PASS"
@@ -145,7 +166,7 @@ acceptance_results:
   independent_id_statement_direction_citation_assertions: "2/2 PASS"
   authority_projection_tamper: "REJECTED_BEFORE_INDEX_USE"
   control_and_schema_tamper_cases: "4/4 REJECTED"
-  example_result_sha256: "12ad2df28e40ee6aaf27050bad3e38cb3c872906e1d0000a2cde03db1ff9730e"
+  example_result_sha256: "ad6a883580b0ae896ac0d5d5e600b216f6b4b9ae3bdb87d01fb8e447387681e1"
   p9a_contract_test_environment:
     status: "NOT_RUN"
     blocker: "MISSING_JSONSCHEMA_DEPENDENCY"

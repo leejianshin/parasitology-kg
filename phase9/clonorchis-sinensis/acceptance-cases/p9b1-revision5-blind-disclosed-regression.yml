@@ -1,0 +1,61 @@
+suite_id: "clonorchis_p9b1_revision5_blind_disclosed_regression_v1"
+status: "DISCLOSED_AFTER_REVISION_5_COMMIT_PUBLIC_REGRESSION"
+origin:
+  prior_suite_id: "clonorchis_p9b1_revision5_blind_heldout_v1"
+  frozen_at: "2026-08-05T10:01:00Z"
+  canonical_content_sha256: "924205fe1b4df71639e475274697a8b4bf4c72e77a4fe346ccf4a5182919dfd6"
+  prior_recall_on_12554f2: "11/16 PASS_CHANGES_REQUIRED"
+  prior_complete_plan_assertions_on_12554f2: "5/16 PASS_CHANGES_REQUIRED"
+  role_from_revision_6: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+retrieval_contract:
+  top_k: 12
+  success_condition: "ALL_REQUIRED_CLAIM_IDS_PRESENT"
+cases:
+  - case_id: "R5BH-01"
+    query_zh: "十二指肠引流液的查卵报告未报阳性，后来便涂片却寻获了虫卵；检索计划应怎样同时保留前一项否定和后一项阳性？"
+    required_claim_ids: ["PCMS-028", "PCMS-029"]
+  - case_id: "R5BH-02"
+    query_zh: "一次便涂片没有观察见虫卵，能据此把感染从鉴别中拿掉吗？"
+    required_claim_ids: ["PCMS-028"]
+  - case_id: "R5BH-03"
+    query_zh: "胆道影像未显示特异改变，粪便检查也始终没能观察见卵；两个阴性结果各是什么极性？"
+    required_claim_ids: ["W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028"]
+  - case_id: "R5BH-04"
+    query_zh: "有长期吃生河鱼经历，但多次病原学送检均为阴性；哪项只是暴露线索，欠缺哪类证据不能确认？"
+    required_claim_ids: ["W2-ATOM-001", "PCMS-028"]
+  - case_id: "R5BH-05"
+    query_zh: "便涂片寻获带卵盖、肩峰及小突起的虫卵，如何从形态辨识提升到病原学确认？"
+    required_claim_ids: ["PCMS-004", "PCMS-005", "PCMS-028"]
+  - case_id: "R5BH-06"
+    query_zh: "影像‘不可单独确认’和‘必须综合证据’角色如何同病原学确认组成完整组？"
+    required_claim_ids: ["W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028"]
+  - case_id: "R5BH-07"
+    query_zh: "生食淡水鱼经历只是流行病学线索；追问确认边界时还须补齐哪条病原学证据？"
+    required_claim_ids: ["W2-ATOM-001", "PCMS-028"]
+  - case_id: "R5BH-08"
+    query_zh: "粪便镜检和十二指肠液查卵的确认表述有何不同？"
+    required_claim_ids: ["PCMS-028", "PCMS-029"]
+  - case_id: "R5BH-09"
+    query_zh: "螺内幼体转换、入鱼形成包囊、在食鱼宿主体内成熟，完整接通转换关系。"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019"]
+  - case_id: "R5BH-10"
+    query_zh: "解释螺、鱼的中间宿主分工并找全支撑它的虫态转换。"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019", "PCMS-020", "PCMS-021"]
+  - case_id: "R5BH-11"
+    query_zh: "可感染人的包囊幼体由哪些前序虫态形成，之后变成哪种主要损害胆道的形态？"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019", "PCMS-025", "PCMS-026"]
+  - case_id: "R5BH-12"
+    query_zh: "审计幼体转换链、十二指肠液查卵依据和WHO用药建议及来源。"
+    required_claim_ids: ["PCMS-014", "PCMS-029", "PCMS-030"]
+  - case_id: "R5BH-13"
+    query_zh: "湖区方案同时处理社区排污和犬猫猪粪便，给出措施—靶点及外推边界。"
+    required_claim_ids: ["W2-ATOM-026", "W2-ATOM-027", "W2-ATOM-028", "PCMS-036"]
+  - case_id: "R5BH-14"
+    query_zh: "同时还原人畜排卵经水、螺、鱼传播，并连接卫生、粪污与综合防控。"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-024", "PCMS-033", "PCMS-034", "PCMS-035", "W2-ATOM-005", "W2-ATOM-026", "W2-ATOM-027", "W2-ATOM-028", "PCMS-036"]
+  - case_id: "R5BH-15"
+    query_zh: "能否把某地改厕效果写成所有地区均有效的定量清除结论？"
+    required_claim_ids: ["W2-ATOM-026", "W2-ATOM-027", "PCMS-036"]
+  - case_id: "R5BH-16"
+    query_zh: "区分IARC危害分组与WHO治疗建议，不把分类当作个体预后。"
+    required_claim_ids: ["PCMS-030", "PCMS-032"]

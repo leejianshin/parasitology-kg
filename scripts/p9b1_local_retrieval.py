@@ -29,7 +29,7 @@ RESULT_SCHEMA_PATH = PHASE9 / "retrieval-result-schema.yml"
 FROZEN_RUNTIME_CONTRACT_SHA256 = "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
 FROZEN_REQUEST_SCHEMA_SHA256 = "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
 FROZEN_RESULT_SCHEMA_SHA256 = "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
-FROZEN_RETRIEVAL_CONTRACT_SHA256 = "12e78a7416c0a675b1a6e7a3033b8ca449281a36b5d104d0e12502332491db77"
+FROZEN_RETRIEVAL_CONTRACT_SHA256 = "9a9d39f60cc34f9acae4adcb3faa717e50bb90878804da1e930e72c36b230e15"
 
 ALLOWED_RUNTIME_INPUTS = (
     "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl",
@@ -293,8 +293,9 @@ def _verify_control_files(root: Path) -> dict[str, Any]:
         raise ValueError("P9-B1 entity alias authority changed")
     if planning.get("required_dimensions") != [
         "entity_ids", "entity_types", "relation_intents", "semantic_roles",
-        "evidence_roles", "negated_evidence_roles", "topic_scopes",
-        "coverage_groups",
+        "evidence_roles", "negated_evidence_roles",
+        "required_evidence_roles", "evidence_observations",
+        "control_semantic_roles", "topic_scopes", "coverage_groups",
     ]:
         raise ValueError("P9-B1 query-plan dimensions changed")
     blind = control.get("revision_3_acceptance", {}).get(
@@ -356,6 +357,41 @@ def _verify_control_files(root: Path) -> dict[str, Any]:
         "reveal_timing": "AFTER_REVISION_5_LOCAL_COMMIT",
     }:
         raise ValueError("P9-B1 revision-5 blind commitment changed")
+    revision_6 = control.get("revision_6_acceptance", {})
+    public_regression = revision_6.get(
+        "revision_5_blind_disclosed_public_regression"
+    )
+    if public_regression != {
+        "path": (
+            "phase9/clonorchis-sinensis/acceptance-cases/"
+            "p9b1-revision5-blind-disclosed-regression.yml"
+        ),
+        "sha256": (
+            "1d8b08110ded74b0c392876d4e0593eb"
+            "21f7a37c683803394d7600c6c9f0644b"
+        ),
+        "cases": 16,
+        "prior_recall_on_12554f2": "11/16 PASS_CHANGES_REQUIRED",
+        "prior_complete_plan_assertions_on_12554f2": (
+            "5/16 PASS_CHANGES_REQUIRED"
+        ),
+        "role_from_revision_6": "PUBLIC_REGRESSION_NOT_HELD_OUT",
+        "required_claim_recall_top12": "ALL_REQUIRED_IDS_PRESENT",
+    }:
+        raise ValueError("P9-B1 revision-5 public regression control changed")
+    revision_6_blind = revision_6.get("blind_independent_suite_commitment")
+    if revision_6_blind != {
+        "suite_id": "clonorchis_p9b1_revision6_blind_heldout_v1",
+        "cases": 18,
+        "canonical_content_sha256": (
+            "074636eaaf4b7d301c6f55645d33fe85"
+            "8f58eba3abb4c0caaf9b741b72b0a698"
+        ),
+        "frozen_at": "2026-08-05T11:33:18Z",
+        "contents_available_to_implementation": False,
+        "reveal_timing": "AFTER_REVISION_6_LOCAL_COMMIT",
+    }:
+        raise ValueError("P9-B1 revision-6 blind commitment changed")
     return control
 
 
@@ -431,6 +467,28 @@ class RetrievalIndex:
 
 
 @dataclass(frozen=True)
+class EvidenceObservation:
+    """A query-side evidence event bound to its method and polarity."""
+
+    observation_id: str
+    evidence_entity_id: str | None
+    evidence_role: str
+    polarity: str
+    event_type: str
+    semantic_roles: tuple[str, ...]
+
+    def public(self) -> dict[str, Any]:
+        return {
+            "observation_id": self.observation_id,
+            "evidence_entity_id": self.evidence_entity_id,
+            "evidence_role": self.evidence_role,
+            "polarity": self.polarity,
+            "event_type": self.event_type,
+            "semantic_roles": list(self.semantic_roles),
+        }
+
+
+@dataclass(frozen=True)
 class QueryPlan:
     """Deterministic query interpretation over the frozen graph vocabulary."""
 
@@ -441,6 +499,9 @@ class QueryPlan:
     semantic_roles: tuple[str, ...]
     evidence_roles: tuple[str, ...]
     negated_evidence_roles: tuple[str, ...]
+    required_evidence_roles: tuple[str, ...]
+    evidence_observations: tuple[EvidenceObservation, ...]
+    control_semantic_roles: tuple[str, ...]
     topic_scopes: tuple[str, ...]
     coverage_groups: tuple[str, ...]
 
@@ -453,6 +514,11 @@ class QueryPlan:
             "semantic_roles": list(self.semantic_roles),
             "evidence_roles": list(self.evidence_roles),
             "negated_evidence_roles": list(self.negated_evidence_roles),
+            "required_evidence_roles": list(self.required_evidence_roles),
+            "evidence_observations": [
+                observation.public() for observation in self.evidence_observations
+            ],
+            "control_semantic_roles": list(self.control_semantic_roles),
             "topic_scopes": list(self.topic_scopes),
             "coverage_groups": list(self.coverage_groups),
         }
@@ -508,6 +574,7 @@ _SEMANTIC_QUALIFIER_KEYS = (
     "confirmation_limit",
     "confirmation_role",
     "evidence_scope",
+    "mechanism",
 )
 
 
@@ -526,6 +593,8 @@ def _formal_semantic_roles(
         roles.add("cannot_confirm_alone")
     if qualifiers.get("evidence_integration_required") is True:
         roles.add("evidence_integration_required")
+    if qualifiers.get("universal_elimination_claim") is False:
+        roles.add("universal_elimination_claim_false")
     return tuple(sorted(roles))
 
 
@@ -770,8 +839,15 @@ _SEQUENCE_MARKERS = (
     "发育全程", "中间阶段", "完整过程", "逐步", "一步步", "哪些阶段",
 )
 _MORPHOLOGY_MARKERS = (
-    "识别", "辨认", "鉴别", "外形", "结构", "大小", "尺寸", "特征",
+    "识别", "辨认", "外形", "结构", "大小", "尺寸", "特征",
     "卵盖", "肩峰", "小疣",
+)
+_CLINICAL_DIFFERENTIAL_MARKERS = (
+    "鉴别诊断", "从鉴别中", "感染鉴别", "排除感染", "拿掉",
+)
+_MORPHOLOGY_ANCHORS = (
+    "形态", "外观", "外形", "结构", "尺寸", "卵盖", "肩峰", "小疣",
+    "显微特征", "肉眼",
 )
 _CONNECTION_MARKERS = (
     "传播", "连接", "循环", "周而复始", "往复", "维持", "链条", "网络",
@@ -779,6 +855,14 @@ _CONNECTION_MARKERS = (
 _DIAGNOSIS_MARKERS = (
     "诊断", "确诊", "确证", "判读", "证据", "依据", "意义", "说明什么",
     "最终判断", "辅助信息", "合并哪些", "综合判断",
+)
+_NONCONFIRMATORY_QUERY_MARKERS = (
+    "线索", "辅助信息", "非确证",
+    "不能单独确诊", "不能单独确认", "不可单独确诊", "不可单独确认",
+    "只是线索", "不属于确证",
+)
+_EPIDEMIOLOGIC_EXPOSURE_MARKERS = (
+    "流行区", "流行地区", "流行地", "居住史", "旅居史", "暴露史",
 )
 _SOURCE_MARKERS = (
     "来源", "出自", "文献", "机构", "指南", "资料", "权威", "回查", "溯源",
@@ -804,15 +888,15 @@ _DETECTION_ACTION_MARKERS = (
     "检出", "镜检", "显微镜", "检卵", "查见", "查到", "检验", "检测",
     "找到", "观察到", "检获", "见虫卵", "查虫卵", "便检", "粪检",
     "寄生虫学检查", "病原学检查", "阳性发现", "阳性结果", "看见",
-    "查出", "检到", "检得",
+    "查出", "检到", "检得", "寻获", "观察见", "送检", "查卵",
 )
 _NEGATED_DETECTION_PATTERNS = (
     re.compile(
         r"(?:没|未|无|没有|并无|未能).{0,10}"
-        r"(?:检出|查到|查出|找到|找出|发现|阳性|检获|查见|观察到|看见|检到|检得)"
+        r"(?:检出|查到|查出|找到|找出|发现|阳性|检获|查见|观察到|观察见|看见|检到|检得|寻获)"
     ),
     re.compile(
-        r"(?:检查|检测|检卵|镜检|便检|粪检|寄生虫学|病原学).{0,10}"
+        r"(?:检查|检测|检卵|镜检|便检|粪检|送检|寄生虫学|病原学).{0,10}"
         r"(?:阴性|未检出|未见|没找到|没有阳性|无阳性|查无|未获阳性)"
     ),
     re.compile(r"(?:结果|报告).{0,4}(?:为)?阴性"),
@@ -822,11 +906,36 @@ _NEGATED_DETECTION_PATTERNS = (
     ),
 )
 
+_NEGATED_IMAGING_PATTERNS = (
+    re.compile(
+        r"(?:影像|超声|ct|mri|胆道).{0,10}"
+        r"(?:未显示|未见|没有显示|无).{0,8}(?:异常|改变|扩张|特异)"
+    ),
+)
+
+_POSITIVE_DETECTION_MARKERS = (
+    "检出", "查到", "查出", "找到", "发现", "检获", "查见", "观察到",
+    "观察见", "看见", "检到", "检得", "寻获", "阳性", "见卵",
+)
+
+_LIFE_CYCLE_EVENT_MARKERS = (
+    "幼体", "幼虫", "虫态", "包囊", "成熟", "转换", "形成", "前序", "后续",
+    "变成", "转化", "蜕变", "入鱼", "螺内", "鱼内", "宿主体内",
+    "演替",
+)
+
 _DIAGNOSTIC_INTEGRATION_ROLES = {
     "diagnostic_evidence_integration",
     "diagnostic_confirmation_limit",
     "evidence_integration_required",
     "pathogen_evidence_required_for_confirmation",
+}
+
+_DIAGNOSTIC_CONTRAST_ROLES = _DIAGNOSTIC_INTEGRATION_ROLES | {
+    "epidemiological_clue",
+    "auxiliary",
+    "not_confirmatory",
+    "cannot_confirm_alone",
 }
 
 _FORMAL_ROLE_TO_EVIDENCE_ROLE = {
@@ -929,6 +1038,10 @@ def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
                 aliases.add(normalize_query(stage_name))
         if "虫卵" in joined:
             aliases.add("卵")
+        if "囊蚴" in joined:
+            aliases.update({"包囊幼体", "包囊期", "包囊", "感染性包囊"})
+        if "成虫" in joined:
+            aliases.update({"成熟虫体", "成熟阶段"})
     if entity_type == "host":
         if "淡水螺" in joined:
             aliases.update({"淡水螺", "螺"})
@@ -988,6 +1101,251 @@ def _roles_for_entities(
     }
 
 
+def _diagnostic_method_cues(
+    entity_id: str, index: RetrievalIndex
+) -> set[str]:
+    """Derive query cues from the reviewed diagnostic method identity."""
+    entity = index.entities[entity_id]
+    joined = normalize_query(_entity_search_text(entity))
+    cues = set(_formal_entity_aliases(entity))
+    if "十二指肠" in joined:
+        cues.update({
+            "十二指肠液", "十二指肠引流液", "十二指肠查卵",
+            "十二指肠引流液查卵",
+        })
+    if "粪便" in joined and "卵" in joined:
+        cues.update({
+            "粪便", "粪样", "粪标本", "便涂片", "粪涂片", "粪检",
+            "便检", "排泄物", "大便",
+        })
+    if "影像" in joined:
+        cues.update({"影像", "超声", "ct", "mri", "胆道影像"})
+    return {normalize_query(cue) for cue in cues if cue}
+
+
+def _diagnostic_method_occurrences(
+    surface: str, index: RetrievalIndex
+) -> list[tuple[int, str]]:
+    occurrences: list[tuple[int, str]] = []
+    for entity_id in sorted(_entities_with_type(index, "diagnostic_method")):
+        formal = normalize_query(_entity_search_text(index.entities[entity_id]))
+        if "粪便" in formal and "卵" in formal and not (
+            "卵" in surface or _has_any(surface, _DETECTION_ACTION_MARKERS)
+        ):
+            continue
+        positions = [
+            surface.find(cue)
+            for cue in _diagnostic_method_cues(entity_id, index)
+            if cue and cue in surface
+        ]
+        if positions:
+            occurrences.append((min(positions), entity_id))
+    return sorted(occurrences)
+
+
+def _detect_diagnostic_methods(
+    surface: str, index: RetrievalIndex
+) -> set[str]:
+    detected = {
+        entity_id
+        for _, entity_id in _diagnostic_method_occurrences(surface, index)
+    }
+    detection = _has_any(surface, _DETECTION_ACTION_MARKERS)
+    if "卵" in surface and detection and not detected:
+        detected.update(
+            record.object
+            for record in index.records
+            if record.predicate == "diagnosed_by"
+            and record.object in _entities_with_type(index, "diagnostic_method")
+            and "卵" in normalize_query(record.search_text)
+        )
+    return {item for item in detected if item}
+
+
+def _is_negative_observation(text: str) -> bool:
+    return "阴性" in text or _has_negated_detection(text) or any(
+        pattern.search(text) for pattern in _NEGATED_IMAGING_PATTERNS
+    )
+
+
+def _is_positive_observation(text: str) -> bool:
+    if _is_negative_observation(text):
+        return False
+    if _has_any(text, _POSITIVE_DETECTION_MARKERS):
+        return True
+    return (
+        _has_any(text, ("提示", "显示", "呈现"))
+        and _has_any(text, ("异常", "改变", "扩张", "阳性"))
+    )
+
+
+def _method_windows(
+    surface: str, occurrences: list[tuple[int, str]]
+) -> list[tuple[str, str]]:
+    """Bind nearby polarity wording to each mentioned diagnostic method."""
+    if not occurrences:
+        return []
+    boundaries = [0, *(position for position, _ in occurrences[1:]), len(surface)]
+    return [
+        (entity_id, surface[boundaries[index]:boundaries[index + 1]])
+        for index, (_, entity_id) in enumerate(occurrences)
+    ]
+
+
+def _coordinated_polarities(text: str, count: int) -> list[str] | None:
+    """Resolve explicit ordered constructions such as '分别阴性和阳性'."""
+    if count < 2:
+        return None
+    if "前者" in text and "后者" in text:
+        former = text.split("前者", 1)[1].split("后者", 1)[0]
+        latter = text.split("后者", 1)[1]
+        return [
+            "negative" if _is_negative_observation(former) else "positive"
+            if _is_positive_observation(former) else "unspecified",
+            "negative" if _is_negative_observation(latter) else "positive"
+            if _is_positive_observation(latter) else "unspecified",
+        ]
+    if "分别" not in text:
+        return None
+    tail = text.split("分别", 1)[1]
+    tokens = [match.group(0) for match in re.finditer(r"阴性|阳性", tail)]
+    if len(tokens) < count:
+        return None
+    return ["negative" if token == "阴性" else "positive" for token in tokens[:count]]
+
+
+def _has_generic_parasitological_event(surface: str) -> bool:
+    return _has_any(
+        surface,
+        ("寄生虫学", "病原学", "病原检查", "送检", "查卵", "虫卵"),
+    ) and (
+        _has_any(surface, _DETECTION_ACTION_MARKERS)
+        or _is_negative_observation(surface)
+    )
+
+
+def _evidence_clauses(query: str, index: RetrievalIndex) -> list[str]:
+    """Preserve event boundaries before punctuation is removed."""
+    raw_parts = re.split(r"[，,；;。！？!?]", query.lower())
+    clauses: list[str] = []
+    for raw in raw_parts:
+        pending = [raw]
+        for marker in ("然而", "随后", "后来", "同时", "但是", "但", "而"):
+            next_pending: list[str] = []
+            for item in pending:
+                position = item.find(marker)
+                if position < 0:
+                    next_pending.append(item)
+                    continue
+                left = _surface_query(item[:position])
+                right = _surface_query(item[position + len(marker):])
+                if (
+                    (
+                        _diagnostic_method_occurrences(left, index)
+                        or _has_generic_parasitological_event(left)
+                    )
+                    and (
+                        _diagnostic_method_occurrences(right, index)
+                        or _has_generic_parasitological_event(right)
+                    )
+                ):
+                    next_pending.extend([item[:position], item[position + len(marker):]])
+                else:
+                    next_pending.append(item)
+            pending = next_pending
+        clauses.extend(
+            normalized for item in pending
+            if (normalized := _surface_query(item))
+        )
+    return clauses
+
+
+def _query_evidence_observations(
+    query: str, surface: str, entities: set[str], index: RetrievalIndex
+) -> tuple[EvidenceObservation, ...]:
+    observations: list[EvidenceObservation] = []
+    for clause in _evidence_clauses(query, index):
+        occurrences = _diagnostic_method_occurrences(clause, index)
+        coordinated = _coordinated_polarities(clause, len(occurrences))
+        clause_has_pathogen_method = False
+        for method_index, (entity_id, window) in enumerate(
+            _method_windows(clause, occurrences)
+        ):
+            roles = _roles_for_entities({entity_id}, index)
+            evidence_role = next(
+                (
+                    mapped
+                    for formal, mapped in _FORMAL_ROLE_TO_EVIDENCE_ROLE.items()
+                    if formal in roles
+                ),
+                "pathogen_confirmation",
+            )
+            polarity = coordinated[method_index] if coordinated else (
+                "negative" if _is_negative_observation(window)
+                else "positive" if _is_positive_observation(window)
+                else "unspecified"
+            )
+            event_type = (
+                "imaging_observation"
+                if evidence_role == "imaging_auxiliary_clue"
+                else "parasitological_test"
+            )
+            if evidence_role == "pathogen_confirmation":
+                clause_has_pathogen_method = True
+            observations.append(EvidenceObservation(
+                observation_id=f"OBS-{len(observations) + 1:02d}",
+                evidence_entity_id=entity_id,
+                evidence_role=evidence_role,
+                polarity=polarity,
+                event_type=event_type,
+                semantic_roles=tuple(sorted(roles)),
+            ))
+        if not clause_has_pathogen_method and _has_generic_parasitological_event(clause):
+            observations.append(EvidenceObservation(
+                observation_id=f"OBS-{len(observations) + 1:02d}",
+                evidence_entity_id=None,
+                evidence_role="pathogen_confirmation",
+                polarity=(
+                    "negative" if _is_negative_observation(clause)
+                    else "positive" if _is_positive_observation(clause)
+                    else "unspecified"
+                ),
+                event_type="parasitological_test",
+                semantic_roles=("parasitological_confirmation",),
+            ))
+
+    has_exposure_observation = False
+    for entity_id in sorted(entities):
+        if index.entities[entity_id].get("entity_type") != "behavior":
+            continue
+        roles = _roles_for_entities({entity_id}, index)
+        if "epidemiological_clue" not in roles:
+            continue
+        observations.append(EvidenceObservation(
+            observation_id=f"OBS-{len(observations) + 1:02d}",
+            evidence_entity_id=entity_id,
+            evidence_role="epidemiologic_exposure_clue",
+            polarity="positive",
+            event_type="exposure_history",
+            semantic_roles=tuple(sorted(roles)),
+        ))
+        has_exposure_observation = True
+    if (
+        not has_exposure_observation
+        and _has_any(surface, _EPIDEMIOLOGIC_EXPOSURE_MARKERS)
+        and _has_any(surface, _NONCONFIRMATORY_QUERY_MARKERS)
+    ):
+        observations.append(EvidenceObservation(
+            observation_id=f"OBS-{len(observations) + 1:02d}",
+            evidence_entity_id=None,
+            evidence_role="epidemiologic_exposure_clue",
+            polarity="positive",
+            event_type="exposure_history",
+            semantic_roles=("epidemiological_clue", "not_confirmatory"),
+        ))
+    return tuple(observations)
+
+
 def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
     detected: set[str] = set()
     for entity_id, entity in index.entities.items():
@@ -1003,7 +1361,8 @@ def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
                 detected.add(entity_id)
 
     raw_food = _has_any(
-        surface, ("生食", "未充分加热", "生鱼", "鱼生", "没煮熟")
+        surface,
+        ("生食", "未充分加热", "生鱼", "鱼生", "没煮熟", "吃生", "生河鱼"),
     )
     if raw_food:
         for entity_id in _entities_with_type(index, "behavior"):
@@ -1022,24 +1381,7 @@ def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
             if "胆道" in formal and "auxiliary" in entity_roles:
                 detected.add(entity_id)
 
-    stool = _has_any(surface, ("粪便", "排泄物", "便检"))
-    detection = _has_any(surface, _DETECTION_ACTION_MARKERS)
-    egg_detection = "卵" in surface and detection
-    if egg_detection:
-        diagnostic_methods = _entities_with_type(index, "diagnostic_method")
-        candidates = {
-            record.object
-            for record in index.records
-            if record.predicate == "diagnosed_by"
-            and record.object in diagnostic_methods
-            and "卵" in normalize_query(record.search_text)
-        }
-        if stool:
-            candidates = {
-                entity_id for entity_id in candidates
-                if "粪便" in normalize_query(_entity_search_text(index.entities[entity_id]))
-            }
-        detected.update(item for item in candidates if item)
+    detected.update(_detect_diagnostic_methods(surface, index))
     return {entity_id for entity_id in detected if entity_id in index.entities}
 
 
@@ -1059,37 +1401,47 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         if index.entities[item]["entity_type"] == "host"
     }
 
+    evidence_observations = _query_evidence_observations(
+        query, surface, entities, index
+    )
     semantic_roles = _roles_for_entities(entities, index)
+    semantic_roles.update(
+        role
+        for observation in evidence_observations
+        for role in observation.semantic_roles
+    )
     evidence_roles = {
         evidence_role
         for formal_role, evidence_role in _FORMAL_ROLE_TO_EVIDENCE_ROLE.items()
         if formal_role in semantic_roles
     }
-    negated_evidence_roles: set[str] = set()
-    parasitological_context = (
-        "卵" in surface
-        or _has_any(
-            surface,
-            (
-                "寄生虫学", "病原学", "病原检查", "镜检", "粪检",
-                "便检", "粪便",
-            ),
-        )
-        or "pathogen_confirmation" in evidence_roles
+    evidence_roles.update(
+        observation.evidence_role for observation in evidence_observations
     )
-    if _has_negated_detection(surface) and parasitological_context:
-        negated_evidence_roles.add("pathogen_confirmation")
-        evidence_roles.add("pathogen_confirmation")
-        semantic_roles.add("parasitological_confirmation")
+    negated_evidence_roles = {
+        observation.evidence_role
+        for observation in evidence_observations
+        if observation.polarity == "negative"
+    }
+    required_evidence_roles: set[str] = set()
 
-    # Formal integration/limit roles require the confirmatory contrast even
-    # when the query mentions only imaging.  This is a graph-semantic rule:
-    # no query literal, case ID or required claim ID selects the claims.
-    if semantic_roles & _DIAGNOSTIC_INTEGRATION_ROLES:
-        evidence_roles.add("pathogen_confirmation")
+    # Every formally admitted non-confirmatory role requires a confirmatory
+    # contrast.  This is driven by graph metadata, never by a case literal.
+    if semantic_roles & _DIAGNOSTIC_CONTRAST_ROLES:
+        required_evidence_roles.add("pathogen_confirmation")
+    if _has_any(surface, _NONCONFIRMATORY_QUERY_MARKERS):
+        required_evidence_roles.add("pathogen_confirmation")
+    evidence_roles.update(required_evidence_roles)
 
     topics: set[str] = set()
-    morphology_intent = _has_any(surface, _MORPHOLOGY_MARKERS)
+    clinical_differential = _has_any(
+        surface, _CLINICAL_DIFFERENTIAL_MARKERS
+    )
+    morphology_intent = _has_any(surface, _MORPHOLOGY_MARKERS) or (
+        "鉴别" in surface
+        and not clinical_differential
+        and _has_any(surface, _MORPHOLOGY_ANCHORS)
+    )
     sequence_intent = _has_any(surface, _SEQUENCE_MARKERS)
     sequence_marker_count = sum(
         normalize_query(marker) in surface for marker in _SEQUENCE_MARKERS
@@ -1110,9 +1462,43 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
             )
         )
     )
+    graph_stage_event_intent = (
+        _has_any(surface, _LIFE_CYCLE_EVENT_MARKERS)
+        and (
+            bool(stages)
+            or bool(hosts)
+            or _has_any(
+                surface,
+                ("螺", "鱼", "宿主", "虫态", "幼体", "包囊"),
+            )
+        )
+        and _has_any(
+            surface,
+            (
+                "转换", "形成", "成熟", "前序", "后续", "变成", "转化",
+                "发育", "接通", "找全", "链",
+            ),
+        )
+    )
+    host_graph_sequence_intent = (
+        len(hosts) >= 2
+        and _has_any(
+            surface,
+            ("虫期", "虫态", "幼体", "幼虫", "阶段", "发育", "演替"),
+        )
+        and (
+            sequence_intent
+            or _has_any(
+                surface,
+                ("先", "再", "继而", "随后", "最后", "转至", "进入", "食入"),
+            )
+        )
+    )
     if (
         (len(stages) >= 2 and sequence_intent)
         or stage_range_intent
+        or graph_stage_event_intent
+        or host_graph_sequence_intent
         or (
             sequence_marker_count >= 1
             and _has_any(surface, ("虫态", "虫期", "幼虫", "虫体", "形态"))
@@ -1175,26 +1561,38 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         semantic_roles
         & (
             set(_FORMAL_ROLE_TO_EVIDENCE_ROLE)
-            | _DIAGNOSTIC_INTEGRATION_ROLES
+            | _DIAGNOSTIC_CONTRAST_ROLES
             | {"not_confirmatory", "cannot_confirm_alone"}
         )
     )
-    if diagnostic_semantic_role or len(evidence_roles) >= 2 or (
+    if required_evidence_roles or diagnostic_semantic_role or len(evidence_roles) >= 2 or (
         evidence_roles and _has_any(surface, _DIAGNOSIS_MARKERS)
     ):
         topics.add("diagnosis")
     infection_intent = _has_any(surface, _INFECTION_MARKERS)
     pathogenic_intent = _has_any(surface, _PATHOGENIC_MARKERS)
     if infection_intent and pathogenic_intent and _has_any(
-        surface, ("虫", "阶段", "虫期", "虫态", "形态")
+        surface, ("虫", "幼体", "阶段", "虫期", "虫态", "形态", "包囊")
     ):
         topics.add("stage_roles")
     if _has_any(surface, _TREATMENT_MARKERS) or "treatment" in entity_types:
         topics.add("treatment")
     if _has_any(surface, _CARCINOGENIC_MARKERS) or "hazard_classification" in entity_types:
         topics.add("carcinogenicity")
-    if "intervention" in entity_types or _has_any(surface, _CONTROL_MARKERS):
+    control_intent = (
+        "intervention" in entity_types or _has_any(surface, _CONTROL_MARKERS)
+    )
+    control_semantic_roles: set[str] = set()
+    if control_intent:
         topics.add("control")
+        control_semantic_roles.update(
+            role
+            for record in index.records
+            if record.predicate in _GROUP_PREDICATES["control_measures"]
+            and _record_has_type(record, "intervention")
+            for role in record.semantic_roles
+        )
+        semantic_roles.update(control_semantic_roles)
     if _has_any(surface, _SOURCE_MARKERS):
         topics.add("source_traceability")
 
@@ -1217,6 +1615,9 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         semantic_roles=tuple(sorted(semantic_roles)),
         evidence_roles=tuple(sorted(evidence_roles)),
         negated_evidence_roles=tuple(sorted(negated_evidence_roles)),
+        required_evidence_roles=tuple(sorted(required_evidence_roles)),
+        evidence_observations=evidence_observations,
+        control_semantic_roles=tuple(sorted(control_semantic_roles)),
         topic_scopes=ordered_topics,
         coverage_groups=coverage_groups,
     )
@@ -1368,9 +1769,17 @@ def _coverage_records(
                     if item.predicate == "diagnostic_stage_for"
                     and _record_has_type(item, "life_cycle_stage")
                 )
+            observed_entities = {
+                observation.evidence_entity_id
+                for observation in plan.evidence_observations
+                if observation.evidence_entity_id
+            }
             selected = sorted(
                 {item.claim_id: item for item in selected}.values(),
-                key=lambda item: item.claim_id,
+                key=lambda item: (
+                    0 if set(item.entity_ids) & observed_entities else 1,
+                    item.claim_id,
+                ),
             )
         elif group == "infective_pathogenic_stages":
             selected = sorted(
