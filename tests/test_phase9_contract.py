@@ -20,6 +20,7 @@ from scripts.validate_phase9_contract import (
     canonical_sha256,
     load_yaml,
     render_response_text,
+    validate_authority_projection,
     validate_adjudication_record_instance,
     validate_audit_instance,
     validate_contract_data,
@@ -128,6 +129,24 @@ class Phase9ContractTests(unittest.TestCase):
                 verify_runtime_bundle(
                     temp_root, verify_source_commit=False
                 )
+
+    def test_authority_projection_preserves_two_distinct_reviewed_claims(
+        self,
+    ) -> None:
+        projection = validate_authority_projection(ROOT)
+        claims = {item["claim_id"]: item for item in projection["claims"]}
+        self.assertEqual({"W2-ATOM-024", "W2-ATOM-025"}, set(claims))
+        self.assertEqual(
+            "华支睾吸虫病影像线索应结合暴露史、临床和实验室证据综合判断。",
+            claims["W2-ATOM-024"]["statement_zh"],
+        )
+        self.assertEqual(
+            "影像不能单独确诊华支睾吸虫病。",
+            claims["W2-ATOM-025"]["statement_zh"],
+        )
+        for claim in claims.values():
+            self.assertIsNone(claim["predicate"])
+            self.assertIsNone(claim["object"])
 
     def test_backend_trace_cannot_replace_student_visible_sources(
         self,

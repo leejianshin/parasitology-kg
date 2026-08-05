@@ -56,16 +56,17 @@ PCMS_SUITE_PATH = (
     / "pilot-content-minimum-set-regression.yml"
 )
 SOURCE_REGISTRY_PATH = ROOT / "sources" / "registry.yml"
+AUTHORITY_PROJECTION_PATH = P9_DIR / "runtime-authority-projection.yml"
 
 SOURCE_COMMIT = "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
 CANONICAL_HASH = (
     "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
 )
 RUNTIME_BUNDLE_HASH = (
-    "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+    "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
 )
 RUNTIME_MANIFEST_HASH = (
-    "67a57cc7791006c277e778a518d0c12f30aaf8ee9849fdef46932e412feb3ca8"
+    "451e7a1fbff02236590b8247e8aa20e51834be1d1a47bb060393474606cb108c"
 )
 SOURCE_TREE_SHA1 = "b0e3ac1e4a40e541d0c621f98521b28b689989d6"
 ALLOWED_RUNTIME_INPUTS = [
@@ -76,6 +77,7 @@ ALLOWED_RUNTIME_INPUTS = [
         "pilot-content-minimum-set-authority-review.yml"
     ),
     "sources/registry.yml",
+    "phase9/clonorchis-sinensis/runtime-authority-projection.yml",
 ]
 EXPECTED_DISPOSITIONS = {"ANSWER": 11, "PARTIAL": 3, "ABSTAIN": 2}
 REQUIRED_HARD_FAILS = {
@@ -242,6 +244,12 @@ def verify_runtime_bundle(
     entries = manifest["files"]
     if [item["path"] for item in entries] != ALLOWED_RUNTIME_INPUTS:
         raise ValueError("runtime bundle file list changed")
+    if manifest.get("authority_projection_revision") != "P9A-P9B1-20260805":
+        raise ValueError("runtime authority projection revision changed")
+    if entries[4].get("provenance") != (
+        "COURSE_LEAD_AUTHORIZED_POST_SOURCE_COMMIT_PROJECTION"
+    ):
+        raise ValueError("runtime authority projection provenance changed")
     if verify_source_commit:
         actual_tree = git_revision_value(root, f"{SOURCE_COMMIT}^{{tree}}")
         if actual_tree != SOURCE_TREE_SHA1:
@@ -263,15 +271,145 @@ def verify_runtime_bundle(
                 f"runtime bundle Git blob mismatch: {relative_path}"
             )
         if verify_source_commit:
-            source_blob = git_revision_value(
-                root, f"{SOURCE_COMMIT}:{relative_path}"
-            )
-            if source_blob != entry["source_blob_sha1"]:
-                raise ValueError(
-                    "runtime bundle source-commit mismatch: "
-                    f"{relative_path}"
+            if relative_path == ALLOWED_RUNTIME_INPUTS[4]:
+                pass
+            else:
+                source_blob = git_revision_value(
+                    root, f"{SOURCE_COMMIT}:{relative_path}"
                 )
+                if source_blob != entry["source_blob_sha1"]:
+                    raise ValueError(
+                        "runtime bundle source-commit mismatch: "
+                        f"{relative_path}"
+                    )
     return manifest
+
+
+def validate_authority_projection(root: Path = ROOT) -> dict[str, Any]:
+    """Validate the two post-admission supporting claims and their provenance."""
+    projection_path = (
+        root
+        / "phase9"
+        / "clonorchis-sinensis"
+        / "runtime-authority-projection.yml"
+    )
+    projection = load_yaml(projection_path)
+    if projection.get("status") != "COURSE_LEAD_AUTHORIZED_RUNTIME_PROJECTION":
+        raise ValueError("authority projection is not authorized")
+    if projection.get("scope") != "W2-ATOM-024_AND_W2-ATOM-025_ONLY":
+        raise ValueError("authority projection scope changed")
+    if projection.get("knowledge_version") != "clonorchis_pcms_v1":
+        raise ValueError("authority projection knowledge version changed")
+    rules = projection.get("projection_rules", {})
+    if rules != {
+        "knowledge_addition": False,
+        "new_graph_edge": False,
+        "source_claims_outside_scope": False,
+        "claim_mode": (
+            "QUALIFIER_OR_NARRATIVE_BOUND_TO_REVIEWED_IMAGING_RELATION"
+        ),
+        "runtime_must_not_read_authority_basis_files": True,
+    }:
+        raise ValueError("authority projection boundary rules changed")
+
+    basis = projection.get("authority_basis", {})
+    expected_basis = {
+        "reviewed_entity_file": (
+            "knowledge/diagnostics/biliary-imaging.md",
+            "7d2b8c926e0d943344c389a5653577893c4b94348adcccf7a054a6ac2d51df22",
+            "debdb791227c859539c0fca7047d4aa0e827a7bf",
+        ),
+        "reviewed_relation_file": (
+            "knowledge/diseases/clonorchiasis.md",
+            "24741f1a524334fbd63c4eeb75f0fab1408eec4893d18e05c80923bdface1579",
+            "c5791707c293cd27182970614af258b3f037ea8b",
+        ),
+        "historical_preparation_ledger": (
+            "candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml",
+            "c2a555711a6c58638bbd8afca4d7a0396b7a3f3925f7f09adeb8528716c72f52",
+            "0fb786a6cebf9feea5d070738a541f43a7adcaf0",
+        ),
+    }
+    for key, (relative, sha256, blob_sha1) in expected_basis.items():
+        declared = basis.get(key, {})
+        if declared.get("path") != relative:
+            raise ValueError(f"authority basis path changed: {key}")
+        path = root / relative
+        if file_sha256(path) != sha256 or git_blob_sha1(path) != blob_sha1:
+            raise ValueError(f"authority basis hash mismatch: {key}")
+        if declared.get("sha256") != sha256:
+            raise ValueError(f"authority basis declared SHA mismatch: {key}")
+        if declared.get("git_blob_sha1") != blob_sha1:
+            raise ValueError(f"authority basis declared blob mismatch: {key}")
+
+    entity_text = (root / expected_basis["reviewed_entity_file"][0]).read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        "review_status: reviewed",
+        "batch_id: P5-B1",
+        "- W2-ATOM-024",
+        "- W2-ATOM-025",
+        "影像学线索应结合暴露史、临床和实验室证据综合判断。",
+        "影像不能单独确诊华支睾吸虫病。",
+    ):
+        if marker not in entity_text:
+            raise ValueError(f"reviewed authority marker missing: {marker}")
+    ledger = load_yaml(root / expected_basis["historical_preparation_ledger"][0])
+    if ledger.get("status") != "ADMISSION_PREPARED_NOT_ADMITTED":
+        raise ValueError("historical preparation status changed")
+    if ledger.get("formal_knowledge_graph_admission") != "NOT_AUTHORIZED":
+        raise ValueError("historical preparation boundary changed")
+
+    expected_claims = {
+        "W2-ATOM-024": {
+            "semantic_role": "diagnostic_evidence_integration",
+            "statement_zh": (
+                "华支睾吸虫病影像线索应结合暴露史、临床和实验室证据综合判断。"
+            ),
+        },
+        "W2-ATOM-025": {
+            "semantic_role": "diagnostic_confirmation_limit",
+            "statement_zh": "影像不能单独确诊华支睾吸虫病。",
+        },
+    }
+    claims = projection.get("claims")
+    if not isinstance(claims, list) or {
+        item.get("claim_id") for item in claims
+    } != set(expected_claims) or len(claims) != 2:
+        raise ValueError("authority projection claim set changed")
+    expected_citations = {
+        ("source.cdc_clinical_overview_clonorchis_2024", "Diagnosis"),
+        ("source.who_foodborne_trematode_fact_sheet", "Diagnosis"),
+    }
+    for claim in claims:
+        claim_id = claim["claim_id"]
+        expected = expected_claims[claim_id]
+        if claim.get("claim_kind") != "supporting_narrative":
+            raise ValueError(f"authority projection kind changed: {claim_id}")
+        if claim.get("semantic_role") != expected["semantic_role"]:
+            raise ValueError(f"authority projection role changed: {claim_id}")
+        if claim.get("statement_zh") != expected["statement_zh"]:
+            raise ValueError(f"authority projection statement changed: {claim_id}")
+        if claim.get("anchor_claim_id") != "W2-ATOM-023":
+            raise ValueError(f"authority projection anchor changed: {claim_id}")
+        if claim.get("subject") != "diagnostic.biliary_imaging":
+            raise ValueError(f"authority projection subject changed: {claim_id}")
+        if claim.get("predicate") is not None or claim.get("object") is not None:
+            raise ValueError(f"authority projection invented edge: {claim_id}")
+        if claim.get("entity_ids") != [
+            "diagnostic.biliary_imaging", "disease.clonorchiasis"
+        ]:
+            raise ValueError(f"authority projection entity binding changed: {claim_id}")
+        if claim.get("qualifiers", {}).get("source_atom_id") != claim_id:
+            raise ValueError(f"authority projection ID binding changed: {claim_id}")
+        citation_pairs = {
+            (item.get("source_id"), item.get("locator"))
+            for item in claim.get("citations", [])
+        }
+        if citation_pairs != expected_citations:
+            raise ValueError(f"authority projection citations changed: {claim_id}")
+    return projection
 
 
 def validate_schema_definition(
@@ -340,13 +478,14 @@ def contract_context(root: Path = ROOT) -> dict[str, Any]:
         / "pilot-content-minimum-set-regression.yml"
     )
     registry = load_yaml(root / "sources" / "registry.yml")
+    projection = validate_authority_projection(root)
 
     node_ids = {row["id"] for row in nodes}
     if len(node_ids) != len(nodes):
         raise ValueError("PCMS contains duplicate entity IDs")
 
     edge_by_claim: dict[str, dict[str, Any]] = {}
-    supporting_narrative_by_claim: dict[str, dict[str, Any]] = {}
+    supporting_narrative_declarations: dict[str, dict[str, Any]] = {}
     for edge in edges:
         claim_id = edge["qualifiers"]["source_atom_id"]
         if claim_id in edge_by_claim:
@@ -355,11 +494,21 @@ def contract_context(root: Path = ROOT) -> dict[str, Any]:
         for supporting_id in edge["qualifiers"].get(
             "supporting_narrative_atom_ids", []
         ):
-            if supporting_id in supporting_narrative_by_claim:
+            if supporting_id in supporting_narrative_declarations:
                 raise ValueError(
                     f"duplicate supporting narrative claim ID: {supporting_id}"
                 )
-            supporting_narrative_by_claim[supporting_id] = edge
+            supporting_narrative_declarations[supporting_id] = edge
+
+    supporting_narrative_by_claim = {
+        claim["claim_id"]: claim for claim in projection["claims"]
+    }
+    if set(supporting_narrative_declarations) != set(
+        supporting_narrative_by_claim
+    ):
+        raise ValueError(
+            "reviewed relation and authority projection claim IDs differ"
+        )
 
     narrative_by_claim: dict[str, dict[str, Any]] = {}
     for group in authority["candidate_groups"]:
@@ -398,12 +547,12 @@ def contract_context(root: Path = ROOT) -> dict[str, Any]:
             "qualifiers": {},
             "render_text": claim["claim"],
         }
-    for claim_id, edge in supporting_narrative_by_claim.items():
+    for claim_id, claim in supporting_narrative_by_claim.items():
         claim_records[claim_id] = {
-            "entity_ids": {edge["subject"], edge["object"]},
-            "evidence": edge["evidence"],
-            "qualifiers": {},
-            "render_text": edge["statement_zh"],
+            "entity_ids": set(claim["entity_ids"]),
+            "evidence": claim["citations"],
+            "qualifiers": claim["qualifiers"],
+            "render_text": claim["statement_zh"],
         }
 
     return {
@@ -729,10 +878,15 @@ def validate_contract_data(
         "entities": manifest["counts"]["nodes"],
         "relation_claims": manifest["counts"]["edges"],
         "narrative_claims": manifest["counts"]["narrative_claims"],
+        "supporting_narrative_claims": 2,
     }:
         raise ValueError("runtime PCMS counts differ from manifest")
     if authority["allowed_runtime_inputs"] != ALLOWED_RUNTIME_INPUTS:
         raise ValueError("runtime input allowlist changed")
+    if runtime["claim_admission"].get(
+        "supporting_narrative_claim_source"
+    ) != "phase9/clonorchis-sinensis/runtime-authority-projection.yml":
+        raise ValueError("supporting narrative authority source changed")
     prohibited = set(authority["prohibited_runtime_inputs"])
     if not {
         "external_web",

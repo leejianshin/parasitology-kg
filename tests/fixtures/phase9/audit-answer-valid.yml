@@ -4,14 +4,14 @@ request_schema_version: "1.0"
 request_id: "P9A-FIXTURE-ANSWER-001"
 request_sha256: "c7d0722f0755ccffe38b757e966a5644c5a99eee5f6036f1283710f3e6fcdefb"
 response_schema_version: "1.2"
-response_sha256: "d23cddf0264a99c0f47eead125843c8abfbc880d0589ae5b6a00f78f2cbd1343"
+response_sha256: "15bafc3d3e45c96edaab8cd42d9979f90bd6a1c16bbdecbfacb956b6029c1d32"
 started_at: "2026-07-29T12:00:00Z"
 completed_at: "2026-07-29T12:00:01Z"
 knowledge_authority:
   knowledge_version: "clonorchis_pcms_v1"
   source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
   canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
-  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
   hash_verified: true
 retrieval:
   candidate_claim_ids: ["W2-ATOM-001"]

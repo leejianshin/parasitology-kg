@@ -11,7 +11,7 @@ knowledge_authority:
   knowledge_version: "clonorchis_pcms_v1"
   source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
   canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
-  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
   hash_verified: false
 retrieval:
   candidate_claim_ids: []

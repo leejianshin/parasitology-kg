@@ -1,10 +1,11 @@
-manifest_version: "1.0"
+manifest_version: "1.1"
 bundle_id: "clonorchis_pcms_v1_runtime_bundle"
 knowledge_version: "clonorchis_pcms_v1"
 source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
 source_tree_sha1: "b0e3ac1e4a40e541d0c621f98521b28b689989d6"
+authority_projection_revision: "P9A-P9B1-20260805"
 digest_algorithm: "sha256(canonical-json-without-bundle_sha256)"
-bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
 files:
   - path: "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
     size_bytes: 16272
@@ -22,3 +23,8 @@ files:
     size_bytes: 26993
     sha256: "815ecc39888a5cdcf0a8ac76571876f4ec66dffd9912ea89f1b58ede4718f2f1"
     source_blob_sha1: "df07cfcbf14afd8de42369b61acaaa97609d9a6d"
+  - path: "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+    size_bytes: 3259
+    sha256: "3ce4adb9808f677e7e99e9eb7e5d1ba9705bec5c3ead3266ed90c721afa15353"
+    source_blob_sha1: "d8afeef77fc41acf2e471493191bc49850681492"
+    provenance: "COURSE_LEAD_AUTHORIZED_POST_SOURCE_COMMIT_PROJECTION"

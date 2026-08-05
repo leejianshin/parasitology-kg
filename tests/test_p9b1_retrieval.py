@@ -70,8 +70,58 @@ class P9B1RetrievalTests(unittest.TestCase):
         self.assertEqual(48, len(index.records))
         self.assertEqual(48, len({item.claim_id for item in index.records}))
         self.assertEqual(
-            "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302",
+            "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f",
             index.bundle_sha256,
+        )
+
+    def test_projected_claims_match_independent_authority_assertions(self) -> None:
+        records = {item.claim_id: item.payload() for item in build_index(ROOT).records}
+        citations = [
+            {
+                "source_id": "source.cdc_clinical_overview_clonorchis_2024",
+                "source_label": "Clinical Overview of Clonorchis",
+                "locator": "Diagnosis",
+            },
+            {
+                "source_id": "source.who_foodborne_trematode_fact_sheet",
+                "source_label": "Foodborne trematode infections",
+                "locator": "Diagnosis",
+            },
+        ]
+        expected = {
+            "W2-ATOM-024": {
+                "statement_zh": (
+                    "华支睾吸虫病影像线索应结合暴露史、临床和实验室证据综合判断。"
+                ),
+                "semantic_role": "diagnostic_evidence_integration",
+            },
+            "W2-ATOM-025": {
+                "statement_zh": "影像不能单独确诊华支睾吸虫病。",
+                "semantic_role": "diagnostic_confirmation_limit",
+            },
+        }
+        for claim_id, authority in expected.items():
+            with self.subTest(claim_id=claim_id):
+                record = records[claim_id]
+                self.assertEqual("supporting_narrative", record["claim_kind"])
+                self.assertEqual("diagnostic.biliary_imaging", record["subject"])
+                self.assertIsNone(record["predicate"])
+                self.assertIsNone(record["object"])
+                self.assertEqual(
+                    ["diagnostic.biliary_imaging", "disease.clonorchiasis"],
+                    record["entity_ids"],
+                )
+                self.assertEqual(authority["statement_zh"], record["statement_zh"])
+                self.assertEqual(claim_id, record["qualifiers"]["source_atom_id"])
+                self.assertEqual(
+                    authority["semantic_role"],
+                    record["qualifiers"]["semantic_role"],
+                )
+                self.assertEqual("W2-ATOM-023", record["qualifiers"]["anchor_claim_id"])
+                self.assertEqual(citations, record["citations"])
+        self.assertNotEqual(
+            records["W2-ATOM-024"]["statement_zh"],
+            records["W2-ATOM-025"]["statement_zh"],
         )
 
     def test_public_retrieve_has_no_external_index_injection_path(self) -> None:
@@ -115,6 +165,28 @@ class P9B1RetrievalTests(unittest.TestCase):
         self.assertGreaterEqual(len(suite["cases"]), 8)
         for case in suite["cases"]:
             with self.subTest(case=case["case_id"]):
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_independent_review_held_out_paraphrases_recall_required_claims(self) -> None:
+        suite = yaml.safe_load(
+            (
+                ROOT
+                / "phase9/clonorchis-sinensis/acceptance-cases"
+                / "p9b1-held-out-paraphrase-cases.yml"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(4, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
                 result = retrieve(
                     request(case["query_zh"], case["case_id"]), root=ROOT
                 )
@@ -221,6 +293,15 @@ class P9B1RetrievalTests(unittest.TestCase):
             self._copy_runtime(root)
             nodes = root / ALLOWED_RUNTIME_INPUTS[0]
             nodes.write_bytes(nodes.read_bytes() + b"\n")
+            with self.assertRaisesRegex(ValueError, "size mismatch"):
+                retrieve(self.request, root=root)
+
+    def test_authority_projection_tamper_fails_before_index_use(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._copy_runtime(root)
+            projection = root / ALLOWED_RUNTIME_INPUTS[4]
+            projection.write_bytes(projection.read_bytes() + b"\n")
             with self.assertRaisesRegex(ValueError, "size mismatch"):
                 retrieve(self.request, root=root)
 

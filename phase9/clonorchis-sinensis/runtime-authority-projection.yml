@@ -1,0 +1,79 @@
+schema_version: "1.0"
+projection_id: "clonorchis_p9a_p9b1_supporting_claim_projection_v1"
+status: "COURSE_LEAD_AUTHORIZED_RUNTIME_PROJECTION"
+authorized_on: "2026-08-05"
+scope: "W2-ATOM-024_AND_W2-ATOM-025_ONLY"
+knowledge_version: "clonorchis_pcms_v1"
+
+authority_basis:
+  reviewed_entity_file:
+    path: "knowledge/diagnostics/biliary-imaging.md"
+    sha256: "7d2b8c926e0d943344c389a5653577893c4b94348adcccf7a054a6ac2d51df22"
+    git_blob_sha1: "debdb791227c859539c0fca7047d4aa0e827a7bf"
+    review_status: "reviewed"
+    admission_batch_id: "P5-B1"
+    admitted_atom_ids: ["W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+  reviewed_relation_file:
+    path: "knowledge/diseases/clonorchiasis.md"
+    sha256: "24741f1a524334fbd63c4eeb75f0fab1408eec4893d18e05c80923bdface1579"
+    git_blob_sha1: "c5791707c293cd27182970614af258b3f037ea8b"
+    anchor_claim_id: "W2-ATOM-023"
+    supporting_narrative_atom_ids: ["W2-ATOM-024", "W2-ATOM-025"]
+  historical_preparation_ledger:
+    path: "candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml"
+    sha256: "c2a555711a6c58638bbd8afca4d7a0396b7a3f3925f7f09adeb8528716c72f52"
+    git_blob_sha1: "0fb786a6cebf9feea5d070738a541f43a7adcaf0"
+    historical_status: "ADMISSION_PREPARED_NOT_ADMITTED"
+    status_interpretation: >-
+      该账本记录Phase 4准备状态；后续正式准入以reviewed的P5-B1知识文件及其
+      派生节点为准，不把历史准备状态改写为当时已经入图。
+
+projection_rules:
+  knowledge_addition: false
+  new_graph_edge: false
+  source_claims_outside_scope: false
+  claim_mode: "QUALIFIER_OR_NARRATIVE_BOUND_TO_REVIEWED_IMAGING_RELATION"
+  runtime_must_not_read_authority_basis_files: true
+
+claims:
+  - claim_id: "W2-ATOM-024"
+    claim_kind: "supporting_narrative"
+    semantic_role: "diagnostic_evidence_integration"
+    anchor_claim_id: "W2-ATOM-023"
+    subject: "diagnostic.biliary_imaging"
+    predicate: null
+    object: null
+    entity_ids:
+      - "diagnostic.biliary_imaging"
+      - "disease.clonorchiasis"
+    statement_zh: "华支睾吸虫病影像线索应结合暴露史、临床和实验室证据综合判断。"
+    qualifiers:
+      source_atom_id: "W2-ATOM-024"
+      relation_mode: "qualifier_or_narrative"
+      evidence_integration_required: true
+      confirmation_role: "pathogen_evidence_required_for_confirmation"
+    citations:
+      - source_id: "source.cdc_clinical_overview_clonorchis_2024"
+        locator: "Diagnosis"
+      - source_id: "source.who_foodborne_trematode_fact_sheet"
+        locator: "Diagnosis"
+  - claim_id: "W2-ATOM-025"
+    claim_kind: "supporting_narrative"
+    semantic_role: "diagnostic_confirmation_limit"
+    anchor_claim_id: "W2-ATOM-023"
+    subject: "diagnostic.biliary_imaging"
+    predicate: null
+    object: null
+    entity_ids:
+      - "diagnostic.biliary_imaging"
+      - "disease.clonorchiasis"
+    statement_zh: "影像不能单独确诊华支睾吸虫病。"
+    qualifiers:
+      source_atom_id: "W2-ATOM-025"
+      relation_mode: "qualifier_or_narrative"
+      cannot_confirm_alone: true
+    citations:
+      - source_id: "source.cdc_clinical_overview_clonorchis_2024"
+        locator: "Diagnosis"
+      - source_id: "source.who_foodborne_trematode_fact_sheet"
+        locator: "Diagnosis"

@@ -1,0 +1,46 @@
+schema_version: "1.0"
+suite_id: "clonorchis_p9b1_independent_review_held_out_v1"
+status: "FROZEN_FROM_INDEPENDENT_REVIEW_BEFORE_REVISION_2"
+origin: "P9-B1_REVISION_1_INDEPENDENT_READ_ONLY_REVIEW"
+purpose: >-
+  冻结复审方在第二修订前提出的自然改写，不得按case_id、完整题干或
+  required_claim_ids为算法编写专用分支。
+cases:
+  - case_id: "P9B1-HO-01"
+    query_zh: "请按先后列出华支睾吸虫各虫态的转变路线。"
+    required_claim_ids:
+      - "PCMS-014"
+      - "PCMS-015"
+      - "PCMS-016"
+      - "PCMS-017"
+      - "PCMS-018"
+      - "PCMS-019"
+  - case_id: "P9B1-HO-02"
+    query_zh: "曾吃过没熟透的河鱼、胆管检查有异常、大便里发现虫卵，这三项各能说明什么？"
+    required_claim_ids:
+      - "W2-ATOM-001"
+      - "W2-ATOM-023"
+      - "PCMS-028"
+  - case_id: "P9B1-HO-03"
+    query_zh: "华支睾吸虫怎样在人、家畜和水生生态系统之间维持循环？"
+    required_claim_ids:
+      - "PCMS-020"
+      - "PCMS-021"
+      - "PCMS-024"
+      - "PCMS-033"
+      - "PCMS-034"
+      - "PCMS-035"
+      - "W2-ATOM-005"
+  - case_id: "P9B1-HO-04"
+    query_zh: "人体是被哪一种虫态侵入的？造成主要损害的又是哪一种虫态？"
+    required_claim_ids:
+      - "PCMS-025"
+      - "PCMS-026"
+acceptance:
+  top_k: 12
+  required_claim_recall: "ALL_REQUIRED_IDS_PRESENT"
+  deterministic_repetitions: 3
+  forbidden_implementation_shortcuts:
+    - "CASE_ID_BRANCH"
+    - "FULL_QUERY_LITERAL_BRANCH"
+    - "REQUIRED_CLAIM_ID_BRANCH"

@@ -46,7 +46,7 @@ properties:
       canonical_input_sha256:
         const: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
       runtime_bundle_sha256:
-        const: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+        const: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
       hash_verified: {type: boolean}
   retrieval:
     type: object

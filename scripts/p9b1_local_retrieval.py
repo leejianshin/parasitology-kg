@@ -3,7 +3,7 @@
 
 P9-B1 deliberately does not call a model, the network, or student data.  Every
 public retrieval and every public result validation rebuilds a verified index
-from the four P9-A allowlisted files.  Callers cannot inject an index.
+from the five P9-A allowlisted files.  Callers cannot inject an index.
 """
 
 from __future__ import annotations
@@ -26,16 +26,17 @@ BUNDLE_MANIFEST_PATH = PHASE9 / "runtime-bundle-manifest.yml"
 REQUEST_SCHEMA_PATH = PHASE9 / "request-schema.yml"
 RETRIEVAL_CONTRACT_PATH = PHASE9 / "p9b1-retrieval-contract.yml"
 RESULT_SCHEMA_PATH = PHASE9 / "retrieval-result-schema.yml"
-FROZEN_RUNTIME_CONTRACT_SHA256 = "f4b2712a1b7cd4a1bce0093a8a4c3a717fecee04ab540434fb3c3ce0539d4a5f"
+FROZEN_RUNTIME_CONTRACT_SHA256 = "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
 FROZEN_REQUEST_SCHEMA_SHA256 = "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
 FROZEN_RESULT_SCHEMA_SHA256 = "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
-FROZEN_RETRIEVAL_CONTRACT_SHA256 = "3d5ce4bd018fd3714f349daa48739a51e7ed0ca741d9916e343cf1bdb601e7d4"
+FROZEN_RETRIEVAL_CONTRACT_SHA256 = "abeb6949d34d7026d226b27dfbeb2393a671e637fbe72bc8013d021b1d2e65ec"
 
 ALLOWED_RUNTIME_INPUTS = (
     "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl",
     "derived/clonorchis-sinensis/pcms-v1/edges.jsonl",
     "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml",
     "sources/registry.yml",
+    "phase9/clonorchis-sinensis/runtime-authority-projection.yml",
 )
 
 _SCHEMA_ANNOTATIONS = {
@@ -273,6 +274,16 @@ def _verify_control_files(root: Path) -> dict[str, Any]:
             raise ValueError(f"frozen control SHA mismatch: {relative}")
     if tuple(control["authority"]["allowed_runtime_inputs"]) != ALLOWED_RUNTIME_INPUTS:
         raise ValueError("P9-B1 allowlist changed")
+    projection_control = control["authority"].get("authority_projection")
+    if projection_control != {
+        "path": ALLOWED_RUNTIME_INPUTS[4],
+        "sha256": (
+            "3ce4adb9808f677e7e99e9eb7e5d1ba9"
+            "705bec5c3ead3266ed90c721afa15353"
+        ),
+        "claim_ids": ["W2-ATOM-024", "W2-ATOM-025"],
+    }:
+        raise ValueError("P9-B1 authority projection control changed")
     return control
 
 
@@ -397,6 +408,7 @@ def build_index(root: Path = ROOT) -> RetrievalIndex:
     edges = _load_jsonl(root / ALLOWED_RUNTIME_INPUTS[1])
     review = _read_yaml(root / ALLOWED_RUNTIME_INPUTS[2])
     registry = _read_yaml(root / ALLOWED_RUNTIME_INPUTS[3])
+    projection = _read_yaml(root / ALLOWED_RUNTIME_INPUTS[4])
     sources = _source_registry(registry)
 
     entities: dict[str, dict[str, Any]] = {}
@@ -412,6 +424,7 @@ def build_index(root: Path = ROOT) -> RetrievalIndex:
 
     review_claims = _review_claims(review)
     records: list[ClaimRecord] = []
+    declared_supporting_ids: set[str] = set()
     for edge in edges:
         if edge.get("relation_status") != "reviewed":
             raise ValueError("unreviewed relation claim")
@@ -441,14 +454,100 @@ def build_index(root: Path = ROOT) -> RetrievalIndex:
             entity_ids=(subject, object_id), statement_zh=edge["statement_zh"],
             qualifiers=qualifiers, citations=citations, search_text=search,
         ))
-        for supporting_id in source_qualifiers.get("supporting_narrative_atom_ids", []):
-            records.append(ClaimRecord(
-                claim_id=supporting_id, claim_kind="supporting_narrative",
-                subject=subject, predicate=edge.get("predicate"), object=object_id,
-                entity_ids=(subject, object_id), statement_zh=edge["statement_zh"],
-                qualifiers={**qualifiers, "supporting_for": claim_id},
-                citations=citations, search_text=search,
-            ))
+        supporting_ids = source_qualifiers.get(
+            "supporting_narrative_atom_ids", []
+        )
+        if not isinstance(supporting_ids, list):
+            raise ValueError("supporting narrative IDs must be a list")
+        for supporting_id in supporting_ids:
+            if not isinstance(supporting_id, str) or not supporting_id:
+                raise ValueError("invalid supporting narrative claim ID")
+            if supporting_id in declared_supporting_ids:
+                raise ValueError(
+                    f"duplicate supporting narrative declaration: {supporting_id}"
+                )
+            declared_supporting_ids.add(supporting_id)
+
+    if projection.get("status") != "COURSE_LEAD_AUTHORIZED_RUNTIME_PROJECTION":
+        raise ValueError("authority projection is not course-lead authorized")
+    if projection.get("scope") != "W2-ATOM-024_AND_W2-ATOM-025_ONLY":
+        raise ValueError("authority projection scope changed")
+    if projection.get("knowledge_version") != "clonorchis_pcms_v1":
+        raise ValueError("authority projection knowledge version changed")
+    rules = projection.get("projection_rules", {})
+    if rules.get("knowledge_addition") is not False:
+        raise ValueError("authority projection cannot add knowledge")
+    if rules.get("new_graph_edge") is not False:
+        raise ValueError("authority projection cannot add graph edges")
+
+    projected_claims = projection.get("claims")
+    if not isinstance(projected_claims, list):
+        raise ValueError("authority projection claims must be a list")
+    projected_ids = [item.get("claim_id") for item in projected_claims]
+    expected_supporting_ids = {"W2-ATOM-024", "W2-ATOM-025"}
+    if set(projected_ids) != expected_supporting_ids:
+        raise ValueError("authority projection claim IDs changed")
+    if len(projected_ids) != len(set(projected_ids)):
+        raise ValueError("authority projection contains duplicate claim IDs")
+    if declared_supporting_ids != expected_supporting_ids:
+        raise ValueError("reviewed relation supporting declarations changed")
+
+    for claim in projected_claims:
+        claim_id = claim["claim_id"]
+        if claim.get("claim_kind") != "supporting_narrative":
+            raise ValueError(f"invalid projected claim kind: {claim_id}")
+        if claim.get("anchor_claim_id") != "W2-ATOM-023":
+            raise ValueError(f"invalid projected claim anchor: {claim_id}")
+        if claim.get("predicate") is not None or claim.get("object") is not None:
+            raise ValueError(
+                f"projected narrative must not fabricate direction: {claim_id}"
+            )
+        semantic_role = claim.get("semantic_role")
+        if not isinstance(semantic_role, str) or not semantic_role:
+            raise ValueError(f"projected claim lacks semantic role: {claim_id}")
+        subject = claim.get("subject")
+        entity_ids = claim.get("entity_ids")
+        if (
+            not isinstance(entity_ids, list)
+            or not entity_ids
+            or len(entity_ids) != len(set(entity_ids))
+            or subject not in entity_ids
+            or any(entity_id not in entities for entity_id in entity_ids)
+        ):
+            raise ValueError(f"invalid projected entity binding: {claim_id}")
+        statement = claim.get("statement_zh")
+        if not isinstance(statement, str) or not statement.strip():
+            raise ValueError(f"projected claim lacks statement: {claim_id}")
+        qualifiers = claim.get("qualifiers")
+        if not isinstance(qualifiers, dict):
+            raise ValueError(f"projected claim lacks qualifiers: {claim_id}")
+        if qualifiers.get("source_atom_id") != claim_id:
+            raise ValueError(f"projected claim ID binding mismatch: {claim_id}")
+        if any(isinstance(value, (dict, list)) for value in qualifiers.values()):
+            raise ValueError(f"projected qualifiers must be scalar: {claim_id}")
+        citations = _citation_tuple(claim.get("citations", []), sources)
+        projected_qualifiers = {
+            **qualifiers,
+            "semantic_role": semantic_role,
+            "anchor_claim_id": claim["anchor_claim_id"],
+        }
+        search = " ".join(
+            [statement, semantic_role]
+            + [_entity_search_text(entities[item]) for item in entity_ids]
+            + [item.source_label for item in citations]
+        )
+        records.append(ClaimRecord(
+            claim_id=claim_id,
+            claim_kind="supporting_narrative",
+            subject=subject,
+            predicate=None,
+            object=None,
+            entity_ids=tuple(entity_ids),
+            statement_zh=statement,
+            qualifiers=projected_qualifiers,
+            citations=citations,
+            search_text=search,
+        ))
 
     for claim_id in [f"PCMS-{number:03d}" for number in range(1, 7)]:
         claim = review_claims.get(claim_id)
@@ -504,7 +603,11 @@ CONCEPT_RULES: dict[str, dict[str, Any]] = {
         "claim_kind": ("narrative",),
     },
     "life_cycle_order": {
-        "terms": ("生活史", "发育", "顺序", "阶段", "衔接", "过程"),
+        "terms": (
+            "生活史", "发育", "顺序", "阶段", "衔接", "过程",
+            "虫态", "转变", "先后", "路线", "次序", "路径",
+            "环节", "历程", "变化", "演变", "各期", "发育期",
+        ),
         "predicates": ("develops_into",),
     },
     "host_roles": {
@@ -512,12 +615,23 @@ CONCEPT_RULES: dict[str, dict[str, Any]] = {
         "predicates": ("has_first_intermediate_host", "has_second_intermediate_host", "has_definitive_host", "has_reservoir_host"),
     },
     "one_health_chain": {
-        "terms": ("传播链", "传播网络", "连接", "粪便", "螺", "水体", "动物", "环境", "onehealth"),
+        "terms": (
+            "传播链", "传播网络", "连接", "粪便", "螺", "水体",
+            "动物", "环境", "家畜", "生态", "循环", "水生", "人类",
+            "畜类", "河塘", "系统", "传播", "维持", "往返",
+            "onehealth",
+        ),
         "min_terms": 3,
         "predicates": ("has_first_intermediate_host", "has_second_intermediate_host", "has_reservoir_host", "sheds_stage", "present_in_environment", "transmitted_via", "targets"),
     },
     "diagnosis": {
-        "terms": ("诊断", "确诊", "确证", "检卵", "影像", "生食鱼史"),
+        "terms": (
+            "诊断", "确诊", "确证", "检卵", "影像", "生食鱼史",
+            "没熟", "未熟", "河鱼", "胆管检查", "大便", "粪样",
+            "发现虫卵", "虫卵", "吃鱼", "食鱼", "鱼肉", "未煮熟",
+            "生鱼", "超声", "ct", "mri", "胆道", "便检", "排泄物",
+            "病原",
+        ),
         "predicates": ("diagnosed_by", "has_diagnostic_clue", "diagnostic_stage_for"),
     },
     "treatment": {
@@ -533,7 +647,11 @@ CONCEPT_RULES: dict[str, dict[str, Any]] = {
         "source_bonus": True,
     },
     "infection_pathogenic_stage": {
-        "terms": ("感染阶段", "致病阶段", "进入人体", "造成感染", "导致病变"),
+        "terms": (
+            "感染阶段", "致病阶段", "进入人体", "造成感染", "导致病变",
+            "侵入", "损害", "虫态", "感染人", "人体", "入侵",
+            "伤害", "致病", "病理", "组织损伤", "进入",
+        ),
         "predicates": ("infective_stage_for", "pathogenic_stage_for"),
     },
     "control": {

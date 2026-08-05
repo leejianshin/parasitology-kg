@@ -1,22 +1,27 @@
-contract_version: "1.1"
+contract_version: "1.2"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_1_PENDING_INDEPENDENT_REVIEW"
+status: "REVISION_2_PENDING_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
   parent_contract_id: "clonorchis_p9a_controlled_rag_v1"
   knowledge_version: "clonorchis_pcms_v1"
-  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
   allowed_runtime_inputs:
     - "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
     - "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
     - "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml"
     - "sources/registry.yml"
+    - "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+  authority_projection:
+    path: "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+    sha256: "3ce4adb9808f677e7e99e9eb7e5d1ba9705bec5c3ead3266ed90c721afa15353"
+    claim_ids: ["W2-ATOM-024", "W2-ATOM-025"]
   external_index_injection: "PROHIBITED"
   every_retrieval_rebuilds_verified_index: true
 
 frozen_controls:
-  runtime_contract_sha256: "f4b2712a1b7cd4a1bce0093a8a4c3a717fecee04ab540434fb3c3ce0539d4a5f"
+  runtime_contract_sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
   request_schema_sha256: "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
   result_schema_sha256: "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
 
@@ -51,6 +56,27 @@ result_validation:
   schema_keywords_must_not_be_ignored: true
   candidate_payload_must_equal_verified_index: true
   ranking_must_be_recomputed: true
+
+revision_2_acceptance:
+  projected_claim_assertions:
+    claim_ids: ["W2-ATOM-024", "W2-ATOM-025"]
+    independently_asserted_fields:
+      - "statement_zh"
+      - "semantic_role"
+      - "subject"
+      - "predicate"
+      - "object"
+      - "entity_ids"
+      - "citations"
+    fake_relation_direction: "PROHIBITED"
+  independent_review_held_out_suite:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-held-out-paraphrase-cases.yml"
+    sha256: "74a0de22be2555766e96bc8deefe8534940410b57ab015152b57d5c250966f1b"
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+    prohibited_shortcuts:
+      - "CASE_ID_BRANCH"
+      - "FULL_QUERY_LITERAL_BRANCH"
+      - "REQUIRED_CLAIM_ID_BRANCH"
 
 scope_boundary:
   model_call: false
