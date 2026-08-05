@@ -29,7 +29,7 @@ RESULT_SCHEMA_PATH = PHASE9 / "retrieval-result-schema.yml"
 FROZEN_RUNTIME_CONTRACT_SHA256 = "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
 FROZEN_REQUEST_SCHEMA_SHA256 = "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
 FROZEN_RESULT_SCHEMA_SHA256 = "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
-FROZEN_RETRIEVAL_CONTRACT_SHA256 = "df4d068000f9b12fe0ffbf061ab16a6208fa5ddfc227df955737b595040ccda0"
+FROZEN_RETRIEVAL_CONTRACT_SHA256 = "c6d96fd3c3180605b6be0466c9d386031c917225540be38a006ed452fe24337c"
 
 ALLOWED_RUNTIME_INPUTS = (
     "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl",
@@ -886,6 +886,11 @@ _SURFACE_NORMALIZATION = (
     ("大便", "粪便"),
     ("粪样", "粪便标本"),
     ("粪标本", "粪便标本"),
+    ("便标本", "粪便标本"),
+    ("排泄物标本", "粪便标本"),
+    ("核磁共振", "mri"),
+    ("磁共振", "mri"),
+    ("核磁", "mri"),
     ("看到", "检出"),
     ("发现", "检出"),
     ("狗", "犬"),
@@ -945,12 +950,13 @@ _CONTROL_MARKERS = (
     "根除", "清除", "消灭", "排泄物污染", "粪水", "便溺入水",
     "整治", "粪源", "无害化", "排泄物入水", "排污", "避免生食",
     "避免食用", "减少人粪", "减少动物排泄物", "减少家养动物排泄物",
+    "拒食生鱼", "拒绝生食", "不吃生鱼", "不碰生鱼", "协同方案",
 )
 _DETECTION_ACTION_MARKERS = (
     "检出", "镜检", "显微镜", "检卵", "查见", "查到", "检验", "检测",
     "找到", "观察到", "检获", "见虫卵", "查虫卵", "便检", "粪检",
     "寄生虫学检查", "病原学检查", "阳性发现", "阳性结果", "看见",
-    "查出", "检到", "检得", "寻获", "观察见", "送检", "查卵",
+    "查出", "检到", "检得", "寻获", "寻见", "观察见", "送检", "查卵",
 )
 _NEGATED_DETECTION_PATTERNS = (
     re.compile(
@@ -1001,18 +1007,35 @@ _SHEDDING_EVENT_MARKERS = (
 )
 _ENVIRONMENT_EVENT_MARKERS = (
     "进入水域", "进入淡水", "排入淡水", "污染水体", "污染淡水",
-    "淡水中", "水体中", "水域中",
+    "淡水中", "水体中", "水域中", "经水", "入水",
 )
 _HOST_INGESTION_MARKERS = (
     "摄取", "摄入", "食入", "吞入", "吃进", "被人摄入", "食鱼行为",
 )
 _PARASITISM_EVENT_MARKERS = (
     "寄生部位", "寄生于", "在胆管成熟", "进入胆管", "进入胆道",
-    "胆管内成熟", "胆道内成熟", "在胆道成熟", "胆道成熟",
+    "胆管内成熟", "胆道内成熟", "在胆道成熟", "胆道成熟", "寄居",
+    "肝内小型胆道", "肝内中型胆道", "肝内小中型胆道", "小中型胆道",
 )
 _BOUNDARY_MARKERS = (
     "边界", "量化效果", "定量", "任何地区", "所有地区", "普遍", "保证",
     "根除", "清除", "已证实有效", "外推",
+)
+
+_HISTORICAL_EXPOSURE_MARKERS = (
+    "既往", "过去", "曾经", "此前", "有生食史", "食用史", "暴露史",
+)
+
+_EXCLUSION_PREFIX_PATTERN = re.compile(
+    r"(?:不涉及|未涉及|不讨论|未讨论|不考虑|无关|排除|不是|并非|"
+    r"没有采用|未采用|不采用|不要把|不能把|不靠|并不靠|无需|无须)"
+    r".{0,4}$"
+)
+_DOUBLE_NEGATIVE_POSITIVE_PATTERNS = (
+    re.compile(
+        r"(?:并非|不是|并不是|不能说|不可说).{0,3}(?:没有|没|未).{0,8}"
+        r"(?:检出|查到|查出|找到|发现|检获|查见|观察到|观察见|看见|检到|检得|寻获)"
+    ),
 )
 
 _DIAGNOSTIC_INTEGRATION_ROLES = {
@@ -1155,17 +1178,29 @@ def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
         if "人" in joined:
             aliases.update({"感染者", "患者", "终宿主"})
     if entity_type == "environment" and "水" in joined:
-        aliases.update({"淡水环境", "水体", "河塘", "水域"})
+        aliases.update({"淡水环境", "淡水", "水体", "河塘", "水域", "经水"})
     if entity_type == "diagnostic_method":
         if "影像" in joined:
-            aliases.update({"影像", "影像学", "胆道影像", "彩超"})
+            aliases.update({
+                "影像", "影像学", "胆道影像", "彩超", "核磁共振",
+                "磁共振", "核磁", "b超",
+            })
         if "粪便" in joined and "卵" in joined:
-            aliases.update({"粪便检卵", "粪检", "便检"})
+            aliases.update({
+                "粪便检卵", "粪检", "便检", "便标本", "粪便标本",
+                "排泄物标本",
+            })
         if "十二指肠" in joined and "卵" in joined:
             aliases.update({
                 "十二指肠液检卵", "十二指肠引流液检卵",
                 "十二指肠引流标本", "十二指肠液标本", "十二指肠标本",
+                "十二指肠引流物", "十二指肠引流样",
             })
+    if entity_type == "anatomical_site" and "肝内" in joined and "胆管" in joined:
+        aliases.update({
+            "肝内小型胆管", "肝内中型胆管", "肝内小中型胆管",
+            "肝内小、中型胆管", "小中型胆管", "肝内胆管",
+        })
     if entity_type == "intervention":
         compact = normalize_query(joined)
         if "改善卫生设施" in compact:
@@ -1187,7 +1222,12 @@ def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
         if "综合防控" in compact:
             aliases.update({
                 "综合防控", "综合治理", "协同防控", "人畜环境协同",
-                "全健康",
+                "全健康", "协同治理", "协同方案", "人动物环境协同",
+            })
+        if "避免食用生或未充分加热淡水鱼" in compact:
+            aliases.update({
+                "拒食生鱼", "拒绝生食", "不吃生鱼", "不碰生鱼",
+                "避免生食", "避免食用生鱼",
             })
     return aliases
 
@@ -1221,16 +1261,58 @@ def _diagnostic_method_cues(
         cues.update({
             "十二指肠液", "十二指肠引流液", "十二指肠查卵",
             "十二指肠引流液查卵", "十二指肠引流标本",
-            "十二指肠液标本", "十二指肠标本",
+            "十二指肠液标本", "十二指肠标本", "十二指肠引流物",
+            "十二指肠引流样",
         })
     if "粪便" in joined and "卵" in joined:
         cues.update({
             "粪便", "粪样", "粪标本", "便涂片", "粪涂片", "粪检",
-            "便检", "排泄物", "大便",
+            "便检", "排泄物", "大便", "便标本", "排泄物标本",
         })
     if "影像" in joined:
-        cues.update({"影像", "超声", "彩超", "ct", "mri", "胆道影像"})
+        cues.update({
+            "影像", "超声", "彩超", "ct", "mri", "胆道影像",
+            "核磁共振", "磁共振", "核磁", "b超",
+        })
     return {normalize_query(cue) for cue in cues if cue}
+
+
+def _mention_is_excluded(surface: str, start: int, end: int) -> bool:
+    """Return true only when this concrete mention is explicitly excluded."""
+    prefix = surface[max(0, start - 18):start]
+    suffix = surface[end:min(len(surface), end + 12)]
+    if _EXCLUSION_PREFIX_PATTERN.search(prefix):
+        return True
+    if re.search(
+        r"(?:不是|并非|不靠|并不靠).{0,16}"
+        r"(?:单靠|仅靠|采用|处理|改厕|粪污|卫生|措施|方案|或|和|以及)$",
+        prefix,
+    ):
+        return True
+    return bool(re.match(r"(?:不在内|不纳入|无关|不是重点|不属于)", suffix))
+
+
+def _affirmed_occurrence_positions(surface: str, terms: Iterable[str]) -> list[int]:
+    positions: list[int] = []
+    for term in sorted({normalize_query(item) for item in terms if item}, key=len, reverse=True):
+        start = 0
+        while term and (position := surface.find(term, start)) >= 0:
+            if not _mention_is_excluded(surface, position, position + len(term)):
+                positions.append(position)
+            start = position + max(1, len(term))
+    return sorted(set(positions))
+
+
+def _has_affirmed_any(surface: str, terms: Iterable[str]) -> bool:
+    return bool(_affirmed_occurrence_positions(surface, terms))
+
+
+def _has_mammalian_animal_actor(surface: str) -> bool:
+    without_aquatic = surface.replace("软体动物", "").replace("水生动物", "")
+    return _has_affirmed_any(
+        without_aquatic,
+        ("动物", "家畜", "家养动物", "犬", "猫", "猪", "犬猫猪", "人畜"),
+    )
 
 
 def _diagnostic_method_occurrences(
@@ -1243,11 +1325,9 @@ def _diagnostic_method_occurrences(
             "卵" in surface or _has_any(surface, _DETECTION_ACTION_MARKERS)
         ):
             continue
-        positions = [
-            surface.find(cue)
-            for cue in _diagnostic_method_cues(entity_id, index)
-            if cue and cue in surface
-        ]
+        positions = _affirmed_occurrence_positions(
+            surface, _diagnostic_method_cues(entity_id, index)
+        )
         if positions:
             occurrences.append((min(positions), entity_id))
     return sorted(occurrences)
@@ -1272,21 +1352,69 @@ def _detect_diagnostic_methods(
     return {item for item in detected if item}
 
 
-def _is_negative_observation(text: str) -> bool:
-    return "阴性" in text or _has_negated_detection(text) or any(
-        pattern.search(text) for pattern in _NEGATED_IMAGING_PATTERNS
+def _observation_polarity(text: str) -> str:
+    """Resolve the last asserted finding, including scoped double negation."""
+    cues: list[tuple[int, int, str]] = []
+    double_positive_spans: list[tuple[int, int]] = []
+    for pattern in _DOUBLE_NEGATIVE_POSITIVE_PATTERNS:
+        for match in pattern.finditer(text):
+            double_positive_spans.append(match.span())
+            cues.append((match.end(), 3, "positive"))
+
+    negative_patterns = (
+        *_NEGATED_DETECTION_PATTERNS,
+        *_NEGATED_IMAGING_PATTERNS,
+        re.compile(r"(?:结果|报告).{0,4}(?:为)?阴性"),
+        re.compile(r"(?:实际|最终|复核)?(?:未|没有|没能|仍未).{0,8}(?:寻见|见到|检得|检出|查到|找到)"),
     )
+    for pattern in negative_patterns:
+        for match in pattern.finditer(text):
+            if any(
+                start <= match.start() and match.end() <= end
+                for start, end in double_positive_spans
+            ):
+                continue
+            cues.append((match.end(), 2, "negative"))
+
+    positive_patterns = (
+        re.compile(
+            r"(?:检出|查到|查出|找到|发现|检获|查见|观察到|观察见|看见|检到|检得|寻获)"
+            r".{0,6}(?:华支睾吸虫)?(?:目标)?虫卵"
+        ),
+        re.compile(
+            r"(?:华支睾吸虫)?(?:目标)?虫卵.{0,5}(?:已|已经|实际|最终)?"
+            r"(?:检出|查到|查出|找到|发现|检获|查见|观察到|观察见|看见|检到|检得|寻获)"
+        ),
+        re.compile(r"(?:结果|报告).{0,4}(?:为)?阳性"),
+        re.compile(r"(?:影像|超声|ct|mri|胆道).{0,10}(?:提示|显示|呈现).{0,6}(?:异常|改变|扩张)"),
+    )
+    for pattern in positive_patterns:
+        for match in pattern.finditer(text):
+            prefix = text[max(0, match.start() - 6):match.start()]
+            if re.search(r"(?:没|未|无|没有|未能|不能写成).{0,3}$", prefix):
+                continue
+            cues.append((match.end(), 1, "positive"))
+
+    if cues:
+        return max(cues)[2]
+    if "阴性" in text:
+        return "negative"
+    if "阳性" in text or _has_any(text, _POSITIVE_DETECTION_MARKERS):
+        return "positive"
+    if (
+        _has_any(text, ("提示", "显示", "呈现"))
+        and _has_any(text, ("异常", "改变", "扩张"))
+    ):
+        return "positive"
+    return "unspecified"
+
+
+def _is_negative_observation(text: str) -> bool:
+    return _observation_polarity(text) == "negative"
 
 
 def _is_positive_observation(text: str) -> bool:
-    if _is_negative_observation(text):
-        return False
-    if _has_any(text, _POSITIVE_DETECTION_MARKERS):
-        return True
-    return (
-        _has_any(text, ("提示", "显示", "呈现"))
-        and _has_any(text, ("异常", "改变", "扩张", "阳性"))
-    )
+    return _observation_polarity(text) == "positive"
 
 
 def _method_windows(
@@ -1325,9 +1453,22 @@ def _coordinated_polarities(text: str, count: int) -> list[str] | None:
 
 
 def _has_generic_parasitological_event(surface: str) -> bool:
+    # A local negation may reject the *object* of an absent observation
+    # ("未观察到的不是目标卵").  That clause does not assert a negative
+    # target-egg event; a later concrete finding remains authoritative.
+    if re.search(
+        r"(?:没|未|没有|没能).{0,8}"
+        r"(?:观察到|观察见|看见|见到|检出|查到|找到|检得|寻见)"
+        r"(?:的)?(?:并非|不是).{0,5}(?:目标)?(?:虫)?卵",
+        surface,
+    ):
+        return False
     return _has_any(
         surface,
-        ("寄生虫学", "病原学", "病原检查", "送检", "查卵", "虫卵"),
+        (
+            "寄生虫学", "病原学", "病原检查", "送检", "查卵",
+            "虫卵", "目标卵",
+        ),
     ) and (
         _has_any(surface, _DETECTION_ACTION_MARKERS)
         or _is_negative_observation(surface)
@@ -1375,6 +1516,13 @@ def _query_evidence_observations(
 ) -> tuple[EvidenceObservation, ...]:
     observations: list[EvidenceObservation] = []
     last_pathogen_method: str | None = None
+    query_pathogen_methods = [
+        entity_id
+        for _, entity_id in _diagnostic_method_occurrences(surface, index)
+        if "parasitological_confirmation"
+        in _roles_for_entities({entity_id}, index)
+    ]
+    unique_query_pathogen_methods = tuple(dict.fromkeys(query_pathogen_methods))
     for clause in _evidence_clauses(query, index):
         occurrences = _diagnostic_method_occurrences(clause, index)
         coordinated = _coordinated_polarities(clause, len(occurrences))
@@ -1391,10 +1539,10 @@ def _query_evidence_observations(
                 ),
                 "pathogen_confirmation",
             )
-            polarity = coordinated[method_index] if coordinated else (
-                "negative" if _is_negative_observation(window)
-                else "positive" if _is_positive_observation(window)
-                else "unspecified"
+            polarity = (
+                coordinated[method_index]
+                if coordinated
+                else _observation_polarity(window)
             )
             event_type = (
                 "imaging_observation"
@@ -1413,12 +1561,15 @@ def _query_evidence_observations(
                 semantic_roles=tuple(sorted(roles)),
             ))
         if not clause_has_pathogen_method and _has_generic_parasitological_event(clause):
-            polarity = (
-                "negative" if _is_negative_observation(clause)
-                else "positive" if _is_positive_observation(clause)
-                else "unspecified"
+            polarity = _observation_polarity(clause)
+            bound_entity = last_pathogen_method or (
+                unique_query_pathogen_methods[0]
+                if len(unique_query_pathogen_methods) == 1 else None
             )
-            bound_entity = last_pathogen_method
+            if bound_entity is None and not _has_any(
+                clause, ("寄生虫学", "病原学", "病原检查", "虫卵", "查卵", "检卵")
+            ):
+                continue
             bound_roles = (
                 tuple(sorted(_roles_for_entities({bound_entity}, index)))
                 if bound_entity else ("parasitological_confirmation",)
@@ -1428,7 +1579,6 @@ def _query_evidence_observations(
                     index_number
                     for index_number in range(len(observations) - 1, -1, -1)
                     if observations[index_number].evidence_entity_id == bound_entity
-                    and observations[index_number].polarity == "unspecified"
                     and bound_entity is not None
                 ),
                 None,
@@ -1457,10 +1607,10 @@ def _query_evidence_observations(
         roles = _roles_for_entities({entity_id}, index)
         if "epidemiological_clue" not in roles:
             continue
-        if _has_any(surface, _CONTROL_MARKERS) and not _has_any(
+        if _has_affirmed_any(surface, _CONTROL_MARKERS) and not _has_any(
             surface,
             ("诊断", "确诊", "确证", "病原学", "寄生虫学", "线索",
-             "流行区", "流行地区", "暴露史"),
+             "流行区", "流行地区", "暴露史", "既往", "过去", "曾经"),
         ):
             continue
         observations.append(EvidenceObservation(
@@ -1485,18 +1635,48 @@ def _query_evidence_observations(
             event_type="exposure_history",
             semantic_roles=("epidemiological_clue", "not_confirmatory"),
         ))
-    return tuple(observations)
+    # Keep at most one normalized event per method/role/polarity.  A generic
+    # event is discarded when the same finding can be bound to a concrete
+    # reviewed diagnostic method elsewhere in the query.
+    concrete_roles = {
+        (item.evidence_role, item.polarity)
+        for item in observations if item.evidence_entity_id is not None
+    }
+    deduplicated: list[EvidenceObservation] = []
+    seen: set[tuple[str | None, str, str]] = set()
+    for item in observations:
+        if (
+            item.evidence_entity_id is None
+            and (item.evidence_role, item.polarity) in concrete_roles
+        ):
+            continue
+        key = (item.evidence_entity_id, item.evidence_role, item.polarity)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduplicated.append(item)
+    return tuple(
+        EvidenceObservation(
+            observation_id=f"OBS-{number:02d}",
+            evidence_entity_id=item.evidence_entity_id,
+            evidence_role=item.evidence_role,
+            polarity=item.polarity,
+            event_type=item.event_type,
+            semantic_roles=item.semantic_roles,
+        )
+        for number, item in enumerate(deduplicated, 1)
+    )
 
 
 def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
     detected: set[str] = set()
     for entity_id, entity in index.entities.items():
-        if any(alias and alias in surface for alias in _formal_entity_aliases(entity)):
+        if _has_affirmed_any(surface, _formal_entity_aliases(entity)):
             detected.add(entity_id)
 
     # Query-language composition chooses among formally typed reviewed entities.
     # It never creates a runtime fact or a synthetic entity.
-    if _has_any(surface, ("犬", "猫", "猪", "家畜", "家养动物", "动物宿主", "人畜")):
+    if _has_mammalian_animal_actor(surface):
         for entity_id in _entities_with_type(index, "host"):
             formal = " ".join(_formal_entity_aliases(index.entities[entity_id]))
             if any(term in formal for term in ("犬", "猫", "猪", "食鱼哺乳动物")):
@@ -1511,25 +1691,36 @@ def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
             formal = normalize_query(_entity_search_text(index.entities[entity_id]))
             if _has_any(formal, ("生食", "未充分加热")):
                 detected.add(entity_id)
-        if _has_any(surface, ("避免", "不吃", "拒绝", "预防", "防控")):
+        if _has_affirmed_any(
+            surface,
+            (
+                "避免生食", "避免食用", "不吃生鱼", "拒食生鱼",
+                "拒绝生食", "不碰生鱼", "预防", "防控",
+            ),
+        ):
             for entity_id in _entities_with_type(index, "intervention"):
                 formal = normalize_query(_entity_search_text(index.entities[entity_id]))
                 if "避免食用生或未充分加热淡水鱼" in formal:
                     detected.add(entity_id)
 
-    if _has_any(surface, _CONTROL_MARKERS):
+    if _has_affirmed_any(surface, _CONTROL_MARKERS):
         for entity_id in _entities_with_type(index, "intervention"):
             formal = normalize_query(_entity_search_text(index.entities[entity_id]))
-            if "改善卫生设施" in formal and _has_any(
+            if "改善卫生设施" in formal and _has_affirmed_any(
                 surface, ("卫生", "改厕", "厕所", "社区排污")
             ):
                 detected.add(entity_id)
-            if "减少人粪便污染" in formal and _has_any(
+            if "减少人粪便污染" in formal and _has_affirmed_any(
                 surface, ("人粪", "社区排污", "人畜粪污", "人畜排卵")
             ):
                 detected.add(entity_id)
-            if "减少动物粪便污染" in formal and _has_any(
-                surface, ("动物", "家畜", "犬猫猪", "人畜粪污", "人畜排卵")
+            if "减少动物粪便污染" in formal and _has_affirmed_any(
+                surface,
+                (
+                    "动物粪污", "动物粪便", "动物排泄物", "家畜粪污",
+                    "家畜粪便", "畜禽粪污", "犬猫猪排泄物",
+                    "人畜粪污", "人畜排卵",
+                ),
             ):
                 detected.add(entity_id)
 
@@ -1616,6 +1807,18 @@ def _event_relation_intents(
         intents.add("has_definitive_host")
     if _has_any(surface, ("保虫宿主", "储存宿主")):
         intents.add("has_reservoir_host")
+    host_adult_event = _has_any(
+        surface,
+        ("成虫", "成体", "成熟形态", "寄居", "寄生", "体内成熟", "宿主角色"),
+    )
+    if host_adult_event and _has_affirmed_any(
+        surface, ("人", "人类", "感染者", "患者")
+    ):
+        intents.add("has_definitive_host")
+    if host_adult_event and _has_affirmed_any(
+        surface, ("犬", "猫", "猪", "犬猫猪", "家养动物", "食鱼哺乳动物")
+    ):
+        intents.update({"has_definitive_host", "has_reservoir_host"})
 
     network_intent = _has_any(surface, _CONNECTION_MARKERS)
     has_snail = _has_any(surface, ("螺", "软体动物"))
@@ -1672,10 +1875,12 @@ def _event_relation_intents(
         surface, ("感染人", "可感染人", "被人", "建立感染", "感染阶段", "包囊")
     ):
         intents.add("infective_stage_for")
-    if _has_any(surface, _PARASITISM_EVENT_MARKERS):
+    if _has_affirmed_any(surface, _PARASITISM_EVENT_MARKERS):
         intents.add("parasitizes_site")
 
-    infection_intent = _has_any(surface, _INFECTION_MARKERS)
+    infection_intent = _has_any(
+        surface, ("感染", "可感染", "建立感染", "侵入", "入侵")
+    )
     pathogenic_intent = _has_any(surface, _PATHOGENIC_MARKERS)
     if infection_intent and _has_any(surface, ("阶段", "虫期", "虫态", "包囊")):
         intents.add("infective_stage_for")
@@ -1684,7 +1889,7 @@ def _event_relation_intents(
     ):
         intents.add("pathogenic_stage_for")
 
-    control_intent = "intervention" in entity_types or _has_any(
+    control_intent = "intervention" in entity_types or _has_affirmed_any(
         surface, _CONTROL_MARKERS
     )
     if control_intent:
@@ -1721,13 +1926,54 @@ def _relation_record_relevant(
     predicate = record.predicate
     if predicate == "develops_into":
         return True
-    if predicate in {
-        "has_first_intermediate_host", "has_second_intermediate_host",
-        "has_definitive_host", "has_reservoir_host", "present_in_environment",
-        "infective_stage_for", "pathogenic_stage_for", "parasitizes_site",
-        "diagnostic_stage_for",
-    }:
-        return True
+    if predicate == "has_first_intermediate_host":
+        return record.object in entities or _has_affirmed_any(
+            surface, ("淡水螺", "螺类", "螺", "软体动物", "第一中间宿主")
+        )
+    if predicate == "has_second_intermediate_host":
+        return record.object in entities or _has_affirmed_any(
+            surface, ("淡水鱼", "鱼体", "鱼", "第二中间宿主", "水生动物")
+        )
+    if predicate == "has_definitive_host":
+        if record.object in entities:
+            return True
+        object_text = normalize_query(_entity_search_text(index.entities[record.object]))
+        if "人" in object_text:
+            return _has_affirmed_any(surface, ("人", "人类", "感染者", "患者", "终宿主"))
+        return _has_affirmed_any(
+            surface,
+            ("食鱼哺乳动物", "食鱼动物", "犬", "猫", "猪", "家养动物"),
+        )
+    if predicate == "has_reservoir_host":
+        return record.object in entities or _has_affirmed_any(
+            surface, ("保虫宿主", "储存宿主", "犬猫猪", "犬", "猫", "猪", "家养动物")
+        )
+    if predicate == "present_in_environment":
+        return bool(set(record.entity_ids) & entities) or (
+            _has_affirmed_any(surface, _ENVIRONMENT_EVENT_MARKERS)
+            and _has_any(
+                surface,
+                ("虫卵", "后代", "排泄物", "粪", "污染", "形态", "排入", "经水"),
+            )
+        )
+    if predicate == "infective_stage_for":
+        return bool(set(record.entity_ids) & entities) or (
+            _has_any(surface, _INFECTION_MARKERS)
+            and _has_any(surface, ("虫期", "虫态", "包囊", "感染阶段", "感染人"))
+        )
+    if predicate == "pathogenic_stage_for":
+        return bool(set(record.entity_ids) & entities) or (
+            _has_any(surface, _PATHOGENIC_MARKERS)
+            and _has_any(surface, ("虫期", "虫态", "成虫", "形态"))
+        )
+    if predicate == "parasitizes_site":
+        return bool(set(record.entity_ids) & entities) or _has_affirmed_any(
+            surface, _PARASITISM_EVENT_MARKERS
+        )
+    if predicate == "diagnostic_stage_for":
+        return bool(set(record.entity_ids) & entities) or _has_any(
+            surface, ("病原学", "寄生虫学", "确证", "虫卵", "查卵")
+        )
     if predicate == "diagnosed_by":
         return bool(set(record.entity_ids) & entities) or _has_any(
             surface, ("病原学", "寄生虫学", "确证", "直接病原体", "虫卵")
@@ -1746,8 +1992,8 @@ def _relation_record_relevant(
         subject_text = normalize_query(_entity_search_text(index.entities[record.subject]))
         if "人" in subject_text and "人" in surface:
             return True
-        if _has_any(subject_text, ("犬", "猫", "猪")) and _has_any(
-            surface, ("动物", "家畜", "家养动物", "犬", "猫", "猪", "人畜")
+        if _has_any(subject_text, ("犬", "猫", "猪")) and _has_mammalian_animal_actor(
+            surface
         ):
             return True
         return not actor_entities
@@ -1771,25 +2017,36 @@ def _relation_record_relevant(
             return True
         object_text = normalize_query(_entity_search_text(index.entities[record.object]))
         if "onehealth综合防控" in object_text:
-            return _has_any(
+            return _has_affirmed_any(
                 surface,
-                ("综合治理", "综合防控", "协同治理", "人动物和环境", "人畜环境"),
+                (
+                    "综合治理", "综合防控", "协同治理", "协同方案",
+                    "人动物和环境", "人畜环境", "全健康", "onehealth",
+                ),
             ) or (
                 _has_any(surface, _BOUNDARY_MARKERS)
-                and _has_any(surface, ("人粪", "社区排污", "人畜"))
-                and _has_any(surface, ("动物", "家畜", "犬", "猫", "猪"))
+                and _has_affirmed_any(surface, ("人粪", "社区排污", "人畜"))
+                and _has_affirmed_any(surface, ("动物", "家畜", "犬", "猫", "猪"))
             )
         if "改善卫生设施" in object_text:
-            return _has_any(surface, ("卫生设施", "改厕", "厕所", "改进卫生"))
+            return _has_affirmed_any(
+                surface, ("卫生设施", "改厕", "厕所", "改进卫生")
+            )
         if "避免食用生或未充分加热淡水鱼" in object_text:
-            return _has_any(surface, ("避免生食", "避免食用", "不吃生鱼"))
+            return _has_affirmed_any(
+                surface,
+                (
+                    "避免生食", "避免食用", "不吃生鱼", "拒食生鱼",
+                    "拒绝生食", "不碰生鱼",
+                ),
+            )
         return False
     if predicate == "targets":
         if record.subject in entities:
             return True
         subject_text = normalize_query(_entity_search_text(index.entities[record.subject]))
         if "减少人粪便污染" in subject_text:
-            return _has_any(
+            return _has_affirmed_any(
                 surface,
                 ("人粪", "人的排泄物", "人类排泄物", "人畜排卵",
                  "排卵污染", "社区排污", "人畜粪污"),
@@ -1798,10 +2055,14 @@ def _relation_record_relevant(
                 and _has_any(surface, _BOUNDARY_MARKERS)
             )
         if "减少动物粪便污染" in subject_text:
-            return _has_any(
+            return _has_affirmed_any(
                 surface,
-                ("动物排泄物", "家养动物排泄物", "动物粪便", "粪污",
-                 "犬猫猪", "人畜排卵", "排卵污染", "人畜粪污"),
+                (
+                    "动物排泄物", "家养动物排泄物", "动物粪便",
+                    "动物粪污", "家畜粪污", "畜禽粪污",
+                    "犬猫猪排泄物", "犬猫猪粪便", "人畜排卵",
+                    "排卵污染", "人畜粪污",
+                ),
             )
         return False
     return bool(set(record.entity_ids) & entities)
@@ -1898,13 +2159,23 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
     ):
         topics.add("life_cycle")
         topics.add("transmission")
+    host_predicates = {
+        "has_first_intermediate_host", "has_second_intermediate_host",
+        "has_definitive_host", "has_reservoir_host",
+    }
     if _has_any(surface, ("宿主", "第一中间", "第二中间", "终宿主", "保虫")) or (
         relation_intents
-        & {
-            "has_first_intermediate_host", "has_second_intermediate_host",
-            "has_definitive_host", "has_reservoir_host",
-        }
-        and _has_any(surface, ("承载", "处于什么位置", "分别是什么", "分工"))
+        & host_predicates
+        and (
+            hosts
+            or _has_any(
+                surface,
+                (
+                    "承载", "处于什么位置", "分别是什么", "分工", "螺", "鱼",
+                    "软体动物", "水生动物", "感染者", "人类", "犬猫猪",
+                ),
+            )
+        )
     ):
         topics.add("host_roles")
 
@@ -1938,7 +2209,7 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         for observation in evidence_observations
     ):
         topics.add("exposure")
-    if "intervention" in entity_types or _has_any(surface, _CONTROL_MARKERS):
+    if "intervention" in entity_types or _has_affirmed_any(surface, _CONTROL_MARKERS):
         topics.add("control")
     if "control" in topics and _has_any(surface, _BOUNDARY_MARKERS):
         topics.add("boundary")
@@ -2015,6 +2286,25 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         activations = _relation_activations(
             surface, entities, relation_intents, index
         )
+
+    # The final relation set is authoritative for relation-scoped roles.
+    semantic_roles.update(
+        role for activation in activations for role in activation.semantic_roles
+    )
+    control_semantic_roles = {
+        role
+        for activation in activations
+        if activation.predicate in {"controlled_by", "targets"}
+        for role in activation.semantic_roles
+    }
+    if control_semantic_roles:
+        semantic_roles.update(control_semantic_roles)
+        topics.add("control")
+        if control_semantic_roles & {
+            "recommendation_not_local_effect", "recommendation_not_quantified_effect",
+            "universal_elimination_claim_false",
+        } or _has_any(surface, _BOUNDARY_MARKERS):
+            topics.add("boundary")
 
     ordered_topics = tuple(item for item in _TOPIC_ORDER if item in topics)
     coverage_groups = tuple(dict.fromkeys(
@@ -2273,42 +2563,45 @@ def _rank(
                     record.claim_id,
                 ),
             )
-    relation_priority = {
-        "has_first_intermediate_host": 10,
-        "has_second_intermediate_host": 20,
-        "sheds_stage": 30,
-        "present_in_environment": 40,
-        "transmitted_via": 50,
-        "infective_stage_for": 60,
-        "parasitizes_site": 70,
-        "targets": 80,
-        "controlled_by": 90,
-        "diagnosed_by": 100,
-        "has_diagnostic_clue": 110,
-        "diagnostic_stage_for": 120,
-        "pathogenic_stage_for": 130,
-        "has_definitive_host": 140,
-        "has_reservoir_host": 150,
-        "treated_by": 160,
-        "classified_as": 170,
-        "develops_into": 0,
-    }
     predicate_order = sorted(
-        predicate_buckets,
-        key=lambda predicate: (relation_priority.get(predicate, 999), predicate),
+        (predicate for predicate in predicate_buckets if predicate != "develops_into"),
+        key=lambda predicate: (
+            -max(
+                _score_record(request["query_text"], record, plan)[0]
+                for record in predicate_buckets[predicate]
+            ),
+            predicate,
+        ),
     )
-    # A reviewed development path is an indivisible coverage constraint.
-    # Reserve the complete ordered path before distributing the remaining slots.
-    for record in predicate_buckets.get("develops_into", []):
-        if len(coverage) >= top_k:
-            break
-        coverage.append((record, "relation:develops_into"))
-        covered_ids.add(record.claim_id)
-    predicate_order = [
-        predicate for predicate in predicate_order if predicate != "develops_into"
-    ]
+    query_surface = plan.normalized_surface
+    complete_development_negated = bool(re.search(
+        r"(?:不要求|无需|无须|不必|不是要).{0,12}"
+        r"(?:完整|全程|逐级|各虫期|所有虫期|发育链|变化链)",
+        query_surface,
+    ))
+    complete_development_requested = (
+        "life_cycle" in plan.topic_scopes
+        and not complete_development_negated
+        and _has_any(
+            query_surface,
+            (
+                "完整发育", "完整路径", "完整过程", "整条", "全程", "逐级",
+                "连续变化", "连续发育", "各虫期", "所有虫期", "从卵到成虫",
+                "从虫卵到成虫", "还原", "发育链", "变化链",
+            ),
+        )
+    )
+    development_bucket = predicate_buckets.get("develops_into", [])
+    development_reserve = (
+        min(len(development_bucket), top_k)
+        if complete_development_requested else 0
+    )
+    nondevelopment_limit = max(0, top_k - development_reserve)
+
+    # Allocate by query-derived predicate buckets.  No global predicate order
+    # may starve a later topic; every activated predicate receives a turn.
     offset = 0
-    while len(coverage) < top_k and any(
+    while len(coverage) < nondevelopment_limit and any(
         offset < len(predicate_buckets[predicate])
         for predicate in predicate_order
     ):
@@ -2320,9 +2613,19 @@ def _rank(
             if record.claim_id not in covered_ids:
                 coverage.append((record, f"relation:{predicate}"))
                 covered_ids.add(record.claim_id)
-                if len(coverage) >= top_k:
+                if len(coverage) >= nondevelopment_limit:
                     break
         offset += 1
+
+    # A complete chain is reserved only when the query actually asks for the
+    # complete path.  Otherwise development transitions compete for remaining
+    # capacity after the other activated relations have received coverage.
+    for record in development_bucket:
+        if len(coverage) >= top_k:
+            break
+        if record.claim_id not in covered_ids:
+            coverage.append((record, "relation:develops_into"))
+            covered_ids.add(record.claim_id)
 
     # Then share remaining capacity across semantic coverage groups.
     group_order = list(plan.coverage_groups)

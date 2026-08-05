@@ -370,6 +370,73 @@ class P9B1RetrievalTests(unittest.TestCase):
                     <= actual_events
                 )
 
+    def test_revision_7_disclosed_findings_are_public_regressions(self) -> None:
+        path = (
+            ROOT
+            / "phase9/clonorchis-sinensis/acceptance-cases"
+            / "p9b1-revision7-review-findings-regression.yml"
+        )
+        suite = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "DERIVED_FROM_DISCLOSED_REVISION_7_REVIEW_FINDINGS_PUBLIC_REGRESSION",
+            suite["status"],
+        )
+        self.assertFalse(suite["origin"]["exact_original_suite_body_available"])
+        self.assertTrue(
+            suite["origin"]["must_not_be_described_as_original_heldout_suite"]
+        )
+        self.assertEqual(13, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        index = build_index(ROOT)
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+                plan = analyze_query(case["query_zh"], index)
+                required = case["required_plan"]
+                for field in (
+                    "topic_scopes", "relation_intents", "semantic_roles",
+                    "evidence_roles", "control_semantic_roles",
+                ):
+                    self.assertTrue(
+                        set(required.get(field, [])) <= set(getattr(plan, field))
+                    )
+                self.assertTrue(
+                    set(required.get("forbidden_topic_scopes", []))
+                    .isdisjoint(plan.topic_scopes)
+                )
+                actual_events = {
+                    (item.evidence_entity_id, item.polarity)
+                    for item in plan.evidence_observations
+                }
+                self.assertTrue(
+                    {tuple(item) for item in required.get("diagnostic_events", [])}
+                    <= actual_events
+                )
+                self.assertTrue(
+                    {tuple(item) for item in required.get("forbidden_diagnostic_events", [])}
+                    .isdisjoint(actual_events)
+                )
+                activations = {
+                    item.claim_id for item in plan.relation_activations
+                }
+                self.assertTrue(
+                    set(required.get("required_relation_activation_claim_ids", []))
+                    <= activations
+                )
+                self.assertTrue(
+                    set(required.get("forbidden_relation_activation_claim_ids", []))
+                    .isdisjoint(activations)
+                )
+
     def test_relation_roles_and_top12_are_bound_to_activated_graph(self) -> None:
         index = build_index(ROOT)
 

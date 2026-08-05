@@ -1,6 +1,6 @@
-contract_version: "1.7"
+contract_version: "1.8"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_7_PENDING_BLIND_INDEPENDENT_REVIEW"
+status: "REVISION_8_PENDING_BLIND_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
@@ -87,7 +87,7 @@ coverage_retrieval:
   diagnostic_event_binding: "NORMALIZED_METHOD_SPECIMEN_DETECTION_EVENT_AND_SCOPED_POLARITY"
   life_cycle_event_graph: "REVIEWED_HOST_STAGE_INGESTION_SHEDDING_ENVIRONMENT_TRANSMISSION_INFECTION_AND_PARASITISM_RELATIONS"
   negated_diagnostic_evidence_role: "RETRIEVE_REQUIRED_CONFIRMATION_CONTRAST"
-  top12_allocation: "COMPLETE_DEVELOPMENT_CHAIN_THEN_ACTIVATED_RELATION_QUOTAS_THEN_SEMANTIC_GROUP_ROUND_ROBIN"
+  top12_allocation: "QUERY_ACTIVATED_RELATION_QUOTAS_THEN_EXPLICIT_COMPLETE_DEVELOPMENT_RESERVE_THEN_SEMANTIC_GROUP_ROUND_ROBIN"
   cross_topic_fixed_group_order: "PROHIBITED"
   complete_group_precedes_lexical_fallback: true
   lexical_similarity_role: "SECONDARY_RANKING_ONLY"
@@ -210,6 +210,36 @@ revision_7_acceptance:
     frozen_at: "2026-08-05T12:20:45Z"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_7_LOCAL_COMMIT"
+
+revision_8_acceptance:
+  revision_7_blind_review_record:
+    suite_id: "clonorchis_p9b1_revision7_blind_heldout_v1"
+    cases: 22
+    canonical_content_sha256: "5bc7692fe7fb0450c80d1227bfada03452d3ac8305d9bce74e22e64b513e89a5"
+    prior_recall_on_67038bc: "17/22 PASS_CHANGES_REQUIRED"
+    prior_complete_plan_on_67038bc: "11/22 PASS_CHANGES_REQUIRED"
+    prior_recall_and_plan_on_67038bc: "9/22 PASS_CHANGES_REQUIRED"
+    exact_original_suite_body_available_to_repository: false
+  revision_7_review_findings_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision7-review-findings-regression.yml"
+    sha256: "e833cd3fcb7cc5feeeef03f7cb9269737dbaeec3fd7b61b22df9037a2e9eee1a"
+    cases: 13
+    reconstruction_basis: "DISCLOSED_REVIEW_FINDINGS_NOT_ORIGINAL_HELDOUT_BODY"
+    role_from_revision_8: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+    required_plan_assertions: "ALL_REQUIRED_RELATIONS_ROLES_EVENTS_SCOPES_AND_EXCLUSIONS_HOLD"
+  query_semantics:
+    diagnostic_event_scope: "CONCRETE_METHOD_SPECIMEN_EVENT_WITH_LATER_ASSERTION_PRECEDENCE"
+    object_negation_scope: "REJECTED_NON_TARGET_FINDING_DOES_NOT_CREATE_TARGET_NEGATIVE_EVENT"
+    control_concept_scope: "ONLY_AFFIRMED_REVIEWED_INTERVENTION_CONCEPTS_ACTIVATE_CONTROL_RELATIONS"
+    top12_dynamic_quota: "QUERY_ACTIVATED_NON_DEVELOPMENT_RELATIONS_RECEIVE_CAPACITY_BEFORE_OPTIONAL_COMPLETE_DEVELOPMENT_RESERVE"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision8_blind_heldout_v1"
+    cases: 24
+    canonical_content_sha256: "615b4bf157e18c8d9ecf5eca8a6b9b512e08cf6e81c0ebeaec0fd45601a1a050"
+    frozen_at: "2026-08-05T13:02:20Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_8_LOCAL_COMMIT"
 
 scope_boundary:
   model_call: false

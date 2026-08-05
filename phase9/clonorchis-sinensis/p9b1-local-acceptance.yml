@@ -1,5 +1,5 @@
-schema_version: "1.7"
-acceptance_id: "clonorchis_p9b1_revision_7_local_acceptance"
+schema_version: "1.8"
+acceptance_id: "clonorchis_p9b1_revision_8_local_acceptance"
 status: "LOCAL_TESTS_PASS_PENDING_BLIND_INDEPENDENT_READ_ONLY_REVIEW"
 scope: "P9-B1_LOCAL_EVIDENCE_RETRIEVAL_CORE"
 
@@ -27,6 +27,9 @@ recovery_provenance:
   revision_6_commit: "bbdc3bba66b267eb49b5d2264286998b33350632"
   revision_6_review_result: "CHANGES_REQUIRED_13_OF_18_RECALL_11_OF_18_COMPLETE_PLAN"
   revision_7_trigger: "NORMALIZED_METHOD_SPECIMEN_EVENT_BINDING_EVENT_GRAPH_RELATION_SCOPED_ROLES_DYNAMIC_TOP12_AND_NEW_BLIND_HELD_OUT"
+  revision_7_commit: "67038bc5ff5009a32ce1160eb662db80d366079c"
+  revision_7_review_result: "CHANGES_REQUIRED_17_OF_22_RECALL_11_OF_22_COMPLETE_PLAN_9_OF_22_BOTH"
+  revision_8_trigger: "SCOPED_DIAGNOSTIC_ASSERTIONS_AFFIRMED_CONTROL_CONCEPTS_DYNAMIC_COVERAGE_AND_NEW_BLIND_HELD_OUT"
 
 authority:
   runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
@@ -40,7 +43,7 @@ authority:
 frozen_artifacts:
   retrieval_contract:
     path: "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
-    sha256: "df4d068000f9b12fe0ffbf061ab16a6208fa5ddfc227df955737b595040ccda0"
+    sha256: "c6d96fd3c3180605b6be0466c9d386031c917225540be38a006ed452fe24337c"
   runtime_contract:
     path: "phase9/clonorchis-sinensis/runtime-contract.yml"
     sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
@@ -123,12 +126,26 @@ frozen_artifacts:
     frozen_at: "2026-08-05T12:20:45Z"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_7_LOCAL_COMMIT"
+  revision_7_review_findings_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision7-review-findings-regression.yml"
+    sha256: "e833cd3fcb7cc5feeeef03f7cb9269737dbaeec3fd7b61b22df9037a2e9eee1a"
+    cases: 13
+    exact_original_suite_body_available: false
+    reconstruction_basis: "INDEPENDENT_REVIEW_PER_CASE_FINDINGS_ONLY"
+    status: "PUBLIC_REGRESSION_NOT_HELD_OUT_FROM_REVISION_8"
+  revision_8_blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision8_blind_heldout_v1"
+    cases: 24
+    canonical_content_sha256: "615b4bf157e18c8d9ecf5eca8a6b9b512e08cf6e81c0ebeaec0fd45601a1a050"
+    frozen_at: "2026-08-05T13:02:20Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_8_LOCAL_COMMIT"
   implementation:
     path: "scripts/p9b1_local_retrieval.py"
-    sha256: "26a8cdf2399ffc45d7f2263595a1762d5b8cea6b38b7a8a4420a6532e5337f1d"
+    sha256: "5e330c8532f5d8deafdea70c19f7a17d6f25897bdb84b27041ba7d2f2d404424"
   tests:
     path: "tests/test_p9b1_retrieval.py"
-    sha256: "df031bcb2052d1d00e79fe57542b056bb8d4235977fc3f99e045b8b272c23c00"
+    sha256: "6b4821a038504bdeddbc92913f910493cc41563373f0c5c6f6b4ec531b2efa25"
   p9a_validator:
     path: "scripts/validate_phase9_contract.py"
     sha256: "c7b5dfc99f3e0730fa356db928e8ad9626ea5c626f3455d70184bc9839213715"
@@ -137,8 +154,8 @@ frozen_artifacts:
     sha256: "37c76c82d334e74933cc0d5de2ad09654cd6b20fa10e9a91cae03e6a5ece8c9f"
 
 acceptance_results:
-  p9b1_unit_tests: "36/36 PASS"
-  repository_runnable_tests: "54/54 PASS"
+  p9b1_unit_tests: "37/37 PASS"
+  repository_runnable_tests: "55/55 PASS"
   fixed_regression_required_claim_recall_top12: "16/16 PASS"
   paraphrase_required_claim_recall_top12: "8/8 PASS"
   independent_review_held_out_recall_top12: "4/4 PASS"
@@ -154,8 +171,13 @@ acceptance_results:
   blind_revision_6_complete_plan_on_bbdc3bb: "11/18 PASS_CHANGES_REQUIRED"
   revision_6_disclosed_public_regression_recall_top12: "18/18 PASS"
   revision_6_disclosed_public_regression_complete_plan: "18/18 PASS"
-  blind_revision_7_held_out_recall_top12: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
-  blind_revision_7_held_out_complete_plan: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
+  blind_revision_7_held_out_recall_top12: "17/22 PASS_CHANGES_REQUIRED_ON_67038BC"
+  blind_revision_7_held_out_complete_plan: "11/22 PASS_CHANGES_REQUIRED_ON_67038BC"
+  blind_revision_7_held_out_recall_and_plan: "9/22 PASS_CHANGES_REQUIRED_ON_67038BC"
+  revision_7_review_findings_public_regression_recall_top12: "13/13 PASS"
+  revision_7_review_findings_public_regression_complete_plan: "13/13 PASS"
+  blind_revision_8_held_out_recall_top12: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
+  blind_revision_8_held_out_complete_plan: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
   structured_query_plan_dimensions:
     formal_entity_alias_recognition: "PASS"
     reviewed_entity_type_binding: "PASS"
@@ -193,7 +215,7 @@ acceptance_results:
   independent_id_statement_direction_citation_assertions: "2/2 PASS"
   authority_projection_tamper: "REJECTED_BEFORE_INDEX_USE"
   control_and_schema_tamper_cases: "4/4 REJECTED"
-  example_result_sha256: "9467d7e54896d44de915d68ac6121569db29aa309be595606e1080a4700b0cb1"
+  example_result_sha256: "bc1e2f4612d73c7d662b6e2b72aedbcf652d18aa81dee55051eaa1651a54d264"
   p9a_contract_test_environment:
     status: "NOT_RUN"
     blocker: "MISSING_JSONSCHEMA_DEPENDENCY"

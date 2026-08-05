@@ -1,0 +1,132 @@
+suite_id: "clonorchis_p9b1_revision7_review_findings_regression_v1"
+status: "DERIVED_FROM_DISCLOSED_REVISION_7_REVIEW_FINDINGS_PUBLIC_REGRESSION"
+origin:
+  prior_suite_id: "clonorchis_p9b1_revision7_blind_heldout_v1"
+  prior_case_count: 22
+  prior_canonical_content_sha256: "5bc7692fe7fb0450c80d1227bfada03452d3ac8305d9bce74e22e64b513e89a5"
+  prior_recall_on_67038bc: "17/22 PASS_CHANGES_REQUIRED"
+  prior_complete_plan_on_67038bc: "11/22 PASS_CHANGES_REQUIRED"
+  prior_recall_and_plan_on_67038bc: "9/22 PASS_CHANGES_REQUIRED"
+  exact_original_suite_body_available: false
+  reconstruction_basis: "INDEPENDENT_REVIEW_PER_CASE_FINDINGS_ONLY"
+  must_not_be_described_as_original_heldout_suite: true
+  role_from_revision_8: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+retrieval_contract:
+  top_k: 12
+  success_condition: "ALL_REQUIRED_CLAIM_IDS_PRESENT_AND_ALL_PLAN_ASSERTIONS_HOLD"
+cases:
+  - case_id: "R7F-01"
+    finding_id: "R7BH-01"
+    query_zh: "十二指肠引流物没有查到虫卵，而粪便标本已经检出目标虫卵；请分别记录两次检测事件。"
+    required_claim_ids: ["PCMS-028", "PCMS-029"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.duodenal_fluid_egg_microscopy", "negative"]
+        - ["diagnostic.stool_egg_microscopy", "positive"]
+  - case_id: "R7F-02"
+    finding_id: "R7BH-02"
+    query_zh: "核磁共振显示胆道异常，粪便标本却未检出虫卵；两项结果分别是什么证据角色？"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.biliary_imaging", "positive"]
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+      evidence_roles: ["imaging_auxiliary_clue", "pathogen_confirmation"]
+  - case_id: "R7F-05"
+    finding_id: "R7BH-05"
+    query_zh: "便标本的结果不能写成找到虫卵，实际未寻见目标卵；这次检测是什么极性？"
+    required_claim_ids: ["PCMS-028"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+  - case_id: "R7F-06"
+    finding_id: "R7BH-06"
+    query_zh: "未观察到的不是目标卵；目标卵已经在便标本检得，应如何记录实际结果？"
+    required_claim_ids: ["PCMS-028"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.stool_egg_microscopy", "positive"]
+      forbidden_diagnostic_events:
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+  - case_id: "R7F-10"
+    finding_id: "R7BH-10"
+    query_zh: "虫体先后借助淡水螺和淡水鱼，最后在人这一宿主体内成熟；三类宿主各是什么角色？"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-022"]
+    required_plan:
+      topic_scopes: ["host_roles"]
+      relation_intents: ["has_first_intermediate_host", "has_second_intermediate_host", "has_definitive_host"]
+      required_relation_activation_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-022"]
+  - case_id: "R7F-12"
+    finding_id: "R7BH-12"
+    query_zh: "成虫寄居于肝内小、中型胆管，这一事件对应哪条正式寄生部位关系？"
+    required_claim_ids: ["W2-ATOM-008"]
+    required_plan:
+      relation_intents: ["parasitizes_site"]
+      required_relation_activation_claim_ids: ["W2-ATOM-008"]
+  - case_id: "R7F-13"
+    finding_id: "R7BH-13"
+    query_zh: "请同时还原从虫卵到成虫的完整发育链，并说明人和犬猫猪承担的宿主角色。"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019", "PCMS-022", "PCMS-024"]
+    required_plan:
+      topic_scopes: ["life_cycle", "host_roles"]
+      relation_intents: ["develops_into", "has_definitive_host", "has_reservoir_host"]
+      required_relation_activation_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019", "PCMS-022", "PCMS-024"]
+  - case_id: "R7F-17"
+    finding_id: "R7BH-17"
+    query_zh: "拒食生鱼属于什么预防建议，现有正式证据是否给出了量化效果？"
+    required_claim_ids: ["W2-ATOM-006"]
+    required_plan:
+      topic_scopes: ["control", "boundary"]
+      control_semantic_roles: ["recommendation_not_quantified_effect"]
+      required_relation_activation_claim_ids: ["W2-ATOM-006"]
+      forbidden_topic_scopes: ["diagnosis"]
+  - case_id: "R7F-18"
+    finding_id: "R7BH-18"
+    query_zh: "既往生食淡水鱼只作为暴露线索，不是在讨论防控；请补出正式病原学确证依据。"
+    required_claim_ids: ["W2-ATOM-001", "PCMS-028"]
+    required_plan:
+      topic_scopes: ["exposure", "diagnosis"]
+      semantic_roles: ["epidemiological_clue", "not_confirmatory"]
+      evidence_roles: ["epidemiologic_exposure_clue", "pathogen_confirmation"]
+      required_relation_activation_claim_ids: ["W2-ATOM-001", "PCMS-028"]
+      forbidden_topic_scopes: ["control"]
+  - case_id: "R7F-19"
+    finding_id: "R7BH-19"
+    query_zh: "本题不讨论动物粪污措施，只分析减少人粪进入淡水所针对的传播环节。"
+    required_claim_ids: ["W2-ATOM-027"]
+    required_plan:
+      topic_scopes: ["transmission", "control"]
+      relation_intents: ["targets"]
+      required_relation_activation_claim_ids: ["W2-ATOM-027"]
+      forbidden_relation_activation_claim_ids: ["W2-ATOM-028"]
+  - case_id: "R7F-20"
+    finding_id: "R7BH-20"
+    query_zh: "人、动物与环境协同治理不是单靠改厕或处理动物粪污；其正式建议和外推边界是什么？"
+    required_claim_ids: ["PCMS-036"]
+    required_plan:
+      topic_scopes: ["one_health", "control", "boundary"]
+      control_semantic_roles: ["recommendation_not_local_effect", "universal_elimination_claim_false"]
+      required_relation_activation_claim_ids: ["PCMS-036"]
+      forbidden_relation_activation_claim_ids: ["W2-ATOM-026", "W2-ATOM-028"]
+  - case_id: "R7F-21"
+    finding_id: "R7BH-21"
+    query_zh: "本题不涉及卫生设施，只问避免生食淡水鱼这一建议是否有量化效果证据。"
+    required_claim_ids: ["W2-ATOM-006"]
+    required_plan:
+      topic_scopes: ["control", "boundary"]
+      control_semantic_roles: ["recommendation_not_quantified_effect"]
+      required_relation_activation_claim_ids: ["W2-ATOM-006"]
+      forbidden_relation_activation_claim_ids: ["W2-ATOM-026"]
+      forbidden_topic_scopes: ["diagnosis"]
+  - case_id: "R7F-22"
+    finding_id: "R7BH-22"
+    query_zh: "概述人畜排卵进入水体、螺鱼宿主环节，并说明人粪、动物粪污及协同治理；不要求完整虫期发育链。"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-033", "PCMS-034", "PCMS-035", "PCMS-036", "W2-ATOM-027", "W2-ATOM-028"]
+    required_plan:
+      topic_scopes: ["transmission", "control", "boundary"]
+      relation_intents: ["has_first_intermediate_host", "has_second_intermediate_host", "sheds_stage", "present_in_environment", "targets", "controlled_by"]
+      required_relation_activation_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-033", "PCMS-034", "PCMS-035", "PCMS-036", "W2-ATOM-027", "W2-ATOM-028"]
