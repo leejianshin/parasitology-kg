@@ -1,0 +1,60 @@
+schema_version: "1.1"
+acceptance_id: "clonorchis_p9b1_revision_1_local_acceptance"
+status: "LOCAL_TESTS_PASS_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
+scope: "P9-B1_LOCAL_EVIDENCE_RETRIEVAL_CORE"
+
+recovery_provenance:
+  reviewed_local_commit: "6d3cba5bd1dac6f24a3b6a141c5ddc7702bb2fc0"
+  reviewed_commit_remote_status: "NEVER_PUSHED_NOT_RECOVERABLE_FROM_GITHUB"
+  recovered_parent_commit: "b84ebf64038fb1230e67f78c23042f2ef8cf5e63"
+  reconstruction_reason: "LOCAL_WORKSPACE_REMOVED_BY_MAINTENANCE"
+  reconstruction_claim: "FUNCTIONAL_EQUIVALENT_PLUS_AUTHORIZED_REVISION_NOT_BYTE_IDENTICAL_6D3CBA5"
+
+authority:
+  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  index_sha256: "f454b248ec55db9adf884faa0441b33d6d771400f0f7f5b8d483b69498f04226"
+  entities: 31
+  relation_claims: 40
+  narrative_claims: 6
+  supporting_narrative_claims: 2
+  index_records: 48
+
+frozen_artifacts:
+  retrieval_contract:
+    path: "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
+    sha256: "3d5ce4bd018fd3714f349daa48739a51e7ed0ca741d9916e343cf1bdb601e7d4"
+  result_schema:
+    path: "phase9/clonorchis-sinensis/retrieval-result-schema.yml"
+    sha256: "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
+  fixed_regression:
+    path: "phase7/clonorchis-sinensis/pilot-content-minimum-set-regression.yml"
+    sha256: "2546aafd472fe7fa514f3cc395fc41449c5f06604d3f718cea1e3afa2d393cbd"
+  paraphrase_suite:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-paraphrase-cases.yml"
+    sha256: "988f2a93a6645a2e5e9a4449b660240f95549ac1a81e6f4fa93bee1cb75d17d1"
+  implementation:
+    path: "scripts/p9b1_local_retrieval.py"
+    sha256: "e7a7a208a7e70d76bed5103e924920ee8c9c9d9c9b2af4e1e82edfb56318b9b7"
+  tests:
+    path: "tests/test_p9b1_retrieval.py"
+    sha256: "61652401effd3ca7f07524568552bc55d8a6b4cbcd5bf129979d28ef952a9617"
+
+acceptance_results:
+  p9b1_unit_tests: "15/15 PASS"
+  fixed_regression_required_claim_recall_top12: "16/16 PASS"
+  paraphrase_required_claim_recall_top12: "8/8 PASS"
+  repeated_runs: "3/3 BYTE_IDENTICAL"
+  cross_process_hash_seeds: "3/3 BYTE_IDENTICAL"
+  forged_external_index: "REJECTED_BY_PUBLIC_API"
+  malformed_result_schema_cases: "9/9 REJECTED"
+  forged_candidate_semantics_cases: "7/7 REJECTED"
+  direction_preservation: "PASS"
+  control_and_schema_tamper_cases: "4/4 REJECTED"
+  example_result_sha256: "584aedcfa83006f47f6fa121fcdbc9676c43f08825d2c211740e4474ae94a4f3"
+
+review_gate:
+  independent_read_only_review_required: true
+  push_authorized: false
+  pull_request_authorized: false
+  p9b2_authorized: false
+  student_release_authorized: false

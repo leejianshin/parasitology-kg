@@ -1,0 +1,63 @@
+contract_version: "1.1"
+contract_id: "clonorchis_p9b1_local_retrieval_v1"
+status: "REVISION_1_PENDING_INDEPENDENT_REVIEW"
+implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
+
+authority:
+  parent_contract_id: "clonorchis_p9a_controlled_rag_v1"
+  knowledge_version: "clonorchis_pcms_v1"
+  runtime_bundle_sha256: "868abdbb5c619d87397167ebaeefe1b1d243a8124acf41e60114bda777187302"
+  allowed_runtime_inputs:
+    - "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
+    - "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
+    - "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml"
+    - "sources/registry.yml"
+  external_index_injection: "PROHIBITED"
+  every_retrieval_rebuilds_verified_index: true
+
+frozen_controls:
+  runtime_contract_sha256: "f4b2712a1b7cd4a1bce0093a8a4c3a717fecee04ab540434fb3c3ce0539d4a5f"
+  request_schema_sha256: "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
+  result_schema_sha256: "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
+
+index_contract:
+  expected_entities: 31
+  expected_relation_claims: 40
+  expected_narrative_claims: 6
+  expected_supporting_narrative_claims: 2
+  expected_records: 48
+  admitted_entity_status: "reviewed"
+  admitted_relation_status: "reviewed"
+  every_claim_requires_registered_source: true
+  every_citation_requires_exact_locator: true
+  relation_direction_fields: ["subject", "predicate", "object"]
+  narrative_entity_bindings:
+    PCMS-001: "stage.clonorchis_adult"
+    PCMS-002: "stage.clonorchis_adult"
+    PCMS-003: "stage.clonorchis_egg"
+    PCMS-004: "stage.clonorchis_egg"
+    PCMS-005: "stage.clonorchis_egg"
+    PCMS-006: "stage.clonorchis_egg"
+
+result_validation:
+  order:
+    - "REQUEST_SCHEMA"
+    - "RUNTIME_BUNDLE"
+    - "CONTROL_HASHES"
+    - "INDEX_BUILD_AND_ADMISSION"
+    - "RESULT_SCHEMA"
+    - "REQUEST_INDEX_RANKING_AND_EVIDENCE_SEMANTICS"
+  fail_closed: true
+  schema_keywords_must_not_be_ignored: true
+  candidate_payload_must_equal_verified_index: true
+  ranking_must_be_recomputed: true
+
+scope_boundary:
+  model_call: false
+  network_call: false
+  external_web: false
+  student_data: false
+  response_generation: false
+  p9b2_started: false
+  push_authorized: false
+  pull_request_authorized: false

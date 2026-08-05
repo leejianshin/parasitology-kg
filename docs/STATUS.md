@@ -15,7 +15,8 @@
 | Phase 6 | 学生RAG验收 | CONFIRMATORY_TEST_COMPLETED | paired-v4已通过独立复核和课程负责人确认，允许进入有限试点准备；未发布原始回答 |
 | Phase 7 | PCMS准入与试点准备 | PCMS_ADMITTED_DRAFTS_READY | PCMS-G01—G09已正式准入，16项回归全通过；学习通三份材料仅为未发布草案 |
 | Phase 8 | 学习平台受控交付适配 | PLATFORM_RAG_NOT_ADMISSIBLE | 固定作业可承载；平台知识库、思维阶梯和题库链路不能满足受控RAG门禁 |
-| Phase 9-A | 独立受控RAG合同 | CONTRACT_READY_FOR_REVIEW | 运行、回答、引用、审计、复核证据和发布边界已形成设计原子；尚未实现运行时 |
+| Phase 9-A | 独立受控RAG合同 | P9A_CLOSED | 运行、回答、引用、审计、复核证据和发布边界已冻结并由PR #11合入；运行时另行分阶段授权 |
+| Phase 9-B1 | 本地证据检索核心 | REVISION_1_PENDING_INDEPENDENT_REVIEW | 已封闭索引注入、执行完整结果Schema与语义绑定、保留关系方向并加入等义改写；仅本地，未推送、未创建PR |
 
 ## 当前决策
 
@@ -152,3 +153,8 @@
   请求、响应、审计三方`request_id`。当前状态为
   `P9A_CLOSED`。最终独立只读复验结论为`PASS`，课程负责人已批准关闭P9-A并
   将PR #11合入主线。P9-B1仍须另行授权，当前不得启动。
+- P9-B1随后获得单独授权。首版本地提交`6d3cba5`独立只读复审为
+  `CHANGES_REQUIRED`；第一修订已关闭外部索引注入，强制每次检索绑定已验证
+  索引，完整执行结果Schema及请求—索引—排序—实体—来源—定位语义比对，
+  保留关系主客体方向，并冻结8个等义改写用例。当前等待重新独立只读复审；
+  不得推送、创建PR或启动P9-B2。

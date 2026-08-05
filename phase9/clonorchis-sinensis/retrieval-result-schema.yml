@@ -1,0 +1,121 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1-retrieval-result-v1.1"
+title: "P9-B1 verified local retrieval result"
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - request_id
+  - request_sha256
+  - knowledge_version
+  - normalized_query
+  - status
+  - top_k
+  - candidate_count
+  - excluded_candidate_count
+  - runtime_bundle_sha256
+  - index_sha256
+  - candidates
+properties:
+  schema_version: {const: "1.1"}
+  request_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  request_sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  knowledge_version: {const: "clonorchis_pcms_v1"}
+  normalized_query: {type: string, minLength: 1, maxLength: 2000}
+  status: {enum: ["RETRIEVED", "NO_MATCH"]}
+  top_k: {type: integer, minimum: 1, maximum: 50}
+  candidate_count: {type: integer, minimum: 0, maximum: 50}
+  excluded_candidate_count: {type: integer, minimum: 0, maximum: 48}
+  runtime_bundle_sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  index_sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  candidates:
+    type: array
+    maxItems: 50
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - rank
+        - score
+        - score_features
+        - claim_id
+        - claim_kind
+        - subject
+        - predicate
+        - object
+        - entity_ids
+        - statement_zh
+        - qualifiers
+        - citations
+      properties:
+        rank: {type: integer, minimum: 1, maximum: 50}
+        score: {type: integer, minimum: 1}
+        score_features:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        claim_id:
+          type: string
+          pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+        claim_kind:
+          enum: ["relation", "narrative", "supporting_narrative"]
+        subject:
+          type: ["string", "null"]
+        predicate:
+          type: ["string", "null"]
+        object:
+          type: ["string", "null"]
+        entity_ids:
+          type: array
+          minItems: 1
+          maxItems: 2
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        statement_zh: {type: string, minLength: 1}
+        qualifiers:
+          type: object
+          additionalProperties:
+            anyOf:
+              - {type: string}
+              - {type: number}
+              - {type: boolean}
+              - {type: "null"}
+        citations:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: object
+            additionalProperties: false
+            required: [source_id, source_label, locator]
+            properties:
+              source_id:
+                type: string
+                pattern: "^source\\.[a-z0-9_]+$"
+              source_label: {type: string, minLength: 1}
+              locator: {type: string, minLength: 1}
+allOf:
+  - if:
+      properties:
+        status: {const: "RETRIEVED"}
+    then:
+      properties:
+        candidates: {minItems: 1}
+        candidate_count: {minimum: 1}
+  - if:
+      properties:
+        status: {const: "NO_MATCH"}
+    then:
+      properties:
+        candidates: {maxItems: 0}
+        candidate_count: {const: 0}

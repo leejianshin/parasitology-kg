@@ -1,0 +1,40 @@
+schema_version: "1.0"
+suite_id: "clonorchis_p9b1_paraphrase_v1"
+status: "FIXED_FOR_REVISION_1_REVIEW"
+purpose: >-
+  用未复用PCMS固定题干的等义表达检查检索泛化；这些必需命题只用于验收，
+  检索实现不得按case_id或claim_id硬编码。
+top_k: 12
+cases:
+  - case_id: "P9B1-P01"
+    category: "morphology"
+    query_zh: "如何凭成虫外形与虫卵结构辨认华支睾吸虫？请列出关键特征。"
+    required_claim_ids: ["PCMS-001", "PCMS-002", "PCMS-003", "PCMS-004", "PCMS-005", "PCMS-006"]
+  - case_id: "P9B1-P02"
+    category: "life_cycle"
+    query_zh: "华支睾吸虫经历哪些生活史环节，各阶段如何衔接？"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019"]
+  - case_id: "P9B1-P03"
+    category: "host_roles"
+    query_zh: "螺、鱼、人和食鱼哺乳动物在华支睾吸虫生活史中各是什么宿主？"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-022", "PCMS-023"]
+  - case_id: "P9B1-P04"
+    category: "host_boundary"
+    query_zh: "淡水鱼与淡水虾在当前最低知识集中是否具有同等宿主证据？"
+    required_claim_ids: ["PCMS-021"]
+  - case_id: "P9B1-P05"
+    category: "diagnosis"
+    query_zh: "怎样判断生食经历、胆道检查异常与粪样发现虫卵各自属于线索还是确证？"
+    required_claim_ids: ["W2-ATOM-001", "W2-ATOM-023", "PCMS-028"]
+  - case_id: "P9B1-P06"
+    category: "one_health"
+    query_zh: "人畜粪便、螺、鱼和水体之间构成怎样的传播链？"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-024", "PCMS-033", "PCMS-034", "PCMS-035", "W2-ATOM-005"]
+  - case_id: "P9B1-P07"
+    category: "source_traceability"
+    query_zh: "生活史、治疗建议和致癌等级分别要查什么权威资料？"
+    required_claim_ids: ["PCMS-014", "PCMS-030", "PCMS-032"]
+  - case_id: "P9B1-P08"
+    category: "stage_distinction"
+    query_zh: "进入人体并造成感染的是哪一阶段，主要导致病变的又是哪一阶段？"
+    required_claim_ids: ["PCMS-025", "PCMS-026"]

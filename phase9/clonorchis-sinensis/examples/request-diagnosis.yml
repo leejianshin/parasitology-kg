@@ -1,0 +1,5 @@
+schema_version: "1.0"
+request_id: "P9B1-EXAMPLE-DIAGNOSIS-001"
+knowledge_version: "clonorchis_pcms_v1"
+locale: "zh-CN"
+query_text: "生食鱼史、影像学和粪便检卵在诊断中分别承担什么角色？"

@@ -66,6 +66,7 @@ Phase 8已完成学习通教师端、固定题目、知识点抽题和学生端�
 - [Phase 6学生RAG验收协议](phase6/clonorchis-sinensis/README.md)
 - [Phase 7 PCMS正式准入](phase7/clonorchis-sinensis/pilot-content-minimum-set-admission.yml)
 - [Phase 9-A受控RAG运行合同](phase9/clonorchis-sinensis/README.md)
+- [Phase 9-B1本地证据检索验收](phase9/clonorchis-sinensis/p9b1-local-acceptance.yml)
 - [学习通教学材料草案](docs/learning-platform/README.md)
 - [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
 - [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
