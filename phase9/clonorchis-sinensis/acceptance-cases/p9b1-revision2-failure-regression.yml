@@ -1,0 +1,66 @@
+schema_version: "1.0"
+suite_id: "clonorchis_p9b1_revision_2_review_failures_v1"
+status: "FROZEN_BEFORE_REVISION_3_IMPLEMENTATION"
+origin: "P9-B1_REVISION_2_INDEPENDENT_READ_ONLY_REVIEW"
+frozen_on: "2026-08-05"
+purpose: >-
+  将第二修订独立复审中失败的六类自然表达固定为公开回归集。该套件不再作为
+  held-out证据；第三修订必须通过结构化查询规划与覆盖检索解决，不得为题干或
+  claim_id建立专用分支。
+top_k: 12
+cases:
+  - case_id: "P9B1-R2F-01"
+    category: "life_cycle_order"
+    query_zh: "从卵排出后，到成为成虫，中途依次经历哪些形态？"
+    required_claim_ids:
+      - "PCMS-014"
+      - "PCMS-015"
+      - "PCMS-016"
+      - "PCMS-017"
+      - "PCMS-018"
+      - "PCMS-019"
+  - case_id: "P9B1-R2F-02"
+    category: "diagnostic_evidence_roles"
+    query_zh: "吃过生腌淡水鱼，B超发现胆管改变，粪标本看到卵，三种信息该如何判读？"
+    required_claim_ids:
+      - "W2-ATOM-001"
+      - "W2-ATOM-023"
+      - "PCMS-028"
+  - case_id: "P9B1-R2F-03"
+    category: "one_health_transmission_chain"
+    query_zh: "这种寄生虫如何在人、犬猫、淡水螺和鱼之间周而复始？"
+    required_claim_ids:
+      - "PCMS-020"
+      - "PCMS-021"
+      - "PCMS-024"
+      - "PCMS-033"
+      - "PCMS-034"
+      - "PCMS-035"
+      - "W2-ATOM-005"
+  - case_id: "P9B1-R2F-04"
+    category: "infective_and_pathogenic_stages"
+    query_zh: "人吃进去后真正建立感染的虫期是什么，主要引起胆道损伤的虫期是什么？"
+    required_claim_ids:
+      - "PCMS-025"
+      - "PCMS-026"
+  - case_id: "P9B1-R2F-05"
+    category: "host_roles"
+    query_zh: "哪些水生动物先后承载幼虫，人和犬猫在其繁殖中处于什么位置？"
+    required_claim_ids:
+      - "PCMS-020"
+      - "PCMS-021"
+      - "PCMS-022"
+      - "PCMS-023"
+  - case_id: "P9B1-R2F-06"
+    category: "cross_topic_source_traceability"
+    query_zh: "虫体变化、处方选择和肿瘤风险分级分别出自哪些机构或文献？"
+    required_claim_ids:
+      - "PCMS-014"
+      - "PCMS-030"
+      - "PCMS-032"
+acceptance:
+  required_claim_recall: "ALL_REQUIRED_IDS_PRESENT"
+  forbidden_implementation_shortcuts:
+    - "CASE_ID_BRANCH"
+    - "FULL_QUERY_LITERAL_BRANCH"
+    - "REQUIRED_CLAIM_ID_BRANCH"

@@ -1,6 +1,6 @@
-contract_version: "1.2"
+contract_version: "1.3"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_2_PENDING_INDEPENDENT_REVIEW"
+status: "REVISION_3_PENDING_BLIND_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
@@ -57,6 +57,27 @@ result_validation:
   candidate_payload_must_equal_verified_index: true
   ranking_must_be_recomputed: true
 
+query_planning:
+  mode: "DETERMINISTIC_STRUCTURED_GRAPH_QUERY_PLAN"
+  entity_alias_authority: "REVIEWED_RUNTIME_ENTITIES_NAME_AND_ALIASES"
+  ordinary_language_normalization_role: "QUERY_SURFACE_ONLY_NO_NEW_FACTS"
+  required_dimensions:
+    - "entity_ids"
+    - "relation_intents"
+    - "evidence_roles"
+    - "topic_scopes"
+    - "coverage_groups"
+  case_id_branch: "PROHIBITED"
+  full_query_literal_branch: "PROHIBITED"
+  regression_claim_id_branch: "PROHIBITED"
+
+coverage_retrieval:
+  graph_neighborhood_binding: "ENTITY_ID_INTERSECTION"
+  semantic_group_binding: "PREDICATE_ENTITY_TYPE_AND_SEMANTIC_ROLE"
+  complete_group_precedes_lexical_fallback: true
+  lexical_similarity_role: "SECONDARY_RANKING_ONLY"
+  top_k_limit_remains_enforced: true
+
 revision_2_acceptance:
   projected_claim_assertions:
     claim_ids: ["W2-ATOM-024", "W2-ATOM-025"]
@@ -77,6 +98,20 @@ revision_2_acceptance:
       - "CASE_ID_BRANCH"
       - "FULL_QUERY_LITERAL_BRANCH"
       - "REQUIRED_CLAIM_ID_BRANCH"
+
+revision_3_acceptance:
+  public_failure_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision2-failure-regression.yml"
+    sha256: "fbb93c076651df2d842eaa59059bcbcb402178231c220198c5a9c3d1afc55cf7"
+    cases: 6
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision3_blind_heldout_v1"
+    cases: 8
+    canonical_content_sha256: "01e4d49b2323c51b57402304db9266f6266f5f6c1a00a7cdb6d8385b90a34394"
+    frozen_at: "2026-08-05T18:07:00+09:00"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_3_LOCAL_COMMIT"
 
 scope_boundary:
   model_call: false

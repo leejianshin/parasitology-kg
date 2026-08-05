@@ -1,6 +1,6 @@
-schema_version: "1.2"
-acceptance_id: "clonorchis_p9b1_revision_2_local_acceptance"
-status: "LOCAL_TESTS_PASS_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
+schema_version: "1.3"
+acceptance_id: "clonorchis_p9b1_revision_3_local_acceptance"
+status: "LOCAL_TESTS_PASS_PENDING_BLIND_INDEPENDENT_READ_ONLY_REVIEW"
 scope: "P9-B1_LOCAL_EVIDENCE_RETRIEVAL_CORE"
 
 recovery_provenance:
@@ -12,6 +12,9 @@ recovery_provenance:
   revision_1_commit: "685e017e7d57639eab74b0d5e0d0c6fd78f8bad1"
   revision_1_review_result: "CHANGES_REQUIRED"
   revision_2_trigger: "AUTHORITATIVE_PROJECTION_AND_HELD_OUT_REVIEW_FINDINGS"
+  revision_2_commit: "b4c1c95a8e83cc744c1b921f633511c9f03e9d52"
+  revision_2_review_result: "CHANGES_REQUIRED"
+  revision_3_trigger: "STRUCTURED_QUERY_PLANNING_GRAPH_COVERAGE_AND_BLIND_HELD_OUT_REVIEW"
 
 authority:
   runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
@@ -25,7 +28,7 @@ authority:
 frozen_artifacts:
   retrieval_contract:
     path: "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
-    sha256: "abeb6949d34d7026d226b27dfbeb2393a671e637fbe72bc8013d021b1d2e65ec"
+    sha256: "09d09be3696314870f3d66c5669aa4071da6cf79d89ba3a246fe740195b6c047"
   runtime_contract:
     path: "phase9/clonorchis-sinensis/runtime-contract.yml"
     sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
@@ -53,12 +56,23 @@ frozen_artifacts:
   independent_review_held_out_suite:
     path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-held-out-paraphrase-cases.yml"
     sha256: "74a0de22be2555766e96bc8deefe8534940410b57ab015152b57d5c250966f1b"
+  revision_2_failure_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision2-failure-regression.yml"
+    sha256: "fbb93c076651df2d842eaa59059bcbcb402178231c220198c5a9c3d1afc55cf7"
+    status: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision3_blind_heldout_v1"
+    cases: 8
+    canonical_content_sha256: "01e4d49b2323c51b57402304db9266f6266f5f6c1a00a7cdb6d8385b90a34394"
+    frozen_at: "2026-08-05T18:07:00+09:00"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_3_LOCAL_COMMIT"
   implementation:
     path: "scripts/p9b1_local_retrieval.py"
-    sha256: "5f495e920f960781e375c039dd19a50409276469a0ffb5152ca775a5629e49a7"
+    sha256: "33113f0cbc79a52c9202358a9251558c2e2531865780eeb4de25c1e37b2ed6d1"
   tests:
     path: "tests/test_p9b1_retrieval.py"
-    sha256: "e94266942549e6b732e48e4b529d6da1d2f4f5420bac28f5fe5adccd5c7aa5cd"
+    sha256: "9470d8a8a8ce9775f5deb37b86a571ca04d9ada6399e23b65608cdbfbddb2dd5"
   p9a_validator:
     path: "scripts/validate_phase9_contract.py"
     sha256: "c7b5dfc99f3e0730fa356db928e8ad9626ea5c626f3455d70184bc9839213715"
@@ -67,11 +81,22 @@ frozen_artifacts:
     sha256: "37c76c82d334e74933cc0d5de2ad09654cd6b20fa10e9a91cae03e6a5ece8c9f"
 
 acceptance_results:
-  p9b1_unit_tests: "18/18 PASS"
-  repository_runnable_tests: "36/36 PASS"
+  p9b1_unit_tests: "21/21 PASS"
+  repository_runnable_tests: "39/39 PASS"
   fixed_regression_required_claim_recall_top12: "16/16 PASS"
   paraphrase_required_claim_recall_top12: "8/8 PASS"
   independent_review_held_out_recall_top12: "4/4 PASS"
+  revision_2_failure_regression_recall_top12: "6/6 PASS"
+  blind_revision_3_held_out_recall_top12: "PENDING_POST_COMMIT_INDEPENDENT_REVIEW"
+  structured_query_plan_dimensions:
+    formal_entity_alias_recognition: "PASS"
+    relation_intent: "PASS"
+    evidence_role: "PASS"
+    topic_scope: "PASS"
+  graph_coverage:
+    relation_neighborhood: "PASS"
+    complete_claim_group_before_lexical_fallback: "PASS"
+    case_id_query_literal_and_required_claim_branches: "ABSENT"
   repeated_runs: "3/3 BYTE_IDENTICAL"
   cross_process_hash_seeds: "3/3 BYTE_IDENTICAL"
   forged_external_index: "REJECTED_BY_PUBLIC_API"
@@ -81,7 +106,7 @@ acceptance_results:
   independent_id_statement_direction_citation_assertions: "2/2 PASS"
   authority_projection_tamper: "REJECTED_BEFORE_INDEX_USE"
   control_and_schema_tamper_cases: "4/4 REJECTED"
-  example_result_sha256: "21ee7dcd53601e29d56bce5e1fd413b38c25840208ef9adb9e35dba535452874"
+  example_result_sha256: "c978fc9f51ecdff410bf3af56338070fd13d27786bee8f2cc8d85df8cc87a404"
   p9a_contract_test_environment:
     status: "NOT_RUN"
     blocker: "MISSING_JSONSCHEMA_DEPENDENCY"

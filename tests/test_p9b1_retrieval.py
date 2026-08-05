@@ -22,6 +22,7 @@ from scripts.p9b1_local_retrieval import (  # noqa: E402
     RESULT_SCHEMA_PATH,
     RETRIEVAL_CONTRACT_PATH,
     RUNTIME_CONTRACT_PATH,
+    analyze_query,
     build_index,
     canonical_sha256,
     retrieve,
@@ -192,6 +193,100 @@ class P9B1RetrievalTests(unittest.TestCase):
                 )
                 retrieved = {item["claim_id"] for item in result["candidates"]}
                 self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_revision_2_review_failures_are_frozen_and_now_recalled(self) -> None:
+        path = (
+            ROOT
+            / "phase9/clonorchis-sinensis/acceptance-cases"
+            / "p9b1-revision2-failure-regression.yml"
+        )
+        suite = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual("FROZEN_BEFORE_REVISION_3_IMPLEMENTATION", suite["status"])
+        self.assertEqual(6, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_query_plan_separates_entities_roles_intents_and_scope(self) -> None:
+        index = build_index(ROOT)
+        formal_alias = analyze_query("MRI能否作为确诊依据？", index)
+        self.assertIn("diagnostic.biliary_imaging", formal_alias.entity_ids)
+        self.assertEqual(
+            ("imaging_auxiliary_clue",), formal_alias.evidence_roles
+        )
+        self.assertIn("diagnosis", formal_alias.topic_scopes)
+
+        diagnosis = analyze_query(
+            "吃过生腌淡水鱼，B超发现胆管改变，粪标本看到卵，三种信息该如何判读？",
+            index,
+        )
+        self.assertEqual(
+            {
+                "epidemiologic_exposure_clue",
+                "imaging_auxiliary_clue",
+                "pathogen_confirmation",
+            },
+            set(diagnosis.evidence_roles),
+        )
+        self.assertIn("diagnosis", diagnosis.topic_scopes)
+        self.assertEqual(
+            {
+                "diagnosed_by", "diagnostic_stage_for", "has_diagnostic_clue"
+            },
+            set(diagnosis.relation_intents),
+        )
+        self.assertTrue({
+            "behavior.raw_undercooked_freshwater_fish_consumption",
+            "diagnostic.biliary_imaging",
+            "diagnostic.stool_egg_microscopy",
+        } <= set(diagnosis.entity_ids))
+
+        stage_roles = analyze_query(
+            "人吃进去后真正建立感染的虫期是什么，主要引起胆道损伤的虫期是什么？",
+            index,
+        )
+        self.assertEqual(("stage_roles",), stage_roles.topic_scopes)
+        self.assertEqual(
+            {"infective_stage_for", "pathogenic_stage_for"},
+            set(stage_roles.relation_intents),
+        )
+
+        source_scope = analyze_query(
+            "虫体变化、处方选择和肿瘤风险分级分别出自哪些机构或文献？",
+            index,
+        )
+        self.assertEqual(
+            {"life_cycle", "treatment", "carcinogenicity", "source_traceability"},
+            set(source_scope.topic_scopes),
+        )
+
+    def test_coverage_groups_are_selected_by_graph_semantics_not_claim_literals(self) -> None:
+        source = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("CONCEPT_RULES", source)
+        suite = yaml.safe_load(
+            (
+                ROOT
+                / "phase9/clonorchis-sinensis/acceptance-cases"
+                / "p9b1-revision2-failure-regression.yml"
+            ).read_text(encoding="utf-8")
+        )
+        for case in suite["cases"]:
+            for claim_id in case["required_claim_ids"]:
+                self.assertNotIn(
+                    repr(claim_id), source,
+                    msg=f"implementation hard-codes regression claim {claim_id}",
+                )
 
     def test_three_repeated_runs_are_byte_deterministic(self) -> None:
         outputs = [
