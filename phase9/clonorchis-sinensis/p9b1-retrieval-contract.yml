@@ -1,6 +1,6 @@
-contract_version: "1.6"
+contract_version: "1.7"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_6_PENDING_BLIND_INDEPENDENT_REVIEW"
+status: "REVISION_7_PENDING_BLIND_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
@@ -74,16 +74,21 @@ query_planning:
     - "control_semantic_roles"
     - "topic_scopes"
     - "coverage_groups"
+    - "relation_activations"
   case_id_branch: "PROHIBITED"
   full_query_literal_branch: "PROHIBITED"
   regression_claim_id_branch: "PROHIBITED"
 
 coverage_retrieval:
-  graph_neighborhood_binding: "ENTITY_ID_INTERSECTION"
+  graph_neighborhood_binding: "ACTIVATED_EVENT_RELATIONS_THEN_ENTITY_ID_INTERSECTION"
   entity_type_source: "REVIEWED_NODE_ENTITY_TYPE"
   semantic_role_source: "ADMITTED_CLAIM_QUALIFIERS_AND_AUTHORIZED_PROJECTION"
-  semantic_group_binding: "PREDICATE_ENTITY_TYPE_AND_FORMAL_SEMANTIC_ROLE"
+  semantic_group_binding: "QUERY_ACTIVATED_PREDICATE_ENTITY_TYPE_AND_FORMAL_SEMANTIC_ROLE"
+  diagnostic_event_binding: "NORMALIZED_METHOD_SPECIMEN_DETECTION_EVENT_AND_SCOPED_POLARITY"
+  life_cycle_event_graph: "REVIEWED_HOST_STAGE_INGESTION_SHEDDING_ENVIRONMENT_TRANSMISSION_INFECTION_AND_PARASITISM_RELATIONS"
   negated_diagnostic_evidence_role: "RETRIEVE_REQUIRED_CONFIRMATION_CONTRAST"
+  top12_allocation: "COMPLETE_DEVELOPMENT_CHAIN_THEN_ACTIVATED_RELATION_QUOTAS_THEN_SEMANTIC_GROUP_ROUND_ROBIN"
+  cross_topic_fixed_group_order: "PROHIBITED"
   complete_group_precedes_lexical_fallback: true
   lexical_similarity_role: "SECONDARY_RANKING_ONLY"
   top_k_limit_remains_enforced: true
@@ -182,6 +187,29 @@ revision_6_acceptance:
     frozen_at: "2026-08-05T11:33:18Z"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_6_LOCAL_COMMIT"
+
+revision_7_acceptance:
+  revision_6_blind_disclosed_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision6-blind-disclosed-regression.yml"
+    sha256: "8c770d29acfab35f5424be7e64375361adc5519cc045bd74bf7b559ddf15abac"
+    cases: 18
+    prior_recall_on_bbdc3bb: "13/18 PASS_CHANGES_REQUIRED"
+    prior_complete_plan_assertions_on_bbdc3bb: "11/18 PASS_CHANGES_REQUIRED"
+    role_from_revision_7: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+    required_plan_assertions: "ALL_REQUIRED_RELATIONS_ROLES_EVENTS_AND_SCOPES_PRESENT"
+  query_semantics:
+    diagnostic_event_normalization: "METHOD_SPECIMEN_DETECTION_EVENT_WITH_LOCAL_NEGATION_SCOPE"
+    event_graph_planning: "FORMAL_HOST_STAGE_INGESTION_SHEDDING_ENVIRONMENT_TRANSMISSION_INFECTION_AND_PARASITISM_RELATIONS"
+    role_binding: "ONLY_QUERY_ACTIVATED_DIAGNOSTIC_AND_CONTROL_RELATIONS"
+    top12_dynamic_quota: "COVERAGE_CONSTRAINED_RELATION_ALLOCATION_WITHOUT_FIXED_CROSS_TOPIC_STARVATION"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision7_blind_heldout_v1"
+    cases: 22
+    canonical_content_sha256: "5bc7692fe7fb0450c80d1227bfada03452d3ac8305d9bce74e22e64b513e89a5"
+    frozen_at: "2026-08-05T12:20:45Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_7_LOCAL_COMMIT"
 
 scope_boundary:
   model_call: false

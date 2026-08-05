@@ -312,6 +312,108 @@ class P9B1RetrievalTests(unittest.TestCase):
                 retrieved = {item["claim_id"] for item in result["candidates"]}
                 self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
 
+    def test_revision_6_blind_suite_is_now_public_regression(self) -> None:
+        path = (
+            ROOT
+            / "phase9/clonorchis-sinensis/acceptance-cases"
+            / "p9b1-revision6-blind-disclosed-regression.yml"
+        )
+        suite = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "DISCLOSED_AFTER_REVISION_6_COMMIT_PUBLIC_REGRESSION",
+            suite["status"],
+        )
+        self.assertEqual(18, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        evidence_role_map = {
+            "parasitological_confirmation": "pathogen_confirmation",
+            "auxiliary": "imaging_auxiliary_clue",
+            "epidemiological_clue": "epidemiologic_exposure_clue",
+        }
+        index = build_index(ROOT)
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+                plan = analyze_query(case["query_zh"], index)
+                required = case["required_plan"]
+                for field in (
+                    "topic_scopes", "relation_intents", "semantic_roles"
+                ):
+                    self.assertTrue(
+                        set(required.get(field, [])) <= set(getattr(plan, field))
+                    )
+                for field in ("evidence_roles", "negated_evidence_roles"):
+                    expected = {
+                        evidence_role_map.get(role, role)
+                        for role in required.get(field, [])
+                    }
+                    self.assertTrue(expected <= set(getattr(plan, field)))
+                self.assertTrue(
+                    set(required.get("forbidden_topic_scopes", []))
+                    .isdisjoint(plan.topic_scopes)
+                )
+                actual_events = {
+                    (item.evidence_entity_id, item.polarity)
+                    for item in plan.evidence_observations
+                }
+                self.assertTrue(
+                    {tuple(item) for item in required.get("diagnostic_events", [])}
+                    <= actual_events
+                )
+
+    def test_relation_roles_and_top12_are_bound_to_activated_graph(self) -> None:
+        index = build_index(ROOT)
+
+        control = analyze_query(
+            "避免生食和改进卫生设施都属于推荐措施；是否已有量化效果？",
+            index,
+        )
+        self.assertNotIn("diagnosis", control.topic_scopes)
+        self.assertNotIn("epidemiological_clue", control.semantic_roles)
+        self.assertNotIn("not_confirmatory", control.semantic_roles)
+        activated = {item.claim_id for item in control.relation_activations}
+        self.assertTrue({"W2-ATOM-006", "W2-ATOM-026"} <= activated)
+        self.assertIn(
+            "recommendation_not_quantified_effect",
+            control.control_semantic_roles,
+        )
+
+        integrated = analyze_query(
+            "人、动物和环境协同治理是否能保证任何地区都根除该病？",
+            index,
+        )
+        self.assertIn("PCMS-036", {
+            item.claim_id for item in integrated.relation_activations
+        })
+        self.assertIn(
+            "recommendation_not_local_effect",
+            integrated.control_semantic_roles,
+        )
+
+        combined = retrieve(
+            request(
+                "一边讨论人畜排卵污染水体以及螺鱼宿主环节，一边提出综合治理；"
+                "请把传播网络和正式防控语义同时纳入，而不要承诺普遍根除。",
+                "P9B1-R7-DYNAMIC-TOP12",
+            ),
+            root=ROOT,
+        )
+        retrieved = {item["claim_id"] for item in combined["candidates"]}
+        self.assertTrue({
+            "PCMS-020", "PCMS-021", "PCMS-033", "PCMS-034", "PCMS-035",
+            "PCMS-036", "W2-ATOM-027", "W2-ATOM-028",
+        } <= retrieved)
+        self.assertLessEqual(len(combined["candidates"]), 12)
+
     def test_mixed_polarity_is_bound_to_each_diagnostic_method(self) -> None:
         index = build_index(ROOT)
         for query_text in (

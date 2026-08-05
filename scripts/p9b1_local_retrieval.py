@@ -29,7 +29,7 @@ RESULT_SCHEMA_PATH = PHASE9 / "retrieval-result-schema.yml"
 FROZEN_RUNTIME_CONTRACT_SHA256 = "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
 FROZEN_REQUEST_SCHEMA_SHA256 = "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
 FROZEN_RESULT_SCHEMA_SHA256 = "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
-FROZEN_RETRIEVAL_CONTRACT_SHA256 = "9a9d39f60cc34f9acae4adcb3faa717e50bb90878804da1e930e72c36b230e15"
+FROZEN_RETRIEVAL_CONTRACT_SHA256 = "df4d068000f9b12fe0ffbf061ab16a6208fa5ddfc227df955737b595040ccda0"
 
 ALLOWED_RUNTIME_INPUTS = (
     "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl",
@@ -296,6 +296,7 @@ def _verify_control_files(root: Path) -> dict[str, Any]:
         "evidence_roles", "negated_evidence_roles",
         "required_evidence_roles", "evidence_observations",
         "control_semantic_roles", "topic_scopes", "coverage_groups",
+        "relation_activations",
     ]:
         raise ValueError("P9-B1 query-plan dimensions changed")
     blind = control.get("revision_3_acceptance", {}).get(
@@ -392,6 +393,44 @@ def _verify_control_files(root: Path) -> dict[str, Any]:
         "reveal_timing": "AFTER_REVISION_6_LOCAL_COMMIT",
     }:
         raise ValueError("P9-B1 revision-6 blind commitment changed")
+    revision_7 = control.get("revision_7_acceptance", {})
+    public_regression = revision_7.get(
+        "revision_6_blind_disclosed_public_regression"
+    )
+    if public_regression != {
+        "path": (
+            "phase9/clonorchis-sinensis/acceptance-cases/"
+            "p9b1-revision6-blind-disclosed-regression.yml"
+        ),
+        "sha256": (
+            "8c770d29acfab35f5424be7e64375361"
+            "adc5519cc045bd74bf7b559ddf15abac"
+        ),
+        "cases": 18,
+        "prior_recall_on_bbdc3bb": "13/18 PASS_CHANGES_REQUIRED",
+        "prior_complete_plan_assertions_on_bbdc3bb": (
+            "11/18 PASS_CHANGES_REQUIRED"
+        ),
+        "role_from_revision_7": "PUBLIC_REGRESSION_NOT_HELD_OUT",
+        "required_claim_recall_top12": "ALL_REQUIRED_IDS_PRESENT",
+        "required_plan_assertions": (
+            "ALL_REQUIRED_RELATIONS_ROLES_EVENTS_AND_SCOPES_PRESENT"
+        ),
+    }:
+        raise ValueError("P9-B1 revision-6 public regression control changed")
+    revision_7_blind = revision_7.get("blind_independent_suite_commitment")
+    if revision_7_blind != {
+        "suite_id": "clonorchis_p9b1_revision7_blind_heldout_v1",
+        "cases": 22,
+        "canonical_content_sha256": (
+            "5bc7692fe7fb0450c80d1227bfada034"
+            "52d3ac8305d9bce74e22e64b513e89a5"
+        ),
+        "frozen_at": "2026-08-05T12:20:45Z",
+        "contents_available_to_implementation": False,
+        "reveal_timing": "AFTER_REVISION_7_LOCAL_COMMIT",
+    }:
+        raise ValueError("P9-B1 revision-7 blind commitment changed")
     return control
 
 
@@ -489,6 +528,22 @@ class EvidenceObservation:
 
 
 @dataclass(frozen=True)
+class RelationActivation:
+    """A reviewed graph relation activated by the query event plan."""
+
+    claim_id: str
+    predicate: str
+    semantic_roles: tuple[str, ...]
+
+    def public(self) -> dict[str, Any]:
+        return {
+            "claim_id": self.claim_id,
+            "predicate": self.predicate,
+            "semantic_roles": list(self.semantic_roles),
+        }
+
+
+@dataclass(frozen=True)
 class QueryPlan:
     """Deterministic query interpretation over the frozen graph vocabulary."""
 
@@ -501,6 +556,7 @@ class QueryPlan:
     negated_evidence_roles: tuple[str, ...]
     required_evidence_roles: tuple[str, ...]
     evidence_observations: tuple[EvidenceObservation, ...]
+    relation_activations: tuple[RelationActivation, ...]
     control_semantic_roles: tuple[str, ...]
     topic_scopes: tuple[str, ...]
     coverage_groups: tuple[str, ...]
@@ -517,6 +573,9 @@ class QueryPlan:
             "required_evidence_roles": list(self.required_evidence_roles),
             "evidence_observations": [
                 observation.public() for observation in self.evidence_observations
+            ],
+            "relation_activations": [
+                activation.public() for activation in self.relation_activations
             ],
             "control_semantic_roles": list(self.control_semantic_roles),
             "topic_scopes": list(self.topic_scopes),
@@ -843,7 +902,8 @@ _MORPHOLOGY_MARKERS = (
     "卵盖", "肩峰", "小疣",
 )
 _CLINICAL_DIFFERENTIAL_MARKERS = (
-    "鉴别诊断", "从鉴别中", "感染鉴别", "排除感染", "拿掉",
+    "鉴别诊断", "患者诊断", "证据区分", "从鉴别中", "感染鉴别",
+    "排除感染", "拿掉", "其他胆道疾病", "临床上",
 )
 _MORPHOLOGY_ANCHORS = (
     "形态", "外观", "外形", "结构", "尺寸", "卵盖", "肩峰", "小疣",
@@ -851,6 +911,7 @@ _MORPHOLOGY_ANCHORS = (
 )
 _CONNECTION_MARKERS = (
     "传播", "连接", "循环", "周而复始", "往复", "维持", "链条", "网络",
+    "延续", "回到", "闭环",
 )
 _DIAGNOSIS_MARKERS = (
     "诊断", "确诊", "确证", "判读", "证据", "依据", "意义", "说明什么",
@@ -882,7 +943,8 @@ _CONTROL_MARKERS = (
     "防控", "防治", "预防", "兽医", "消除", "干预", "管控",
     "治理", "切断", "阻断", "厕所", "改厕", "粪污", "粪便污染",
     "根除", "清除", "消灭", "排泄物污染", "粪水", "便溺入水",
-    "整治", "粪源", "无害化", "排泄物入水", "排污",
+    "整治", "粪源", "无害化", "排泄物入水", "排污", "避免生食",
+    "避免食用", "减少人粪", "减少动物排泄物", "减少家养动物排泄物",
 )
 _DETECTION_ACTION_MARKERS = (
     "检出", "镜检", "显微镜", "检卵", "查见", "查到", "检验", "检测",
@@ -904,6 +966,10 @@ _NEGATED_DETECTION_PATTERNS = (
         r"(?:查不出|查不到|检不出|检不到|找不着|没查着|查无).{0,6}"
         r"(?:虫卵|病原|阳性)"
     ),
+    re.compile(
+        r"(?:仍|始终|依然)?(?:无|没有).{0,6}(?:虫卵|目标虫卵)"
+        r".{0,4}(?:可见|可检出|被发现|阳性所见)"
+    ),
 )
 
 _NEGATED_IMAGING_PATTERNS = (
@@ -922,6 +988,31 @@ _LIFE_CYCLE_EVENT_MARKERS = (
     "幼体", "幼虫", "虫态", "包囊", "成熟", "转换", "形成", "前序", "后续",
     "变成", "转化", "蜕变", "入鱼", "螺内", "鱼内", "宿主体内",
     "演替",
+)
+
+_MORPHOLOGY_NEGATION_PATTERNS = (
+    re.compile(r"(?:不|不是|并非).{0,8}(?:辨认|识别|观察).{0,8}(?:外形|形态|结构)"),
+    re.compile(r"(?:不|不是|并非).{0,8}(?:虫体|虫卵).{0,6}(?:外形|形态)"),
+)
+
+_SHEDDING_EVENT_MARKERS = (
+    "排出", "排卵", "随粪", "排泄物进入", "排泄物排入", "排入淡水",
+    "污染水体", "污染淡水", "进入水域", "进入淡水",
+)
+_ENVIRONMENT_EVENT_MARKERS = (
+    "进入水域", "进入淡水", "排入淡水", "污染水体", "污染淡水",
+    "淡水中", "水体中", "水域中",
+)
+_HOST_INGESTION_MARKERS = (
+    "摄取", "摄入", "食入", "吞入", "吃进", "被人摄入", "食鱼行为",
+)
+_PARASITISM_EVENT_MARKERS = (
+    "寄生部位", "寄生于", "在胆管成熟", "进入胆管", "进入胆道",
+    "胆管内成熟", "胆道内成熟", "在胆道成熟", "胆道成熟",
+)
+_BOUNDARY_MARKERS = (
+    "边界", "量化效果", "定量", "任何地区", "所有地区", "普遍", "保证",
+    "根除", "清除", "已证实有效", "外推",
 )
 
 _DIAGNOSTIC_INTEGRATION_ROLES = {
@@ -965,6 +1056,13 @@ _GROUP_PREDICATES: dict[str, tuple[str, ...]] = {
         "has_reservoir_host", "sheds_stage", "present_in_environment",
         "transmitted_via",
     ),
+    "event_transmission": (
+        "has_first_intermediate_host", "has_second_intermediate_host",
+        "has_definitive_host", "has_reservoir_host", "sheds_stage",
+        "present_in_environment", "transmitted_via", "infective_stage_for",
+        "parasitizes_site",
+    ),
+    "exposure_evidence": ("has_diagnostic_clue", "transmitted_via"),
     "diagnostic_evidence_roles": (
         "has_diagnostic_clue", "diagnosed_by", "diagnostic_stage_for",
     ),
@@ -981,6 +1079,8 @@ _TOPIC_TO_GROUP = {
     "life_cycle": "life_cycle_development",
     "host_roles": "host_roles",
     "one_health": "one_health_transmission",
+    "transmission": "event_transmission",
+    "exposure": "exposure_evidence",
     "diagnosis": "diagnostic_evidence_roles",
     "stage_roles": "infective_pathogenic_stages",
     "treatment": "treatment_options",
@@ -989,9 +1089,9 @@ _TOPIC_TO_GROUP = {
 }
 
 _TOPIC_ORDER = (
-    "morphology", "life_cycle", "host_roles", "one_health", "diagnosis",
-    "stage_roles", "treatment", "carcinogenicity", "control",
-    "source_traceability",
+    "morphology", "life_cycle", "transmission", "exposure", "host_roles",
+    "one_health", "diagnosis", "stage_roles", "treatment",
+    "carcinogenicity", "control", "boundary", "source_traceability",
 )
 
 
@@ -1037,43 +1137,52 @@ def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
             if stage_name in joined:
                 aliases.add(normalize_query(stage_name))
         if "虫卵" in joined:
-            aliases.add("卵")
+            # Keep the reviewed full stage name; a one-character alias would
+            # falsely match the unrelated action word “排卵”.
+            aliases.add("虫卵")
         if "囊蚴" in joined:
             aliases.update({"包囊幼体", "包囊期", "包囊", "感染性包囊"})
         if "成虫" in joined:
-            aliases.update({"成熟虫体", "成熟阶段"})
+            aliases.update({"成熟虫体", "成熟阶段", "成体", "成熟形态"})
     if entity_type == "host":
         if "淡水螺" in joined:
-            aliases.update({"淡水螺", "螺"})
+            aliases.update({"淡水螺", "螺", "软体动物", "螺类"})
         if "淡水鱼" in joined:
             aliases.update({"淡水鱼", "河鱼", "鱼"})
         for host_name in ("犬", "猫", "猪", "人类"):
             if host_name in joined:
                 aliases.add(normalize_query(host_name))
+        if "人" in joined:
+            aliases.update({"感染者", "患者", "终宿主"})
     if entity_type == "environment" and "水" in joined:
         aliases.update({"淡水环境", "水体", "河塘", "水域"})
     if entity_type == "diagnostic_method":
         if "影像" in joined:
-            aliases.update({"影像", "影像学", "胆道影像"})
+            aliases.update({"影像", "影像学", "胆道影像", "彩超"})
         if "粪便" in joined and "卵" in joined:
             aliases.update({"粪便检卵", "粪检", "便检"})
         if "十二指肠" in joined and "卵" in joined:
-            aliases.update({"十二指肠液检卵", "十二指肠引流液检卵"})
+            aliases.update({
+                "十二指肠液检卵", "十二指肠引流液检卵",
+                "十二指肠引流标本", "十二指肠液标本", "十二指肠标本",
+            })
     if entity_type == "intervention":
         compact = normalize_query(joined)
         if "改善卫生设施" in compact:
             aliases.update({
                 "卫生设施", "厕所设施", "厕所", "改厕", "改良厕所",
-                "厕所改造", "环境卫生",
+                "厕所改造", "环境卫生", "卫生治理",
             })
         if "减少动物粪便污染" in compact:
             aliases.update({
                 "动物粪污", "家畜粪污", "畜禽粪污", "牲畜粪便",
                 "动物排泄物污染", "家畜排泄物", "畜禽排泄物",
+                "动物排泄物", "家养动物排泄物", "动物粪便",
             })
         if "减少人粪便污染" in compact:
             aliases.update({
                 "人粪污", "人粪便污染", "人的排泄物污染", "人类排泄物",
+                "人粪", "人的排泄物", "人排泄物",
             })
         if "综合防控" in compact:
             aliases.update({
@@ -1111,7 +1220,8 @@ def _diagnostic_method_cues(
     if "十二指肠" in joined:
         cues.update({
             "十二指肠液", "十二指肠引流液", "十二指肠查卵",
-            "十二指肠引流液查卵",
+            "十二指肠引流液查卵", "十二指肠引流标本",
+            "十二指肠液标本", "十二指肠标本",
         })
     if "粪便" in joined and "卵" in joined:
         cues.update({
@@ -1119,7 +1229,7 @@ def _diagnostic_method_cues(
             "便检", "排泄物", "大便",
         })
     if "影像" in joined:
-        cues.update({"影像", "超声", "ct", "mri", "胆道影像"})
+        cues.update({"影像", "超声", "彩超", "ct", "mri", "胆道影像"})
     return {normalize_query(cue) for cue in cues if cue}
 
 
@@ -1264,6 +1374,7 @@ def _query_evidence_observations(
     query: str, surface: str, entities: set[str], index: RetrievalIndex
 ) -> tuple[EvidenceObservation, ...]:
     observations: list[EvidenceObservation] = []
+    last_pathogen_method: str | None = None
     for clause in _evidence_clauses(query, index):
         occurrences = _diagnostic_method_occurrences(clause, index)
         coordinated = _coordinated_polarities(clause, len(occurrences))
@@ -1292,6 +1403,7 @@ def _query_evidence_observations(
             )
             if evidence_role == "pathogen_confirmation":
                 clause_has_pathogen_method = True
+                last_pathogen_method = entity_id
             observations.append(EvidenceObservation(
                 observation_id=f"OBS-{len(observations) + 1:02d}",
                 evidence_entity_id=entity_id,
@@ -1301,18 +1413,42 @@ def _query_evidence_observations(
                 semantic_roles=tuple(sorted(roles)),
             ))
         if not clause_has_pathogen_method and _has_generic_parasitological_event(clause):
-            observations.append(EvidenceObservation(
-                observation_id=f"OBS-{len(observations) + 1:02d}",
-                evidence_entity_id=None,
-                evidence_role="pathogen_confirmation",
-                polarity=(
-                    "negative" if _is_negative_observation(clause)
-                    else "positive" if _is_positive_observation(clause)
-                    else "unspecified"
+            polarity = (
+                "negative" if _is_negative_observation(clause)
+                else "positive" if _is_positive_observation(clause)
+                else "unspecified"
+            )
+            bound_entity = last_pathogen_method
+            bound_roles = (
+                tuple(sorted(_roles_for_entities({bound_entity}, index)))
+                if bound_entity else ("parasitological_confirmation",)
+            )
+            replacement_index = next(
+                (
+                    index_number
+                    for index_number in range(len(observations) - 1, -1, -1)
+                    if observations[index_number].evidence_entity_id == bound_entity
+                    and observations[index_number].polarity == "unspecified"
+                    and bound_entity is not None
                 ),
+                None,
+            )
+            observation = EvidenceObservation(
+                observation_id=(
+                    observations[replacement_index].observation_id
+                    if replacement_index is not None
+                    else f"OBS-{len(observations) + 1:02d}"
+                ),
+                evidence_entity_id=bound_entity,
+                evidence_role="pathogen_confirmation",
+                polarity=polarity,
                 event_type="parasitological_test",
-                semantic_roles=("parasitological_confirmation",),
-            ))
+                semantic_roles=bound_roles,
+            )
+            if replacement_index is None:
+                observations.append(observation)
+            else:
+                observations[replacement_index] = observation
 
     has_exposure_observation = False
     for entity_id in sorted(entities):
@@ -1320,6 +1456,12 @@ def _query_evidence_observations(
             continue
         roles = _roles_for_entities({entity_id}, index)
         if "epidemiological_clue" not in roles:
+            continue
+        if _has_any(surface, _CONTROL_MARKERS) and not _has_any(
+            surface,
+            ("诊断", "确诊", "确证", "病原学", "寄生虫学", "线索",
+             "流行区", "流行地区", "暴露史"),
+        ):
             continue
         observations.append(EvidenceObservation(
             observation_id=f"OBS-{len(observations) + 1:02d}",
@@ -1354,7 +1496,7 @@ def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
 
     # Query-language composition chooses among formally typed reviewed entities.
     # It never creates a runtime fact or a synthetic entity.
-    if _has_any(surface, ("犬", "猫", "猪", "家畜", "动物")):
+    if _has_any(surface, ("犬", "猫", "猪", "家畜", "家养动物", "动物宿主", "人畜")):
         for entity_id in _entities_with_type(index, "host"):
             formal = " ".join(_formal_entity_aliases(index.entities[entity_id]))
             if any(term in formal for term in ("犬", "猫", "猪", "食鱼哺乳动物")):
@@ -1368,6 +1510,27 @@ def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
         for entity_id in _entities_with_type(index, "behavior"):
             formal = normalize_query(_entity_search_text(index.entities[entity_id]))
             if _has_any(formal, ("生食", "未充分加热")):
+                detected.add(entity_id)
+        if _has_any(surface, ("避免", "不吃", "拒绝", "预防", "防控")):
+            for entity_id in _entities_with_type(index, "intervention"):
+                formal = normalize_query(_entity_search_text(index.entities[entity_id]))
+                if "避免食用生或未充分加热淡水鱼" in formal:
+                    detected.add(entity_id)
+
+    if _has_any(surface, _CONTROL_MARKERS):
+        for entity_id in _entities_with_type(index, "intervention"):
+            formal = normalize_query(_entity_search_text(index.entities[entity_id]))
+            if "改善卫生设施" in formal and _has_any(
+                surface, ("卫生", "改厕", "厕所", "社区排污")
+            ):
+                detected.add(entity_id)
+            if "减少人粪便污染" in formal and _has_any(
+                surface, ("人粪", "社区排污", "人畜粪污", "人畜排卵")
+            ):
+                detected.add(entity_id)
+            if "减少动物粪便污染" in formal and _has_any(
+                surface, ("动物", "家畜", "犬猫猪", "人畜粪污", "人畜排卵")
+            ):
                 detected.add(entity_id)
 
     imaging_context = (
@@ -1385,8 +1548,286 @@ def _detect_entities(surface: str, index: RetrievalIndex) -> set[str]:
     return {entity_id for entity_id in detected if entity_id in index.entities}
 
 
+def _has_negated_morphology_intent(surface: str) -> bool:
+    return any(pattern.search(surface) for pattern in _MORPHOLOGY_NEGATION_PATTERNS)
+
+
+def _event_relation_intents(
+    surface: str,
+    entities: set[str],
+    evidence_observations: tuple[EvidenceObservation, ...],
+    index: RetrievalIndex,
+) -> set[str]:
+    """Map query events onto predicates that exist in the reviewed graph."""
+    intents: set[str] = set()
+    entity_types = {
+        index.entities[entity_id].get("entity_type") for entity_id in entities
+    }
+    stage_entities = {
+        entity_id for entity_id in entities
+        if index.entities[entity_id].get("entity_type") == "life_cycle_stage"
+    }
+    host_entities = {
+        entity_id for entity_id in entities
+        if index.entities[entity_id].get("entity_type") == "host"
+    }
+
+    if evidence_observations:
+        if any(
+            item.event_type in {"parasitological_test", "imaging_observation"}
+            for item in evidence_observations
+        ):
+            intents.update({"diagnosed_by", "diagnostic_stage_for"})
+        if any(item.event_type == "exposure_history" for item in evidence_observations):
+            intents.add("has_diagnostic_clue")
+
+    stage_event_language = (
+        bool(stage_entities)
+        or _has_any(
+            surface,
+            ("幼体", "成体", "后代", "虫态", "虫期", "虫体", "发育", "变化",
+             "转换", "形成", "成熟", "演替"),
+        )
+    )
+    life_event = "生活史" in surface or (
+        (
+            _has_any(surface, _SEQUENCE_MARKERS)
+            or _has_any(surface, _LIFE_CYCLE_EVENT_MARKERS)
+            or _has_any(surface, ("连续变化", "完整发育", "虫期变化", "虫态转换"))
+        )
+        and stage_event_language
+    )
+    if life_event:
+        intents.add("develops_into")
+
+    host_relation_context = life_event or _has_any(
+        surface, (*_CONNECTION_MARKERS, "宿主", "承载", "水生动物")
+    )
+    if host_relation_context and _has_any(
+        surface, ("螺", "软体动物", "第一中间宿主")
+    ):
+        intents.add("has_first_intermediate_host")
+    if host_relation_context and _has_any(
+        surface,
+        ("淡水鱼", "鱼体", "入鱼", "第二中间宿主", "螺和鱼", "螺鱼"),
+    ):
+        intents.add("has_second_intermediate_host")
+    if _has_any(surface, ("终宿主", "食鱼哺乳动物")):
+        intents.add("has_definitive_host")
+    if _has_any(surface, ("保虫宿主", "储存宿主")):
+        intents.add("has_reservoir_host")
+
+    network_intent = _has_any(surface, _CONNECTION_MARKERS)
+    has_snail = _has_any(surface, ("螺", "软体动物"))
+    has_fish = _has_any(surface, ("鱼", "水生动物"))
+    has_human_or_animal = _has_any(
+        surface, ("人", "感染者", "食鱼者", "犬", "猫", "猪", "家畜", "人畜")
+    )
+    if network_intent and has_snail and has_fish and has_human_or_animal:
+        intents.update({
+            "has_first_intermediate_host", "has_second_intermediate_host",
+            "sheds_stage", "present_in_environment", "transmitted_via",
+        })
+        if _has_any(
+            surface, ("犬", "猫", "猪", "家畜", "家养动物", "动物", "人畜")
+        ):
+            intents.add("has_reservoir_host")
+    if network_intent and _has_any(surface, ("水生生态系统", "水生系统")) and _has_any(
+        surface, ("人", "家畜", "动物", "人畜")
+    ):
+        intents.update({
+            "has_first_intermediate_host", "has_second_intermediate_host",
+            "has_reservoir_host", "sheds_stage", "present_in_environment",
+            "transmitted_via",
+        })
+    if network_intent and _has_any(surface, ("人", "人类")) and _has_any(
+        surface, ("动物", "家畜", "人畜")
+    ) and _has_any(surface, ("淡水环境", "水环境", "水体", "水域")):
+        intents.update({
+            "has_first_intermediate_host", "has_second_intermediate_host",
+            "has_reservoir_host", "sheds_stage", "present_in_environment",
+            "transmitted_via",
+        })
+    if _has_any(surface, ("水生动物", "水生宿主")) and _has_any(
+        surface, ("承载", "幼虫", "先后", "宿主")
+    ):
+        intents.update({"has_first_intermediate_host", "has_second_intermediate_host"})
+    if _has_any(surface, ("人", "犬", "猫", "食鱼动物")) and _has_any(
+        surface, ("终宿主", "繁殖", "成体", "处于什么位置")
+    ):
+        intents.add("has_definitive_host")
+
+    if _has_any(surface, _SHEDDING_EVENT_MARKERS):
+        intents.add("sheds_stage")
+    if _has_any(surface, _ENVIRONMENT_EVENT_MARKERS) and (
+        "sheds_stage" in intents
+        or _has_any(surface, ("虫卵", "后代", "排泄物", "粪", "污染"))
+    ):
+        intents.add("present_in_environment")
+    if _has_any(surface, ("食鱼行为", "生食", "未充分加热")) and _has_any(
+        surface, ("传播", "感染", "回到人", "摄入", "食入")
+    ):
+        intents.add("transmitted_via")
+    if _has_any(surface, _HOST_INGESTION_MARKERS) and _has_any(
+        surface, ("感染人", "可感染人", "被人", "建立感染", "感染阶段", "包囊")
+    ):
+        intents.add("infective_stage_for")
+    if _has_any(surface, _PARASITISM_EVENT_MARKERS):
+        intents.add("parasitizes_site")
+
+    infection_intent = _has_any(surface, _INFECTION_MARKERS)
+    pathogenic_intent = _has_any(surface, _PATHOGENIC_MARKERS)
+    if infection_intent and _has_any(surface, ("阶段", "虫期", "虫态", "包囊")):
+        intents.add("infective_stage_for")
+    if pathogenic_intent and _has_any(
+        surface, ("阶段", "虫期", "虫态", "成虫", "形态")
+    ):
+        intents.add("pathogenic_stage_for")
+
+    control_intent = "intervention" in entity_types or _has_any(
+        surface, _CONTROL_MARKERS
+    )
+    if control_intent:
+        intents.add("controlled_by")
+    target_mechanism = _has_any(surface, _ENVIRONMENT_EVENT_MARKERS) or _has_any(
+        surface, ("靶点", "传播环节", "机制", "粪污", "排污")
+    )
+    target_actor = _has_any(
+        surface,
+        ("人粪", "动物", "家畜", "犬", "猫", "猪", "排泄物", "粪污",
+         "人畜排卵", "排卵污染", "社区排污"),
+    )
+    sanitation_boundary = (
+        "intervention.improved_sanitation" in entities
+        and _has_any(surface, _BOUNDARY_MARKERS)
+    )
+    if control_intent and ((target_mechanism and target_actor) or sanitation_boundary):
+        intents.add("targets")
+
+    if _has_any(surface, _TREATMENT_MARKERS) or "treatment" in entity_types:
+        intents.add("treated_by")
+    if _has_any(surface, _CARCINOGENIC_MARKERS) or "hazard_classification" in entity_types:
+        intents.add("classified_as")
+    return intents
+
+
+def _relation_record_relevant(
+    record: ClaimRecord,
+    surface: str,
+    entities: set[str],
+    index: RetrievalIndex,
+) -> bool:
+    """Bind an activated predicate to the entities/events present in this query."""
+    predicate = record.predicate
+    if predicate == "develops_into":
+        return True
+    if predicate in {
+        "has_first_intermediate_host", "has_second_intermediate_host",
+        "has_definitive_host", "has_reservoir_host", "present_in_environment",
+        "infective_stage_for", "pathogenic_stage_for", "parasitizes_site",
+        "diagnostic_stage_for",
+    }:
+        return True
+    if predicate == "diagnosed_by":
+        return bool(set(record.entity_ids) & entities) or _has_any(
+            surface, ("病原学", "寄生虫学", "确证", "直接病原体", "虫卵")
+        )
+    if predicate == "has_diagnostic_clue":
+        return bool(set(record.entity_ids) & entities) or _has_any(
+            surface, ("流行区", "暴露史", "流行病学", "辅助线索")
+        )
+    if predicate == "sheds_stage":
+        actor_entities = {
+            entity_id for entity_id in entities
+            if index.entities[entity_id].get("entity_type") == "host"
+        }
+        if record.subject in actor_entities:
+            return True
+        subject_text = normalize_query(_entity_search_text(index.entities[record.subject]))
+        if "人" in subject_text and "人" in surface:
+            return True
+        if _has_any(subject_text, ("犬", "猫", "猪")) and _has_any(
+            surface, ("动物", "家畜", "家养动物", "犬", "猫", "猪", "人畜")
+        ):
+            return True
+        return not actor_entities
+    if predicate == "transmitted_via":
+        return bool(set(record.entity_ids) & entities) or _has_any(
+            surface, ("食鱼行为", "食鱼者", "生食", "未充分加热", "饮食回到")
+        ) or (
+            _has_any(surface, _CONNECTION_MARKERS)
+            and _has_any(surface, ("鱼", "水生生态系统"))
+            and _has_any(surface, ("人", "动物", "家畜", "食鱼者", "人畜"))
+        ) or (
+            _has_any(surface, _CONNECTION_MARKERS)
+            and _has_any(surface, ("人", "人类"))
+            and _has_any(surface, ("动物", "家畜", "人畜"))
+            and _has_any(surface, ("淡水环境", "水环境", "水体", "水域"))
+        )
+    if predicate in {"treated_by", "classified_as"}:
+        return not entities or bool(set(record.entity_ids) & entities)
+    if predicate == "controlled_by":
+        if record.object in entities:
+            return True
+        object_text = normalize_query(_entity_search_text(index.entities[record.object]))
+        if "onehealth综合防控" in object_text:
+            return _has_any(
+                surface,
+                ("综合治理", "综合防控", "协同治理", "人动物和环境", "人畜环境"),
+            ) or (
+                _has_any(surface, _BOUNDARY_MARKERS)
+                and _has_any(surface, ("人粪", "社区排污", "人畜"))
+                and _has_any(surface, ("动物", "家畜", "犬", "猫", "猪"))
+            )
+        if "改善卫生设施" in object_text:
+            return _has_any(surface, ("卫生设施", "改厕", "厕所", "改进卫生"))
+        if "避免食用生或未充分加热淡水鱼" in object_text:
+            return _has_any(surface, ("避免生食", "避免食用", "不吃生鱼"))
+        return False
+    if predicate == "targets":
+        if record.subject in entities:
+            return True
+        subject_text = normalize_query(_entity_search_text(index.entities[record.subject]))
+        if "减少人粪便污染" in subject_text:
+            return _has_any(
+                surface,
+                ("人粪", "人的排泄物", "人类排泄物", "人畜排卵",
+                 "排卵污染", "社区排污", "人畜粪污"),
+            ) or (
+                "intervention.improved_sanitation" in entities
+                and _has_any(surface, _BOUNDARY_MARKERS)
+            )
+        if "减少动物粪便污染" in subject_text:
+            return _has_any(
+                surface,
+                ("动物排泄物", "家养动物排泄物", "动物粪便", "粪污",
+                 "犬猫猪", "人畜排卵", "排卵污染", "人畜粪污"),
+            )
+        return False
+    return bool(set(record.entity_ids) & entities)
+
+
+def _relation_activations(
+    surface: str,
+    entities: set[str],
+    relation_intents: set[str],
+    index: RetrievalIndex,
+) -> tuple[RelationActivation, ...]:
+    activations = [
+        RelationActivation(
+            claim_id=record.claim_id,
+            predicate=record.predicate,
+            semantic_roles=record.semantic_roles,
+        )
+        for record in index.records
+        if record.predicate in relation_intents
+        and _relation_record_relevant(record, surface, entities, index)
+    ]
+    return tuple(sorted(activations, key=lambda item: item.claim_id))
+
+
 def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
-    """Split a query into reviewed entities, intent, evidence role and scope."""
+    """Build a deterministic, relation-bound plan over the reviewed graph."""
     surface = _surface_query(query)
     entities = _detect_entities(surface, index)
     entity_types = {
@@ -1400,141 +1841,75 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         item for item in entities
         if index.entities[item]["entity_type"] == "host"
     }
-
     evidence_observations = _query_evidence_observations(
         query, surface, entities, index
     )
-    semantic_roles = _roles_for_entities(entities, index)
-    semantic_roles.update(
+    semantic_roles = {
         role
         for observation in evidence_observations
         for role in observation.semantic_roles
-    )
+    }
     evidence_roles = {
+        observation.evidence_role for observation in evidence_observations
+    }
+    evidence_roles.update(
         evidence_role
         for formal_role, evidence_role in _FORMAL_ROLE_TO_EVIDENCE_ROLE.items()
         if formal_role in semantic_roles
-    }
-    evidence_roles.update(
-        observation.evidence_role for observation in evidence_observations
     )
     negated_evidence_roles = {
         observation.evidence_role
         for observation in evidence_observations
         if observation.polarity == "negative"
     }
-    required_evidence_roles: set[str] = set()
-
-    # Every formally admitted non-confirmatory role requires a confirmatory
-    # contrast.  This is driven by graph metadata, never by a case literal.
-    if semantic_roles & _DIAGNOSTIC_CONTRAST_ROLES:
-        required_evidence_roles.add("pathogen_confirmation")
-    if _has_any(surface, _NONCONFIRMATORY_QUERY_MARKERS):
-        required_evidence_roles.add("pathogen_confirmation")
-    evidence_roles.update(required_evidence_roles)
 
     topics: set[str] = set()
-    clinical_differential = _has_any(
-        surface, _CLINICAL_DIFFERENTIAL_MARKERS
-    )
-    morphology_intent = _has_any(surface, _MORPHOLOGY_MARKERS) or (
-        "鉴别" in surface
-        and not clinical_differential
-        and _has_any(surface, _MORPHOLOGY_ANCHORS)
-    )
-    sequence_intent = _has_any(surface, _SEQUENCE_MARKERS)
-    sequence_marker_count = sum(
-        normalize_query(marker) in surface for marker in _SEQUENCE_MARKERS
-    )
+    clinical_differential = _has_any(surface, _CLINICAL_DIFFERENTIAL_MARKERS)
+    morphology_intent = (
+        _has_any(surface, _MORPHOLOGY_MARKERS)
+        or ("鉴别" in surface and _has_any(surface, _MORPHOLOGY_ANCHORS))
+    ) and not clinical_differential and not _has_negated_morphology_intent(surface)
     if morphology_intent and (
-        stages or _has_any(surface, ("成虫", "虫卵", "虫体"))
+        stages or _has_any(surface, ("成虫", "虫卵", "虫体", "卵壳"))
     ):
         topics.add("morphology")
-    stage_range_intent = (
-        len(stages) >= 2
-        and (
-            ("从" in surface and "到" in surface)
-            or ("由" in surface and "至" in surface)
-            or ("到" in surface and "之间" in surface)
-            or _has_any(
-                surface,
-                ("经历", "经过", "直至", "直到", "最终", "中间阶段", "过程"),
-            )
-        )
+
+    relation_intents = _event_relation_intents(
+        surface, entities, evidence_observations, index
     )
-    graph_stage_event_intent = (
-        _has_any(surface, _LIFE_CYCLE_EVENT_MARKERS)
-        and (
-            bool(stages)
-            or bool(hosts)
-            or _has_any(
-                surface,
-                ("螺", "鱼", "宿主", "虫态", "幼体", "包囊"),
-            )
-        )
-        and _has_any(
-            surface,
-            (
-                "转换", "形成", "成熟", "前序", "后续", "变成", "转化",
-                "发育", "接通", "找全", "链",
-            ),
-        )
-    )
-    host_graph_sequence_intent = (
-        len(hosts) >= 2
-        and _has_any(
-            surface,
-            ("虫期", "虫态", "幼体", "幼虫", "阶段", "发育", "演替"),
-        )
-        and (
-            sequence_intent
-            or _has_any(
-                surface,
-                ("先", "再", "继而", "随后", "最后", "转至", "进入", "食入"),
-            )
-        )
-    )
-    if (
-        (len(stages) >= 2 and sequence_intent)
-        or stage_range_intent
-        or graph_stage_event_intent
-        or host_graph_sequence_intent
-        or (
-            sequence_marker_count >= 1
-            and _has_any(surface, ("虫态", "虫期", "幼虫", "虫体", "形态"))
-        )
-        or "生活史" in surface
-        or "发育" in surface
-        or (
-            "虫体" in surface
-            and _has_any(surface, ("变化", "演变", "转变", "路线", "路径"))
-        )
+    if "develops_into" in relation_intents or "生活史" in surface:
+        topics.add("life_cycle")
+    transmission_predicates = {
+        "has_first_intermediate_host", "has_second_intermediate_host",
+        "has_definitive_host", "has_reservoir_host", "sheds_stage",
+        "present_in_environment", "transmitted_via", "infective_stage_for",
+        "parasitizes_site",
+    }
+    if relation_intents & transmission_predicates and _has_any(
+        surface,
+        ("传播", "链", "水域", "淡水", "排出", "排卵", "摄取", "摄入",
+         "感染人", "回到人", "宿主环节", "进入鱼", "进入水"),
+    ):
+        topics.add("transmission")
+    if {
+        "has_first_intermediate_host", "has_second_intermediate_host"
+    } <= relation_intents and (
+        "sheds_stage" in relation_intents or "present_in_environment" in relation_intents
     ):
         topics.add("life_cycle")
-
-    host_role_intent = (
-        _has_any(
-            surface,
-            ("宿主", "第一中间", "第二中间", "终宿主", "保虫"),
-        )
-        or (
-            bool(hosts)
-            and _has_any(surface, ("承载", "寄居", "繁殖", "处于什么位置"))
-        )
-    )
-    if host_role_intent and (
-        len(hosts) >= 1
-        or "宿主" in surface
-        or _has_any(surface, ("水生动物", "人", "动物"))
+        topics.add("transmission")
+    if _has_any(surface, ("宿主", "第一中间", "第二中间", "终宿主", "保虫")) or (
+        relation_intents
+        & {
+            "has_first_intermediate_host", "has_second_intermediate_host",
+            "has_definitive_host", "has_reservoir_host",
+        }
+        and _has_any(surface, ("承载", "处于什么位置", "分别是什么", "分工"))
     ):
         topics.add("host_roles")
 
-    actor_groups = set()
-    if any(
-        index.entities[item]["entity_type"] == "host"
-        and index.entities[item].get("name_zh") == "人"
-        for item in entities
-    ) or "人" in surface:
+    actor_groups: set[str] = set()
+    if "host.human" in entities or "人" in surface:
         actor_groups.add("human")
     if any(
         _has_any(
@@ -1542,81 +1917,125 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
             ("犬", "猫", "猪", "食鱼哺乳动物"),
         )
         for item in hosts
-    ) or "动物" in surface:
+    ) or _has_any(surface, ("动物", "人畜")):
         actor_groups.add("animal")
     if any("螺" in index.entities[item].get("name_zh", "") for item in hosts):
         actor_groups.add("snail")
     if any("鱼" in index.entities[item].get("name_zh", "") for item in hosts):
         actor_groups.add("fish")
-    if "environment" in entity_types or _has_any(surface, ("环境", "水体", "河塘", "水域")):
+    if "environment" in entity_types or _has_any(
+        surface, ("环境", "水体", "河塘", "水域", "淡水")
+    ):
         actor_groups.add("environment")
     if (
-        (_has_any(surface, _CONNECTION_MARKERS) and len(actor_groups) >= 2)
-        or len(actor_groups) >= 4
-        or _has_any(surface, ("onehealth", "全健康"))
+        len(actor_groups) >= 4
+        or _has_any(surface, ("onehealth", "全健康", "人动物和环境", "人畜环境"))
     ):
         topics.add("one_health")
 
-    diagnostic_semantic_role = bool(
-        semantic_roles
-        & (
-            set(_FORMAL_ROLE_TO_EVIDENCE_ROLE)
-            | _DIAGNOSTIC_CONTRAST_ROLES
-            | {"not_confirmatory", "cannot_confirm_alone"}
-        )
-    )
-    if required_evidence_roles or diagnostic_semantic_role or len(evidence_roles) >= 2 or (
-        evidence_roles and _has_any(surface, _DIAGNOSIS_MARKERS)
+    if any(
+        observation.evidence_role == "epidemiologic_exposure_clue"
+        for observation in evidence_observations
     ):
-        topics.add("diagnosis")
-    infection_intent = _has_any(surface, _INFECTION_MARKERS)
-    pathogenic_intent = _has_any(surface, _PATHOGENIC_MARKERS)
-    if infection_intent and pathogenic_intent and _has_any(
-        surface, ("虫", "幼体", "阶段", "虫期", "虫态", "形态", "包囊")
-    ):
-        topics.add("stage_roles")
+        topics.add("exposure")
+    if "intervention" in entity_types or _has_any(surface, _CONTROL_MARKERS):
+        topics.add("control")
+    if "control" in topics and _has_any(surface, _BOUNDARY_MARKERS):
+        topics.add("boundary")
     if _has_any(surface, _TREATMENT_MARKERS) or "treatment" in entity_types:
         topics.add("treatment")
     if _has_any(surface, _CARCINOGENIC_MARKERS) or "hazard_classification" in entity_types:
         topics.add("carcinogenicity")
-    control_intent = (
-        "intervention" in entity_types or _has_any(surface, _CONTROL_MARKERS)
-    )
-    control_semantic_roles: set[str] = set()
-    if control_intent:
-        topics.add("control")
-        control_semantic_roles.update(
-            role
-            for record in index.records
-            if record.predicate in _GROUP_PREDICATES["control_measures"]
-            and _record_has_type(record, "intervention")
-            for role in record.semantic_roles
-        )
-        semantic_roles.update(control_semantic_roles)
+    if (
+        "infective_stage_for" in relation_intents
+        and "pathogenic_stage_for" in relation_intents
+    ):
+        topics.add("stage_roles")
     if _has_any(surface, _SOURCE_MARKERS):
         topics.add("source_traceability")
 
+    diagnostic_role = bool(
+        semantic_roles
+        & (set(_FORMAL_ROLE_TO_EVIDENCE_ROLE) | _DIAGNOSTIC_CONTRAST_ROLES)
+    )
+    if evidence_observations and any(
+        item.event_type != "exposure_history" for item in evidence_observations
+    ):
+        topics.add("diagnosis")
+    if diagnostic_role or _has_any(surface, _DIAGNOSIS_MARKERS):
+        if evidence_roles or clinical_differential or "diagnosed_by" in relation_intents:
+            topics.add("diagnosis")
+
+    required_evidence_roles: set[str] = set()
+    if semantic_roles & _DIAGNOSTIC_CONTRAST_ROLES:
+        required_evidence_roles.add("pathogen_confirmation")
+    if _has_any(surface, _NONCONFIRMATORY_QUERY_MARKERS):
+        required_evidence_roles.add("pathogen_confirmation")
+    if required_evidence_roles:
+        evidence_roles.update(required_evidence_roles)
+        topics.add("diagnosis")
+        relation_intents.update({"diagnosed_by", "diagnostic_stage_for"})
+
+    # Preserve established complete groups where their topic is actually active;
+    # transmission, exposure and control remain event-selective.
+    broad_group_topics = {
+        "morphology", "diagnosis", "stage_roles", "treatment",
+        "carcinogenicity",
+    }
+    for topic in topics & broad_group_topics:
+        group = _TOPIC_TO_GROUP[topic]
+        relation_intents.update(_GROUP_PREDICATES.get(group, ()))
+
+    activations = _relation_activations(
+        surface, entities, relation_intents, index
+    )
+    semantic_roles.update(
+        role for activation in activations for role in activation.semantic_roles
+    )
+    control_semantic_roles = {
+        role
+        for activation in activations
+        if activation.predicate in {"controlled_by", "targets"}
+        for role in activation.semantic_roles
+    }
+    if control_semantic_roles:
+        semantic_roles.update(control_semantic_roles)
+        topics.add("control")
+        if control_semantic_roles & {
+            "recommendation_not_local_effect", "recommendation_not_quantified_effect",
+            "universal_elimination_claim_false",
+        } or _has_any(surface, _BOUNDARY_MARKERS):
+            topics.add("boundary")
+
+    if semantic_roles & _DIAGNOSTIC_CONTRAST_ROLES:
+        required_evidence_roles.add("pathogen_confirmation")
+        evidence_roles.add("pathogen_confirmation")
+        topics.add("diagnosis")
+        relation_intents.update({"diagnosed_by", "diagnostic_stage_for"})
+        activations = _relation_activations(
+            surface, entities, relation_intents, index
+        )
+
     ordered_topics = tuple(item for item in _TOPIC_ORDER if item in topics)
-    coverage_groups = tuple(
+    coverage_groups = tuple(dict.fromkeys(
         _TOPIC_TO_GROUP[item]
         for item in ordered_topics
         if item in _TOPIC_TO_GROUP
-    )
-    relation_intents = sorted({
-        predicate
-        for group in coverage_groups
-        for predicate in _GROUP_PREDICATES.get(group, ())
-    })
+        and not (
+            item == "life_cycle" and "develops_into" not in relation_intents
+        )
+    ))
     return QueryPlan(
         normalized_surface=surface,
         entity_ids=tuple(sorted(entities)),
         entity_types=tuple(sorted(entity_types)),
-        relation_intents=tuple(relation_intents),
+        relation_intents=tuple(sorted(relation_intents)),
         semantic_roles=tuple(sorted(semantic_roles)),
         evidence_roles=tuple(sorted(evidence_roles)),
         negated_evidence_roles=tuple(sorted(negated_evidence_roles)),
         required_evidence_roles=tuple(sorted(required_evidence_roles)),
         evidence_observations=evidence_observations,
+        relation_activations=activations,
         control_semantic_roles=tuple(sorted(control_semantic_roles)),
         topic_scopes=ordered_topics,
         coverage_groups=coverage_groups,
@@ -1697,6 +2116,9 @@ def _coverage_records(
     records = list(index.records)
     result: dict[str, list[ClaimRecord]] = {}
     roles = set(plan.evidence_roles)
+    activated_ids = {
+        activation.claim_id for activation in plan.relation_activations
+    }
     for group in plan.coverage_groups:
         selected: list[ClaimRecord]
         if group == "morphology_features":
@@ -1729,27 +2151,18 @@ def _coverage_records(
                 ),
                 key=lambda item: (priority[item.predicate], item.claim_id),
             )
-        elif group == "one_health_transmission":
-            priority = {
-                "has_first_intermediate_host": 0,
-                "has_second_intermediate_host": 1,
-                "has_reservoir_host": 2,
-                "sheds_stage": 3,
-                "present_in_environment": 4,
-                "transmitted_via": 5,
-            }
+        elif group in {
+            "one_health_transmission", "event_transmission",
+            "exposure_evidence", "control_measures",
+        }:
+            predicates = set(_GROUP_PREDICATES[group])
             selected = sorted(
                 (
                     item for item in records
-                    if item.predicate in priority
-                    and (
-                        _record_has_type(item, "host")
-                        or _record_has_type(item, "environment")
-                        or _record_has_type(item, "behavior")
-                        or _record_has_type(item, "intervention")
-                    )
+                    if item.claim_id in activated_ids
+                    and item.predicate in predicates
                 ),
-                key=lambda item: (priority[item.predicate], item.claim_id),
+                key=lambda item: item.claim_id,
             )
         elif group == "diagnostic_evidence_roles":
             selected: list[ClaimRecord] = []
@@ -1812,15 +2225,6 @@ def _coverage_records(
                 ),
                 key=lambda item: item.claim_id,
             )
-        elif group == "control_measures":
-            selected = sorted(
-                (
-                    item for item in records
-                    if item.predicate in set(_GROUP_PREDICATES[group])
-                    and _record_has_type(item, "intervention")
-                ),
-                key=lambda item: item.claim_id,
-            )
         else:
             predicates = set(_GROUP_PREDICATES.get(group, ()))
             selected = sorted(
@@ -1849,11 +2253,101 @@ def _rank(
     groups = _coverage_records(plan, index)
     coverage: list[tuple[ClaimRecord, str]] = []
     covered_ids: set[str] = set()
-    for group in (*plan.coverage_groups, "entity_neighborhood"):
-        for record in groups.get(group, []):
+    records_by_id = {record.claim_id: record for record in index.records}
+
+    # First reserve capacity across each actually activated graph predicate.
+    # Round-robin prevents the first broad topic from consuming all Top12 slots.
+    predicate_buckets: dict[str, list[ClaimRecord]] = {}
+    for activation in plan.relation_activations:
+        predicate_buckets.setdefault(activation.predicate, []).append(
+            records_by_id[activation.claim_id]
+        )
+    for predicate, bucket in predicate_buckets.items():
+        if predicate == "develops_into":
+            predicate_buckets[predicate] = _ordered_life_cycle(bucket)
+        else:
+            predicate_buckets[predicate] = sorted(
+                bucket,
+                key=lambda record: (
+                    -_score_record(request["query_text"], record, plan)[0],
+                    record.claim_id,
+                ),
+            )
+    relation_priority = {
+        "has_first_intermediate_host": 10,
+        "has_second_intermediate_host": 20,
+        "sheds_stage": 30,
+        "present_in_environment": 40,
+        "transmitted_via": 50,
+        "infective_stage_for": 60,
+        "parasitizes_site": 70,
+        "targets": 80,
+        "controlled_by": 90,
+        "diagnosed_by": 100,
+        "has_diagnostic_clue": 110,
+        "diagnostic_stage_for": 120,
+        "pathogenic_stage_for": 130,
+        "has_definitive_host": 140,
+        "has_reservoir_host": 150,
+        "treated_by": 160,
+        "classified_as": 170,
+        "develops_into": 0,
+    }
+    predicate_order = sorted(
+        predicate_buckets,
+        key=lambda predicate: (relation_priority.get(predicate, 999), predicate),
+    )
+    # A reviewed development path is an indivisible coverage constraint.
+    # Reserve the complete ordered path before distributing the remaining slots.
+    for record in predicate_buckets.get("develops_into", []):
+        if len(coverage) >= top_k:
+            break
+        coverage.append((record, "relation:develops_into"))
+        covered_ids.add(record.claim_id)
+    predicate_order = [
+        predicate for predicate in predicate_order if predicate != "develops_into"
+    ]
+    offset = 0
+    while len(coverage) < top_k and any(
+        offset < len(predicate_buckets[predicate])
+        for predicate in predicate_order
+    ):
+        for predicate in predicate_order:
+            bucket = predicate_buckets[predicate]
+            if offset >= len(bucket):
+                continue
+            record = bucket[offset]
+            if record.claim_id not in covered_ids:
+                coverage.append((record, f"relation:{predicate}"))
+                covered_ids.add(record.claim_id)
+                if len(coverage) >= top_k:
+                    break
+        offset += 1
+
+    # Then share remaining capacity across semantic coverage groups.
+    group_order = list(plan.coverage_groups)
+    offset = 0
+    while len(coverage) < top_k and any(
+        offset < len(groups.get(group, [])) for group in group_order
+    ):
+        for group in group_order:
+            bucket = groups.get(group, [])
+            if offset >= len(bucket):
+                continue
+            record = bucket[offset]
             if record.claim_id not in covered_ids:
                 coverage.append((record, group))
                 covered_ids.add(record.claim_id)
+                if len(coverage) >= top_k:
+                    break
+        offset += 1
+
+    for record in groups.get("entity_neighborhood", []):
+        if len(coverage) >= top_k:
+            break
+        if record.claim_id not in covered_ids:
+            coverage.append((record, "entity_neighborhood"))
+            covered_ids.add(record.claim_id)
 
     scored: list[tuple[int, str, ClaimRecord, list[str]]] = []
     for record in index.records:

@@ -1,0 +1,142 @@
+suite_id: "clonorchis_p9b1_revision6_blind_disclosed_regression_v1"
+status: "DISCLOSED_AFTER_REVISION_6_COMMIT_PUBLIC_REGRESSION"
+origin:
+  prior_suite_id: "clonorchis_p9b1_revision6_blind_heldout_v1"
+  frozen_at_utc: "2026-08-05T11:33:18Z"
+  canonical_content_sha256: "074636eaaf4b7d301c6f55645d33fe858f58eba3abb4c0caaf9b741b72b0a698"
+  prior_recall_on_bbdc3bb: "13/18 PASS_CHANGES_REQUIRED"
+  prior_complete_plan_on_bbdc3bb: "11/18 PASS_CHANGES_REQUIRED"
+  role_from_revision_7: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+retrieval_contract:
+  top_k: 12
+  success_condition: "ALL_REQUIRED_CLAIM_IDS_PRESENT_AND_ALL_PLAN_ASSERTIONS_HOLD"
+cases:
+  - case_id: "R6BH-01"
+    query_zh: "十二指肠引流标本里看见了华支睾吸虫卵，而同日送检的粪样镜下未能寻获虫卵；请分别判断两项结果的极性和证据性质。"
+    required_claim_ids: ["PCMS-028", "PCMS-029"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.duodenal_fluid_egg_microscopy", "positive"]
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+      evidence_roles: ["parasitological_confirmation"]
+  - case_id: "R6BH-02"
+    query_zh: "粪便涂片已经检获华支睾吸虫卵，但这次胆道超声没有显示异常；两个检查结果不能合并成一个笼统的阴性或阳性，请逐项理解。"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.stool_egg_microscopy", "positive"]
+        - ["diagnostic.biliary_imaging", "negative"]
+      evidence_roles: ["parasitological_confirmation", "auxiliary"]
+  - case_id: "R6BH-03"
+    query_zh: "CT提示胆道改变，排泄物寄生虫学检查却未呈阳性；前者是何种线索，后者是否足以排除感染？"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.biliary_imaging", "positive"]
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+      evidence_roles: ["parasitological_confirmation", "auxiliary"]
+  - case_id: "R6BH-04"
+    query_zh: "检验者在粪样中反复搜寻，仍无虫卵可见。这个表述对应什么检测极性，能不能据此作排除结论？"
+    required_claim_ids: ["PCMS-028"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+      negated_evidence_roles: ["parasitological_confirmation"]
+  - case_id: "R6BH-05"
+    query_zh: "十二指肠液镜检未获阳性所见，应如何记录这次检查结果，又该怎样保留结论边界？"
+    required_claim_ids: ["PCMS-029"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.duodenal_fluid_egg_microscopy", "negative"]
+      negated_evidence_roles: ["parasitological_confirmation"]
+  - case_id: "R6BH-06"
+    query_zh: "排泄物显微检查没有观察见目标虫卵，这句话是在否定哪一项证据事件，而不是否定哪些其他诊断资料？"
+    required_claim_ids: ["PCMS-028"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      diagnostic_events:
+        - ["diagnostic.stool_egg_microscopy", "negative"]
+      negated_evidence_roles: ["parasitological_confirmation"]
+  - case_id: "R6BH-07"
+    query_zh: "临床上要把华支睾吸虫病同其他胆道疾病区别开，超声所见能否独自完成鉴别并确诊？还需哪类正式证据作对照？"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      evidence_roles: ["auxiliary", "parasitological_confirmation"]
+      forbidden_topic_scopes: ["morphology"]
+  - case_id: "R6BH-08"
+    query_zh: "做虫种形态鉴别时，只讨论卵壳、卵盖、肩峰和末端小疣等显微特征，不是在问临床如何确诊。"
+    required_claim_ids: ["PCMS-003", "PCMS-004", "PCMS-005", "PCMS-006"]
+    required_plan:
+      topic_scopes: ["morphology"]
+      forbidden_topic_scopes: ["diagnosis"]
+  - case_id: "R6BH-09"
+    query_zh: "这里说的鉴别是患者诊断层面的证据区分，不是辨认虫体外形：影像提示和查到虫卵各承担什么角色？"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      evidence_roles: ["auxiliary", "parasitological_confirmation"]
+      forbidden_topic_scopes: ["morphology"]
+  - case_id: "R6BH-10"
+    query_zh: "寄生在终宿主体内的成体所产生的后代随排泄物进入水域，之后借助螺和鱼完成转换，再随食鱼行为回到人；请还原其中连续的虫期变化。"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019", "PCMS-020", "PCMS-021", "PCMS-033", "W2-ATOM-005"]
+    required_plan:
+      topic_scopes: ["life_cycle", "transmission"]
+      relation_intents: ["develops_into", "has_first_intermediate_host", "has_second_intermediate_host"]
+  - case_id: "R6BH-11"
+    query_zh: "一种形态由感染者排入淡水，被适宜软体动物摄取后在其体内连续变化，离开后进入淡水鱼并形成可感染人的形态；这条链对应哪些正式关系？"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-020", "PCMS-021", "PCMS-025", "PCMS-033", "PCMS-035"]
+    required_plan:
+      topic_scopes: ["life_cycle", "transmission"]
+      relation_intents: ["develops_into", "has_first_intermediate_host", "has_second_intermediate_host", "infective_stage_for"]
+  - case_id: "R6BH-12"
+    query_zh: "不直接点出各虫期名称，只按事件描述：螺内连续发育、游出后进入鱼体、被人摄入后在胆管成熟。系统应召回哪条完整发育路径？"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019", "PCMS-020", "PCMS-021", "PCMS-025", "W2-ATOM-008"]
+    required_plan:
+      topic_scopes: ["life_cycle"]
+      relation_intents: ["develops_into", "has_first_intermediate_host", "has_second_intermediate_host", "parasitizes_site"]
+  - case_id: "R6BH-13"
+    query_zh: "来自流行地区并且经常吃生淡水鱼，这些资料属于确诊证据吗？请同时给出当前正式病原学确证依据作为对照。"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-001"]
+    required_plan:
+      topic_scopes: ["diagnosis", "exposure"]
+      semantic_roles: ["epidemiological_clue", "not_confirmatory"]
+      evidence_roles: ["epidemiological_clue", "parasitological_confirmation"]
+  - case_id: "R6BH-14"
+    query_zh: "只有胆道MRI异常而没有直接病原体证据时，为什么不能把辅助线索写成确诊？请补出正式确证对照。"
+    required_claim_ids: ["PCMS-028", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025"]
+    required_plan:
+      topic_scopes: ["diagnosis"]
+      semantic_roles: ["auxiliary", "cannot_confirm_alone", "diagnostic_evidence_integration", "diagnostic_confirmation_limit"]
+      evidence_roles: ["auxiliary", "parasitological_confirmation"]
+  - case_id: "R6BH-15"
+    query_zh: "避免生食和改进卫生设施都属于推荐措施；现有正式证据是否同时给出了量化效果？"
+    required_claim_ids: ["W2-ATOM-006", "W2-ATOM-026"]
+    required_plan:
+      topic_scopes: ["control"]
+      semantic_roles: ["recommendation_not_quantified_effect"]
+  - case_id: "R6BH-16"
+    query_zh: "减少人粪和家养动物排泄物进入淡水，针对的是传播链哪个环节？这种机制与建议的语义边界应怎样进入检索计划？"
+    required_claim_ids: ["W2-ATOM-027", "W2-ATOM-028"]
+    required_plan:
+      topic_scopes: ["control", "transmission"]
+      semantic_roles: ["mechanism_and_recommendation"]
+      relation_intents: ["targets"]
+  - case_id: "R6BH-17"
+    query_zh: "人、动物和环境协同治理是正式推荐，但能否把它解释成任何地区都已证实有效并保证清除该病？"
+    required_claim_ids: ["PCMS-036"]
+    required_plan:
+      topic_scopes: ["control", "boundary"]
+      semantic_roles: ["recommendation_not_local_effect"]
+  - case_id: "R6BH-18"
+    query_zh: "一边讨论人畜排卵污染水体以及螺鱼宿主环节，一边提出综合治理；请把传播网络和正式防控语义同时纳入，而不要承诺普遍根除。"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-033", "PCMS-034", "PCMS-035", "PCMS-036", "W2-ATOM-027", "W2-ATOM-028"]
+    required_plan:
+      topic_scopes: ["life_cycle", "transmission", "control", "boundary"]
+      semantic_roles: ["mechanism_and_recommendation", "recommendation_not_local_effect"]
+      relation_intents: ["sheds_stage", "present_in_environment", "targets", "controlled_by"]
