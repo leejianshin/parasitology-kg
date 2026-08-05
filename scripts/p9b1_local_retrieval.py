@@ -29,7 +29,7 @@ RESULT_SCHEMA_PATH = PHASE9 / "retrieval-result-schema.yml"
 FROZEN_RUNTIME_CONTRACT_SHA256 = "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
 FROZEN_REQUEST_SCHEMA_SHA256 = "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
 FROZEN_RESULT_SCHEMA_SHA256 = "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
-FROZEN_RETRIEVAL_CONTRACT_SHA256 = "c4d35625e16cdd0fb8d46dfb73a999f2da03e9813c731de18bb1dba05393fe3e"
+FROZEN_RETRIEVAL_CONTRACT_SHA256 = "12e78a7416c0a675b1a6e7a3033b8ca449281a36b5d104d0e12502332491db77"
 
 ALLOWED_RUNTIME_INPUTS = (
     "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl",
@@ -324,6 +324,38 @@ def _verify_control_files(root: Path) -> dict[str, Any]:
         "reveal_timing": "AFTER_REVISION_4_LOCAL_COMMIT",
     }:
         raise ValueError("P9-B1 revision-4 blind commitment changed")
+    revision_5 = control.get("revision_5_acceptance", {})
+    public_regression = revision_5.get(
+        "revision_4_blind_disclosed_public_regression"
+    )
+    if public_regression != {
+        "path": (
+            "phase9/clonorchis-sinensis/acceptance-cases/"
+            "p9b1-revision4-blind-disclosed-regression.yml"
+        ),
+        "sha256": (
+            "b88918ae75fb26a61f43dcf83636a8a9"
+            "444c460060edd3f88b93d00232ffd1cd"
+        ),
+        "cases": 15,
+        "prior_blind_result_on_b71d08c": "12/15 PASS_CHANGES_REQUIRED",
+        "role_from_revision_5": "PUBLIC_REGRESSION_NOT_HELD_OUT",
+        "required_claim_recall_top12": "ALL_REQUIRED_IDS_PRESENT",
+    }:
+        raise ValueError("P9-B1 revision-4 public regression control changed")
+    revision_5_blind = revision_5.get("blind_independent_suite_commitment")
+    if revision_5_blind != {
+        "suite_id": "clonorchis_p9b1_revision5_blind_heldout_v1",
+        "cases": 16,
+        "canonical_content_sha256": (
+            "924205fe1b4df71639e475274697a8b4b"
+            "f4c72e77a4fe346ccf4a5182919dfd6"
+        ),
+        "frozen_at": "2026-08-05T10:01:00Z",
+        "contents_available_to_implementation": False,
+        "reveal_timing": "AFTER_REVISION_5_LOCAL_COMMIT",
+    }:
+        raise ValueError("P9-B1 revision-5 blind commitment changed")
     return control
 
 
@@ -734,6 +766,8 @@ _SURFACE_NORMALIZATION = (
 _SEQUENCE_MARKERS = (
     "生活史", "发育", "顺序", "依次", "先后", "中途", "变化", "演变",
     "转变", "路线", "路径", "衔接", "串联", "串起来", "经过哪些虫期",
+    "变化链", "发生次序", "逐级", "阶段变化", "发育链", "演化链",
+    "发育全程", "中间阶段", "完整过程", "逐步", "一步步", "哪些阶段",
 )
 _MORPHOLOGY_MARKERS = (
     "识别", "辨认", "鉴别", "外形", "结构", "大小", "尺寸", "特征",
@@ -744,9 +778,11 @@ _CONNECTION_MARKERS = (
 )
 _DIAGNOSIS_MARKERS = (
     "诊断", "确诊", "确证", "判读", "证据", "依据", "意义", "说明什么",
+    "最终判断", "辅助信息", "合并哪些", "综合判断",
 )
 _SOURCE_MARKERS = (
     "来源", "出自", "文献", "机构", "指南", "资料", "权威", "回查", "溯源",
+    "查证", "翻阅", "出处", "登记材料", "核对材料",
 )
 _INFECTION_MARKERS = (
     "感染", "侵入", "入侵", "进入", "吃进", "摄入", "建立感染",
@@ -758,15 +794,40 @@ _TREATMENT_MARKERS = ("治疗", "药物", "用药", "处方", "疗法")
 _CARCINOGENIC_MARKERS = (
     "致癌", "癌", "肿瘤", "风险分级", "危害分类", "iarc", "group1",
 )
-_CONTROL_MARKERS = ("防控", "预防", "卫生", "兽医", "消除", "干预")
+_CONTROL_MARKERS = (
+    "防控", "防治", "预防", "兽医", "消除", "干预", "管控",
+    "治理", "切断", "阻断", "厕所", "改厕", "粪污", "粪便污染",
+    "根除", "清除", "消灭", "排泄物污染", "粪水", "便溺入水",
+    "整治", "粪源", "无害化", "排泄物入水", "排污",
+)
 _DETECTION_ACTION_MARKERS = (
     "检出", "镜检", "显微镜", "检卵", "查见", "查到", "检验", "检测",
-    "找到", "观察到", "检获", "见虫卵", "查虫卵", "便检",
+    "找到", "观察到", "检获", "见虫卵", "查虫卵", "便检", "粪检",
+    "寄生虫学检查", "病原学检查", "阳性发现", "阳性结果", "看见",
+    "查出", "检到", "检得",
 )
-_NEGATION_MARKERS = (
-    "没有", "未检出", "未见", "未查到", "没查到", "找不到", "阴性",
-    "未发现", "未能检出", "并无",
+_NEGATED_DETECTION_PATTERNS = (
+    re.compile(
+        r"(?:没|未|无|没有|并无|未能).{0,10}"
+        r"(?:检出|查到|查出|找到|找出|发现|阳性|检获|查见|观察到|看见|检到|检得)"
+    ),
+    re.compile(
+        r"(?:检查|检测|检卵|镜检|便检|粪检|寄生虫学|病原学).{0,10}"
+        r"(?:阴性|未检出|未见|没找到|没有阳性|无阳性|查无|未获阳性)"
+    ),
+    re.compile(r"(?:结果|报告).{0,4}(?:为)?阴性"),
+    re.compile(
+        r"(?:查不出|查不到|检不出|检不到|找不着|没查着|查无).{0,6}"
+        r"(?:虫卵|病原|阳性)"
+    ),
 )
+
+_DIAGNOSTIC_INTEGRATION_ROLES = {
+    "diagnostic_evidence_integration",
+    "diagnostic_confirmation_limit",
+    "evidence_integration_required",
+    "pathogen_evidence_required_for_confirmation",
+}
 
 _FORMAL_ROLE_TO_EVIDENCE_ROLE = {
     "epidemiological_clue": "epidemiologic_exposure_clue",
@@ -836,6 +897,11 @@ def _has_any(text: str, terms: Iterable[str]) -> bool:
     return any(normalize_query(term) in text for term in terms)
 
 
+def _has_negated_detection(text: str) -> bool:
+    """Recognize compositional negative test reports, not negative conclusions."""
+    return any(pattern.search(text) for pattern in _NEGATED_DETECTION_PATTERNS)
+
+
 def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
     """Derive searchable forms from reviewed names/aliases, not case text."""
     values = [entity.get("name_zh", ""), *entity.get("aliases", [])]
@@ -861,6 +927,8 @@ def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
         for stage_name in ("虫卵", "毛蚴", "胞蚴", "雷蚴", "尾蚴", "囊蚴", "成虫"):
             if stage_name in joined:
                 aliases.add(normalize_query(stage_name))
+        if "虫卵" in joined:
+            aliases.add("卵")
     if entity_type == "host":
         if "淡水螺" in joined:
             aliases.update({"淡水螺", "螺"})
@@ -878,6 +946,27 @@ def _formal_entity_aliases(entity: dict[str, Any]) -> set[str]:
             aliases.update({"粪便检卵", "粪检", "便检"})
         if "十二指肠" in joined and "卵" in joined:
             aliases.update({"十二指肠液检卵", "十二指肠引流液检卵"})
+    if entity_type == "intervention":
+        compact = normalize_query(joined)
+        if "改善卫生设施" in compact:
+            aliases.update({
+                "卫生设施", "厕所设施", "厕所", "改厕", "改良厕所",
+                "厕所改造", "环境卫生",
+            })
+        if "减少动物粪便污染" in compact:
+            aliases.update({
+                "动物粪污", "家畜粪污", "畜禽粪污", "牲畜粪便",
+                "动物排泄物污染", "家畜排泄物", "畜禽排泄物",
+            })
+        if "减少人粪便污染" in compact:
+            aliases.update({
+                "人粪污", "人粪便污染", "人的排泄物污染", "人类排泄物",
+            })
+        if "综合防控" in compact:
+            aliases.update({
+                "综合防控", "综合治理", "协同防控", "人畜环境协同",
+                "全健康",
+            })
     return aliases
 
 
@@ -977,14 +1066,27 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         if formal_role in semantic_roles
     }
     negated_evidence_roles: set[str] = set()
-    if (
-        _has_any(surface, _NEGATION_MARKERS)
-        and _has_any(surface, _DETECTION_ACTION_MARKERS)
-        and "卵" in surface
-    ):
+    parasitological_context = (
+        "卵" in surface
+        or _has_any(
+            surface,
+            (
+                "寄生虫学", "病原学", "病原检查", "镜检", "粪检",
+                "便检", "粪便",
+            ),
+        )
+        or "pathogen_confirmation" in evidence_roles
+    )
+    if _has_negated_detection(surface) and parasitological_context:
         negated_evidence_roles.add("pathogen_confirmation")
         evidence_roles.add("pathogen_confirmation")
         semantic_roles.add("parasitological_confirmation")
+
+    # Formal integration/limit roles require the confirmatory contrast even
+    # when the query mentions only imaging.  This is a graph-semantic rule:
+    # no query literal, case ID or required claim ID selects the claims.
+    if semantic_roles & _DIAGNOSTIC_INTEGRATION_ROLES:
+        evidence_roles.add("pathogen_confirmation")
 
     topics: set[str] = set()
     morphology_intent = _has_any(surface, _MORPHOLOGY_MARKERS)
@@ -996,8 +1098,21 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         stages or _has_any(surface, ("成虫", "虫卵", "虫体"))
     ):
         topics.add("morphology")
+    stage_range_intent = (
+        len(stages) >= 2
+        and (
+            ("从" in surface and "到" in surface)
+            or ("由" in surface and "至" in surface)
+            or ("到" in surface and "之间" in surface)
+            or _has_any(
+                surface,
+                ("经历", "经过", "直至", "直到", "最终", "中间阶段", "过程"),
+            )
+        )
+    )
     if (
         (len(stages) >= 2 and sequence_intent)
+        or stage_range_intent
         or (
             sequence_marker_count >= 1
             and _has_any(surface, ("虫态", "虫期", "幼虫", "虫体", "形态"))
@@ -1056,7 +1171,15 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
     ):
         topics.add("one_health")
 
-    if len(evidence_roles) >= 2 or (
+    diagnostic_semantic_role = bool(
+        semantic_roles
+        & (
+            set(_FORMAL_ROLE_TO_EVIDENCE_ROLE)
+            | _DIAGNOSTIC_INTEGRATION_ROLES
+            | {"not_confirmatory", "cannot_confirm_alone"}
+        )
+    )
+    if diagnostic_semantic_role or len(evidence_roles) >= 2 or (
         evidence_roles and _has_any(surface, _DIAGNOSIS_MARKERS)
     ):
         topics.add("diagnosis")
@@ -1070,7 +1193,7 @@ def analyze_query(query: str, index: RetrievalIndex) -> QueryPlan:
         topics.add("treatment")
     if _has_any(surface, _CARCINOGENIC_MARKERS) or "hazard_classification" in entity_types:
         topics.add("carcinogenicity")
-    if _has_any(surface, _CONTROL_MARKERS):
+    if "intervention" in entity_types or _has_any(surface, _CONTROL_MARKERS):
         topics.add("control")
     if _has_any(surface, _SOURCE_MARKERS):
         topics.add("source_traceability")

@@ -1,0 +1,57 @@
+suite_id: "clonorchis_p9b1_revision4_blind_disclosed_regression_v1"
+status: "DISCLOSED_AFTER_REVISION_4_COMMIT_PUBLIC_REGRESSION"
+origin:
+  prior_suite_id: "clonorchis_p9b1_revision4_blind_heldout_v1"
+  frozen_at: "2026-08-05T09:30:03Z"
+  canonical_content_sha256: "fc38df6ebb0876aa5ac8c5f23e9b6b0285f476069dd5fb2107aef0cae9c6dd81"
+  prior_result_on_b71d08c: "12/15 PASS_CHANGES_REQUIRED"
+  role_from_revision_5: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+retrieval_contract:
+  top_k: 12
+  success_condition: "ALL_REQUIRED_CLAIM_IDS_PRESENT"
+cases:
+  - case_id: "R4BH-01"
+    query_zh: "腹部彩超提示胆道有改变，可是连续送检的粪样都没找到虫卵；这两类结果各自能说明什么，又不能说明什么？"
+    required_claim_ids: ["W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028"]
+  - case_id: "R4BH-02"
+    query_zh: "化验人员对排泄物涂片作显微观察时看到了华支睾吸虫卵，这项发现属于一般提示还是病原学确认？"
+    required_claim_ids: ["PCMS-028"]
+  - case_id: "R4BH-03"
+    query_zh: "患者常吃鱼生，CT显示胆道异常，但寄生虫学检查没有阳性发现，凭现有材料能下确诊结论吗？"
+    required_claim_ids: ["W2-ATOM-001", "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028"]
+  - case_id: "R4BH-04"
+    query_zh: "淡水螺、鲤科鱼、人以及猫狗猪，分别处在这种寄生虫生存周期的哪个位置？"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-022", "PCMS-023", "PCMS-024"]
+  - case_id: "R4BH-05"
+    query_zh: "在排泄物或者十二指肠引流液里查到卵时，这两种发现分别属于什么性质的诊断依据？"
+    required_claim_ids: ["PCMS-028", "PCMS-029"]
+  - case_id: "R4BH-06"
+    query_zh: "超声、CT或MRI的结果为什么只能当辅助信息，作出最终判断时还应合并哪些资料？"
+    required_claim_ids: ["W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028"]
+  - case_id: "R4BH-07"
+    query_zh: "请沿着人和家养动物排卵、水域、软体动物、淡水鱼再到食鱼者的路径，还原华支睾吸虫的传播网络。"
+    required_claim_ids: ["PCMS-020", "PCMS-021", "PCMS-024", "PCMS-033", "PCMS-034", "PCMS-035", "W2-ATOM-005"]
+  - case_id: "R4BH-08"
+    query_zh: "按当前正式证据，河虾与鲤科鱼能被看成同等重要的幼虫寄居载体吗？"
+    required_claim_ids: ["PCMS-021"]
+  - case_id: "R4BH-09"
+    query_zh: "从虫卵被螺吞食开始，按发生次序说明直到终宿主体内出现成虫的逐级变化。"
+    required_claim_ids: ["PCMS-014", "PCMS-015", "PCMS-016", "PCMS-017", "PCMS-018", "PCMS-019"]
+  - case_id: "R4BH-10"
+    query_zh: "想分别查证从卵到成虫的变化链、WHO的用药建议以及IARC的危害类别，应翻阅哪些已登记材料？"
+    required_claim_ids: ["PCMS-014", "PCMS-030", "PCMS-032"]
+  - case_id: "R4BH-11"
+    query_zh: "怎样用正式证据区分影像提示与查卵确认，同时指出世界卫生组织建议的治疗药物？"
+    required_claim_ids: ["W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028", "PCMS-030"]
+  - case_id: "R4BH-12"
+    query_zh: "被人摄入后可以建立寄生的形态，与在胆道造成主要伤害的形态是否相同？请分别指出。"
+    required_claim_ids: ["PCMS-025", "PCMS-026"]
+  - case_id: "R4BH-13"
+    query_zh: "显微镜下应怎样辨认虫卵，肉眼所见成虫的外观和尺寸又有什么特点？"
+    required_claim_ids: ["PCMS-001", "PCMS-002", "PCMS-003", "PCMS-004", "PCMS-005", "PCMS-006"]
+  - case_id: "R4BH-14"
+    query_zh: "改进厕所设施与管好家畜粪污分别切断水域传播的哪一段？能据此断言所有地方都可彻底根除吗？"
+    required_claim_ids: ["W2-ATOM-026", "W2-ATOM-027", "W2-ATOM-028", "PCMS-036"]
+  - case_id: "R4BH-15"
+    query_zh: "被列入最高级别致癌危害，是否就代表每一名感染者必然会发生胆管癌？"
+    required_claim_ids: ["PCMS-032"]

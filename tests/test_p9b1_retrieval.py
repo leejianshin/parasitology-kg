@@ -262,6 +262,117 @@ class P9B1RetrievalTests(unittest.TestCase):
                 retrieved = {item["claim_id"] for item in result["candidates"]}
                 self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
 
+    def test_revision_4_blind_suite_is_now_public_regression(self) -> None:
+        path = (
+            ROOT
+            / "phase9/clonorchis-sinensis/acceptance-cases"
+            / "p9b1-revision4-blind-disclosed-regression.yml"
+        )
+        suite = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "DISCLOSED_AFTER_REVISION_4_COMMIT_PUBLIC_REGRESSION",
+            suite["status"],
+        )
+        self.assertEqual(15, len(suite["cases"]))
+        implementation = (
+            ROOT / "scripts/p9b1_local_retrieval.py"
+        ).read_text(encoding="utf-8")
+        for case in suite["cases"]:
+            with self.subTest(case=case["case_id"]):
+                self.assertNotIn(case["case_id"], implementation)
+                self.assertNotIn(case["query_zh"], implementation)
+                result = retrieve(
+                    request(case["query_zh"], case["case_id"]), root=ROOT
+                )
+                retrieved = {item["claim_id"] for item in result["candidates"]}
+                self.assertTrue(set(case["required_claim_ids"]) <= retrieved)
+
+    def test_negative_polarity_is_compositional_and_does_not_negate_conclusions(self) -> None:
+        index = build_index(ROOT)
+        negated_queries = (
+            "粪样里没找到虫卵，这次检查如何解释？",
+            "寄生虫学检查没有阳性发现，能据此排除吗？",
+            "粪检报告为阴性时，证据角色是什么？",
+            "镜检未能发现虫卵，是否等于没有感染？",
+            "病原学检查查无虫卵，现有线索还能否确认？",
+            "粪便标本里查不出虫卵，是否代表一定未感染？",
+        )
+        for query_text in negated_queries:
+            with self.subTest(query=query_text):
+                plan = analyze_query(query_text, index)
+                self.assertIn(
+                    "pathogen_confirmation", plan.negated_evidence_roles
+                )
+                self.assertIn("diagnosis", plan.topic_scopes)
+
+        conclusion = analyze_query(
+            "现有线索不能排除感染，但尚不能确诊。", index
+        )
+        self.assertNotIn(
+            "pathogen_confirmation", conclusion.negated_evidence_roles
+        )
+
+    def test_formal_diagnostic_roles_trigger_confirmation_contrast_group(self) -> None:
+        index = build_index(ROOT)
+        plan = analyze_query(
+            "MRI显示胆道改变，作最终判断还应合并哪些资料？", index
+        )
+        self.assertTrue({
+            "diagnostic_evidence_integration",
+            "diagnostic_confirmation_limit",
+        } <= set(plan.semantic_roles))
+        self.assertIn("pathogen_confirmation", plan.evidence_roles)
+        self.assertIn("diagnostic_evidence_roles", plan.coverage_groups)
+        result = retrieve(
+            request(
+                "MRI显示胆道改变，作最终判断还应合并哪些资料？",
+                "P9B1-R5-DIAG",
+            ),
+            root=ROOT,
+        )
+        retrieved = {item["claim_id"] for item in result["candidates"]}
+        self.assertTrue({
+            "W2-ATOM-023", "W2-ATOM-024", "W2-ATOM-025", "PCMS-028"
+        } <= retrieved)
+
+    def test_life_cycle_and_control_compositions_use_typed_coverage(self) -> None:
+        index = build_index(ROOT)
+        life_cycle = analyze_query(
+            "从卵到成虫的逐级变化应怎样衔接？", index
+        )
+        self.assertIn("life_cycle", life_cycle.topic_scopes)
+        self.assertEqual(
+            "life_cycle_development", life_cycle.coverage_groups[0]
+        )
+        life_cycle_range = analyze_query(
+            "虫卵最终成为成虫要经过哪些中间阶段？", index
+        )
+        self.assertIn("life_cycle", life_cycle_range.topic_scopes)
+
+        control = analyze_query(
+            "改厕和处理畜禽粪污如何切断水域传播，能否保证根除？",
+            index,
+        )
+        self.assertIn("intervention", control.entity_types)
+        self.assertIn("control", control.topic_scopes)
+        result = retrieve(
+            request(
+                "改厕和处理畜禽粪污如何切断水域传播，能否保证根除？",
+                "P9B1-R5-CONTROL",
+            ),
+            root=ROOT,
+        )
+        retrieved = {item["claim_id"] for item in result["candidates"]}
+        self.assertTrue({
+            "W2-ATOM-026", "W2-ATOM-028", "PCMS-036"
+        } <= retrieved)
+        control_variant = analyze_query(
+            "改良厕所并减少家畜排泄物进入水域，属于哪类治理？",
+            index,
+        )
+        self.assertIn("intervention", control_variant.entity_types)
+        self.assertIn("control", control_variant.topic_scopes)
+
     def test_formal_entity_types_and_semantic_roles_drive_query_plan(self) -> None:
         index = build_index(ROOT)
         records = {item.claim_id: item for item in index.records}
@@ -320,7 +431,8 @@ class P9B1RetrievalTests(unittest.TestCase):
         formal_alias = analyze_query("MRI能否作为确诊依据？", index)
         self.assertIn("diagnostic.biliary_imaging", formal_alias.entity_ids)
         self.assertEqual(
-            ("imaging_auxiliary_clue",), formal_alias.evidence_roles
+            ("imaging_auxiliary_clue", "pathogen_confirmation"),
+            formal_alias.evidence_roles,
         )
         self.assertIn("diagnosis", formal_alias.topic_scopes)
 

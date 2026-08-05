@@ -1,6 +1,6 @@
-contract_version: "1.4"
+contract_version: "1.5"
 contract_id: "clonorchis_p9b1_local_retrieval_v1"
-status: "REVISION_4_PENDING_BLIND_INDEPENDENT_REVIEW"
+status: "REVISION_5_PENDING_BLIND_INDEPENDENT_REVIEW"
 implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 
 authority:
@@ -135,6 +135,27 @@ revision_4_acceptance:
     frozen_at: "2026-08-05T09:30:03Z"
     contents_available_to_implementation: false
     reveal_timing: "AFTER_REVISION_4_LOCAL_COMMIT"
+
+revision_5_acceptance:
+  revision_4_blind_disclosed_public_regression:
+    path: "phase9/clonorchis-sinensis/acceptance-cases/p9b1-revision4-blind-disclosed-regression.yml"
+    sha256: "b88918ae75fb26a61f43dcf83636a8a9444c460060edd3f88b93d00232ffd1cd"
+    cases: 15
+    prior_blind_result_on_b71d08c: "12/15 PASS_CHANGES_REQUIRED"
+    role_from_revision_5: "PUBLIC_REGRESSION_NOT_HELD_OUT"
+    required_claim_recall_top12: "ALL_REQUIRED_IDS_PRESENT"
+  query_semantics:
+    negated_detection: "COMPOSITIONAL_POLARITY_PATTERNS_WITH_PARASITOLOGICAL_CONTEXT"
+    diagnostic_group_trigger: "FORMAL_SEMANTIC_ROLES_REQUIRE_CONFIRMATION_CONTRAST"
+    life_cycle_scope: "REVIEWED_STAGE_ENTITIES_AND_SEQUENCE_COMPOSITION"
+    control_scope: "REVIEWED_INTERVENTION_ENTITIES_AND_CONTROL_RELATIONS"
+  blind_independent_suite_commitment:
+    suite_id: "clonorchis_p9b1_revision5_blind_heldout_v1"
+    cases: 16
+    canonical_content_sha256: "924205fe1b4df71639e475274697a8b4bf4c72e77a4fe346ccf4a5182919dfd6"
+    frozen_at: "2026-08-05T10:01:00Z"
+    contents_available_to_implementation: false
+    reveal_timing: "AFTER_REVISION_5_LOCAL_COMMIT"
 
 scope_boundary:
   model_call: false
