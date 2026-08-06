@@ -1,0 +1,39 @@
+commitment_version: "1.0"
+commitment_id: "clonorchis_p9b1q_r10_suite_commitment_v1"
+status: "SECRET_SUITE_FROZEN_NOT_EXECUTED"
+
+design_authority:
+  contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_3"
+  contract_version: "1.3"
+  approved_design_commit: "acd3b6005257714b5135e6296b2c2cd344f3f04a"
+
+secret_suite_public_metadata:
+  suite_id: "p9b1q-r10-zhcn-6a9e41c7"
+  language: "zh-CN"
+  semantic_case_count: 24
+  binding_positive_probe_count: 2
+  binding_negative_probe_count: 17
+  total_execution_count: 43
+  frozen_at_utc: "2026-08-06T03:04:48Z"
+  canonical_content_sha256: "152696dbd93ffa39adcaaa7bc792c84039dd7f3e85880e59f268e88fefde5ea9"
+  manifest_sha256: "c53981c55c11a27c026123d586fbcd1b89b809141ae3a7d1dfc789e80fcd3b2e"
+  sha256sums_sha256: "0812929416c6c4e258880a08b7372638e79bc0bdb935048df98641935c1587b8"
+
+audit_boundary:
+  suite_body_in_repository: false
+  suite_body_read_by_implementation_context: false
+  suite_executed_before_commitment: false
+  commitment_contains_query_text: false
+  commitment_contains_case_ids: false
+  commitment_contains_expected_claim_ids: false
+  implementation_must_descend_from_this_commit: true
+  implementation_diff_base: "THIS_COMMIT"
+
+prohibited_in_this_commit:
+  - "parser or interpreter code change"
+  - "semantic validator code change"
+  - "graph executor code change"
+  - "model or prompt configuration change"
+  - "public regression query addition"
+  - "P9-A contract change"
+  - "P9-B2 work"
