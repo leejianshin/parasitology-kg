@@ -121,6 +121,14 @@ def main() -> None:
         normalized[suffix] = norm
 
         ast = load(f"clause-ast-{suffix}-positive.json")
+        if suffix == "diagnostic":
+            egg = next(
+                item for item in ast["surface_mentions"]
+                if item["surface_mention_id"] == "U002"
+            )
+            egg["normalized_surface"] = "卵"
+            egg["candidate_origin"] = "FORMAL_ALIAS_EXACT"
+            egg["source_span"] = {"start_char": 3, "end_char": 4, "text": "卵"}
         ast["normalized_request_sha256"] = csha(norm)
         ast["stage_validator_contract_sha256"] = new_contract
         ast["producer"]["executable_sha256"] = new_exec
@@ -234,6 +242,19 @@ def main() -> None:
                 "canonical_sha256": projection_sha,
                 "byte_length": len((HERE / "queryir-projection-rule-set.yml").read_bytes()),
             })
+        if name == "stage-validation-s3-positive.json" and not any(
+            item["object_kind"] == "CONSTRAINT_SET_SCHEMA"
+            for item in result["actual_input_objects"]
+        ):
+            schema_path = HERE / "constraint-set-schema-candidate.yml"
+            result["actual_input_objects"].append({
+                "object_kind": "CONSTRAINT_SET_SCHEMA",
+                "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-schema-candidate.yml",
+                "content_json_pointer": None,
+                "schema_id": "constraint-set-schema-candidate.yml",
+                "canonical_sha256": raw_sha(schema_path),
+                "byte_length": len(schema_path.read_bytes()),
+            })
         for item in result["actual_input_objects"] + [result["actual_output_object"]]:
             absolute = resolve(item["content_path"])
             item["canonical_sha256"] = raw_sha(absolute)
@@ -288,7 +309,7 @@ def main() -> None:
 
     negative_path = FIX / "stage-validator-negative-fixtures.yml"
     negative = yaml.safe_load(negative_path.read_text(encoding="utf-8"))
-    negative["status"] = "FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW"
+    negative["status"] = "FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW"
     for item in negative["base_objects"]:
         item["canonical_sha256"] = raw_sha(resolve(item["path"]))
     for case in negative["cases"]:
@@ -296,6 +317,12 @@ def main() -> None:
             case["base_object_canonical_sha256"] = raw_sha(resolve(case["valid_base_object_path"]))
         if case["stage"] == "S5_RUNTIME_BINDING":
             case["paired_actual_object_paths"] = [item["path"] for item in sidecar["actual_objects"]]
+        if case.get("actual_input_mutation", {}).get("object_kind") == "CONSTRAINT_REGISTRY":
+            registry = yaml.safe_load((HERE / "constraint-id-registry.yml").read_text(encoding="utf-8"))
+            for operation in case["actual_input_mutation"]["patch"]:
+                if operation["op"] == "add" and operation["path"] == "/unexpected_field":
+                    registry["unexpected_field"] = operation["value"]
+            case["patch"][0]["value"] = csha(registry)
     negative_path.write_text(yaml.safe_dump(negative, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
     # Bootstrap the old summary into the new Schema, then replace it with actual execution.

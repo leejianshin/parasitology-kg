@@ -38,7 +38,7 @@ design_files:
   design-manifest-v0.4.yml: 9e6861ef7542be843e61cf927425c8004989e03bea5d9a4ff29ca99d6b792b8a
   design-manifest-v0.5.yml: 5213ebb077981e3347796d4db4ca872aa871d6c3b97d8619ed5686e7fb3b9c01
   design-manifest-v0.6.yml: 4d99b717678eecf0dc1c20e629ace8a3b8a88d2a314ca84f1b3e1dd64ebc16ee
-  design-manifest.yml: 15e68ee6779383bdafd453daf9904dd7865c21da6fb5f1622f11cfa253b0cd5b
+  design-manifest.yml: 98bed371b744c94a87521a8883db45121b16a089f891129ce9ccc650a8615bca
   event-frame-schema-candidate.yml: ce052ef654952cffaf60c4d008f532fdddf34a74242e81386323f6e4f09ec051
   execution-binding-sidecar-architecture-schema-candidate.yml: 61297b606964b61fe4d07995a038177e4297956b99c5a5ca1024570ce1a06e8c
   failure-to-stage-matrix.yml: 6c2814026eda0aa60697f8a6ef0007c85751b3174c70b62d2aacc56e8c28c190

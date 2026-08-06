@@ -30,6 +30,8 @@ NEGATIVE = FIXTURES / "stage-validator-negative-fixtures.yml"
 SCHEMA_GATE = HERE / "strict-schema-gate.mjs"
 CONSTRAINT_SET = HERE / "constraint-set-v0.1.yml"
 PROJECTION_RULE_SET = HERE / "queryir-projection-rule-set.yml"
+CONSTRAINT_REGISTRY_SCHEMA = HERE / "constraint-id-registry-schema-candidate.yml"
+CONSTRAINT_SET_SCHEMA = HERE / "constraint-set-schema-candidate.yml"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
 _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
@@ -214,10 +216,7 @@ def validate_s1(
         for entity_id in mention["candidate_entity_ids"]:
             registered_aliases = aliases.get(entity_id)
             surface = mention["normalized_surface"]
-            if not registered_aliases or not any(
-                alias == surface or alias in surface or surface in alias
-                for alias in registered_aliases
-            ):
+            if mention["source_span"]["text"] != surface or not registered_aliases or surface not in registered_aliases:
                 errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", f"/surface_mentions/{index}/candidate_entity_ids"))
                 break
     for pointer, span in spans_in_ast(ast):
@@ -293,6 +292,7 @@ def validate_s2(
     if dangling:
         errors.append(error("CNS-EF-REF_INTEGRITY", "DANGLING_REFERENCE", "/frames"))
     for fi, item in enumerate(frame["frames"]):
+        local_slots = {slot["slot_id"]: slot for slot in item["participant_slots"]}
         for si, slot in enumerate(item["participant_slots"]):
             domain = slot["domain"]
             if slot["binding_status"] == "FIXED" and (len(domain["entity_ids"]) != 1 or len(domain["entity_types"]) != 1):
@@ -318,6 +318,34 @@ def validate_s2(
                 if set(domain["entity_ids"]) - licensed_ids:
                     errors.append(error("CNS-EF-SLOT_TYPE", "SLOT_TYPE_MISMATCH", f"/frames/{fi}/participant_slots/{si}/domain"))
         identity = item["normalized_identity"]
+        role_bindings = {
+            "actor_slot_ids": "ACTOR",
+            "target_slot_ids": "TARGET",
+            "anatomical_site_slot_ids": "LOCATION",
+        }
+        identity_role_error = any(
+            local_slots.get(slot_id, {}).get("semantic_role") != expected_role
+            for field, expected_role in role_bindings.items()
+            for slot_id in identity[field]
+        )
+        if identity["method_slot_id"] is not None:
+            identity_role_error |= (
+                local_slots.get(identity["method_slot_id"], {}).get("semantic_role")
+                != "METHOD"
+            )
+        identity_dimensions = [
+            set(identity["actor_slot_ids"]),
+            set(identity["target_slot_ids"]),
+            set(identity["anatomical_site_slot_ids"]),
+            {identity["method_slot_id"]} if identity["method_slot_id"] else set(),
+        ]
+        identity_role_error |= any(
+            left & right
+            for index, left in enumerate(identity_dimensions)
+            for right in identity_dimensions[index + 1 :]
+        )
+        if identity_role_error:
+            errors.append(error("CNS-EF-IDENTITY_CONSISTENCY", "EVENT_IDENTITY_MISMATCH", f"/frames/{fi}/normalized_identity"))
         if identity["event_type_domain"] != item["event_type_domain"]:
             errors.append(error("CNS-EF-IDENTITY_CONSISTENCY", "EVENT_IDENTITY_MISMATCH", f"/frames/{fi}/normalized_identity/event_type_domain"))
         event_types = item["event_type_domain"]
@@ -329,9 +357,16 @@ def validate_s2(
         if is_diagnostic != (binding is not None):
             errors.append(error("CNS-EF-DIAGNOSTIC_BINDING", "DIAGNOSTIC_BINDING_INVALID", f"/frames/{fi}/diagnostic_binding"))
         if binding is not None:
-            local_slots = {slot["slot_id"]: slot for slot in item["participant_slots"]}
             method = local_slots.get(binding["method_slot_id"])
-            if method is None or method["semantic_role"] != "METHOD" or any(target not in local_slots for target in binding["target_slot_ids"]):
+            targets = [local_slots.get(target) for target in binding["target_slot_ids"]]
+            if (
+                method is None
+                or method["semantic_role"] != "METHOD"
+                or any(target is None or target["semantic_role"] != "TARGET" for target in targets)
+                or binding["method_slot_id"] != identity["method_slot_id"]
+                or binding["target_slot_ids"] != identity["target_slot_ids"]
+                or binding["specimen_slot_id"] not in identity["specimen_slot_ids"]
+            ):
                 errors.append(error("CNS-EF-DIAGNOSTIC_BINDING", "DIAGNOSTIC_BINDING_INVALID", f"/frames/{fi}/diagnostic_binding"))
         if ast:
             ast_ids = {node["node_id"] for node in ast["nodes"]}
@@ -502,9 +537,23 @@ def validate_s3(
     inputs = inputs or {}
     input_hashes = input_hashes or {}
     registry_object = inputs.get("CONSTRAINT_REGISTRY", load_yaml(REGISTRY))
+    registry_schema = inputs.get(
+        "CONSTRAINT_REGISTRY_SCHEMA", load_yaml(CONSTRAINT_REGISTRY_SCHEMA)
+    )
+    constraint_set_schema = inputs.get(
+        "CONSTRAINT_SET_SCHEMA", load_yaml(CONSTRAINT_SET_SCHEMA)
+    )
+    if (
+        registry_schema != load_yaml(CONSTRAINT_REGISTRY_SCHEMA)
+        or not schema_valid("constraint-id-registry-schema-candidate.yml", registry_object)
+        or constraint_set_schema != load_yaml(CONSTRAINT_SET_SCHEMA)
+    ):
+        errors.append(error("CNS-SOLVER-REGISTRY_MEMBERSHIP", "UNKNOWN_CONSTRAINT_ID", "/constraint_registry"))
     registry_entries = registry_object["entries"]
     registry = {entry["id"] for entry in registry_entries}
     constraint_set = inputs.get("CONSTRAINT_SET", load_yaml(CONSTRAINT_SET))
+    if not schema_valid("constraint-set-schema-candidate.yml", constraint_set):
+        errors.append(error("CNS-SOLVER-REGISTRY_MEMBERSHIP", "UNKNOWN_CONSTRAINT_ID", "/constraint_set"))
     core = solution_core(typed)
     unknown = set(core["satisfied_constraint_ids"]) - registry
     if unknown:
@@ -625,6 +674,8 @@ def validate_s4(
     inputs = inputs or {}
     emission = typed["selected_solution"]["queryir_emission_record"]
     emitted = emission["query_ir"]
+    if emission["query_ir_sha256"] != canonical_sha(emitted):
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/selected_solution/queryir_emission_record/query_ir_sha256"))
     if typed["status"] != "UNIQUE" or typed["solution_cardinality"] != "ONE" or emitted["interpretation_status"] != "VALID":
         errors.append(error("CNS-EMIT-VALID_STATUS", "QUERYIR_NOT_VALID", "/interpretation_status"))
     pointers = all_json_pointers(emitted)
@@ -849,11 +900,98 @@ def _selector_types(selector: dict[str, Any], entity_types: dict[str, str]) -> s
     }
 
 
+def _event_relation_sources(
+    event: dict[str, Any], source_rules: list[str], entity_types: dict[str, str]
+) -> set[str]:
+    """Resolve frozen subject_from/object_from tokens against one actual event."""
+    event_entities = set(event["actor_entity_ids"] + event["target_entity_ids"])
+    if event["method_entity_id"] is not None:
+        event_entities.add(event["method_entity_id"])
+    resolved: set[str] = set()
+    for source in source_rules:
+        if source == "method_entity_id" and event["method_entity_id"] is not None:
+            resolved.add(event["method_entity_id"])
+        else:
+            resolved.update(
+                entity_id
+                for entity_id in event_entities
+                if entity_types.get(entity_id) == source
+            )
+    return resolved
+
+
+def _relation_is_bound_to_event(
+    relation: dict[str, Any],
+    event: dict[str, Any],
+    event_mapping: dict[str, Any],
+    entity_types: dict[str, str],
+    basis_mentions: list[dict[str, Any]],
+    frame_by_id: dict[str, dict[str, Any]],
+    ast_mentions: dict[str, dict[str, Any]],
+) -> bool:
+    mapping = event_mapping.get(event["event_type"], {}).get("predicates", {}).get(
+        relation["predicate"]
+    )
+    if mapping is None:
+        return False
+    subject_ids = set(relation["subject_selector"]["entity_ids"])
+    object_ids = set(relation["object_selector"]["entity_ids"])
+    basis_ids = {item["entity_id"] for item in basis_mentions}
+    basis_by_type = {
+        entity_type: {item["entity_id"] for item in basis_mentions if item["entity_type"] == entity_type}
+        for entity_type in {item["entity_type"] for item in basis_mentions}
+    }
+    if relation["derivation_mode"] == "EVENT_DERIVED":
+        return (
+            subject_ids
+            == _event_relation_sources(event, mapping["subject_from"], entity_types)
+            and object_ids
+            == _event_relation_sources(event, mapping["object_from"], entity_types)
+        )
+
+    def direct_allowed(selector_ids: set[str], rules: list[str]) -> bool:
+        allowed: set[str] = set()
+        for source in rules:
+            if source == "method_entity_id" and event["method_entity_id"] is not None:
+                allowed.add(event["method_entity_id"])
+            else:
+                allowed.update(basis_by_type.get(source, set()))
+        return bool(selector_ids) and selector_ids <= allowed
+
+    if not (
+        (subject_ids | object_ids) == basis_ids
+        and direct_allowed(subject_ids, mapping["subject_from"])
+        and direct_allowed(object_ids, mapping["object_from"])
+    ):
+        return False
+    frame = frame_by_id.get(event["frame_id"], {})
+    slot_by_id = {item["slot_id"]: item for item in frame.get("participant_slots", [])}
+    target_source_ids = {
+        source_id
+        for slot_id in frame.get("normalized_identity", {}).get("target_slot_ids", [])
+        for source_id in slot_by_id.get(slot_id, {}).get("source_ids", [])
+    }
+    target_entities = {
+        entity_id
+        for source_id in target_source_ids
+        for entity_id in ast_mentions.get(source_id, {}).get("candidate_entity_ids", [])
+    }
+    basis_surface_ids = {item["surface_mention_id"] for item in basis_mentions}
+    return (
+        target_source_ids <= basis_surface_ids
+        and object_ids == target_entities == set(event["target_entity_ids"])
+    )
+
+
 def _matching_projection_profiles(
     core: dict[str, Any], inputs: dict[str, Any]
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     projection = inputs.get("PROJECTION_RULE_SET", load_yaml(PROJECTION_RULE_SET))
     entity_types = _entity_type_lookup(inputs)
+    mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    frame_by_id = {item["frame_id"]: item for item in inputs.get("EVENT_FRAME", {}).get("frames", [])}
+    ast_mentions = {item["surface_mention_id"]: item for item in inputs.get("CLAUSE_AST", {}).get("surface_mentions", [])}
+    event_mapping = inputs.get("EVENT_RELATION_MAPPING", {}).get("event_mapping", {})
     matches: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for relation in core["resolved_relations"]:
         subject_types = _selector_types(relation["subject_selector"], entity_types)
@@ -872,6 +1010,15 @@ def _matching_projection_profiles(
                 and (
                     not when.get("event_target_equals_relation_object")
                     or set(event["target_entity_ids"]) == set(relation["object_selector"]["entity_ids"])
+                )
+                and _relation_is_bound_to_event(
+                    relation,
+                    event,
+                    event_mapping,
+                    entity_types,
+                    [mention_by_key[root] for root in relation["root_keys"] if root in mention_by_key],
+                    frame_by_id,
+                    ast_mentions,
                 )
             ]
             if compatible_events:
@@ -918,19 +1065,49 @@ def validate_semantic_authority(
     entity_types = _entity_type_lookup(inputs)
     predicate_matrix = inputs.get("PREDICATE_TYPE_MAPPING", {}).get("predicate_type_matrix", {})
     event_mapping = inputs.get("EVENT_RELATION_MAPPING", {}).get("event_mapping", {})
+    frame_by_id = {
+        item["frame_id"]: item
+        for item in inputs.get("EVENT_FRAME", {}).get("frames", [])
+    }
+    ast_mentions = {
+        item["surface_mention_id"]: item
+        for item in inputs.get("CLAUSE_AST", {}).get("surface_mentions", [])
+    }
     for relation in core["resolved_relations"]:
         roots = relation["root_keys"]
         basis_mentions = [mention_by_key[root] for root in roots if root in mention_by_key]
         basis_events = [event_by_key[root] for root in roots if root in event_by_key]
         selector_ids = set(relation["subject_selector"]["entity_ids"] + relation["object_selector"]["entity_ids"])
-        if selector_ids - {item["entity_id"] for item in basis_mentions} and relation["derivation_mode"] == "DIRECT_MENTION_DERIVED":
+        if relation["derivation_mode"] == "DIRECT_MENTION_DERIVED" and (
+            any(not root.startswith("RM") for root in roots)
+            or selector_ids != {item["entity_id"] for item in basis_mentions}
+        ):
             errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
         matrix = predicate_matrix.get(relation["predicate"])
         if matrix is None or _selector_types(relation["subject_selector"], entity_types) - set(matrix["subject_types"]) or _selector_types(relation["object_selector"], entity_types) - set(matrix["object_types"]):
             errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
-        if relation["derivation_mode"] == "EVENT_DERIVED":
-            if not basis_events or any(relation["predicate"] not in event_mapping.get(item["event_type"], {}).get("predicates", {}) for item in basis_events):
-                errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
+        candidate_events = (
+            basis_events
+            if relation["derivation_mode"] == "EVENT_DERIVED"
+            else list(event_by_key.values())
+        )
+        if relation["derivation_mode"] == "EVENT_DERIVED" and (
+            not basis_events or any(not root.startswith("RE") for root in roots)
+        ):
+            errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
+        if not any(
+            _relation_is_bound_to_event(
+                relation,
+                event,
+                event_mapping,
+                entity_types,
+                basis_mentions,
+                frame_by_id,
+                ast_mentions,
+            )
+            for event in candidate_events
+        ):
+            errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
 
     profiles = _matching_projection_profiles(core, inputs)
     wh_present = any(item["marker_kind"] == "WH_FOCUS" for item in inputs.get("CLAUSE_AST", {}).get("assertion_markers", []))
@@ -977,11 +1154,211 @@ def validate_semantic_authority(
     return ordered(errors)
 
 
+def _queryir_id(identifier: str) -> str:
+    prefixes = {"RM": "M", "RE": "E", "RR": "R", "RN": "N", "RQ": "Q"}
+    for source, target in prefixes.items():
+        if identifier.startswith(source):
+            return f"{target}{int(identifier[len(source):]):02d}"
+    raise ValueError(identifier)
+
+
+def derive_queryir_projection(
+    core: dict[str, Any], inputs: dict[str, Any]
+) -> dict[str, Any]:
+    """Deterministically emit every QueryIR field from bound upstream objects."""
+    normalized = inputs["NORMALIZED_REQUEST"]
+    ast = inputs["CLAUSE_AST"]
+    frame_object = inputs["EVENT_FRAME"]
+    proposition_nodes = sorted(
+        (item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (item["source_span"]["start_char"], item["source_span"]["end_char"]),
+    )
+    clause_by_node = {
+        item["node_id"]: f"C{index:02d}"
+        for index, item in enumerate(proposition_nodes, 1)
+    }
+    clause_order = {clause_id: index for index, clause_id in enumerate(clause_by_node.values(), 1)}
+    clauses = [
+        {
+            "alternative_group_id": None,
+            "clause_id": f"C{index:02d}",
+            "discourse_operator": "ROOT" if index == 1 else "AND",
+            "order": index,
+            "parent_clause_id": None if index == 1 else "C01",
+            "source_span": copy.deepcopy(node["source_span"]),
+        }
+        for index, node in enumerate(proposition_nodes, 1)
+    ]
+    ast_mentions = {item["surface_mention_id"]: item for item in ast["surface_mentions"]}
+    mention_id_by_surface = {
+        item["surface_mention_id"]: _queryir_id(item["mention_key"])
+        for item in core["resolved_mentions"]
+    }
+    mentions = []
+    for item in core["resolved_mentions"]:
+        source = ast_mentions[item["surface_mention_id"]]
+        mentions.append(
+            {
+                "assertion_status": item["assertion_status"],
+                "clause_id": clause_by_node[source["containing_node_id"]],
+                "entity_id": item["entity_id"],
+                "entity_type": item["entity_type"],
+                "mention_id": _queryir_id(item["mention_key"]),
+                "reference_ids": [],
+                "source_span": copy.deepcopy(source["source_span"]),
+                "temporal_scope": item["temporal_scope"],
+            }
+        )
+    frame_by_id = {item["frame_id"]: item for item in frame_object["frames"]}
+    events = []
+    event_clause_by_key: dict[str, str] = {}
+    for item in core["resolved_events"]:
+        frame = frame_by_id[item["frame_id"]]
+        clause_id = clause_by_node[frame["source_ast_node_ids"][0]]
+        event_clause_by_key[item["event_key"]] = clause_id
+        source_ids = {
+            source_id
+            for slot in frame["participant_slots"]
+            for source_id in slot["source_ids"]
+        }
+        events.append(
+            {
+                "actor_entity_ids": item["actor_entity_ids"],
+                "assertion_status": item["assertion_status"],
+                "clause_id": clause_id,
+                "event_id": _queryir_id(item["event_key"]),
+                "event_type": item["event_type"],
+                "finding_polarity": item["finding_polarity"],
+                "mention_ids": sorted(mention_id_by_surface[source] for source in source_ids),
+                "method_entity_id": item["method_entity_id"],
+                "reference_ids": [],
+                "source_span": copy.deepcopy(frame["source_spans"][0]),
+                "specimen_code": item["specimen_code"],
+                "target_entity_id": item["target_entity_ids"][0] if len(item["target_entity_ids"]) == 1 else None,
+                "temporal_scope": item["temporal_scope"],
+            }
+        )
+    mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    relation_metadata: dict[str, dict[str, Any]] = {}
+    relation_intents = []
+    for item in core["resolved_relations"]:
+        basis_ids = [_queryir_id(root) for root in item["root_keys"]]
+        clause_ids = sorted(
+            {
+                next(mention["clause_id"] for mention in mentions if mention["mention_id"] == basis_id)
+                for basis_id in basis_ids
+                if basis_id.startswith("M")
+            },
+            key=clause_order.get,
+        )
+        if not clause_ids:
+            clause_ids = sorted(
+                {event_clause_by_key[root] for root in item["root_keys"] if root in event_clause_by_key},
+                key=clause_order.get,
+            )
+        spans = [copy.deepcopy(clauses[clause_order[cid] - 1]["source_span"]) for cid in clause_ids]
+        assertions = {mention_by_key[root]["assertion_status"] for root in item["root_keys"] if root in mention_by_key}
+        temporals = {mention_by_key[root]["temporal_scope"] for root in item["root_keys"] if root in mention_by_key}
+        assertion = next(iter(assertions)) if len(assertions) == 1 else "UNKNOWN"
+        temporal = next(iter(temporals)) if len(temporals) == 1 else "UNKNOWN"
+        relation_metadata[item["relation_key"]] = {
+            "basis_ids": basis_ids,
+            "clause_ids": clause_ids,
+            "source_spans": spans,
+            "assertion_status": assertion,
+            "temporal_scope": temporal,
+        }
+        relation_intents.append(
+            {
+                "activation_policy": item["activation_policy"],
+                "assertion_status": assertion,
+                "basis_ids": basis_ids,
+                "clause_ids": clause_ids,
+                "derivation_mode": item["derivation_mode"],
+                "intent_id": _queryir_id(item["relation_key"]),
+                "object_selector": copy.deepcopy(item["object_selector"]),
+                "predicate": item["predicate"],
+                "source_spans": spans,
+                "subject_selector": copy.deepcopy(item["subject_selector"]),
+                "temporal_scope": temporal,
+            }
+        )
+    required_roles = []
+    for item in core["semantic_roles"]:
+        metadata = relation_metadata[item["root_keys"][0]]
+        event_clauses = sorted(set(event_clause_by_key.values()), key=clause_order.get)
+        required_roles.append(
+            {
+                "activation_policy": item["activation_policy"],
+                "basis_ids": sorted(metadata["basis_ids"]),
+                "clause_ids": event_clauses,
+                "role_id": _queryir_id(item["role_key"]),
+                "role_namespace": item["role_namespace"],
+                "role_value": item["role_value"],
+            }
+        )
+    narrative_intents = []
+    for item in core["narrative_intents"]:
+        metadata = relation_metadata[item["root_keys"][0]]
+        subject_ids = set(item["entity_selector"]["entity_ids"])
+        subject_basis = sorted(
+            _queryir_id(mention["mention_key"])
+            for mention in core["resolved_mentions"]
+            if mention["entity_id"] in subject_ids
+        )
+        narrative_intents.append(
+            {
+                "activation_policy": item["activation_policy"],
+                "assertion_status": metadata["assertion_status"],
+                "basis_ids": subject_basis,
+                "clause_ids": metadata["clause_ids"],
+                "derivation_mode": "DIRECT_MENTION_DERIVED",
+                "entity_selector": copy.deepcopy(item["entity_selector"]),
+                "narrative_intent_id": _queryir_id(item["narrative_key"]),
+                "required_anchor_predicates": item["required_anchor_predicates"],
+                "semantic_role": item["semantic_role"],
+                "source_spans": metadata["source_spans"],
+                "temporal_scope": metadata["temporal_scope"],
+                "topic_scope": item["topic_scope"],
+            }
+        )
+    return {
+        "ambiguities": [],
+        "clauses": clauses,
+        "events": events,
+        "forbidden_relation_intents": copy.deepcopy(core["forbidden_relations"]),
+        "interpretation_status": "VALID",
+        "knowledge_version": normalized["knowledge_version"],
+        "mentions": mentions,
+        "narrative_intents": narrative_intents,
+        "producer": {
+            "configuration_sha256": sha_bytes(PROJECTION_RULE_SET.read_bytes()),
+            "implementation_kind": "DETERMINISTIC",
+            "producer_id": "p9b1q-queryir-emitter",
+            "producer_version": "0.1-fixture",
+        },
+        "query_ir_version": "0.3-candidate",
+        "relation_intents": relation_intents,
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "required_roles": required_roles,
+        "resolved_overrides": copy.deepcopy(core["resolved_overrides"]),
+        "resolved_references": copy.deepcopy(core["resolved_references"]),
+        "span_basis": ast["span_basis"],
+    }
+
+
 def validate_queryir_projection(
     core: dict[str, Any], query_ir: dict[str, Any], inputs: dict[str, Any]
 ) -> list[dict[str, str]]:
     """Compare every semantic QueryIR array with a deterministic core projection."""
     errors: list[dict[str, str]] = []
+    try:
+        expected_query_ir = derive_queryir_projection(core, inputs)
+    except (KeyError, IndexError, StopIteration, ValueError):
+        expected_query_ir = None
+    if expected_query_ir is None or query_ir != expected_query_ir:
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/"))
 
     def translated(identifier: str) -> str:
         prefixes = {"RM": "M", "RE": "E", "RR": "R", "RN": "N", "RQ": "Q"}
@@ -1349,9 +1726,42 @@ def run_negative() -> list[dict[str, Any]]:
     results = []
     for case in manifest["cases"]:
         base = load_json(resolve_review_path(case["valid_base_object_path"]))
+        stage = case["stage"]
+        base_errors: list[dict[str, str]]
+        if stage == "S0_NORMALIZED_REQUEST":
+            base_request = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+            base_errors = validate_s0(base, base_request)
+        elif stage == "S1_CLAUSE_AST":
+            base_errors = validate_s1(base, normalized[base["request_id"]])
+        elif stage == "S2_EVENT_FRAME":
+            base_ast = (
+                load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+                if case.get("paired_actual_object_paths")
+                and "clause-ast" in case["paired_actual_object_paths"][0]
+                else None
+            )
+            base_errors = validate_s2(base, normalized[base["request_id"]], base_ast)
+        elif stage == "S3_TYPED_SOLVER":
+            s3_record, s3_inputs, _ = load_stage_result("S3")
+            s3_hashes = {item["object_kind"]: item["canonical_sha256"] for item in s3_record["actual_input_objects"]}
+            base_errors = validate_s3(base, s3_inputs, s3_hashes)
+        elif stage == "S4_QUERYIR_EMISSION":
+            _, s4_inputs, _ = load_stage_result("S4")
+            if "solver_result_version" in base:
+                base_query = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+                base_errors = validate_s4(base, base_query, s4_inputs)
+            else:
+                base_typed = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+                base_errors = validate_s4(base_typed, base, s4_inputs)
+        elif stage == "S5_RUNTIME_BINDING":
+            base_errors = validate_s5(base)
+        else:
+            raise ValueError(stage)
+        if base_errors:
+            raise RuntimeError(f"negative fixture base failed before mutation: {case['fixture_id']}")
+
         mutated = apply_patch(base, case["patch"])
         recompute_declared_derived(mutated, case["recompute_derived_hashes"])
-        stage = case["stage"]
         if stage == "S0_NORMALIZED_REQUEST":
             request = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
             errors = validate_s0(mutated, request)
@@ -1370,6 +1780,14 @@ def run_negative() -> list[dict[str, Any]]:
         elif stage == "S3_TYPED_SOLVER":
             s3_record, s3_inputs, _ = load_stage_result("S3")
             s3_hashes = {item["object_kind"]: item["canonical_sha256"] for item in s3_record["actual_input_objects"]}
+            if case.get("actual_input_mutation"):
+                mutation = case["actual_input_mutation"]
+                object_kind = mutation["object_kind"]
+                s3_inputs = copy.deepcopy(s3_inputs)
+                s3_inputs[object_kind] = apply_patch(
+                    s3_inputs[object_kind], mutation["patch"]
+                )
+                s3_hashes[object_kind] = canonical_sha(s3_inputs[object_kind])
             errors = validate_s3(mutated, s3_inputs, s3_hashes)
         elif stage == "S4_QUERYIR_EMISSION":
             _, s4_inputs, _ = load_stage_result("S4")

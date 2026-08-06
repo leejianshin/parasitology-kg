@@ -1,6 +1,6 @@
 contract_version: "0.3-candidate"
 contract_id: "clonorchis_p9b1q_stage_semantic_validators_v0_3"
-status: "FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW"
+status: "FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW"
 result_schema: "stage-semantic-validation-result-schema-candidate.yml"
 canonicalization_profile: "object-canonicalization-and-hash-chain.yml"
 constraint_registry: "constraint-id-registry.yml"
@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 9
     minimality: 8
-    negative: 27
+    negative: 33
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -83,6 +83,7 @@ validators:
       - "root_node_id resolves to the only ROOT and only it has null parent"
       - "all child, marker, mention, scope target, and attachment IDs resolve with the declared type"
       - "every candidate entity and normalized surface is licensed by the content-addressed formal alias authority"
+      - "normalized_surface equals the exact source-span text and an exact registered alias; substring containment is forbidden"
       - "start_char < end_char and text equals normalized request codepoint slice"
       - "UNIQUE attachment or scope target has exactly one candidate; UNRESOLVED has at least two"
       - "NEGATOR and EXCLUSION can scope over S proposition/operator or U mention/object"
@@ -109,6 +110,7 @@ validators:
       - "specimen source span equals an actual specimen expression or explicit typed unknown slot"
       - "frame event_type_domain equals normalized_identity.event_type_domain"
       - "identity contains actor, method, specimen, target, anatomical site and temporal domains"
+      - "every normalized_identity slot references the matching ACTOR, TARGET, METHOD or LOCATION semantic_role and no slot is reused across conflicting dimensions"
       - "reference identity_relation_domain explicitly contains all and only viable SAME_EVENT/DISTINCT_EVENT alternatives"
       - "override dimension is selected only from overridden_dimension_domain"
   S3_TYPED_SOLVER:
@@ -125,6 +127,7 @@ validators:
       - CONSTRAINT_REGISTRY
       - CONSTRAINT_REGISTRY_SCHEMA
       - CONSTRAINT_SET
+      - CONSTRAINT_SET_SCHEMA
       - MINIMALITY_PROOF_SCHEMA
       - PROJECTION_RULE_SET
     required_actual_output: TYPED_CONSTRAINT_RESULT
@@ -145,9 +148,11 @@ validators:
       - "registry entry orders are exactly integers 1 through 42 with no duplicate or gap"
       - "selected constraint IDs equal the complete registry ID sequence in registry validation order"
       - "registry and constraint set both pass their frozen Schemas before any constraint executes"
+      - "the actual registry Schema and constraint-set Schema equal their independently content-addressed frozen objects"
       - "ZERO/ONE/MULTIPLE equals actual enumerated inclusion-minimal solution cardinality"
       - "UNIQUE for a nonempty query contains at least one material QueryIR object"
       - "every relation direction and selector is exactly derived from one event or explicit relation root"
+      - "every direct relation root is the exact selector mention set and is tied to the selected event target through the bound Event Frame slot source"
       - "every emitted semantic object has a rooted acyclic license path"
       - "every retained semantic object has a valid removal witness"
       - "semantic universe and every removal probe resolve from their declared path, pass minimality-proof-schema-candidate.yml, and match the bound canonical hash"
@@ -199,6 +204,7 @@ validators:
       - "S4 performs extraction and validation only; it cannot add, remove, reorder, or rewrite semantic content"
       - "mentions, events, relation intents, required roles and narrative intents are independently reprojected from the typed core and bound AST/Event Frame"
       - "synchronized mutation of output QueryIR and all trace hashes still fails when the recomputed typed-core projection differs"
+      - "request binding, clause topology, mention/event clause membership, relation spans, roles, narratives and query_ir_sha256 are all independently recomputed"
   S5_RUNTIME_BINDING:
     validator_id: p9b1q-stage-semantic-validator-s5
     required_actual_inputs: "complete object chain declared by object-canonicalization-and-hash-chain.yml"

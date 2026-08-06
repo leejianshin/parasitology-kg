@@ -1,38 +1,38 @@
 fixture_manifest_version: 0.1-candidate
 fixture_manifest_id: clonorchis_p9b1q_stage_validator_negative_fixtures_v0_1
-status: FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW
+status: FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW
 mutation_format: RFC6902_JSON_PATCH
 base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 41186c002228030832215a1decb4157ba54385399c6ab04ded00aaf514b2b2e3
+  canonical_sha256: 714d6cf5c4c29dd557545556288d83f200bf8a4cc8f064b11ed8008dc1a6aa32
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 926e770f8b62e3ef13215f2e0ad6e9fa4c7ffac05b783db7ae729874850708ad
+  canonical_sha256: eeaf6c418d7e5c3e6b192ff2b50aec09b159ff1bc5dda2c12af14483e5138725
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 1fdd100486a70a5f542e95adf9d95b24f178511d5d098101e692ae7e30f9b954
+  canonical_sha256: 0d6134cf2af57afe3c6d6d531fa75da6dd728e0b43e6742946e3ebc00011d4d6
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: febe8066d5c92375ef77d879a35edc21f90287d0db2ff5455deba20e3569e7f5
+  canonical_sha256: 40d535ef59b3f2e5a1e4b83cc46e4b632600ada414afdcf0c9d88ef7cc1a9689
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: aea6654c05cb189e756c5fd82fe8760ff20d6dd59ab9c6683c0df3783b35443b
+  canonical_sha256: facfa5e8d19d573015d76de6e875136083a089983451a7ceeeabe9cce3ed64c3
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 2bdc05c6af70d3b684adac338a116e680c9546f9932d0afbb6ce6d7d587fb23e
+  canonical_sha256: 78646e11e1af4a6ae995288330bef571cdc5560e6e543778042fc955bdf08e54
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 710b8562b203b3a4bbad437f03ce75a9bca7a98c442d669748e6be283cf78b0c
+  canonical_sha256: b14707a5be19875b7eb88801f8ccf4ecc27dce5155cb1a4eec9c5f12437f05cd
 - path: fixtures/queryir-exposure-positive.json
-  canonical_sha256: 3ee8fb86ffada4ed7cbcb900f9c71e3bcf5b244d048984ceaedc604a0289e1e9
+  canonical_sha256: 108d9f814581973e4db0e4c24c1f580a77603de60e540732af8b302122063bbe
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 2ffd86a3bbcafa6cde6b095e902aa2512ee50e56dc3e938b9d9edb5f9e44b8e9
+  canonical_sha256: e6c1238403b55465ab2e17d5dea2f56ba5412987b4adfd4e52bfe02fe140be04
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: d856c9613292790e8146b35a5fcd37a4718314f8852ad2323b5c60ee92da69f8
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 4d304638b7c373e9b6b61b9117cbdac51e469999c94817e0863d3c4d7a0be432
+  canonical_sha256: c4d4e5375cedad6afc82db4717438f01baaae8fe8cce555c6a709dde715ce780
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: c840fde302af233d9a899b4d6aa2a55eb34fde3084f4ddc2956dedb093151fe1
+  canonical_sha256: 38887a57a077b843db0c35e2836377d81cac8ef3d263d9ca520790f6e0452964
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -342,6 +342,7 @@ cases:
   - strict-schema-gate.mjs
   - typed-solution-core-schema-candidate.yml
   - phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml
+  - constraint-set-schema-candidate.yml
   fault_class: ACTUAL_OBJECT_BINDING_MISMATCH
   patch:
   - op: replace
@@ -351,7 +352,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: c840fde302af233d9a899b4d6aa2a55eb34fde3084f4ddc2956dedb093151fe1
+  base_object_canonical_sha256: 38887a57a077b843db0c35e2836377d81cac8ef3d263d9ca520790f6e0452964
 - fixture_id: NEG-S3-EVENT-MAPPING-HASH
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -502,6 +503,104 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-SLOT_TYPE
   expected_failure_code: SLOT_TYPE_MISMATCH
+- fixture_id: NEG-S1-NONEXACT-ALIAS-SURFACE
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-exposure-positive.json
+  fault_class: FORMAL_ALIAS_MUST_MATCH_EXACT_SOURCE_SURFACE
+  patch:
+  - op: replace
+    path: /surface_mentions/0/normalized_surface
+    value: 生食淡水
+  - op: replace
+    path: /surface_mentions/0/source_span/end_char
+    value: 12
+  - op: replace
+    path: /surface_mentions/0/source_span/text
+    value: 生食淡水
+  recompute_derived_hashes: []
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-REF_INTEGRITY
+  expected_failure_code: DANGLING_REFERENCE
+- fixture_id: NEG-S2-IDENTITY-SLOT-ROLE-CONFLICT
+  stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-exposure-positive.json
+  fault_class: NORMALIZED_IDENTITY_TARGET_REFERENCES_NON_TARGET_SLOT
+  patch:
+  - op: replace
+    path: /frames/0/participant_slots/0/semantic_role
+    value: ACTOR
+  recompute_derived_hashes: []
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-IDENTITY_CONSISTENCY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
+- fixture_id: NEG-S3-RELATION-DISCONNECTED-FROM-EVENT-TARGET
+  stage: S3_TYPED_SOLVER
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths: []
+  fault_class: DIRECT_RELATION_ROOT_OMITS_BOUND_EVENT_TARGET_MENTION
+  patch:
+  - op: remove
+    path: /selected_solution/resolved_relations/0/root_keys/1
+  recompute_derived_hashes:
+  - semantic_object_set_sha256
+  - semantic_solution_core_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-SOLVER-EVENT_RELATION_DERIVATION
+  expected_failure_code: EVENT_RELATION_DERIVATION_MISMATCH
+- fixture_id: NEG-S3-REGISTRY-ACTUAL-OBJECT-SCHEMA-INVALID
+  stage: S3_TYPED_SOLVER
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths: []
+  fault_class: CONTENT_ADDRESSED_REGISTRY_OBJECT_FAILS_FROZEN_SCHEMA
+  patch:
+  - op: replace
+    path: /constraint_registry_sha256
+    value: 59b2c7e06e24873981c23a6a6efeb645f6b9a8d471392d26031e54dbee1f000e
+  actual_input_mutation:
+    object_kind: CONSTRAINT_REGISTRY
+    patch:
+    - op: add
+      path: /unexpected_field
+      value: true
+  recompute_derived_hashes: []
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-SOLVER-REGISTRY_MEMBERSHIP
+  expected_failure_code: UNKNOWN_CONSTRAINT_ID
+- fixture_id: NEG-S4-STALE-QUERYIR-HASH
+  stage: S4_QUERYIR_EMISSION
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/queryir-exposure-positive.json
+  fault_class: EMBEDDED_QUERYIR_HASH_NOT_RECOMPUTED
+  patch:
+  - op: replace
+    path: /selected_solution/queryir_emission_record/query_ir_sha256
+    value: '0000000000000000000000000000000000000000000000000000000000000000'
+  recompute_derived_hashes: []
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+  expected_failure_code: NON_PURE_PROJECTION
+- fixture_id: NEG-S4-SYNCHRONIZED-CLAUSE-TOPOLOGY-TAMPER
+  stage: S4_QUERYIR_EMISSION
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/queryir-exposure-positive.json
+  query_ir_from_mutated_emission: true
+  fault_class: OUTPUT_TRACE_AND_HASH_AGREE_BUT_CLAUSE_TOPOLOGY_DIFFERS_FROM_AST
+  patch:
+  - op: replace
+    path: /selected_solution/queryir_emission_record/query_ir/clauses/1/parent_clause_id
+    value: C02
+  recompute_derived_hashes:
+  - query_ir_sha256
+  - field_traces.emitted_value_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+  expected_failure_code: NON_PURE_PROJECTION
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true

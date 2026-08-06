@@ -1,0 +1,49 @@
+revision_id: P9B1Q-ARCHITECTURE-REVISION-6
+status: FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW
+parent_commit: 23053e440a0c0ae7f3d3547f74c2b90c8720972d
+frozen_implementation_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
+scope: REVIEW_ONLY_ARCHITECTURE_EVIDENCE
+closed_findings:
+  exact_alias_authority:
+    - normalized_surface equals its source-span text
+    - the complete surface equals one registered formal alias
+    - substring licensing is forbidden
+  event_frame_identity_roles:
+    - actor, target, method and location identities bind only matching semantic-role slots
+    - one slot cannot satisfy conflicting identity dimensions
+    - diagnostic binding equals the normalized method, target and specimen identity
+  event_relation_authorization:
+    - direct relation roots equal the complete selector mention set
+    - the selected event, Event Frame target slot and source mention determine the relation target
+    - event-derived selectors are recomputed from the actual bound event and frozen direction mapping
+  pure_queryir_projection:
+    - request identity, clause topology, mention/event clause membership, relation spans, roles and narratives are independently regenerated
+    - query_ir_sha256 is recomputed from the actual embedded QueryIR
+    - synchronized output, trace and hash mutations cannot authorize a different projection
+  actual_input_schema_gate:
+    - the registry and constraint set pass their own frozen Schemas
+    - both actual Schema objects equal the independently content-addressed local authority
+  isolated_negative_precondition:
+    - every negative case first proves its unmodified base passes the same stage validator
+    - a failing base aborts the suite before its mutation is evaluated
+negative_evidence:
+  positive_cases: 9
+  minimality_removal_cases: 8
+  negative_cases: 33
+  newly_frozen_attacks:
+    - FORMAL_ALIAS_MUST_MATCH_EXACT_SOURCE_SURFACE
+    - NORMALIZED_IDENTITY_TARGET_REFERENCES_NON_TARGET_SLOT
+    - DIRECT_RELATION_ROOT_OMITS_BOUND_EVENT_TARGET_MENTION
+    - CONTENT_ADDRESSED_REGISTRY_OBJECT_FAILS_FROZEN_SCHEMA
+    - EMBEDDED_QUERYIR_HASH_NOT_RECOMPUTED
+    - OUTPUT_TRACE_AND_HASH_AGREE_BUT_CLAUSE_TOPOLOGY_DIFFERS_FROM_AST
+  repeat_runs: 3
+  required_repeat_result: BYTE_IDENTICAL
+boundaries:
+  frozen_runtime_modified: false
+  p9a_modified: false
+  model_or_network_at_runtime: false
+  r11_frozen: false
+  pushed: false
+  pr_created: false
+  p9b2_started: false

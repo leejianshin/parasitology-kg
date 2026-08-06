@@ -1,7 +1,7 @@
 # P9-B1Q architecture review
 
-Status: executable architecture evidence corrected after the second
-CHANGES_REQUIRED review and awaiting a third independent, read-only review.
+Status: executable architecture evidence corrected after the fifth
+CHANGES_REQUIRED review and awaiting a sixth independent, read-only review.
 
 This atom freezes `6ac0e4b2978e5fb41e7b90e27ced17826d35a394` unchanged and
 replaces the next implementation direction—not the frozen code—with a four-stage
@@ -49,12 +49,12 @@ semantic errors stable instead of making them correct.
 - `minimality-proof-schema-candidate.yml`: independently persisted semantic
   universe plus eight replayable single-removal probes.
 - `execution-binding-sidecar-architecture-schema-candidate.yml`: a complete S5
-  positive chain binding 45 actual objects and five stage PASS results.
-- `design-manifest-v0.6.yml`: the raw-byte review inventory for the corrected
+  positive chain binding 46 actual objects and five stage PASS results.
+- `design-manifest-v0.7.yml`: the raw-byte review inventory for the corrected
   design, fixtures, and protected implementation/P9-A boundary.
 - `reference-stage-semantic-validator.py`: a deterministic, review-only
   executable that validates the positive chain, replays all eight minimality
-  removals through the same semantic predicate, and executes all twenty-seven
+  removals through the same semantic predicate, and executes all thirty-three
   isolated negative mutations.
 - `fixtures/reference-validator-execution-summary.json` and its Schema: the
   byte-identical three-run result binding the actual executable and contract.
@@ -62,7 +62,7 @@ semantic errors stable instead of making them correct.
 The corrected evidence set passes strict Draft 2020-12 compilation for all twelve
 local candidate Schemas, validates 27 positive fixtures, resolves all 189 QueryIR
 field traces to persisted source objects, and executes 9 positive, 8 minimality,
-and 27 negative gates in three byte-identical runs. All review JSON actual objects
+and 33 negative gates in three byte-identical runs. All review JSON actual objects
 are stored in their exact canonical bytes.
 
 ## Boundaries

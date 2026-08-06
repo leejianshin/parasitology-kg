@@ -1,6 +1,6 @@
-projection_rule_set_version: "0.2-candidate"
-projection_rule_set_id: "clonorchis_p9b1q_queryir_projection_rules_v0_2"
-status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
+projection_rule_set_version: "0.3-candidate"
+projection_rule_set_id: "clonorchis_p9b1q_queryir_projection_rules_v0_3"
+status: "FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW"
 input_schema: "typed-constraint-result-schema-candidate.yml"
 emission_record_schema: "queryir-emission-record-schema-candidate.yml"
 output_schema: "../p9b1q/query-ir-schema-candidate.yml"
@@ -78,6 +78,10 @@ semantic_projection_closure:
   required_narrative_intents: EXACT_SET_NO_OMISSION_NO_ADDITION
   queryir_semantic_arrays: EXACT_PROJECTION_FROM_TYPED_CORE
   synchronized_output_and_trace_mutation: FAIL_CLOSED_BY_CORE_RECOMPUTATION
+  direct_relation_basis: EXACT_SELECTOR_MENTION_SET_BOUND_TO_EVENT_TARGET_SLOT_SOURCE
+  event_derived_relation_basis: EXACT_BOUND_EVENT_PARTICIPANT_PROJECTION
+  request_and_clause_binding: EXACT_NORMALIZED_REQUEST_AND_AST_PROJECTION
+  query_ir_sha256: RECOMPUTED_FROM_ACTUAL_EMITTED_QUERYIR
 
 forbidden_operations:
   - parse_query_text
