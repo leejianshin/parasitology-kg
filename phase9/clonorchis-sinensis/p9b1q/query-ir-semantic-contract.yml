@@ -1,0 +1,194 @@
+contract_version: "0.1-candidate"
+contract_id: "clonorchis_p9b1q_scoped_query_ir_semantics_v0_1"
+status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
+target_implementation_commit: "accf29d144412b5634de17b77c53f153b8ac7f7d"
+
+authority:
+  request_schema: "phase9/clonorchis-sinensis/request-schema.yml"
+  entity_type_schema: "schema/entity-types.yml"
+  relation_type_schema: "schema/relation-types.yml"
+  reviewed_entities: "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
+  reviewed_relations: "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
+  runtime_projection: "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+  knowledge_version: "clonorchis_pcms_v1"
+  claim_id_in_query_ir: "PROHIBITED"
+  source_or_locator_in_query_ir: "PROHIBITED"
+  answer_text_in_query_ir: "PROHIBITED"
+
+interpretation_unit:
+  input: "ACTUAL_P9A_REQUEST_OBJECT"
+  span_source: "request.query_text"
+  span_indexing: "UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN"
+  normalization_may_change_span_basis: false
+  every_clause_mention_event_and_intent_requires_exact_source_span: true
+  empty_or_synthetic_span: "FAIL_CLOSED"
+
+structural_invariants:
+  identifiers_unique_within_namespace: true
+  clause_order_contiguous_from_one: true
+  exactly_one_root_clause: true
+  root_parent_clause_id: null
+  non_root_parent_must_exist: true
+  clause_parent_graph_acyclic: true
+  referenced_clause_mention_event_role_ids_must_exist: true
+  source_span_text_must_equal_request_substring: true
+  child_span_must_be_contained_by_bound_clause_span: true
+  duplicate_semantic_objects_after_canonicalization: "FAIL_CLOSED"
+
+ontology_invariants:
+  entity_id_must_exist_in_reviewed_runtime_nodes: true
+  entity_type_must_equal_reviewed_node_type: true
+  predicate_must_exist_in_relation_types: true
+  selector_types_must_be_allowed_for_predicate_direction: true
+  out_of_vocabulary_entity_predicate_or_role: "FAIL_CLOSED"
+  query_ir_specimen_codes:
+    status: "QUERY_SEMANTICS_ONLY_NOT_KG_ENTITIES"
+    allowed: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE, UNSPECIFIED]
+    must_not_be_promoted_to_medical_claim: true
+
+clause_and_discourse_semantics:
+  ROOT: "Top-level request proposition."
+  AND: "Both child propositions are requested or asserted."
+  OR: "Alternatives remain distinct; the interpreter must not collapse them into AND."
+  CONTRAST: "Contrasted propositions remain independently scoped."
+  OVERRIDE: >-
+    A later explicit proposition may replace an earlier proposition only when
+    both refer to the same normalized event signature and the later span is
+    strictly later in request.query_text.
+  CONDITION: "The proposition is conditional and cannot activate an unconditional fact."
+  implied_override_without_same_event_signature: "PROHIBITED"
+
+assertion_and_temporal_semantics:
+  assertion_statuses:
+    AFFIRMED: "May license graph execution if all other gates pass."
+    NEGATED: "Describes a negated proposition; must not license its affirmative relation."
+    EXCLUDED: "Explicitly outside the requested scope; must create a prohibition when a formal relation is identifiable."
+    HYPOTHETICAL: "Possible or conditional only; must not license an affirmative material claim."
+    UNKNOWN: "Scope unresolved; makes the QueryIR non-executable."
+  temporal_scopes:
+    HISTORICAL: "Past exposure or event; does not automatically express current diagnosis or future prevention."
+    CURRENT: "Current finding, state, or request."
+    FUTURE: "Prospective prevention, treatment, or recommendation."
+    GENERAL: "Timeless/general knowledge request."
+    UNKNOWN: "Temporal role unresolved; fail closed when it changes relation activation."
+  cross_temporal_activation_without_explicit_bridge: "PROHIBITED"
+
+diagnostic_event_semantics:
+  normalized_signature:
+    - "method_entity_id"
+    - "specimen_code"
+    - "target_entity_id"
+    - "finding_polarity"
+    - "assertion_status"
+    - "temporal_scope"
+  method_specimen_constraints:
+    diagnostic.stool_egg_microscopy: "STOOL"
+    diagnostic.duodenal_fluid_egg_microscopy: "DUODENAL_FLUID"
+    diagnostic.biliary_imaging: "NOT_APPLICABLE"
+  diagnostic_finding_requires_method: true
+  pathogen_test_requires_specimen: true
+  imaging_requires_specimen_not_applicable: true
+  shared_predicate_over_coordinated_methods:
+    rule: "EMIT_ONE_EVENT_PER_METHOD_SPECIMEN_PAIR"
+    silent_binding_to_only_one_conjunct: "PROHIBITED"
+  negation_scope:
+    local_to_event: true
+    global_role_set_as_substitute: "PROHIBITED"
+    object_negation_is_not_automatically_negative_finding: true
+    double_negation:
+      resolution: "COMPOSITIONAL_WITHIN_BOUND_EVENT_SPAN"
+      unresolved_result: "AMBIGUOUS_AND_NO_RETRIEVAL"
+  conflicting_findings:
+    same_signature_without_valid_override: "AMBIGUOUS_AND_NO_RETRIEVAL"
+    valid_later_override: "KEEP_BOTH_IN_TRACE_MARK_EARLIER_NONACTIVATING"
+  unspecified_method_specimen_or_polarity_when_material: "AMBIGUOUS_AND_NO_RETRIEVAL"
+
+relation_intent_semantics:
+  derivation_basis:
+    - "AFFIRMED_MENTION"
+    - "AFFIRMED_EVENT"
+    - "EXPLICIT_REQUIRED_ROLE"
+    - "CONTRACT_AUTHORIZED_CONTRAST_RULE"
+  lexical_similarity_as_intent_authority: "PROHIBITED"
+  relation_intent_requires_formal_predicate: true
+  subject_object_direction_preserved: true
+  selector_semantics:
+    entity_ids: "Exact reviewed entity constraints."
+    entity_types: "Open slot constrained to reviewed entity type; not a new fact."
+    both_empty: "INVALID"
+  non_affirmed_activation:
+    NEGATED: "FORBIDDEN"
+    EXCLUDED: "FORBIDDEN_AND_RECORD_PROHIBITION"
+    HYPOTHETICAL: "FORBIDDEN_UNLESS_OUTPUT_REMAINS_NONFACTUAL_AND_SEPARATELY_AUTHORIZED"
+    UNKNOWN: "FAIL_CLOSED"
+  formal_event_graph:
+    source: "REVIEWED_RELATIONS_ONLY"
+    event_types:
+      DEVELOPMENT: [develops_into]
+      HOST_ROLE:
+        - has_definitive_host
+        - has_first_intermediate_host
+        - has_second_intermediate_host
+        - has_paratenic_host
+        - has_reservoir_host
+        - has_vector
+      INGESTION: [transmitted_via, infective_stage_for]
+      SHEDDING: [sheds_stage]
+      ENVIRONMENT_PRESENCE: [present_in_environment, transmission_supported_by]
+      INFECTION: [infects, infective_stage_for]
+      PARASITISM: [parasitizes_site]
+      PATHOLOGICAL_PROCESS: [pathogenic_stage_for, has_pathological_process, occurs_in]
+      TREATMENT: [treated_by]
+      CONTROL: [controlled_by, targets]
+      HAZARD_CLASSIFICATION: [classified_as]
+    graph_completion_policy: >-
+      The executor may traverse reviewed edges needed to satisfy an AFFIRMED
+      event or required relation group, but QueryIR itself must not name claims.
+
+role_semantics:
+  allowlist_sources:
+    TOPIC_SCOPE: "query-ir-schema-candidate.yml#/$defs/topic_scope"
+    EVIDENCE_ROLE: "reviewed diagnostic methods and authorized runtime projection"
+    SEMANTIC_BOUNDARY: "reviewed claim qualifiers and P9-A semantic boundaries"
+    CONTROL_ROLE: "reviewed controlled_by/targets qualifiers"
+  role_value_must_resolve_to_allowlist: true
+  not_confirmatory_contrast:
+    trigger: >-
+      An AFFIRMED request about a reviewed non-confirmatory diagnostic role or
+      its explicit boundary.
+    required_contrast_roles: [pathogen_confirmation]
+    required_predicates: [diagnosed_by, diagnostic_stage_for]
+    trace_requirement: "REQUIRED_CONTRAST basis must point to the triggering event or role."
+    claim_selection_in_query_ir: "PROHIBITED"
+  treatment_hazard_boundary:
+    explicit_intent_must_be_planned_even_if_broad_retrieval_would_find_claims: true
+
+candidate_semantic_license:
+  applies_after_graph_execution: true
+  is_relevance_reranking: false
+  every_material_candidate_requires_one_of:
+    - "AFFIRMED_RELATION_INTENT"
+    - "AFFIRMED_EVENT"
+    - "REQUIRED_ROLE"
+    - "REQUIRED_CONTRAST"
+  candidate_direction_must_match_intent_selector: true
+  candidate_triggered_only_by_negated_excluded_or_hypothetical_basis: "EXCLUDE"
+  broad_coverage_candidate_without_license: "INTERNAL_ONLY_NOT_MATERIAL"
+  forbidden_relation_match: "EXCLUDE_AND_AUDIT"
+  conflict_or_scope_mismatch: "COVERAGE_GAP_OR_ABSTAIN"
+
+executable_query_ir_gate:
+  schema_valid: true
+  semantic_contract_valid: true
+  interpretation_status: "VALID"
+  ambiguities_empty: true
+  forbidden_and_required_intents_noncontradictory: true
+  on_failure: "DO_NOT_RETRIEVE"
+
+implementation_boundary:
+  interpreter_route_selected: false
+  allowed_future_candidates: [DETERMINISTIC, CONSTRAINED_MODEL, HYBRID]
+  model_call_in_this_atom: false
+  code_change_in_this_atom: false
+  p9a_contract_change: false
+  p9b2_started: false

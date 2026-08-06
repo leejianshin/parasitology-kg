@@ -1,0 +1,134 @@
+matrix_version: "1.0"
+matrix_id: "clonorchis_p9b1q_r9_failure_coverage_v1"
+status: "AGGREGATE_FAILURE_TYPES_ONLY_NO_SECRET_QUERY_TEXT"
+
+r9_evidence:
+  target_commit: "accf29d144412b5634de17b77c53f153b8ac7f7d"
+  suite_id: "clonorchis_p9b1_revision9_blind_heldout_v1"
+  suite_status: "CONFIDENTIAL_DIAGNOSTIC_SET_USED_FOR_ARCHITECTURE_SELECTION"
+  case_count: 24
+  canonical_content_sha256: "d67261c7720289ba75f355b3e610a6cdfa97571fc4ae80ad8fc4c52a136241fd"
+  top12_required_claim_recall: "24/24"
+  complete_query_plan: "9/24"
+  source_locator_semantics: "24/24"
+  combined_pass: "9/24"
+  secret_query_text_in_this_file: false
+
+coverage:
+  - finding_id: "R9-F01"
+    severity: "HIGH"
+    aggregate_problem: "diagnostic method/specimen/event/polarity binding incomplete"
+    query_ir_fields:
+      - "clauses.source_span"
+      - "clauses.discourse_operator"
+      - "events.method_entity_id"
+      - "events.specimen_code"
+      - "events.target_entity_id"
+      - "events.finding_polarity"
+      - "events.assertion_status"
+      - "events.mention_ids"
+      - "ambiguities"
+    semantic_rules:
+      - "one event per coordinated method–specimen pair"
+      - "local compositional negation and double-negation scope"
+      - "same-signature later override only"
+      - "material unspecified binding fails closed"
+    required_r10_assertions:
+      - "exact method–specimen–target–polarity tuples"
+      - "no extra contradictory event"
+      - "all event spans match raw query"
+      - "unresolved binding prevents retrieval"
+
+  - finding_id: "R9-F02"
+    severity: "HIGH"
+    aggregate_problem: "implicit formal event graph fails to activate all requested relations"
+    query_ir_fields:
+      - "events.event_type"
+      - "events.actor_entity_ids"
+      - "relation_intents.predicate"
+      - "relation_intents.subject_selector"
+      - "relation_intents.object_selector"
+      - "relation_intents.activation_policy"
+      - "relation_intents.basis_ids"
+    semantic_rules:
+      - "event-to-predicate mapping uses reviewed graph relations"
+      - "formal subject/object direction preserved"
+      - "implicit host, stage, site, pathology and transmission events are compositional"
+      - "claim IDs remain executor output, never QueryIR input"
+    required_r10_assertions:
+      - "all required predicates activated"
+      - "all forbidden predicates absent"
+      - "selector direction and entity types valid"
+      - "each activation traces to an affirmed event or mention"
+
+  - finding_id: "R9-F03"
+    severity: "HIGH"
+    aggregate_problem: "affirmed/excluded control concepts and temporal roles are not compositionally scoped"
+    query_ir_fields:
+      - "mentions.assertion_status"
+      - "mentions.temporal_scope"
+      - "events.assertion_status"
+      - "events.temporal_scope"
+      - "forbidden_relation_intents"
+      - "required_roles"
+      - "clauses.discourse_operator"
+    semantic_rules:
+      - "excluded control concepts create prohibitions, not affirmative activations"
+      - "historical exposure does not activate future prevention"
+      - "future prevention does not rewrite historical exposure"
+      - "integrated control remains distinct from individual excluded measures"
+    required_r10_assertions:
+      - "forbidden control activation false-positive count is zero"
+      - "temporal scopes match each proposition"
+      - "future/historical cross-talk absent"
+      - "candidate semantic gate excludes prohibited relations"
+
+  - finding_id: "R9-F04"
+    severity: "MEDIUM"
+    aggregate_problem: "treatment, hazard and boundary claims may be retrieved without explicit planning"
+    query_ir_fields:
+      - "events.event_type"
+      - "relation_intents.predicate"
+      - "required_roles.role_namespace"
+      - "required_roles.role_value"
+      - "required_roles.activation_policy"
+    semantic_rules:
+      - "explicit treatment intent creates treated_by relation intent"
+      - "hazard request creates classified_as intent without individual-risk promotion"
+      - "boundary role is explicit and traceable"
+    required_r10_assertions:
+      - "retrieval success cannot substitute for missing QueryIR intent"
+      - "required treatment/hazard/boundary intent and role are present"
+      - "unlicensed broad candidates cannot become material claims"
+
+  - finding_id: "R9-F05"
+    severity: "HIGH"
+    aggregate_problem: "broad post-retrieval coverage masks pre-retrieval semantic failure"
+    query_ir_fields:
+      - "interpretation_status"
+      - "relation_intents"
+      - "required_roles"
+      - "forbidden_relation_intents"
+      - "ambiguities"
+    semantic_rules:
+      - "QueryIR validity is an independent gate before retrieval"
+      - "candidate semantic license is required after retrieval"
+      - "Top12 recall is reported separately from interpretation correctness"
+    required_r10_assertions:
+      - "QueryIR full-pass rate is measured independently"
+      - "Top12 required-claim recall is measured independently"
+      - "material-claim license rate is 100%"
+      - "a recall-only pass cannot pass the suite"
+
+audit_caveat:
+  source: "R9 independent review"
+  rule: >-
+    A questionable topic-label expectation must not alone create a failure.
+    Formal predicate, direction, event, role and prohibition assertions take
+    precedence over informal topic labels.
+
+completion_gate:
+  every_finding_has_schema_field_coverage: true
+  every_finding_has_semantic_rule_coverage: true
+  every_finding_has_r10_behavioral_assertions: true
+  design_coverage_is_not_implementation_evidence: true

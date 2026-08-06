@@ -1,0 +1,109 @@
+rules_version: "0.1-candidate"
+rules_id: "clonorchis_p9b1q_ambiguity_fail_closed_v0_1"
+status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
+
+default_policy:
+  unresolved_ambiguity: "NO_RETRIEVAL"
+  unsupported_intent: "NO_RETRIEVAL"
+  unknown_assertion_or_material_temporal_scope: "NO_RETRIEVAL"
+  silent_best_guess: "PROHIBITED"
+  broaden_query_to_hide_ambiguity: "PROHIBITED"
+  p9a_mapping:
+    disposition: "ABSTAIN"
+    hard_fail_code: "NO_SAFE_ADMITTED_ANSWER"
+    material_claim_ids: []
+
+ambiguity_classes:
+  ENTITY_RESOLUTION:
+    trigger: "A material mention maps to zero or multiple reviewed entity IDs without a unique contextual resolution."
+    required_trace: [source_span, candidate_entity_ids]
+    retrieval: "PROHIBITED"
+  CLAUSE_ATTACHMENT:
+    trigger: "A modifier, negation, condition, or contrast can attach to multiple clauses with different activations."
+    required_trace: [source_spans, candidate_parent_clause_ids]
+    retrieval: "PROHIBITED"
+  NEGATION_SCOPE:
+    trigger: "The target of a negation or double negation cannot be uniquely bound to a proposition or event."
+    required_trace: [source_spans, candidate_event_or_intent_ids]
+    retrieval: "PROHIBITED"
+  COORDINATION_SCOPE:
+    trigger: "A shared predicate or polarity over coordinated methods, specimens, entities, or interventions is unresolved."
+    required_trace: [source_spans, candidate_distributions]
+    retrieval: "PROHIBITED"
+  METHOD_SPECIMEN_BINDING:
+    trigger: "A diagnostic finding lacks a unique method–specimen pair or conflicts with the formal method constraint."
+    required_trace: [source_spans, candidate_method_specimen_pairs]
+    retrieval: "PROHIBITED"
+  FINDING_POLARITY:
+    trigger: "A material diagnostic event cannot be uniquely classified as POSITIVE or NEGATIVE."
+    required_trace: [source_spans, candidate_polarities]
+    retrieval: "PROHIBITED"
+  TEMPORAL_SCOPE:
+    trigger: "Historical exposure, current finding, or future action cannot be separated where activation would differ."
+    required_trace: [source_spans, candidate_temporal_scopes]
+    retrieval: "PROHIBITED"
+  REFERENCE_RESOLUTION:
+    trigger: "A pronoun or omitted argument can refer to multiple events or entities."
+    required_trace: [source_spans, candidate_referents]
+    retrieval: "PROHIBITED"
+  RELATION_DIRECTION:
+    trigger: "Formal subject and object direction cannot be uniquely determined."
+    required_trace: [source_spans, candidate_directed_predicates]
+    retrieval: "PROHIBITED"
+  DISCOURSE_OVERRIDE:
+    trigger: "Two conflicting assertions may or may not form a valid later override."
+    required_trace: [source_spans, candidate_override_graphs]
+    retrieval: "PROHIBITED"
+  UNSUPPORTED_INTENT:
+    trigger: "The requested relation or conclusion is outside the frozen entity/predicate/role vocabulary."
+    required_trace: [source_spans, unresolved_intent_description]
+    retrieval: "PROHIBITED"
+
+non_ambiguity_hard_failures:
+  QUERY_IR_SCHEMA_INVALID: "NO_RETRIEVAL"
+  REQUEST_QUERY_IR_HASH_MISMATCH: "NO_RETRIEVAL"
+  SPAN_TEXT_MISMATCH: "NO_RETRIEVAL"
+  DANGLING_REFERENCE: "NO_RETRIEVAL"
+  CLAUSE_GRAPH_CYCLE: "NO_RETRIEVAL"
+  UNKNOWN_ENTITY_ID: "NO_RETRIEVAL"
+  ENTITY_TYPE_MISMATCH: "NO_RETRIEVAL"
+  UNKNOWN_PREDICATE: "NO_RETRIEVAL"
+  PREDICATE_DIRECTION_TYPE_MISMATCH: "NO_RETRIEVAL"
+  REQUIRED_FORBIDDEN_INTENT_CONFLICT: "NO_RETRIEVAL"
+  NON_AFFIRMED_INTENT_MARKED_REQUIRED: "NO_RETRIEVAL"
+  CLAIM_SOURCE_LOCATOR_OR_ANSWER_IN_QUERY_IR: "NO_RETRIEVAL"
+
+resolved_cases:
+  valid_override:
+    requirements:
+      - "same normalized event signature"
+      - "later explicit assertion"
+      - "later source span strictly follows earlier span"
+      - "discourse link is OVERRIDE or unambiguous equivalent"
+    action: "mark earlier event nonactivating; retain both for private trace"
+  explicit_exclusion:
+    requirements:
+      - "formal relation is identifiable"
+      - "exclusion span is exact"
+    action: "create forbidden_relation_intent; do not create affirmative activation"
+  explicit_contrast_request:
+    requirements:
+      - "contrast is authorized by the semantic contract"
+      - "triggering event or role is AFFIRMED"
+    action: "create REQUIRED_CONTRAST; preserve trace to trigger"
+
+candidate_gate_failures:
+  candidate_has_no_affirmed_or_contrast_license: "INTERNAL_ONLY_NOT_MATERIAL"
+  candidate_matches_forbidden_relation: "EXCLUDE_AND_AUDIT"
+  candidate_direction_mismatch: "EXCLUDE_AND_AUDIT"
+  candidate_temporal_scope_mismatch: "EXCLUDE_AND_AUDIT"
+  candidate_requires_unresolved_query_interpretation: "ABSTAIN"
+
+privacy_and_explanation:
+  student_visible_ambiguity_detail: "NOT_DEFINED_IN_THIS_ATOM"
+  private_audit_must_preserve:
+    - "ambiguity_type"
+    - "exact_source_spans"
+    - "affected_semantic_object_ids"
+    - "candidate_interpretations"
+  must_not_log_student_identifier: true

@@ -1,0 +1,133 @@
+contract_version: "0.1-candidate"
+contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_1"
+status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
+
+compatibility:
+  p9a_request_schema: "UNCHANGED_1.0"
+  p9a_response_schema: "UNCHANGED_1.2"
+  p9a_audit_schema: "UNCHANGED_1.3"
+  p9b1_retrieval_result_schema: "UNCHANGED_1.1"
+  query_ir_schema: "CANDIDATE_0.1"
+  new_p9a_reason_code: false
+  new_student_visible_state: false
+
+canonicalization:
+  algorithm: "SHA256"
+  serialization: "SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE"
+  unicode_normalization_before_hash: "NONE"
+  numbers: "JSON_SCHEMA_VALIDATED_NATIVE_JSON"
+  arrays_preserve_order: true
+  objects_sort_keys_recursively: true
+
+actual_object_requirements:
+  request: "ALWAYS_REQUIRED"
+  query_ir:
+    required_before_retrieval: true
+    must_be_schema_and_semantically_valid: true
+  retrieval_result:
+    required_if_retrieval_started: true
+    prohibited_if_query_ir_not_executable: true
+  audit_record: "ALWAYS_REQUIRED_UNDER_P9A_ONE_REQUEST_ONE_AUDIT"
+  response: "FOLLOW_FROZEN_P9A_RESPONSE_AND_AUDIT_RULES"
+  hash_without_corresponding_actual_object: "PROHIBITED"
+
+binding_chain:
+  request_to_query_ir:
+    assertions:
+      - "query_ir.request_id == request.request_id"
+      - "query_ir.request_sha256 == canonical_sha256(request)"
+      - "query_ir.knowledge_version == request.knowledge_version"
+      - "all QueryIR spans validate against request.query_text"
+  request_to_retrieval_result:
+    assertions:
+      - "retrieval_result.request_id == request.request_id"
+      - "retrieval_result.request_sha256 == canonical_sha256(request)"
+      - "retrieval_result.knowledge_version == request.knowledge_version"
+  query_ir_to_retrieval_result:
+    assertions:
+      - "retrieval was executed from the exact QueryIR object named by query_ir_sha256"
+      - "candidate semantic license was evaluated against that same QueryIR object"
+      - "recomputation with the same request, QueryIR, authority, and executor configuration is deterministic"
+    note: >-
+      Retrieval-result schema v1.1 has no query_ir_sha256 field. The private
+      binding evidence record below carries this link without changing P9-A or
+      the frozen retrieval-result schema in this design atom.
+  request_to_audit:
+    assertions:
+      - "audit.request_id == request.request_id"
+      - "audit.request_sha256 == canonical_sha256(request)"
+      - "audit.request_schema_version == request.schema_version"
+  retrieval_to_audit:
+    assertions:
+      - "audit.retrieval.candidate_claim_ids equals the validated candidate IDs selected for audit"
+      - "audit.retrieval.admitted_claim_ids is a subset of validated retrieved candidates"
+      - "audit.decision.material_claim_ids is licensed by QueryIR and admitted by P9-A"
+      - "P9-A excluded_candidates remains limited to its frozen authority-exclusion reasons"
+      - "query-semantic exclusions are recorded only in the private binding sidecar and are not mislabeled as P9-A authority failures"
+
+private_binding_evidence_record:
+  storage_role: "PRIVATE_NON_STUDENT_AUDIT_SIDECAR"
+  public_export_allowed: false
+  one_record_per_request: true
+  required_fields:
+    binding_schema_version: "0.1-candidate"
+    binding_id: "NONEMPTY_UNIQUE_STRING"
+    audit_id: "EXACT_EXISTING_P9A_AUDIT_ID"
+    request_id: "EXACT_REQUEST_ID"
+    request_sha256: "CANONICAL_ACTUAL_REQUEST_SHA256"
+    query_ir_sha256: "CANONICAL_ACTUAL_QUERY_IR_SHA256"
+    query_ir_schema_sha256: "FROZEN_QUERY_IR_SCHEMA_FILE_SHA256"
+    query_ir_semantic_contract_sha256: "FROZEN_SEMANTIC_CONTRACT_FILE_SHA256"
+    interpreter_configuration_sha256: "FROZEN_INTERPRETER_CONFIGURATION_SHA256"
+    executor_configuration_sha256: "FROZEN_GRAPH_EXECUTOR_CONFIGURATION_SHA256"
+    retrieval_result_sha256: "CANONICAL_ACTUAL_RESULT_SHA256_OR_NULL_IF_NOT_RUN"
+    audit_record_sha256: "CANONICAL_ACTUAL_AUDIT_SHA256"
+    runtime_bundle_sha256: "FROZEN_P9A_RUNTIME_BUNDLE_SHA256"
+    disposition: "QUERY_IR_VALID_RETRIEVED_OR_QUERY_IR_FAIL_CLOSED"
+    query_semantic_exclusions: "ARRAY_OF_PRIVATE_QUERY_LICENSE_EXCLUSION_RECORDS"
+  semantic_conditions:
+    - "If disposition is QUERY_IR_VALID_RETRIEVED, retrieval_result_sha256 is non-null."
+    - "If disposition is QUERY_IR_FAIL_CLOSED, retrieval_result_sha256 is null."
+    - "The sidecar audit_id and request binding must match the actual P9-A audit object."
+    - "The sidecar must be validated and hashed only after all actual objects exist."
+    - >-
+      Each query_semantic_exclusions item contains claim_id, the matching
+      prohibition_id or missing-license reason, and one of
+      FORBIDDEN_RELATION_MATCH, NO_AFFIRMED_LICENSE, DIRECTION_MISMATCH, or
+      TEMPORAL_SCOPE_MISMATCH.
+  limitation: >-
+    This sidecar preserves internal traceability while P9-A remains frozen. It
+    does not make QueryIR visible to students and does not add a new P9-A field.
+
+ambiguity_path:
+  query_ir_interpretation_status: [AMBIGUOUS, UNSUPPORTED]
+  retrieval_started: false
+  retrieval_result_exists: false
+  p9a_disposition: "ABSTAIN"
+  p9a_hard_fail_code: "NO_SAFE_ADMITTED_ANSWER"
+  p9a_material_claim_ids: []
+  student_visible_medical_claim: "PROHIBITED"
+  internal_detail_location: "PRIVATE_BINDING_EVIDENCE_AND_QUERY_IR_AMBIGUITIES"
+
+tamper_and_mismatch_policy:
+  request_hash_mismatch: "FAIL_CLOSED"
+  query_ir_hash_mismatch: "FAIL_CLOSED"
+  result_hash_mismatch: "FAIL_CLOSED"
+  audit_hash_mismatch: "FAIL_CLOSED"
+  request_id_mismatch_at_any_link: "FAIL_CLOSED"
+  knowledge_version_mismatch: "FAIL_CLOSED"
+  query_ir_recomputed_from_different_request: "FAIL_CLOSED"
+  result_recomputed_from_different_query_ir: "FAIL_CLOSED"
+  orphan_hash_or_orphan_object: "FAIL_CLOSED"
+
+acceptance_probes:
+  positive:
+    - "valid request -> valid QueryIR -> validated retrieval -> matching P9-A audit"
+    - "ambiguous request -> no retrieval -> P9-A safe abstain -> complete private binding sidecar"
+  negative:
+    - "tampered request after QueryIR creation"
+    - "tampered QueryIR after retrieval"
+    - "request_id mismatch between QueryIR and result"
+    - "retrieval result copied from another QueryIR for the same request"
+    - "audit copied from another request"
+    - "non-null result hash without actual result object"

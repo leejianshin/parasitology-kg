@@ -1,0 +1,173 @@
+contract_version: "1.0"
+contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1"
+status: "DESIGN_CANDIDATE_NOT_YET_FROZEN"
+
+purpose: >-
+  Provide a genuinely held-out, implementation-agnostic test of Scoped QueryIR,
+  deterministic graph execution, candidate semantic licensing, provenance, and
+  fail-closed behavior. It must not be a vocabulary memorization test.
+
+freeze_order:
+  prerequisite: "P9-B1Q design passes independent read-only review"
+  required_before:
+    - "selection of interpreter implementation route"
+    - "any parser or executor code modification after accf29d"
+    - "any new lexical marker, alias, pattern, prompt, or model configuration"
+  independent_context: "NEW_CONTEXT_WITH_NO_IMPLEMENTATION_PARTICIPATION"
+  authority_read_allowed_before_freeze:
+    - "P9-A frozen contracts and schemas"
+    - "reviewed runtime entities and formal relations"
+    - "P9-B1Q approved design artifacts"
+    - "R9 aggregate failure categories without secret query text"
+  prohibited_before_suite_persistence:
+    - "read implementation script"
+    - "read implementation tests or public regression query text"
+    - "run retrieval or interpreter"
+    - "consult implementation author about case wording"
+
+persistence:
+  repository_location: "PROHIBITED_WHILE_SECRET"
+  required_copies: 3
+  canonical_plus_backups: 3
+  copies_must_be_byte_identical: true
+  required_files:
+    - "canonical suite body"
+    - "two byte-identical backups"
+    - "manifest with suite_id, case_count, frozen_at_utc, canonical_content_sha256"
+    - "SHA256SUMS"
+  directory_mode: "0700"
+  file_mode: "0400"
+  verify_after_write: true
+  verify_immediately_before_execution: true
+  body_loss_disposition: "AUDIT_COMMITMENT_INVALIDATED_ARTIFACT_UNAVAILABLE"
+  body_loss_is_implementation_failure: false
+
+suite_shape:
+  planned_case_count: 24
+  language: "zh-CN"
+  request_schema_version: "1.0"
+  query_ir_schema_candidate_version: "0.1-candidate"
+  top_k: 12
+  categories:
+    diagnostic_method_specimen_polarity:
+      cases: 6
+      must_include:
+        - "coordinated methods/specimens with shared predicate"
+        - "local negation"
+        - "double negation"
+        - "object negation"
+        - "later valid override"
+        - "unresolved polarity or binding that must abstain"
+    assertion_exclusion_and_temporal_scope:
+      cases: 5
+      must_include:
+        - "affirmed versus explicitly excluded intervention"
+        - "historical exposure versus current diagnosis"
+        - "historical exposure versus future prevention"
+        - "hypothetical proposition"
+        - "condition or contrast scope"
+    implicit_formal_event_graph:
+      cases: 5
+      must_include:
+        - "host role"
+        - "development path"
+        - "infection or ingestion"
+        - "shedding and environment presence"
+        - "parasitism, pathogenic stage, or pathology site"
+    treatment_hazard_and_boundary:
+      cases: 3
+      must_include:
+        - "treatment authority/role distinction"
+        - "hazard classification versus individual certainty"
+        - "explicit knowledge or extrapolation boundary"
+    compositional_multi_intent:
+      cases: 3
+      must_include:
+        - "two or more affirmed topics without fixed-group starvation"
+        - "required contrast generated from a non-confirmatory role"
+        - "affirmed and forbidden relations in one request"
+    ambiguity_fail_closed:
+      cases: 2
+      must_include:
+        - "unresolved referent, attachment, or relation direction"
+        - "unsupported formal intent"
+
+case_record_requirements:
+  case_id: "OPAQUE_NONSEMANTIC_ID"
+  actual_request_object: "REQUIRED"
+  expected_interpretation_status: "VALID_OR_AMBIGUOUS_OR_UNSUPPORTED"
+  expected_query_ir_assertions:
+    - "clause spans and discourse graph"
+    - "mention entity IDs, assertion statuses, and temporal scopes"
+    - "event method/specimen/target/polarity tuples"
+    - "required relation predicates and directed selectors"
+    - "required roles"
+    - "forbidden relation predicates and selectors"
+    - "expected ambiguity type where applicable"
+  expected_retrieval_assertions:
+    - "required claim IDs for executable cases"
+    - "forbidden candidate/material claim IDs where applicable"
+    - "required source IDs and exact locators"
+    - "no retrieval result for non-executable QueryIR"
+  forbidden_shortcuts:
+    - "case ID branch"
+    - "full or partial query literal branch"
+    - "expected claim ID branch"
+    - "held-out fragment or hash branch"
+
+acceptance_gates:
+  suite_commitment_and_persistence: "PASS_REQUIRED"
+  query_ir_schema_validation: "ALL_CASES"
+  exact_span_binding: "ALL_EXPECTED_SPANS"
+  clause_and_reference_integrity: "ALL_CASES"
+  method_specimen_target_polarity: "ZERO_ERROR"
+  assertion_negation_exclusion_scope: "ZERO_FORBIDDEN_ACTIVATION"
+  temporal_scope: "ZERO_CROSS_TEMPORAL_ACTIVATION"
+  required_relation_intents: "ALL_PRESENT"
+  forbidden_relation_intents: "ALL_ABSENT_FROM_AFFIRMATIVE_ACTIVATION"
+  ambiguity_fail_closed: "ALL_NONEXECUTABLE_CASES_HAVE_NO_RETRIEVAL"
+  top12_required_claim_recall: "ALL_REQUIRED_IDS_PRESENT_FOR_EXECUTABLE_CASES"
+  material_candidate_query_ir_license: "100_PERCENT"
+  source_locator_direction_semantics: "ALL_REQUIRED_CLAIMS"
+  deterministic_repeated_runs: 3
+  combined_gate: >-
+    A case passes only when its QueryIR, prohibitions, retrieval behavior,
+    candidate license, provenance, and determinism all pass. Recall alone can
+    never pass a case.
+
+review_execution:
+  target: "FUTURE_COMMIT_CREATED_AFTER_VALID_R10_FREEZE"
+  mode: "INDEPENDENT_READ_ONLY"
+  before_reveal_checks:
+    - "recompute suite hashes from all three copies"
+    - "verify target commit time is after frozen_at_utc"
+    - "verify worktree clean"
+    - "search implementation and tests for suite ID, case IDs, query fragments, and hashes"
+  output:
+    - "per-gate aggregate counts"
+    - "per-case pass/fail without disclosing text until review completion"
+    - "source/locator and deterministic hashes"
+    - "repository mutation check"
+  verdicts: [PASS, CHANGES_REQUIRED, INVALID_AUDIT_COMMITMENT]
+
+post_review_lifecycle:
+  if_suite_influences_code_or_architecture:
+    new_role: "DISCLOSED_OR_DIAGNOSTIC_PUBLIC_REGRESSION"
+    remains_final_heldout: false
+  if_final_acceptance_passes_without_adaptation:
+    retain_confidential_body: true
+    evidence_role: "FINAL_HELDOUT_ACCEPTANCE_EVIDENCE"
+  direct_patch_to_secret_case_wording: "PROHIBITED"
+  future_failure_policy: >-
+    Diagnose the failed semantic layer first. Do not resume unbounded lexical
+    rule growth merely to fit disclosed cases.
+
+scope_boundary:
+  r10_suite_created_in_this_atom: false
+  interpreter_route_selected: false
+  code_modified: false
+  model_called: false
+  p9a_modified: false
+  pushed: false
+  pull_request_created: false
+  p9b2_started: false
