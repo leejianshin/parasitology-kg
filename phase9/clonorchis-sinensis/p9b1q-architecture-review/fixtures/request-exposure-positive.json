@@ -1,7 +1,1 @@
-{
-  "schema_version": "1.0",
-  "request_id": "P9B1Q-ARCH-FIXTURE-001",
-  "knowledge_version": "clonorchis_pcms_v1",
-  "locale": "zh-CN",
-  "query_text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
-}
+{"knowledge_version":"clonorchis_pcms_v1","locale":"zh-CN","query_text":"来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？","request_id":"P9B1Q-ARCH-FIXTURE-001","schema_version":"1.0"}

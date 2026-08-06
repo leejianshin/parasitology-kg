@@ -147,6 +147,8 @@ object_chain:
       - P9A_RESPONSE_IF_PRESENT
       - P9A_AUDIT_RECORD
       - EXECUTION_BINDING_SIDECAR_SCHEMA
+      - STAGE_VALIDATOR_EXECUTABLE
+      - STAGE_VALIDATOR_CONTRACT
     actual_output: EXECUTION_BINDING_SIDECAR
     independent_hash_fields: "EVERY_RESOLVED_ACTUAL_OBJECT_CANONICAL_SHA256"
 
@@ -159,4 +161,6 @@ binding_invariants:
   - "missing actual object, noncanonical persisted bytes, wrong path, or wrong object kind fails closed"
   - "no retrieval object may exist unless S0 through S4 all PASS"
   - "typed solution cores, semantic universes and removal probes are persisted as independently resolvable canonical JSON objects"
+  - "every JSON path is persisted in the exact canonical bytes that its canonical_sha256 names"
+  - "stage PASS and removal-probe outcomes bind the exact review reference validator executable and contract configuration bytes"
   - "a source ID is interpreted only in the namespace of its declared actual object kind and must resolve there"

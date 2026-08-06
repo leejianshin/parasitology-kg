@@ -1,7 +1,7 @@
 constraint_set_version: "0.1-candidate"
 constraint_set_id: "clonorchis_p9b1q_typed_constraints_v0_1"
 knowledge_version: "clonorchis_pcms_v1"
-canonicalization_profile_sha256: "65aa11c07913fe7d3f4e59161fea3c453bf3b67e8a66f34eaad88ea1c06b24c2"
+canonicalization_profile_sha256: "a336641805c06c5eae2b7e69ff7048a7eee97ddf2654df9ad8719c2056703027"
 constraint_registry_sha256: "184ebf60bc881584d8e8c62908e411624d8883e4255b7ef49e574c88714ac544"
 authority_object_hashes:
   entity_ontology_sha256: "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e"

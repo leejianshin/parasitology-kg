@@ -53,7 +53,9 @@ $defs:
       - mutation
       - candidate_typed_solution_sha256
       - validator_contract_sha256
+      - validator_executable_path
       - validator_executable_sha256
+      - validator_configuration_path
       - validator_configuration_sha256
       - constraint_set_sha256
       - expected_result
@@ -74,7 +76,9 @@ $defs:
         items: {$ref: "#/$defs/patch_operation"}
       candidate_typed_solution_sha256: {$ref: "#/$defs/sha256"}
       validator_contract_sha256: {$ref: "#/$defs/sha256"}
+      validator_executable_path: {const: "reference-stage-semantic-validator.py"}
       validator_executable_sha256: {$ref: "#/$defs/sha256"}
+      validator_configuration_path: {const: "stage-semantic-validator-contract.yml"}
       validator_configuration_sha256: {$ref: "#/$defs/sha256"}
       constraint_set_sha256: {$ref: "#/$defs/sha256"}
       expected_result: {const: FAIL_CLOSED}

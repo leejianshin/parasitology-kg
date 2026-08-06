@@ -1,7 +1,7 @@
 # P9-B1Q architecture review
 
-Status: first architecture design revision corrected after CHANGES_REQUIRED and
-awaiting a second independent, read-only review.
+Status: executable architecture evidence corrected after the second
+CHANGES_REQUIRED review and awaiting a third independent, read-only review.
 
 This atom freezes `6ac0e4b2978e5fb41e7b90e27ced17826d35a394` unchanged and
 replaces the next implementation direction—not the frozen code—with a four-stage
@@ -52,10 +52,17 @@ semantic errors stable instead of making them correct.
   positive chain binding 29 actual objects and five stage PASS results.
 - `design-manifest-v0.3.yml`: the raw-byte review inventory for the corrected
   design, fixtures, and protected implementation/P9-A boundary.
+- `reference-stage-semantic-validator.py`: a deterministic, review-only
+  executable that validates the positive chain, replays all eight minimality
+  removals, and executes all seventeen isolated negative mutations.
+- `fixtures/reference-validator-execution-summary.json` and its Schema: the
+  byte-identical three-run result binding the actual executable and contract.
 
-The corrected evidence set passes strict Draft 2020-12 compilation for all eleven
-local candidate Schemas, validates 26 positive fixtures, resolves all 189 QueryIR
-field traces to persisted source objects, and replays eight minimality probes.
+The corrected evidence set passes strict Draft 2020-12 compilation for all twelve
+local candidate Schemas, validates 27 positive fixtures, resolves all 189 QueryIR
+field traces to persisted source objects, and executes 9 positive, 8 minimality,
+and 17 negative gates in three byte-identical runs. All review JSON actual objects
+are stored in their exact canonical bytes.
 
 ## Boundaries
 

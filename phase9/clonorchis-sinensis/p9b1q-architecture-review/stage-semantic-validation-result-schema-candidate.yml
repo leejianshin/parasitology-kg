@@ -26,11 +26,13 @@ properties:
   validator:
     type: object
     additionalProperties: false
-    required: [validator_id, validator_version, executable_sha256, configuration_sha256]
+    required: [validator_id, validator_version, executable_path, executable_sha256, configuration_path, configuration_sha256]
     properties:
       validator_id: {type: string, pattern: "^p9b1q-stage-semantic-validator-s[0-5]$"}
       validator_version: {type: string, minLength: 1, maxLength: 64}
+      executable_path: {const: "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"}
       executable_sha256: {$ref: "#/$defs/sha256"}
+      configuration_path: {const: "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"}
       configuration_sha256: {$ref: "#/$defs/sha256"}
   actual_input_objects:
     type: array
@@ -99,6 +101,7 @@ $defs:
           - CLAUSE_GRAMMAR_CONFIG
           - CANONICALIZATION_PROFILE
           - STAGE_VALIDATOR_CONTRACT
+          - STAGE_VALIDATOR_EXECUTABLE
           - CONSTRAINT_REGISTRY
           - CONSTRAINT_REGISTRY_SCHEMA
           - CONSTRAINT_SET
@@ -112,7 +115,7 @@ $defs:
           - TYPED_SOLUTION_CORE_SCHEMA
       content_path:
         type: string
-        pattern: "^(fixtures/|phase9/|schema/|derived/|sources/)[A-Za-z0-9._/-]+\\.(json|jsonl|yml)$"
+        pattern: "^(fixtures/|phase9/|schema/|derived/|sources/)[A-Za-z0-9._/-]+\\.(json|jsonl|yml|py)$"
       content_json_pointer:
         oneOf:
           - {type: string, pattern: "^/"}

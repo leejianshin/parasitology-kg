@@ -1,5 +1,6 @@
 manifest_id: P9B1Q-ARCHITECTURE-FIRST-REVISION-DESIGN-MANIFEST-v0.3
-status: FROZEN_FOR_SECOND_INDEPENDENT_READ_ONLY_REVIEW
+status: SUPERSEDED_AFTER_SECOND_REVIEW_CHANGES_REQUIRED
+superseded_by: design-manifest-v0.4.yml
 parent_correction_commit: a13bd208f2567ed3dc041ff994e4d511dab1a341
 parent_design_commit: ac3f16d9c59a0ff822a06eaeb3bbb70249778fda
 frozen_implementation_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394

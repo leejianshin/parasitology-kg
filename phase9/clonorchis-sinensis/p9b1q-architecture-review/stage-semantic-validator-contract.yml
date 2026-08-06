@@ -6,6 +6,23 @@ canonicalization_profile: "object-canonicalization-and-hash-chain.yml"
 constraint_registry: "constraint-id-registry.yml"
 constraint_registry_schema: "constraint-id-registry-schema-candidate.yml"
 
+reference_execution:
+  executable_path: "reference-stage-semantic-validator.py"
+  executable_hash_rule: "SHA256_OVER_EXACT_FILE_BYTES"
+  configuration_path: "stage-semantic-validator-contract.yml"
+  configuration_hash_rule: "SHA256_OVER_EXACT_FILE_BYTES_RESOLVED_BEFORE_EXECUTION"
+  all_gates_invocation: "python reference-stage-semantic-validator.py --mode all"
+  isolated_modes: [positive, minimality, negative]
+  required_exit_code: 0
+  required_result: PASS
+  required_counts:
+    positive: 9
+    minimality: 8
+    negative: 17
+  repeat_runs: 3
+  repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
+  network_or_model_allowed: false
+
 common_executable_interface:
   invocation: "validate(stage_id, actual_object_store, normative_artifact_store) -> validation_result"
   actual_object_resolution: "content address resolves to exact persisted canonical bytes"
@@ -21,6 +38,10 @@ common_executable_interface:
   stop_on_first_error: false
   output_all_errors_in_registry_order: true
   unregistered_constraint_or_failure_code: "FAIL_CLOSED"
+  executable_and_configuration_resolution:
+    - "validator executable_sha256 resolves to reference_execution.executable_path exact bytes"
+    - "validator configuration_sha256 resolves to reference_execution.configuration_path exact bytes"
+    - "missing path, hash mismatch, nonzero exit, non-PASS summary, or count mismatch fails closed"
 
 validators:
   S0_NORMALIZED_REQUEST:
@@ -195,3 +216,4 @@ negative_fixture_contract:
     - "mutated object remains isolated from all other cases"
     - "actual validator result equals expected constraint and failure code"
     - "all cases run three times with byte-identical result"
+    - "the reference executable must derive observed failures from mutated objects; fixture expected fields are comparison targets only"
