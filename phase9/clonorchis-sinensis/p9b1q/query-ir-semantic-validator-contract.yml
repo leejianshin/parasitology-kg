@@ -1,19 +1,20 @@
-contract_version: "0.1-candidate"
-contract_id: "clonorchis_p9b1q_query_ir_semantic_validator_v0_1"
+contract_version: "0.2-candidate"
+contract_id: "clonorchis_p9b1q_query_ir_semantic_validator_v0_2"
 status: "DESIGN_CANDIDATE_NO_IMPLEMENTATION_AUTHORIZED"
 
 inputs:
   actual_request: "REQUIRED_SCHEMA_VALID_P9A_REQUEST_1.0"
-  actual_query_ir: "REQUIRED_SCHEMA_VALID_QUERY_IR_0.2_CANDIDATE"
+  actual_query_ir: "REQUIRED_ACTUAL_QUERY_IR_0.3_CANDIDATE_BYTES"
   reviewed_nodes: "REQUIRED_HASH_VERIFIED_RUNTIME_INPUT"
   relation_schema: "REQUIRED_HASH_VERIFIED_RELATION_TYPES_1.2"
   mapping_contract: "REQUIRED_HASH_VERIFIED_EVENT_PREDICATE_TYPE_ROLE_MAPPING"
   semantic_contract: "REQUIRED_HASH_VERIFIED_QUERY_IR_SEMANTIC_CONTRACT"
 
 output:
-  type: "PRIVATE_MACHINE_VALIDATION_RESULT"
+  type: "SCHEMA_VALID_PRIVATE_MACHINE_VALIDATION_RESULT"
+  schema: "phase9/clonorchis-sinensis/p9b1q/semantic-validation-result-schema-candidate.yml"
   fields:
-    validator_contract_version: "0.1-candidate"
+    schema_version: "0.1-candidate"
     request_id: "EXACT_REQUEST_ID"
     request_sha256: "CANONICAL_ACTUAL_REQUEST_SHA256"
     query_ir_sha256: "CANONICAL_ACTUAL_QUERY_IR_SHA256"
@@ -24,6 +25,11 @@ output:
     prohibited_relation_intent_ids: "ORDERED_UNIQUE_F_IDS"
     superseded_event_ids: "ORDERED_UNIQUE_E_IDS"
   student_visible: false
+  invalid_request_boundary: >-
+    An object that fails the frozen P9-A request Schema is rejected before
+    QueryIR creation and has no P9-B1Q semantic-validation result. The
+    request_schema_valid=true field records that precondition; it must not be
+    fabricated to represent an upstream request failure.
 
 validation_order:
   - "01_REQUEST_SCHEMA_AND_CANONICAL_HASH"
@@ -87,7 +93,9 @@ algorithms:
     - "every OR clause has a non-null ALT group"
     - "each ALT group contains at least two OR siblings with one common parent"
     - "non-OR clauses have null alternative group"
-    - "QueryIR v0.2 has no branch-selection object; any OR branch that could root an R/N intent makes the QueryIR AMBIGUOUS"
+    - "QueryIR v0.3 has no resolved branch-selection object; any OR branch that could root an R/N intent makes the QueryIR AMBIGUOUS"
+    - "each OR_SELECTION ambiguity has at least two OR_BRANCH options"
+    - "OR_BRANCH options share one ALT ID and exactly cover every OR sibling branch in that ALT group without duplicates or omissions"
     - "CONTRAST does not change assertion status or create a prohibition"
     - "CONDITION cannot be an ancestor of an executable intent"
 
@@ -140,11 +148,23 @@ algorithms:
 
   relation_intents:
     - "assertion_status is AFFIRMED"
+    - "derivation_mode is EVENT_DERIVED, DIRECT_MENTION_DERIVED, or CLOSED_CONTRAST_DERIVED"
     - "subject and object selectors are each nonempty"
     - "selector entity IDs and types satisfy predicate_type_matrix direction"
     - "basis IDs contain only M/E and satisfy affirmed-root rule"
     - "source spans cover all basis spans and stay within bound clauses"
     - "CONDITION, unresolved OR, HYPOTHETICAL, EXCLUDED, and NEGATED bases are non-executable"
+    - >-
+      EVENT_DERIVED: each material E basis maps the R predicate in
+      event_mapping[event_type].predicates; subject/object selectors equal the
+      deterministic subject_from/object_from projection and contain no
+      unbound concrete entity
+    - >-
+      DIRECT_MENTION_DERIVED: basis contains M only; concrete selector IDs are
+      present in AFFIRMED basis mentions and open type slots are explicit
+    - >-
+      CLOSED_CONTRAST_DERIVED: one closed rule emits the exact predicate,
+      selectors and REQUIRED_CONTRAST activation from the shared AFFIRMED root
 
   narrative_intents:
     - "assertion_status is AFFIRMED"
@@ -153,6 +173,15 @@ algorithms:
     - "basis IDs contain only M/E and satisfy affirmed-root rule"
     - "all mapping-required anchor predicates have matching executable relation intents"
     - "no narrative intent names or selects a claim"
+    - >-
+      EVENT_DERIVED: event type is allowed for the narrative role; selected
+      entities come only from event participants/method/target/bound mentions
+    - >-
+      every mapping-required anchor R shares at least one identical AFFIRMED
+      M/E root, overlapping clause scope and root-covering source span with N
+    - >-
+      DIRECT_MENTION_DERIVED and CLOSED_CONTRAST_DERIVED obey their closed
+      basis, selector and activation rules
 
   roles_and_contrast:
     - "a required role depends only on M/E/R/N and cannot be an execution root"
@@ -180,8 +209,14 @@ algorithms:
       - "no semantic object is treated as executable"
       - "every candidate option is closed-structure and its option_kind matches ambiguity_type"
 
+  result_serialization:
+    - "construct exactly one semantic-validation result object after all stages"
+    - "validate it against semantic-validation-result-schema-candidate.yml"
+    - "PASS lists every and only executable R/N and has no fail codes"
+    - "FAIL_CLOSED lists no executable R/N and has at least one ordered fail code"
+    - "hash the canonical result bytes only after Schema validation"
+
 fail_codes:
-  - "REQUEST_SCHEMA_INVALID"
   - "REQUEST_HASH_OR_ID_MISMATCH"
   - "QUERY_IR_SCHEMA_INVALID"
   - "GENERATED_PAYLOAD_BOUNDARY_VIOLATION"
@@ -189,12 +224,15 @@ fail_codes:
   - "DUPLICATE_OR_DANGLING_ID"
   - "CLAUSE_GRAPH_INVALID"
   - "OR_GROUP_INVALID_OR_UNRESOLVED"
+  - "OR_BRANCH_COVERAGE_INVALID"
   - "REFERENCE_INVALID_OR_AMBIGUOUS"
   - "OVERRIDE_INVALID_OR_AMBIGUOUS"
   - "UNKNOWN_OR_UNREVIEWED_ENTITY"
   - "ENTITY_TYPE_MISMATCH"
   - "UNKNOWN_PREDICATE_OR_ROLE"
   - "EVENT_FIELD_OR_TYPE_MISMATCH"
+  - "EVENT_INTENT_DERIVATION_MISMATCH"
+  - "NARRATIVE_INTENT_DERIVATION_MISMATCH"
   - "DEPENDENCY_GRAPH_INVALID"
   - "NO_AFFIRMED_SEMANTIC_ROOT"
   - "RELATION_DIRECTION_OR_SELECTOR_INVALID"
@@ -203,6 +241,7 @@ fail_codes:
   - "REQUIRED_FORBIDDEN_INTENT_CONFLICT"
   - "NON_MATERIAL_CONTEXT_ACTIVATED"
   - "NO_EXECUTABLE_INTENT"
+  - "AMBIGUITY_OPTION_MISMATCH"
   - "UNRESOLVED_AMBIGUITY"
 
 failure_mapping:

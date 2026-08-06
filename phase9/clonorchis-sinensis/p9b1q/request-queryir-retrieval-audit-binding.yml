@@ -1,5 +1,5 @@
-contract_version: "0.2-candidate"
-contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_2"
+contract_version: "0.3-candidate"
+contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_3"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 
 compatibility:
@@ -7,8 +7,9 @@ compatibility:
   p9a_response_schema: "UNCHANGED_1.2"
   p9a_audit_schema: "UNCHANGED_1.3"
   p9b1_retrieval_result_schema: "UNCHANGED_1.1"
-  query_ir_schema: "CANDIDATE_0.2"
-  private_sidecar_schema: "CANDIDATE_0.1"
+  query_ir_schema: "CANDIDATE_0.3"
+  semantic_validation_result_schema: "CANDIDATE_0.1"
+  private_sidecar_schema: "CANDIDATE_0.2"
   new_p9a_reason_code: false
   new_student_visible_state: false
 
@@ -42,12 +43,52 @@ actual_object_requirements:
     json_object_bytes_must_be_canonical_serialization: true
     missing_or_unresolvable_address: "FAIL_CLOSED"
 
+normative_artifact_identity:
+  rule: >-
+    Every named artifact key resolves to the exact bytes of the one canonical
+    repository path below at the bound source revision. A caller-provided file
+    with the same label, contract ID, Schema ID, or version is not equivalent.
+  schema_artifacts:
+    p9a_request_schema: "phase9/clonorchis-sinensis/request-schema.yml"
+    p9a_response_schema: "phase9/clonorchis-sinensis/response-schema.yml"
+    p9a_audit_schema: "phase9/clonorchis-sinensis/audit-log-schema.yml"
+    retrieval_result_schema: "phase9/clonorchis-sinensis/retrieval-result-schema.yml"
+    semantic_validation_result_schema: "phase9/clonorchis-sinensis/p9b1q/semantic-validation-result-schema-candidate.yml"
+    query_ir_schema: "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml"
+    query_ir_semantic_contract: "phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-contract.yml"
+    query_ir_semantic_validator_contract: "phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-validator-contract.yml"
+    event_predicate_type_role_mapping: "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml"
+    p9b1_retrieval_contract: "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
+    p9a_release_boundary: "phase9/clonorchis-sinensis/release-boundary.yml"
+    p9a_reviewer_evidence_admission: "phase9/clonorchis-sinensis/reviewer-evidence-admission.yml"
+    request_queryir_retrieval_audit_binding_contract: "phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml"
+    ambiguity_fail_closed_rules: "phase9/clonorchis-sinensis/p9b1q/ambiguity-fail-closed-rules.yml"
+    sidecar_schema: "phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml"
+  authority_artifacts:
+    runtime_bundle: "phase9/clonorchis-sinensis/runtime-bundle-manifest.yml"
+    runtime_authority_projection: "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+    runtime_contract: "phase9/clonorchis-sinensis/runtime-contract.yml"
+    reviewed_nodes: "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
+    reviewed_edges: "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
+    entity_type_schema: "schema/entity-types.yml"
+    relation_type_schema: "schema/relation-types.yml"
+    pcms_authority_review: "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml"
+    source_registry: "sources/registry.yml"
+  verification:
+    - "every required sidecar artifact key appears exactly once in this map"
+    - "resolved bytes equal the canonical path bytes at the bound source revision"
+    - "artifact_sha256 equals SHA256 over those exact resolved bytes"
+    - "content-address suffix and byte_length equal the resolved bytes"
+    - "missing, extra, substituted, or path-mismatched artifacts fail closed"
+
 binding_validation_order:
   - "SIDECAR_SCHEMA"
   - "RESOLVE_ALL_NON_NULL_OBJECT_AND_ARTIFACT_ADDRESSES"
   - "VERIFY_BYTE_LENGTH_AND_ADDRESS_DIGEST"
+  - "PARSE_AND_VALIDATE_NORMATIVE_ARTIFACTS"
   - "PARSE_AND_VALIDATE_ACTUAL_OBJECTS"
   - "VERIFY_REQUEST_QUERY_IR_AND_SEMANTIC_VALIDATION_BINDING"
+  - "VERIFY_SEMANTIC_VALIDATION_RESULT_SCHEMA_AND_ARTIFACT_HASHES"
   - "VERIFY_COMPONENT_EXECUTABLE_BUILD_AND_CONFIGURATION_HASHES"
   - "RECOMPUTE_QUERY_IR_SEMANTIC_VALIDATION"
   - "RECOMPUTE_RETRIEVAL_FROM_EXACT_QUERY_IR_AND_COMPONENTS_IF_STARTED"
@@ -64,6 +105,15 @@ binding_chain:
       - "all QueryIR spans validate against request.query_text"
       - "query_ir.producer.configuration_sha256 == components.interpreter.configuration_sha256"
       - "query_ir.producer identity and version are present in the resolved interpreter build manifest"
+  query_ir_to_semantic_validation:
+    assertions:
+      - "semantic_validation validates against semantic-validation-result-schema-candidate.yml"
+      - "semantic_validation.request_id == request.request_id"
+      - "semantic_validation.request_sha256 == objects.request.content_sha256"
+      - "semantic_validation.query_ir_sha256 == objects.query_ir.content_sha256"
+      - "semantic_validation.knowledge_version == request.knowledge_version"
+      - "semantic_validation contract/schema/mapping hashes equal the corresponding schema_artifacts digests"
+      - "semantic_validation result and executable intent IDs equal deterministic recomputation from the same request and QueryIR"
   request_to_retrieval_result:
     assertions:
       - "retrieval_result.request_id == request.request_id"
@@ -95,6 +145,18 @@ binding_chain:
       - "query-semantic exclusions are recorded only in the private binding sidecar and are not mislabeled as P9-A authority failures"
       - "every retrieval candidate is in exactly one query-semantic partition: licensed by a matching R/N intent or recorded once as a private query-semantic exclusion"
       - "no admitted or material claim is present in query_semantic_exclusions"
+  sidecar_state_summary_to_actual_objects:
+    assertions:
+      - "state_summary.semantic_validation_result equals actual semantic_validation.result"
+      - "state_summary.semantic_executable_intent_count equals the total unique executable R/N IDs in semantic_validation"
+      - "state_summary.retrieval_present equals whether objects.retrieval_result is non-null"
+      - "state_summary.audit_* fields equal the actual P9-A audit decision, output_validation and response_sha256 fields"
+      - "state_summary.response_present equals whether objects.response is non-null"
+      - "non-null response disposition and validation fields equal the actual P9-A response object"
+      - "audit.response_sha256 equals objects.response.content_sha256 when response exists and is null otherwise"
+      - "audit and response request_id, knowledge_version, runtime bundle and disposition agree"
+    mirror_is_not_authority: true
+    any_mismatch: "FAIL_CLOSED"
 
 private_binding_evidence_record:
   schema: "phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml"
@@ -113,10 +175,16 @@ private_binding_evidence_record:
     - "p9a_response_schema"
     - "p9a_audit_schema"
     - "retrieval_result_schema"
+    - "semantic_validation_result_schema"
     - "query_ir_schema"
     - "query_ir_semantic_contract"
     - "query_ir_semantic_validator_contract"
     - "event_predicate_type_role_mapping"
+    - "p9b1_retrieval_contract"
+    - "p9a_release_boundary"
+    - "p9a_reviewer_evidence_admission"
+    - "request_queryir_retrieval_audit_binding_contract"
+    - "ambiguity_fail_closed_rules"
     - "sidecar_schema"
   authority_artifact_references:
     - "runtime_bundle"
@@ -126,17 +194,24 @@ private_binding_evidence_record:
     - "reviewed_edges"
     - "entity_type_schema"
     - "relation_type_schema"
+    - "pcms_authority_review"
+    - "source_registry"
   component_references:
     - "interpreter executable/build/configuration"
     - "deterministic semantic validator executable/build/configuration"
     - "deterministic graph executor executable/build/configuration"
   semantic_conditions:
-    - "QUERY_IR_VALID_RETRIEVED requires a non-null retrieval-result object reference."
-    - "QUERY_IR_FAIL_CLOSED requires a null retrieval-result reference."
+    - "QUERY_IR_VALID_RETRIEVED requires semantic PASS, at least one executable R/N, and a non-null retrieval-result object reference."
+    - "QUERY_IR_FAIL_CLOSED requires semantic FAIL_CLOSED, zero executable R/N, a null retrieval result, and P9-A ABSTAIN with NO_SAFE_ADMITTED_ANSWER."
+    - "P9-A ANSWER/PARTIAL requires a non-null matching response, PASS output validation, and no hard-fail code."
+    - "P9-A ABSTAIN requires FAIL_CLOSED output validation; a response may be absent or must itself be an ABSTAIN response."
     - "The sidecar audit_id and request binding must match the actual P9-A audit object."
     - "Every non-null content address resolves to actual immutable bytes before validation."
+    - "Every schema/contract/authority key resolves to its unique normative_artifact_identity path at the bound source revision."
     - "Address suffix, declared digest, actual byte digest, and declared byte length match."
-    - "runtime_bundle_sha256 equals authority_artifacts.runtime_bundle.artifact_sha256."
+    - "authority_artifacts.runtime_bundle.artifact_sha256 equals SHA256 over the exact runtime-bundle-manifest.yml bytes."
+    - "runtime_bundle_sha256 equals the parsed runtime-bundle-manifest.yml bundle_sha256 field, not the manifest file-byte digest."
+    - "request, retrieval, audit and response runtime-bundle values equal that parsed logical bundle_sha256 wherever their frozen Schemas define the field."
     - "Component executable/build/configuration artifacts are resolved and their digest and byte length are verified."
     - "Semantic-validator and graph-executor implementation_kind are DETERMINISTIC."
     - "The sidecar is validated and hashed only after all actual objects exist."
@@ -177,6 +252,10 @@ tamper_and_mismatch_policy:
   executor_executable_or_build_drift: "FAIL_CLOSED"
   component_configuration_drift: "FAIL_CLOSED"
   semantic_validation_recompute_mismatch: "FAIL_CLOSED"
+  semantic_validation_schema_or_contract_hash_mismatch: "FAIL_CLOSED"
+  normative_artifact_identity_or_path_mismatch: "FAIL_CLOSED"
+  runtime_bundle_logical_digest_or_manifest_digest_mismatch: "FAIL_CLOSED"
+  state_summary_actual_object_mismatch: "FAIL_CLOSED"
   candidate_license_recompute_mismatch: "FAIL_CLOSED"
 
 acceptance_probes:
@@ -193,5 +272,9 @@ acceptance_probes:
     - "content address resolves to bytes with a different digest or length"
     - "interpreter code changes while version/configuration labels stay constant"
     - "semantic validator code or mapping changes after QueryIR creation"
+    - "normative contract key resolves to substituted bytes or a noncanonical path"
+    - "runtime bundle logical digest is replaced by the manifest file-byte digest"
+    - "semantic-validation result reports PASS with zero executable R/N"
+    - "sidecar state summary is changed without changing the actual audit/response objects"
     - "executor artifact changes while result object is reused"
     - "query semantic exclusion is mislabeled as a P9-A authority exclusion"

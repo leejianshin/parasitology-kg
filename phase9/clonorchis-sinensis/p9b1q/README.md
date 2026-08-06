@@ -21,12 +21,13 @@ R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完
 1. `query-ir-schema-candidate.yml`：Scoped QueryIR的JSON Schema候选；
 2. `query-ir-semantic-contract.yml`：分句、span、否定、极性、时间和关系激活语义；
 3. `query-ir-semantic-validator-contract.yml`：跨字段、跨对象语义校验顺序与失败码；
-4. `event-predicate-type-role-mapping.yml`：完整事件—谓词—方向—实体类型—角色映射；
-5. `execution-binding-sidecar-schema-candidate.yml`：私有端到端绑定旁证Schema候选；
-6. `request-queryir-retrieval-audit-binding.yml`：实际对象与组件产物的绑定规则；
-7. `ambiguity-fail-closed-rules.yml`：歧义分类及关闭式失败规则；
-8. `r9-failure-coverage-matrix.yml`：R9聚合失败类型到新设计字段和验收断言的映射；
-9. `r10-blind-test-design-contract.yml`：下一轮真正held-out的预冻结与验收合同。
+4. `semantic-validation-result-schema-candidate.yml`：可执行的语义校验结果Schema；
+5. `event-predicate-type-role-mapping.yml`：完整事件—谓词—方向—实体类型—角色映射；
+6. `execution-binding-sidecar-schema-candidate.yml`：私有端到端绑定旁证Schema候选；
+7. `request-queryir-retrieval-audit-binding.yml`：实际对象与组件产物的绑定规则；
+8. `ambiguity-fail-closed-rules.yml`：歧义分类及关闭式失败规则；
+9. `r9-failure-coverage-matrix.yml`：R9聚合失败类型到新设计字段和验收断言的映射；
+10. `r10-blind-test-design-contract.yml`：下一轮真正held-out的预冻结与验收合同。
 
 ## 核心边界
 
@@ -37,9 +38,11 @@ R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完
 - `NEGATED`、`EXCLUDED`、`HYPOTHETICAL`不得激活肯定关系；
 - 未解决的方法—标本—极性、否定、时间、指代或关系方向歧义必须停止检索；
 - 语义依赖固定为有根、分层、无环图；角色和事件不能直接许可医学主张；
+- `EVENT_DERIVED`关系和叙事意图只能从对应事件映射、参与实体及共享根确定性派生；
 - 关系候选必须匹配正式定向的`AFFIRMED`关系意图；无谓词叙述候选必须匹配受控
   叙述意图及其必要锚定关系，才可进入后续material claim阶段；
-- OR、CONDITION、HYPOTHETICAL及未解决同指不得被静默物化为肯定事实；
+- OR歧义必须以`ALT组+具体分支句`完整列出全部候选；OR、CONDITION、
+  HYPOTHETICAL及未解决同指不得被静默物化为肯定事实；
 - 本目录的候选设计通过独立只读复审之前，不得选择或实现Query Interpreter路线。
 
 ## 与P9-A的兼容方式
@@ -48,5 +51,7 @@ R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完
 内容寻址对象串联实际请求、QueryIR、语义校验、检索结果、响应及审计，并绑定解释器、
 语义校验器和图执行器的可执行产物、构建清单与配置哈希；同时绑定P9-A/P9-B1
 Schema、正式运行证据包、投影、节点、边及本体文件的实际内容地址。
+语义校验结果本身必须通过独立Schema，并与sidecar状态摘要、实际检索结果、P9-A
+响应和审计对象逐项一致；摘要不构成独立权威。
 QueryIR歧义在当前合同下只能映射为`ABSTAIN + NO_SAFE_ADMITTED_ANSWER`；若未来希望
 增加新的学生端状态或P9-A原因码，必须另行授权修改P9-A，不能在P9-B1Q中静默加入。

@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/execution-binding-sidecar-v0.1"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/execution-binding-sidecar-v0.2"
 title: "P9-B1Q private execution binding sidecar candidate"
 description: >-
   Private content-addressed evidence that binds actual request, QueryIR,
@@ -20,10 +20,11 @@ required:
   - schema_artifacts
   - authority_artifacts
   - objects
+  - state_summary
   - components
   - query_semantic_exclusions
 properties:
-  binding_schema_version: {const: "0.1-candidate"}
+  binding_schema_version: {const: "0.2-candidate"}
   binding_id:
     type: string
     pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
@@ -50,20 +51,32 @@ properties:
       - p9a_response_schema
       - p9a_audit_schema
       - retrieval_result_schema
+      - semantic_validation_result_schema
       - query_ir_schema
       - query_ir_semantic_contract
       - query_ir_semantic_validator_contract
       - event_predicate_type_role_mapping
+      - p9b1_retrieval_contract
+      - p9a_release_boundary
+      - p9a_reviewer_evidence_admission
+      - request_queryir_retrieval_audit_binding_contract
+      - ambiguity_fail_closed_rules
       - sidecar_schema
     properties:
       p9a_request_schema: {$ref: "#/$defs/artifact_ref"}
       p9a_response_schema: {$ref: "#/$defs/artifact_ref"}
       p9a_audit_schema: {$ref: "#/$defs/artifact_ref"}
       retrieval_result_schema: {$ref: "#/$defs/artifact_ref"}
+      semantic_validation_result_schema: {$ref: "#/$defs/artifact_ref"}
       query_ir_schema: {$ref: "#/$defs/artifact_ref"}
       query_ir_semantic_contract: {$ref: "#/$defs/artifact_ref"}
       query_ir_semantic_validator_contract: {$ref: "#/$defs/artifact_ref"}
       event_predicate_type_role_mapping: {$ref: "#/$defs/artifact_ref"}
+      p9b1_retrieval_contract: {$ref: "#/$defs/artifact_ref"}
+      p9a_release_boundary: {$ref: "#/$defs/artifact_ref"}
+      p9a_reviewer_evidence_admission: {$ref: "#/$defs/artifact_ref"}
+      request_queryir_retrieval_audit_binding_contract: {$ref: "#/$defs/artifact_ref"}
+      ambiguity_fail_closed_rules: {$ref: "#/$defs/artifact_ref"}
       sidecar_schema: {$ref: "#/$defs/artifact_ref"}
   authority_artifacts:
     type: object
@@ -76,6 +89,8 @@ properties:
       - reviewed_edges
       - entity_type_schema
       - relation_type_schema
+      - pcms_authority_review
+      - source_registry
     properties:
       runtime_bundle: {$ref: "#/$defs/artifact_ref"}
       runtime_authority_projection: {$ref: "#/$defs/artifact_ref"}
@@ -84,6 +99,8 @@ properties:
       reviewed_edges: {$ref: "#/$defs/artifact_ref"}
       entity_type_schema: {$ref: "#/$defs/artifact_ref"}
       relation_type_schema: {$ref: "#/$defs/artifact_ref"}
+      pcms_authority_review: {$ref: "#/$defs/artifact_ref"}
+      source_registry: {$ref: "#/$defs/artifact_ref"}
   objects:
     type: object
     additionalProperties: false
@@ -129,6 +146,8 @@ properties:
               - type: object
                 properties: {object_kind: {const: RESPONSE}}
           - {type: "null"}
+  state_summary:
+    $ref: "#/$defs/state_summary"
   components:
     type: object
     additionalProperties: false
@@ -171,6 +190,12 @@ allOf:
           type: object
           properties:
             retrieval_result: {$ref: "#/$defs/object_ref"}
+        state_summary:
+          type: object
+          properties:
+            semantic_validation_result: {const: PASS}
+            semantic_executable_intent_count: {type: integer, minimum: 1}
+            retrieval_present: {const: true}
   - if:
       properties:
         disposition: {const: QUERY_IR_FAIL_CLOSED}
@@ -180,7 +205,133 @@ allOf:
           type: object
           properties:
             retrieval_result: {type: "null"}
+        state_summary:
+          type: object
+          properties:
+            semantic_validation_result: {const: FAIL_CLOSED}
+            semantic_executable_intent_count: {const: 0}
+            retrieval_present: {const: false}
+            audit_disposition: {const: ABSTAIN}
+            audit_output_validation_result: {const: FAIL_CLOSED}
+            audit_hard_fail_codes:
+              type: array
+              contains: {const: NO_SAFE_ADMITTED_ANSWER}
+              minContains: 1
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {retrieval_present: {const: true}}
+    then:
+      properties:
+        objects:
+          type: object
+          properties: {retrieval_result: {$ref: "#/$defs/object_ref"}}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {retrieval_present: {const: false}}
+    then:
+      properties:
+        objects:
+          type: object
+          properties: {retrieval_result: {type: "null"}}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {audit_disposition: {const: ANSWER}}
+    then:
+      properties:
+        state_summary:
+          type: object
+          properties:
+            audit_output_validation_result: {const: PASS}
+            audit_hard_fail_codes: {type: array, maxItems: 0}
+            audit_response_sha256: {$ref: "#/$defs/sha256"}
+            response_present: {const: true}
+            response_disposition: {const: ANSWER}
+            response_validation_result: {const: PASS}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {audit_disposition: {const: PARTIAL}}
+    then:
+      properties:
+        state_summary:
+          type: object
+          properties:
+            audit_output_validation_result: {const: PASS}
+            audit_hard_fail_codes: {type: array, maxItems: 0}
+            audit_response_sha256: {$ref: "#/$defs/sha256"}
+            response_present: {const: true}
+            response_disposition: {const: PARTIAL}
+            response_validation_result: {const: PASS}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {audit_disposition: {const: ABSTAIN}}
+    then:
+      properties:
+        state_summary:
+          type: object
+          properties:
+            audit_output_validation_result: {const: FAIL_CLOSED}
+            audit_hard_fail_codes: {type: array, minItems: 1}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {response_present: {const: true}}
+    then:
+      properties:
+        objects:
+          type: object
+          properties: {response: {$ref: "#/$defs/object_ref"}}
+        state_summary:
+          type: object
+          properties:
+            audit_response_sha256: {$ref: "#/$defs/sha256"}
+            response_disposition: {enum: [ANSWER, PARTIAL, ABSTAIN]}
+            response_validation_result: {enum: [PASS, FAIL_CLOSED]}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties: {response_present: {const: false}}
+    then:
+      properties:
+        objects:
+          type: object
+          properties: {response: {type: "null"}}
+        state_summary:
+          type: object
+          properties:
+            audit_disposition: {const: ABSTAIN}
+            audit_response_sha256: {type: "null"}
+            response_disposition: {type: "null"}
+            response_validation_result: {type: "null"}
+  - if:
+      properties:
+        state_summary:
+          type: object
+          properties:
+            response_present: {const: true}
+            audit_disposition: {const: ABSTAIN}
+    then:
+      properties:
+        state_summary:
+          type: object
+          properties:
+            response_disposition: {const: ABSTAIN}
+            response_validation_result: {const: FAIL_CLOSED}
 $defs:
+  sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
   artifact_ref:
     type: object
     additionalProperties: false
@@ -260,6 +411,60 @@ $defs:
         type: string
         pattern: "^private-audit://artifacts/sha256/[0-9a-f]{64}$"
       configuration_byte_length: {type: integer, minimum: 1}
+  state_summary:
+    type: object
+    additionalProperties: false
+    required:
+      - semantic_validation_result
+      - semantic_executable_intent_count
+      - retrieval_present
+      - audit_disposition
+      - audit_output_validation_result
+      - audit_hard_fail_codes
+      - audit_response_sha256
+      - response_present
+      - response_disposition
+      - response_validation_result
+    properties:
+      semantic_validation_result: {enum: [PASS, FAIL_CLOSED]}
+      semantic_executable_intent_count: {type: integer, minimum: 0, maximum: 192}
+      retrieval_present: {type: boolean}
+      audit_disposition: {enum: [ANSWER, PARTIAL, ABSTAIN]}
+      audit_output_validation_result: {enum: [PASS, FAIL_CLOSED]}
+      audit_hard_fail_codes:
+        type: array
+        uniqueItems: true
+        items: {$ref: "#/$defs/p9a_hard_fail_code"}
+      audit_response_sha256:
+        oneOf:
+          - {$ref: "#/$defs/sha256"}
+          - {type: "null"}
+      response_present: {type: boolean}
+      response_disposition:
+        oneOf:
+          - {enum: [ANSWER, PARTIAL, ABSTAIN]}
+          - {type: "null"}
+      response_validation_result:
+        oneOf:
+          - {enum: [PASS, FAIL_CLOSED]}
+          - {type: "null"}
+  p9a_hard_fail_code:
+    enum:
+      - AUTHORITY_BUNDLE_MISMATCH
+      - NO_SAFE_ADMITTED_ANSWER
+      - UNREGISTERED_SOURCE
+      - UNKNOWN_ENTITY_ID
+      - UNKNOWN_CLAIM_ID
+      - UNREVIEWED_CLAIM
+      - MISSING_REQUIRED_QUALIFIER
+      - HIDDEN_STUDENT_CITATION
+      - CITATION_CLAIM_MISMATCH
+      - CITATION_LOCATOR_MISMATCH
+      - DIAGNOSTIC_CLUE_PROMOTED_TO_CONFIRMATION
+      - ASSOCIATION_PROMOTED_TO_CAUSALITY
+      - MODEL_MEMORY_GAP_FILL
+      - EXTERNAL_WEB_GAP_FILL
+      - STUDENT_DATA_IN_PUBLIC_ARTIFACT
   query_semantic_exclusion:
     type: object
     additionalProperties: false

@@ -1,5 +1,5 @@
-rules_version: "0.2-candidate"
-rules_id: "clonorchis_p9b1q_ambiguity_fail_closed_v0_2"
+rules_version: "0.3-candidate"
+rules_id: "clonorchis_p9b1q_ambiguity_fail_closed_v0_3"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 
 default_policy:
@@ -55,8 +55,11 @@ ambiguity_classes:
     required_trace: [source_spans, candidate_override_graphs]
     retrieval: "PROHIBITED"
   OR_SELECTION:
-    trigger: "One or more branches in an OR group could license a material relation or narrative intent; QueryIR v0.2 has no branch-selection object."
-    required_trace: [source_spans, candidate_parent_clause_ids]
+    trigger: "One or more branches in an OR group could license a material relation or narrative intent; QueryIR v0.3 has no resolved branch-selection object."
+    required_trace: [source_spans, candidate_or_branches]
+    option_shape: "OR_BRANCH(alternative_group_id, branch_clause_id)"
+    option_count_minimum: 2
+    coverage: "EXACTLY_ALL_OR_SIBLINGS_IN_ONE_ALT_GROUP"
     retrieval: "PROHIBITED"
   UNSUPPORTED_INTENT:
     trigger: "The requested relation or conclusion is outside the frozen entity/predicate/role vocabulary."
@@ -70,6 +73,7 @@ non_ambiguity_hard_failures:
   DANGLING_REFERENCE: "NO_RETRIEVAL"
   CLAUSE_GRAPH_CYCLE: "NO_RETRIEVAL"
   OR_GROUP_INVALID: "NO_RETRIEVAL"
+  OR_BRANCH_COVERAGE_INVALID: "NO_RETRIEVAL"
   EMPTY_SELECTOR: "NO_RETRIEVAL"
   SEMANTIC_DEPENDENCY_CYCLE_OR_BACK_EDGE: "NO_RETRIEVAL"
   NO_AFFIRMED_SEMANTIC_ROOT: "NO_RETRIEVAL"
@@ -112,7 +116,10 @@ resolved_cases:
     requirements:
       - "at least two OR siblings share one ALT group and parent"
       - "at least one branch could root a material relation or narrative intent"
-    action: "record OR_SELECTION ambiguity and prohibit retrieval; v0.2 has no resolved-OR representation"
+    action: >-
+      record one OR_BRANCH option for every sibling branch in the ALT group,
+      reject duplicate/omitted/foreign branches, and prohibit retrieval; v0.3
+      has no resolved-OR representation
 
 candidate_gate_failures:
   relation_candidate_has_no_matching_affirmed_relation_intent: "INTERNAL_ONLY_NOT_MATERIAL"

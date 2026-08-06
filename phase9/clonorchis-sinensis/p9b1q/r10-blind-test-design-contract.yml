@@ -1,5 +1,5 @@
-contract_version: "1.1"
-contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_1"
+contract_version: "1.2"
+contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_2"
 status: "DESIGN_CANDIDATE_NOT_YET_FROZEN"
 
 purpose: >-
@@ -59,12 +59,13 @@ persistence:
 suite_shape:
   planned_semantic_case_count: 24
   planned_binding_positive_probe_count: 2
-  planned_binding_negative_probe_count: 12
-  planned_total_execution_count: 38
+  planned_binding_negative_probe_count: 16
+  planned_total_execution_count: 42
   language: "zh-CN"
   request_schema_version: "1.0"
-  query_ir_schema_candidate_version: "0.2-candidate"
-  sidecar_schema_candidate_version: "0.1-candidate"
+  query_ir_schema_candidate_version: "0.3-candidate"
+  semantic_validation_result_schema_candidate_version: "0.1-candidate"
+  sidecar_schema_candidate_version: "0.2-candidate"
   top_k: 12
   categories:
     diagnostic_method_specimen_polarity:
@@ -125,8 +126,12 @@ binding_integrity_probes:
     - "content-address digest or declared byte length does not match resolved bytes"
     - "interpreter executable changes while version and configuration labels remain constant"
     - "semantic-validator executable or mapping artifact changes after QueryIR creation"
+    - "a normative contract key resolves to a different file with the same ID or version label"
+    - "logical runtime bundle digest is replaced by the runtime manifest file-byte digest"
     - "graph-executor executable/build artifact changes while result is reused"
     - "query-semantic exclusion is mislabeled as a P9-A authority exclusion"
+    - "semantic-validation result is changed to PASS with zero executable R/N or mismatched request/QueryIR/artifact hashes"
+    - "sidecar state summary is changed without changing the actual validation, retrieval, audit, or response objects"
   mutation_basis: >-
     Each negative probe mutates exactly one field or object of a frozen positive
     chain; all unchanged objects retain their original bytes and hashes.
@@ -140,9 +145,13 @@ case_record_requirements:
     - "exact mention entity IDs, assertion statuses, and temporal scopes"
     - "exact event method/specimen/target/polarity tuples"
     - "exact relation and narrative intent sets with directed selectors"
+    - "exact derivation_mode and exact E/M basis for every relation and narrative intent"
+    - "every EVENT_DERIVED R predicate and selector is the exact event-mapping projection"
+    - "every narrative anchor shares the required AFFIRMED root and clause scope"
     - "exact required role set"
     - "exact forbidden relation intent set"
     - "expected ambiguity type where applicable"
+    - "OR_SELECTION options exactly cover all OR_BRANCH members in the ALT group"
     - "explicit allowed-optional semantic objects; default optional set is empty"
   expected_retrieval_assertions:
     - "required claim IDs for executable cases"
@@ -172,7 +181,9 @@ acceptance_gates:
   assertion_negation_exclusion_scope: "ZERO_FORBIDDEN_ACTIVATION"
   temporal_scope: "ZERO_CROSS_TEMPORAL_ACTIVATION"
   required_relation_intents: "ALL_PRESENT"
+  event_relation_derivation_consistency: "ZERO_EVENT_PREDICATE_SELECTOR_MISMATCH"
   required_narrative_intents: "ALL_PRESENT_WHERE_EXPECTED"
+  narrative_root_anchor_consistency: "ZERO_UNRELATED_ENTITY_OR_ANCHOR"
   forbidden_relation_intents: "ALL_ABSENT_FROM_AFFIRMATIVE_ACTIVATION"
   exact_no_extra_semantic_objects: "ZERO_UNEXPECTED_AFFIRMED_EVENTS_INTENTS_ROLES_OR_PROHIBITIONS"
   plan_precision: "1.0_EXCLUDING_EXPLICITLY_ALLOWLISTED_OPTIONAL_OBJECTS"
@@ -184,7 +195,8 @@ acceptance_gates:
   deterministic_repeated_runs: 3
   sidecar_schema_and_content_address_resolution: "ALL_POSITIVE_CHAINS"
   end_to_end_binding_positive_probes: "2/2"
-  end_to_end_binding_negative_probes: "12/12_FAIL_CLOSED_AT_EXPECTED_STAGE"
+  semantic_validation_result_schema: "ALL_POSITIVE_AND_NEGATIVE_CHAINS"
+  end_to_end_binding_negative_probes: "16/16_FAIL_CLOSED_AT_EXPECTED_STAGE"
   combined_gate: >-
     A case passes only when its QueryIR, prohibitions, retrieval behavior,
     candidate license, provenance, and determinism all pass. Recall alone can
@@ -205,7 +217,7 @@ review_execution:
     - "per-case pass/fail without disclosing text until review completion"
     - "source/locator and deterministic hashes"
     - "exact/no-extra semantic-object and plan-precision results"
-    - "all 14 end-to-end binding probe results and failure stages"
+    - "all 18 end-to-end binding probe results and failure stages"
     - "repository mutation check"
   verdicts: [PASS, CHANGES_REQUIRED, INVALID_AUDIT_COMMITMENT]
 

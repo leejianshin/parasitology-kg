@@ -1,5 +1,5 @@
-mapping_version: "0.1-candidate"
-mapping_id: "clonorchis_p9b1q_event_predicate_type_role_mapping_v0_1"
+mapping_version: "0.2-candidate"
+mapping_id: "clonorchis_p9b1q_event_predicate_type_role_mapping_v0_2"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 
 authority:
@@ -70,6 +70,48 @@ event_field_defaults:
     specimen_code: "NOT_APPLICABLE"
     finding_polarity: "NOT_APPLICABLE"
   unresolved_material_field: "AMBIGUOUS_NO_RETRIEVAL"
+
+derivation_source_tokens:
+  entity_type_token: >-
+    A token equal to a formal entity type resolves only to reviewed entity IDs
+    of that type present in event.actor_entity_ids, event.target_entity_id, or
+    mentions directly bound by event.mention_ids. It never authorizes another
+    entity merely because that entity has the same type.
+  method_entity_id: "Exactly event.method_entity_id; null contributes no entity."
+  bound_mention_scope: >-
+    A bound mention must be in the event clause or a uniquely resolved
+    reference-linked clause. Unrelated same-clause or same-type mentions are
+    not event participants.
+  open_type_selector: >-
+    An entity-type-only selector is permitted only when the corresponding
+    subject_from/object_from list contains that type and the request explicitly
+    asks for an unknown counterpart. It cannot hide an unresolved known entity.
+  concrete_selector: >-
+    Every concrete selector entity ID must be in the deterministically resolved
+    source set for its side. Adding an entity not present in that source set is
+    EVENT_INTENT_DERIVATION_MISMATCH.
+
+event_to_relation_derivation:
+  applies_when: "relation_intent.derivation_mode == EVENT_DERIVED"
+  rules:
+    - "each E basis resolves to exactly one event"
+    - "relation predicate exists in every material E basis event_mapping[event_type].predicates"
+    - "subject selector is derived only from that predicate subject_from tokens"
+    - "object selector is derived only from that predicate object_from tokens"
+    - "all concrete selector entities occur in the deterministic event source set"
+    - "all E bases share the relation intent clause/source-span scope"
+    - "an unrelated M basis cannot repair an E-to-predicate mismatch"
+  zero_matching_event_predicate: "FAIL_CLOSED"
+  selector_contains_unbound_entity: "FAIL_CLOSED"
+
+direct_mention_to_relation_derivation:
+  applies_when: "relation_intent.derivation_mode == DIRECT_MENTION_DERIVED"
+  rules:
+    - "basis contains M IDs only"
+    - "every concrete selector entity occurs in an AFFIRMED basis mention"
+    - "open entity-type slots follow predicate_type_matrix and are explicitly requested"
+    - "predicate and direction are expressed by exact request spans"
+  inferred_concrete_entity_not_in_basis: "FAIL_CLOSED"
 
 event_mapping:
   DIAGNOSTIC_FINDING:
@@ -242,17 +284,49 @@ narrative_intent_mapping:
     authority: "reviewed narrative records with formal narrative role"
     allowed_topics: [morphology]
     allowed_entity_types: [life_cycle_stage]
+    allowed_event_types: [DEVELOPMENT]
     required_anchor_predicates: []
   diagnostic_evidence_integration:
     authority: "runtime-authority-projection.yml claims[].semantic_role"
     allowed_topics: [diagnosis, boundary]
     allowed_entity_types: [diagnostic_method, disease]
+    allowed_event_types: [DIAGNOSTIC_FINDING, EXPOSURE]
     required_anchor_predicates: [has_diagnostic_clue]
   diagnostic_confirmation_limit:
     authority: "runtime-authority-projection.yml claims[].semantic_role"
     allowed_topics: [diagnosis, boundary]
     allowed_entity_types: [diagnostic_method, disease]
+    allowed_event_types: [DIAGNOSTIC_FINDING, EXPOSURE]
     required_anchor_predicates: [has_diagnostic_clue]
+
+event_to_narrative_derivation:
+  applies_when: "narrative_intent.derivation_mode == EVENT_DERIVED"
+  rules:
+    - "each E basis event_type is allowlisted by narrative_intent_mapping[semantic_role].allowed_event_types"
+    - "every concrete narrative entity is an event participant, method, target, or directly bound mention"
+    - "topic_scope and semantic_role are an allowlisted pair"
+    - "every required anchor predicate has an executable R intent sharing at least one identical AFFIRMED M/E root"
+    - "anchor R and N clause scopes overlap and both cover their shared root span"
+  unrelated_anchor_relation: "FAIL_CLOSED"
+  selector_contains_unbound_entity: "FAIL_CLOSED"
+
+direct_mention_to_narrative_derivation:
+  applies_when: "narrative_intent.derivation_mode == DIRECT_MENTION_DERIVED"
+  rules:
+    - "basis contains M IDs only"
+    - "concrete narrative entities occur in AFFIRMED basis mentions"
+    - "entity type, topic and semantic role satisfy narrative_intent_mapping"
+    - "required anchor R shares at least one identical AFFIRMED M root and clause scope"
+
+closed_contrast_intent_derivation:
+  applies_when: "R/N derivation_mode == CLOSED_CONTRAST_DERIVED"
+  authority: "closed_contrast_derivations"
+  rules:
+    - "activation_policy is REQUIRED_CONTRAST"
+    - "predicate or narrative role is exactly emitted by one closed rule"
+    - "selector entities and types follow the closed rule and formal predicate matrix"
+    - "emitted intent and required role share the same AFFIRMED M/E root"
+  unregistered_closed_rule: "FAIL_CLOSED"
 
 role_catalog:
   EVIDENCE_ROLE:

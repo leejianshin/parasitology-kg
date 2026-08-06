@@ -1,5 +1,5 @@
-matrix_version: "1.1"
-matrix_id: "clonorchis_p9b1q_r9_failure_coverage_v1_1"
+matrix_version: "1.2"
+matrix_id: "clonorchis_p9b1q_r9_failure_coverage_v1_2"
 status: "AGGREGATE_FAILURE_TYPES_ONLY_NO_SECRET_QUERY_TEXT"
 
 r9_evidence:
@@ -52,6 +52,7 @@ coverage:
       - "relation_intents.object_selector"
       - "relation_intents.activation_policy"
       - "relation_intents.basis_ids"
+      - "relation_intents.derivation_mode"
       - "event-predicate-type-role-mapping.yml"
     semantic_rules:
       - "event-to-predicate mapping uses reviewed graph relations"
@@ -63,6 +64,7 @@ coverage:
       - "all forbidden predicates absent"
       - "selector direction and entity types valid"
       - "each activation traces to an affirmed event or mention"
+      - "event-derived predicate and selectors exactly match the bound event mapping"
 
   - finding_id: "R9-F03"
     severity: "HIGH"
@@ -117,6 +119,7 @@ coverage:
       - "forbidden_relation_intents"
       - "ambiguities"
       - "query-ir-semantic-validator-contract.yml"
+      - "semantic-validation-result-schema-candidate.yml"
       - "execution-binding-sidecar-schema-candidate.yml"
     semantic_rules:
       - "QueryIR validity is an independent gate before retrieval"

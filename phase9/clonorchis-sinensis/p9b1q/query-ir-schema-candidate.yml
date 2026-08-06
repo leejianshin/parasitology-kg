@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/query-ir-schema-candidate-v0.2"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/query-ir-schema-candidate-v0.3"
 title: "P9-B1Q scoped query interpretation candidate"
 description: >-
   Candidate only. This object interprets request text into scoped clauses,
@@ -28,7 +28,7 @@ required:
   - ambiguities
 properties:
   query_ir_version:
-    const: "0.2-candidate"
+    const: "0.3-candidate"
   request_id:
     type: string
     pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
@@ -444,6 +444,7 @@ $defs:
       - assertion_status
       - temporal_scope
       - activation_policy
+      - derivation_mode
       - basis_ids
     properties:
       intent_id:
@@ -468,6 +469,8 @@ $defs:
       temporal_scope: {$ref: "#/$defs/temporal_scope"}
       activation_policy:
         enum: [REQUIRED, OPTIONAL_CONTEXT, REQUIRED_CONTRAST]
+      derivation_mode:
+        enum: [EVENT_DERIVED, DIRECT_MENTION_DERIVED, CLOSED_CONTRAST_DERIVED]
       basis_ids:
         type: array
         minItems: 1
@@ -476,6 +479,28 @@ $defs:
         items:
           type: string
           pattern: "^(M|E)[0-9]{2,3}$"
+    allOf:
+      - if:
+          properties: {derivation_mode: {const: EVENT_DERIVED}}
+        then:
+          properties:
+            basis_ids:
+              type: array
+              contains: {type: string, pattern: "^E[0-9]{2,3}$"}
+              minContains: 1
+      - if:
+          properties: {derivation_mode: {const: DIRECT_MENTION_DERIVED}}
+        then:
+          properties:
+            basis_ids:
+              type: array
+              items: {type: string, pattern: "^M[0-9]{2,3}$"}
+            activation_policy: {enum: [REQUIRED, OPTIONAL_CONTEXT]}
+      - if:
+          properties: {derivation_mode: {const: CLOSED_CONTRAST_DERIVED}}
+        then:
+          properties:
+            activation_policy: {const: REQUIRED_CONTRAST}
   narrative_intent:
     type: object
     additionalProperties: false
@@ -489,6 +514,7 @@ $defs:
       - assertion_status
       - temporal_scope
       - activation_policy
+      - derivation_mode
       - basis_ids
       - required_anchor_predicates
     properties:
@@ -518,6 +544,8 @@ $defs:
       temporal_scope: {$ref: "#/$defs/temporal_scope"}
       activation_policy:
         enum: [REQUIRED, OPTIONAL_CONTEXT, REQUIRED_CONTRAST]
+      derivation_mode:
+        enum: [EVENT_DERIVED, DIRECT_MENTION_DERIVED, CLOSED_CONTRAST_DERIVED]
       basis_ids:
         type: array
         minItems: 1
@@ -531,6 +559,28 @@ $defs:
         maxItems: 8
         uniqueItems: true
         items: {$ref: "#/$defs/predicate"}
+    allOf:
+      - if:
+          properties: {derivation_mode: {const: EVENT_DERIVED}}
+        then:
+          properties:
+            basis_ids:
+              type: array
+              contains: {type: string, pattern: "^E[0-9]{2,3}$"}
+              minContains: 1
+      - if:
+          properties: {derivation_mode: {const: DIRECT_MENTION_DERIVED}}
+        then:
+          properties:
+            basis_ids:
+              type: array
+              items: {type: string, pattern: "^M[0-9]{2,3}$"}
+            activation_policy: {enum: [REQUIRED, OPTIONAL_CONTEXT]}
+      - if:
+          properties: {derivation_mode: {const: CLOSED_CONTRAST_DERIVED}}
+        then:
+          properties:
+            activation_policy: {const: REQUIRED_CONTRAST}
   required_role:
     type: object
     additionalProperties: false
@@ -858,11 +908,12 @@ $defs:
           properties:
             candidate_options:
               type: array
+              minItems: 2
               items:
                 allOf:
                   - {$ref: "#/$defs/ambiguity_option"}
                   - type: object
-                    properties: {option_kind: {const: PARENT_CLAUSE}}
+                    properties: {option_kind: {const: OR_BRANCH}}
       - if:
           properties: {ambiguity_type: {const: UNSUPPORTED_INTENT}}
         then:
@@ -890,6 +941,14 @@ $defs:
           option_id: {type: string, pattern: "^OPT[0-9]{2,3}$"}
           option_kind: {const: PARENT_CLAUSE}
           parent_clause_id: {type: string, pattern: "^C[0-9]{2,3}$"}
+      - type: object
+        additionalProperties: false
+        required: [option_id, option_kind, alternative_group_id, branch_clause_id]
+        properties:
+          option_id: {type: string, pattern: "^OPT[0-9]{2,3}$"}
+          option_kind: {const: OR_BRANCH}
+          alternative_group_id: {type: string, pattern: "^ALT[0-9]{2,3}$"}
+          branch_clause_id: {type: string, pattern: "^C[0-9]{2,3}$"}
       - type: object
         additionalProperties: false
         required: [option_id, option_kind, assertion_status]

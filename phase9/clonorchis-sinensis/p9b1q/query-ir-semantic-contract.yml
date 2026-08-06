@@ -1,5 +1,5 @@
-contract_version: "0.2-candidate"
-contract_id: "clonorchis_p9b1q_scoped_query_ir_semantics_v0_2"
+contract_version: "0.3-candidate"
+contract_id: "clonorchis_p9b1q_scoped_query_ir_semantics_v0_3"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 target_implementation_commit: "accf29d144412b5634de17b77c53f153b8ac7f7d"
 
@@ -76,7 +76,7 @@ clause_and_discourse_semantics:
   OR: >-
     Alternatives remain distinct in one non-null alternative_group_id. A group
     has at least two sibling OR clauses with the same parent; it must not be
-    materialized as AND. QueryIR v0.2 defines no branch-selection object, so
+    materialized as AND. QueryIR v0.3 defines no resolved branch-selection object, so
     every OR group that could root a material relation or narrative intent is
     AMBIGUOUS and cannot be retrieved.
   CONTRAST: >-
@@ -154,6 +154,18 @@ reference_semantics:
   inferred_referent_without_auditable_reference_object: "PROHIBITED"
 
 relation_intent_semantics:
+  derivation_modes:
+    EVENT_DERIVED: >-
+      Predicate and both directed selectors are deterministically projected
+      from every material E basis through event_mapping; an unrelated event or
+      mention cannot serve as a generic affirmed root.
+    DIRECT_MENTION_DERIVED: >-
+      Basis contains AFFIRMED mentions only. Concrete selector IDs occur in
+      those mentions; open type slots are explicitly requested and satisfy the
+      formal predicate matrix.
+    CLOSED_CONTRAST_DERIVED: >-
+      Predicate, selectors and role are emitted by exactly one registered
+      closed contrast rule and share its AFFIRMED root.
   derivation_basis:
     - "AFFIRMED_MENTION"
     - "AFFIRMED_EVENT"
@@ -178,6 +190,12 @@ relation_intent_semantics:
     graph_completion_policy: >-
       The executor may traverse reviewed edges needed to satisfy an AFFIRMED
       event or required relation group, but QueryIR itself must not name claims.
+  event_intent_derivation:
+    predicate_must_be_in_event_mapping: true
+    selectors_must_follow_subject_from_and_object_from: true
+    concrete_entities_must_be_event_bound: true
+    unrelated_mention_cannot_repair_mismatch: true
+    mismatch: "FAIL_CLOSED"
 
 narrative_intent_semantics:
   purpose: >-
@@ -195,6 +213,17 @@ narrative_intent_semantics:
     diagnostic_evidence_integration: [has_diagnostic_clue]
     diagnostic_confirmation_limit: [has_diagnostic_clue]
   anchor_relation_intent_must_exist_when_required: true
+  derivation_modes:
+    EVENT_DERIVED: >-
+      Event type, entity selector and topic/role pair satisfy the narrative
+      mapping; every anchor R shares an identical AFFIRMED root and clause scope.
+    DIRECT_MENTION_DERIVED: >-
+      Concrete entities occur in AFFIRMED basis mentions and required anchors
+      share one of those roots.
+    CLOSED_CONTRAST_DERIVED: >-
+      The narrative role and anchors are exactly emitted by one registered
+      closed contrast rule.
+  unrelated_anchor_or_entity: "FAIL_CLOSED"
   claim_selection_in_query_ir: "PROHIBITED"
 
 role_semantics:
