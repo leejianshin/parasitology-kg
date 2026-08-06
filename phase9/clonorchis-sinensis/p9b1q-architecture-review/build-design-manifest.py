@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the raw-byte inventory for the fourth independent architecture review."""
+"""Build the raw-byte inventory for the fifth independent architecture review."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import yaml
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
-OUTPUT = HERE / "design-manifest-v0.5.yml"
+OUTPUT = HERE / "design-manifest-v0.6.yml"
 
 
 def sha(path: Path) -> str:
@@ -37,9 +37,9 @@ fixtures = {
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
 manifest = {
-    "manifest_id": "P9B1Q-ARCHITECTURE-EXECUTABLE-EVIDENCE-DESIGN-MANIFEST-v0.5",
-    "status": "FROZEN_FOR_FOURTH_INDEPENDENT_READ_ONLY_REVIEW",
-    "parent_correction_commit": "e40359005a309cd5dedf621e2f16ea0f171a01ad",
+    "manifest_id": "P9B1Q-ARCHITECTURE-EXECUTABLE-EVIDENCE-DESIGN-MANIFEST-v0.6",
+    "status": "FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW",
+    "parent_correction_commit": "5254afe9eefcb85b3433558deaa2b0111231e853",
     "frozen_implementation_commit": "6ac0e4b2978e5fb41e7b90e27ced17826d35a394",
     "hash_algorithm": "SHA256_RAW_FILE_BYTES",
     "manifest_self_hash_excluded": True,
@@ -61,7 +61,7 @@ manifest = {
         "required_result": "PASS",
         "positive_cases": 9,
         "minimality_cases": 8,
-        "negative_cases": 20,
+        "negative_cases": 27,
         "repeat_runs": 3,
     },
     "schema_gate": {

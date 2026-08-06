@@ -56,6 +56,14 @@ def apply_remove(value: dict[str, Any], pointer: str) -> dict[str, Any]:
     return result
 
 
+def pointer_get(value: Any, pointer: str) -> Any:
+    current = value
+    for token in pointer.lstrip("/").split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        current = current[int(token)] if isinstance(current, list) else current[token]
+    return current
+
+
 def semantic_set(core: dict[str, Any]) -> dict[str, Any]:
     return {k: core[k] for k in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents")}
 
@@ -97,6 +105,7 @@ def main() -> None:
     new_contract = raw_sha(HERE / "stage-semantic-validator-contract.yml")
     profile_sha = raw_sha(HERE / "object-canonicalization-and-hash-chain.yml")
     constraint_sha = raw_sha(HERE / "constraint-set-v0.1.yml")
+    projection_sha = raw_sha(HERE / "queryir-projection-rule-set.yml")
 
     requests: dict[str, dict[str, Any]] = {}
     normalized: dict[str, dict[str, Any]] = {}
@@ -146,13 +155,22 @@ def main() -> None:
         path.write_bytes(cbytes(probe))
         probe_hashes[probe["removed_semantic_object_id"]] = csha(probe)
 
+    query_ir = load("queryir-exposure-positive.json")
+    query_ir["producer"]["configuration_sha256"] = projection_sha
+    write("queryir-exposure-positive.json", query_ir)
+
     emission = load("queryir-emission-record-exposure-positive.json")
     emission["normalized_request_sha256"] = csha(normalized["exposure"])
     emission["clause_ast_sha256"] = csha(asts["exposure"])
     emission["event_frame_sha256"] = csha(frames["exposure"])
     emission["semantic_solution_core_sha256"] = core_sha
-    emission["query_ir_sha256"] = csha(emission["query_ir"])
+    emission["projection_rule_set_sha256"] = projection_sha
+    emission["query_ir"] = copy.deepcopy(query_ir)
+    emission["query_ir_sha256"] = csha(query_ir)
     for trace in emission["field_traces"]:
+        trace["emitted_value_sha256"] = csha(
+            pointer_get(query_ir, trace["query_ir_json_pointer"])
+        )
         for binding in trace["source_bindings"]:
             if binding["object_kind"] == "TYPED_SOLUTION":
                 binding["object_sha256"] = core_sha
@@ -191,6 +209,31 @@ def main() -> None:
         result["validator"]["executable_sha256"] = new_exec
         result["validator"]["configuration_sha256"] = new_contract
         result["validator"]["validator_version"] = "0.3-reference"
+        if name == "stage-validation-s1-positive.json" and not any(
+            item["object_kind"] == "ENTITY_ALIAS_AUTHORITY"
+            for item in result["actual_input_objects"]
+        ):
+            alias_path = REPO / "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+            result["actual_input_objects"].append({
+                "object_kind": "ENTITY_ALIAS_AUTHORITY",
+                "content_path": "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml",
+                "content_json_pointer": None,
+                "schema_id": "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml",
+                "canonical_sha256": raw_sha(alias_path),
+                "byte_length": len(alias_path.read_bytes()),
+            })
+        if name == "stage-validation-s3-positive.json" and not any(
+            item["object_kind"] == "PROJECTION_RULE_SET"
+            for item in result["actual_input_objects"]
+        ):
+            result["actual_input_objects"].append({
+                "object_kind": "PROJECTION_RULE_SET",
+                "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-projection-rule-set.yml",
+                "content_json_pointer": None,
+                "schema_id": "queryir-projection-rule-set.yml",
+                "canonical_sha256": projection_sha,
+                "byte_length": len((HERE / "queryir-projection-rule-set.yml").read_bytes()),
+            })
         for item in result["actual_input_objects"] + [result["actual_output_object"]]:
             absolute = resolve(item["content_path"])
             item["canonical_sha256"] = raw_sha(absolute)
@@ -245,7 +288,7 @@ def main() -> None:
 
     negative_path = FIX / "stage-validator-negative-fixtures.yml"
     negative = yaml.safe_load(negative_path.read_text(encoding="utf-8"))
-    negative["status"] = "FROZEN_FOR_FOURTH_INDEPENDENT_READ_ONLY_REVIEW"
+    negative["status"] = "FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW"
     for item in negative["base_objects"]:
         item["canonical_sha256"] = raw_sha(resolve(item["path"]))
     for case in negative["cases"]:

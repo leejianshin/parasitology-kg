@@ -49,19 +49,20 @@ semantic errors stable instead of making them correct.
 - `minimality-proof-schema-candidate.yml`: independently persisted semantic
   universe plus eight replayable single-removal probes.
 - `execution-binding-sidecar-architecture-schema-candidate.yml`: a complete S5
-  positive chain binding 29 actual objects and five stage PASS results.
-- `design-manifest-v0.3.yml`: the raw-byte review inventory for the corrected
+  positive chain binding 45 actual objects and five stage PASS results.
+- `design-manifest-v0.6.yml`: the raw-byte review inventory for the corrected
   design, fixtures, and protected implementation/P9-A boundary.
 - `reference-stage-semantic-validator.py`: a deterministic, review-only
   executable that validates the positive chain, replays all eight minimality
-  removals, and executes all seventeen isolated negative mutations.
+  removals through the same semantic predicate, and executes all twenty-seven
+  isolated negative mutations.
 - `fixtures/reference-validator-execution-summary.json` and its Schema: the
   byte-identical three-run result binding the actual executable and contract.
 
 The corrected evidence set passes strict Draft 2020-12 compilation for all twelve
 local candidate Schemas, validates 27 positive fixtures, resolves all 189 QueryIR
 field traces to persisted source objects, and executes 9 positive, 8 minimality,
-and 17 negative gates in three byte-identical runs. All review JSON actual objects
+and 27 negative gates in three byte-identical runs. All review JSON actual objects
 are stored in their exact canonical bytes.
 
 ## Boundaries

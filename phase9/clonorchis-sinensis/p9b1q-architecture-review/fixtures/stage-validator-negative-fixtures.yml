@@ -1,38 +1,38 @@
 fixture_manifest_version: 0.1-candidate
 fixture_manifest_id: clonorchis_p9b1q_stage_validator_negative_fixtures_v0_1
-status: FROZEN_FOR_FOURTH_INDEPENDENT_READ_ONLY_REVIEW
+status: FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW
 mutation_format: RFC6902_JSON_PATCH
 base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 2ada1a6e7ce6a5877931e4b10bc2b4c3ae9390f49c3ec2f560f464ff01e07a76
+  canonical_sha256: 41186c002228030832215a1decb4157ba54385399c6ab04ded00aaf514b2b2e3
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 6fb491572d00b65a32e961b420c1993a49e6388dea7cd479ef63b8f6ff242580
+  canonical_sha256: 926e770f8b62e3ef13215f2e0ad6e9fa4c7ffac05b783db7ae729874850708ad
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 7626ffde26643589ad435d012e7e6af12a4378724d1989db246dcb36eeec0dc9
+  canonical_sha256: 1fdd100486a70a5f542e95adf9d95b24f178511d5d098101e692ae7e30f9b954
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: 34f92a8812139af2df16d0d9ed2fe551d769c28c03a73cd56d9f2e344ae890a7
+  canonical_sha256: febe8066d5c92375ef77d879a35edc21f90287d0db2ff5455deba20e3569e7f5
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: ba93cad834440a6ca1c94892d9fe7b8375cb16433dc0d16be0d598a99c1bfa62
+  canonical_sha256: aea6654c05cb189e756c5fd82fe8760ff20d6dd59ab9c6683c0df3783b35443b
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: a98e5b7dfa7fc95f54ca59b279319d8169ec01ca9c5b3bcdef218d7bd24370dc
+  canonical_sha256: 2bdc05c6af70d3b684adac338a116e680c9546f9932d0afbb6ce6d7d587fb23e
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: fe47c6eda9b641aaa42b18ab01d49c6c6649cdf9b927c74c27352ec85cfa38d5
+  canonical_sha256: 710b8562b203b3a4bbad437f03ce75a9bca7a98c442d669748e6be283cf78b0c
 - path: fixtures/queryir-exposure-positive.json
-  canonical_sha256: f28aceca8112f98ffa238b6eb5ffe705085ada7116cdb3a6d6f54ddf31b1f091
+  canonical_sha256: 3ee8fb86ffada4ed7cbcb900f9c71e3bcf5b244d048984ceaedc604a0289e1e9
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 8ada43b3f678e2c8eb93e16458ba1e0c4cd9b5b81b4e38f9164b30c503094182
+  canonical_sha256: 2ffd86a3bbcafa6cde6b095e902aa2512ee50e56dc3e938b9d9edb5f9e44b8e9
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: d856c9613292790e8146b35a5fcd37a4718314f8852ad2323b5c60ee92da69f8
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: a8cf286462fc9d5bf31e5c088aaa78b538ca258de361cf0aaaab7665e0b01597
+  canonical_sha256: 4d304638b7c373e9b6b61b9117cbdac51e469999c94817e0863d3c4d7a0be432
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: e226b85b8f0274dfa4eee97d163743e956ca5b4d90d647bdc9ef097141d0a045
+  canonical_sha256: c840fde302af233d9a899b4d6aa2a55eb34fde3084f4ddc2956dedb093151fe1
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -341,6 +341,7 @@ cases:
   - schema/relation-types.yml
   - strict-schema-gate.mjs
   - typed-solution-core-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml
   fault_class: ACTUAL_OBJECT_BINDING_MISMATCH
   patch:
   - op: replace
@@ -350,7 +351,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: e226b85b8f0274dfa4eee97d163743e956ca5b4d90d647bdc9ef097141d0a045
+  base_object_canonical_sha256: c840fde302af233d9a899b4d6aa2a55eb34fde3084f4ddc2956dedb093151fe1
 - fixture_id: NEG-S3-EVENT-MAPPING-HASH
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -396,6 +397,111 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-VALID_STATUS
   expected_failure_code: QUERYIR_NOT_VALID
+- fixture_id: NEG-S3-UNAUTHORIZED-ENTITY-CANDIDATE
+  stage: S3_TYPED_SOLVER
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths: []
+  fault_class: ENTITY_NOT_IN_BOUND_AST_CANDIDATE_SET
+  patch:
+  - op: replace
+    path: /selected_solution/resolved_mentions/0/entity_id
+    value: behavior.unregistered_candidate
+  recompute_derived_hashes:
+  - semantic_object_set_sha256
+  - semantic_solution_core_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-SOLVER-ENTITY_RESOLUTION
+  expected_failure_code: INPUT_HASH_MISMATCH
+- fixture_id: NEG-S3-ASSERTION-SCOPE-ESCALATION
+  stage: S3_TYPED_SOLVER
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths: []
+  fault_class: ASSERTION_NOT_DERIVED_FROM_BOUND_AST_SCOPE
+  patch:
+  - op: replace
+    path: /selected_solution/resolved_mentions/0/assertion_status
+    value: EXCLUDED
+  recompute_derived_hashes:
+  - semantic_object_set_sha256
+  - semantic_solution_core_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
+  expected_failure_code: ASSERTION_SCOPE_UNRESOLVED
+- fixture_id: NEG-S3-EVENT-PARTICIPANT-INJECTION
+  stage: S3_TYPED_SOLVER
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths: []
+  fault_class: EVENT_PARTICIPANT_NOT_IN_BOUND_FRAME_SLOT
+  patch:
+  - op: replace
+    path: /selected_solution/resolved_events/0/target_entity_ids/0
+    value: behavior.unregistered_candidate
+  recompute_derived_hashes:
+  - semantic_object_set_sha256
+  - semantic_solution_core_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
+- fixture_id: NEG-S3-SEMANTIC-ROLE-ESCALATION
+  stage: S3_TYPED_SOLVER
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths: []
+  fault_class: ROLE_NOT_EXACTLY_DERIVED_FROM_BOUND_PROFILE
+  patch:
+  - op: replace
+    path: /selected_solution/semantic_roles/1/role_value
+    value: pathogen_confirmation
+  recompute_derived_hashes:
+  - semantic_object_set_sha256
+  - semantic_solution_core_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
+  expected_failure_code: ASSERTION_SCOPE_UNRESOLVED
+- fixture_id: NEG-S4-SYNCHRONIZED-ROLE-AND-TRACE-TAMPER
+  stage: S4_QUERYIR_EMISSION
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/queryir-exposure-positive.json
+  query_ir_from_mutated_emission: true
+  fault_class: OUTPUT_AND_TRACE_AGREE_BUT_DISAGREE_WITH_TYPED_CORE
+  patch:
+  - op: replace
+    path: /selected_solution/queryir_emission_record/query_ir/required_roles/1/role_value
+    value: pathogen_confirmation
+  recompute_derived_hashes:
+  - query_ir_sha256
+  - field_traces.emitted_value_sha256
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+  expected_failure_code: NON_PURE_PROJECTION
+- fixture_id: NEG-S1-UNREGISTERED-ALIAS-CANDIDATE
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-exposure-positive.json
+  fault_class: CANDIDATE_NOT_IN_FORMAL_ALIAS_AUTHORITY
+  patch:
+  - op: replace
+    path: /surface_mentions/0/candidate_entity_ids/0
+    value: behavior.unregistered_candidate
+  recompute_derived_hashes: []
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-REF_INTEGRITY
+  expected_failure_code: DANGLING_REFERENCE
+- fixture_id: NEG-S2-PARTICIPANT-NOT-LICENSED-BY-MENTION
+  stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-exposure-positive.json
+  fault_class: FRAME_SLOT_VALUE_NOT_IN_SOURCE_MENTION_CANDIDATES
+  patch:
+  - op: replace
+    path: /frames/0/participant_slots/0/domain/entity_ids/0
+    value: behavior.unregistered_candidate
+  recompute_derived_hashes: []
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-SLOT_TYPE
+  expected_failure_code: SLOT_TYPE_MISMATCH
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true

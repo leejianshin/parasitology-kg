@@ -1,6 +1,6 @@
-contract_version: "0.2-candidate"
-contract_id: "clonorchis_p9b1q_stage_semantic_validators_v0_2"
-status: "FROZEN_FOR_FOURTH_INDEPENDENT_READ_ONLY_REVIEW"
+contract_version: "0.3-candidate"
+contract_id: "clonorchis_p9b1q_stage_semantic_validators_v0_3"
+status: "FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW"
 result_schema: "stage-semantic-validation-result-schema-candidate.yml"
 canonicalization_profile: "object-canonicalization-and-hash-chain.yml"
 constraint_registry: "constraint-id-registry.yml"
@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 9
     minimality: 8
-    negative: 20
+    negative: 27
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -68,7 +68,7 @@ validators:
       - "request_id and request_sha256 equal the actual P9A request"
   S1_CLAUSE_AST:
     validator_id: p9b1q-stage-semantic-validator-s1
-    required_actual_inputs: [NORMALIZED_REQUEST, ENTITY_ONTOLOGY, CLAUSE_GRAMMAR_CONFIG]
+    required_actual_inputs: [NORMALIZED_REQUEST, ENTITY_ONTOLOGY, ENTITY_ALIAS_AUTHORITY, CLAUSE_GRAMMAR_CONFIG]
     required_actual_output: CLAUSE_AST
     registered_constraints:
       - CNS-AST-SINGLE_ROOT
@@ -82,6 +82,7 @@ validators:
     additional_checks:
       - "root_node_id resolves to the only ROOT and only it has null parent"
       - "all child, marker, mention, scope target, and attachment IDs resolve with the declared type"
+      - "every candidate entity and normalized surface is licensed by the content-addressed formal alias authority"
       - "start_char < end_char and text equals normalized request codepoint slice"
       - "UNIQUE attachment or scope target has exactly one candidate; UNRESOLVED has at least two"
       - "NEGATOR and EXCLUSION can scope over S proposition/operator or U mention/object"
@@ -102,6 +103,7 @@ validators:
       - CNS-EF-OVERRIDE_DOMAIN
     additional_checks:
       - "every slot, specimen, frame, AST source, reference, and override ID resolves with type"
+      - "every concrete participant domain value is licensed by the cited Clause AST surface mention candidate"
       - "FIXED domains contain exactly one allowed value; COMPETING domains contain at least two"
       - "diagnostic method, specimen, target, polarity and assertion belong to the same frame"
       - "specimen source span equals an actual specimen expression or explicit typed unknown slot"
@@ -124,6 +126,7 @@ validators:
       - CONSTRAINT_REGISTRY_SCHEMA
       - CONSTRAINT_SET
       - MINIMALITY_PROOF_SCHEMA
+      - PROJECTION_RULE_SET
     required_actual_output: TYPED_CONSTRAINT_RESULT
     registered_constraints:
       - CNS-SOLVER-REGISTRY_MEMBERSHIP
@@ -150,7 +153,10 @@ validators:
       - "semantic universe and every removal probe resolve from their declared path, pass minimality-proof-schema-candidate.yml, and match the bound canonical hash"
       - "each removal probe is replayed against the actual typed-solution core and frozen constraint set; the candidate hash and unsatisfied constraints must match"
       - "semantic_object_set_sha256 and solution_id are recomputed after each removal before registered constraints execute"
-      - "all 2^8 subsets of the frozen eight-object semantic universe are enumerated; exactly one inclusion-minimal solution is required for UNIQUE/ONE"
+      - "resolved mentions equal the bound AST candidate and assertion-scope derivation; no self-consistent replacement entity or assertion is accepted"
+      - "resolved event participants, method, specimen, polarity and temporal state equal the bound fixed Event Frame slots"
+      - "roles and narrative intents equal the one matching frozen semantic projection profile; schema-valid role escalation is rejected"
+      - "all 2^N subsets of the N-object candidate universe are evaluated by the same AST/frame/profile semantic predicate used for the positive solution; exactly one inclusion-minimal solution is required for UNIQUE/ONE"
   S4_QUERYIR_EMISSION:
     validator_id: p9b1q-stage-semantic-validator-s4
     required_actual_inputs:
@@ -191,6 +197,8 @@ validators:
       - "all material QueryIR IDs occur in license DAG and minimality witness"
       - "every persisted license_path_node_ids begins at a zero-indegree DAG root, follows declared edges, and terminates at the witness semantic object"
       - "S4 performs extraction and validation only; it cannot add, remove, reorder, or rewrite semantic content"
+      - "mentions, events, relation intents, required roles and narrative intents are independently reprojected from the typed core and bound AST/Event Frame"
+      - "synchronized mutation of output QueryIR and all trace hashes still fails when the recomputed typed-core projection differs"
   S5_RUNTIME_BINDING:
     validator_id: p9b1q-stage-semantic-validator-s5
     required_actual_inputs: "complete object chain declared by object-canonicalization-and-hash-chain.yml"
@@ -229,5 +237,6 @@ negative_fixture_contract:
     - "authority, source, request, contract, registry and expected-result hashes are never recomputed"
     - "mutated object remains isolated from all other cases"
     - "actual validator result equals expected constraint and failure code"
+    - "cross-object synchronized mutation cases may derive the actual QueryIR from the mutated embedded emission, but may not mutate the typed semantic core"
     - "all cases run three times with byte-identical result"
     - "the reference executable must derive observed failures from mutated objects; fixture expected fields are comparison targets only"

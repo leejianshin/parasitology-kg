@@ -1,0 +1,46 @@
+revision_id: P9B1Q-ARCHITECTURE-REVISION-5
+status: FROZEN_FOR_FIFTH_INDEPENDENT_READ_ONLY_REVIEW
+parent_commit: 5254afe9eefcb85b3433558deaa2b0111231e853
+frozen_implementation_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
+scope: REVIEW_ONLY_ARCHITECTURE_EVIDENCE
+closed_findings:
+  typed_solver_semantic_authorization:
+    closure:
+      - resolved mentions are recomputed from the bound Clause AST candidate domains and assertion scopes
+      - resolved events are recomputed from fixed Event Frame participant, method, specimen, polarity and temporal slots
+      - relation selectors and types are checked against the bound predicate and event mappings
+      - required roles and narrative intents must equal the sole matching frozen semantic projection profile
+      - self-consistent entity, assertion, participant or role substitutions fail closed
+  pure_queryir_projection:
+    closure:
+      - QueryIR mention, event, relation, required-role and narrative arrays are reprojected from the typed solution core
+      - clause and source spans remain bound to the actual Clause AST and Event Frame
+      - output and trace hashes may agree with one another but still fail when they disagree with the typed core
+  executable_minimality:
+    closure:
+      - positive and removal candidates execute the same semantic authorization predicate
+      - every subset of the current candidate universe is evaluated without comparing its IDs to a frozen expected ID set
+      - the positive fixture has exactly one satisfying solution and every retained-object removal has zero
+      - each probe records the first registered constraint in its minimal unsatisfied core
+negative_evidence:
+  positive_cases: 9
+  minimality_removal_cases: 8
+  negative_cases: 27
+  newly_frozen_attacks:
+    - ENTITY_NOT_IN_BOUND_AST_CANDIDATE_SET
+    - ASSERTION_NOT_DERIVED_FROM_BOUND_AST_SCOPE
+    - EVENT_PARTICIPANT_NOT_IN_BOUND_FRAME_SLOT
+    - ROLE_NOT_EXACTLY_DERIVED_FROM_BOUND_PROFILE
+    - OUTPUT_AND_TRACE_AGREE_BUT_DISAGREE_WITH_TYPED_CORE
+    - CANDIDATE_NOT_IN_FORMAL_ALIAS_AUTHORITY
+    - FRAME_SLOT_VALUE_NOT_IN_SOURCE_MENTION_CANDIDATES
+  repeat_runs: 3
+  required_repeat_result: BYTE_IDENTICAL
+boundaries:
+  frozen_runtime_modified: false
+  p9a_modified: false
+  model_or_network_at_runtime: false
+  r11_frozen: false
+  pushed: false
+  pr_created: false
+  p9b2_started: false

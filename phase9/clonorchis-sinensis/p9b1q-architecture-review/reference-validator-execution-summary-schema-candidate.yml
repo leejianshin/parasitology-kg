@@ -44,13 +44,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 20
-    maxItems: 20
+    minItems: 27
+    maxItems: 27
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
   positive_pass_count: {const: 9}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 20}
+  negative_pass_count: {const: 27}
   schema_gate:
     type: object
     additionalProperties: false

@@ -29,6 +29,10 @@ REGISTRY = HERE / "constraint-id-registry.yml"
 NEGATIVE = FIXTURES / "stage-validator-negative-fixtures.yml"
 SCHEMA_GATE = HERE / "strict-schema-gate.mjs"
 CONSTRAINT_SET = HERE / "constraint-set-v0.1.yml"
+PROJECTION_RULE_SET = HERE / "queryir-projection-rule-set.yml"
+_SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
+_SCHEMA_GATE_CACHE: dict[str, Any] | None = None
+_REGISTRY_ORDER_CACHE: dict[str, int] | None = None
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -121,7 +125,12 @@ def error(constraint_id: str, failure_code: str, pointer: str) -> dict[str, str]
 
 
 def registry_order() -> dict[str, int]:
-    return {entry["id"]: entry["order"] for entry in load_yaml(REGISTRY)["entries"]}
+    global _REGISTRY_ORDER_CACHE
+    if _REGISTRY_ORDER_CACHE is None:
+        _REGISTRY_ORDER_CACHE = {
+            entry["id"]: entry["order"] for entry in load_yaml(REGISTRY)["entries"]
+        }
+    return _REGISTRY_ORDER_CACHE
 
 
 def ordered(errors: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -164,7 +173,11 @@ def spans_in_ast(ast: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     return values
 
 
-def validate_s1(ast: dict[str, Any], normalized: dict[str, Any]) -> list[dict[str, str]]:
+def validate_s1(
+    ast: dict[str, Any],
+    normalized: dict[str, Any],
+    alias_authority: dict[str, Any] | None = None,
+) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("clause-ast-schema-candidate.yml", ast):
         errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", "/"))
@@ -193,6 +206,20 @@ def validate_s1(ast: dict[str, Any], normalized: dict[str, Any]) -> list[dict[st
     if dangling:
         errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", "/"))
     text = normalized["normalized_query_text"]
+    alias_authority = alias_authority or load_yaml(
+        REPO / "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+    )
+    aliases = alias_authority.get("entity_alias_extensions", {})
+    for index, mention in enumerate(ast["surface_mentions"]):
+        for entity_id in mention["candidate_entity_ids"]:
+            registered_aliases = aliases.get(entity_id)
+            surface = mention["normalized_surface"]
+            if not registered_aliases or not any(
+                alias == surface or alias in surface or surface in alias
+                for alias in registered_aliases
+            ):
+                errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", f"/surface_mentions/{index}/candidate_entity_ids"))
+                break
     for pointer, span in spans_in_ast(ast):
         if span["start_char"] >= span["end_char"]:
             errors.append(error("CNS-AST-SPAN_ORDER", "SPAN_ORDER_INVALID", pointer))
@@ -278,6 +305,18 @@ def validate_s2(
                 for entity_id in domain["entity_ids"]
             ):
                 errors.append(error("CNS-EF-SLOT_TYPE", "SLOT_TYPE_MISMATCH", f"/frames/{fi}/participant_slots/{si}/domain"))
+            if ast:
+                ast_mentions = {
+                    mention["surface_mention_id"]: mention
+                    for mention in ast.get("surface_mentions", [])
+                }
+                licensed_ids = {
+                    entity_id
+                    for source_id in slot["source_ids"]
+                    for entity_id in ast_mentions.get(source_id, {}).get("candidate_entity_ids", [])
+                }
+                if set(domain["entity_ids"]) - licensed_ids:
+                    errors.append(error("CNS-EF-SLOT_TYPE", "SLOT_TYPE_MISMATCH", f"/frames/{fi}/participant_slots/{si}/domain"))
         identity = item["normalized_identity"]
         if identity["event_type_domain"] != item["event_type_domain"]:
             errors.append(error("CNS-EF-IDENTITY_CONSISTENCY", "EVENT_IDENTITY_MISMATCH", f"/frames/{fi}/normalized_identity/event_type_domain"))
@@ -417,8 +456,10 @@ def validate_core_minimality(core: dict[str, Any], emission: dict[str, Any]) -> 
     return []
 
 
-def finite_solution_count(base_core: dict[str, Any], emission: dict[str, Any]) -> int:
-    """Enumerate every inclusion subset of the frozen eight-object universe."""
+def finite_solution_count(
+    base_core: dict[str, Any], emission: dict[str, Any], inputs: dict[str, Any]
+) -> int:
+    """Enumerate all subsets and run the same semantic authorization predicate."""
     slots: list[tuple[str, int]] = []
     for collection in (
         "resolved_mentions",
@@ -428,10 +469,6 @@ def finite_solution_count(base_core: dict[str, Any], emission: dict[str, Any]) -
         "semantic_roles",
     ):
         slots.extend((collection, index) for index in range(len(base_core[collection])))
-    required_ids = {
-        item["semantic_object_id"]
-        for item in load_json(FIXTURES / "semantic-universe-exposure-positive.json")["semantic_objects"]
-    }
     satisfying = 0
     for mask in range(1 << len(slots)):
         candidate = copy.deepcopy(base_core)
@@ -449,15 +486,7 @@ def finite_solution_count(base_core: dict[str, Any], emission: dict[str, Any]) -
                 keep[collection].append(base_core[collection][index])
         candidate.update(keep)
         refresh_core_hashes(candidate)
-        mention_keys = {item["mention_key"] for item in candidate["resolved_mentions"]}
-        relation_keys = {item["relation_key"] for item in candidate["resolved_relations"]}
-        event_keys = {item["event_key"] for item in candidate["resolved_events"]}
-        dependencies_valid = not any(
-            root.startswith("RM") and root not in mention_keys
-            for relation in candidate["resolved_relations"]
-            for root in relation["root_keys"]
-        ) and bool(relation_keys) == bool(event_keys)
-        if material_ids(candidate) == required_ids and dependencies_valid:
+        if not validate_semantic_authority(candidate, inputs, require_complete=True):
             satisfying += 1
     return satisfying
 
@@ -482,7 +511,8 @@ def validate_s3(
         errors.append(error("CNS-SOLVER-REGISTRY_MEMBERSHIP", "UNKNOWN_CONSTRAINT_ID", "/selected_solution/satisfied_constraint_ids"))
     if typed["status"] == "UNIQUE" and typed["solution_cardinality"] != "ONE":
         errors.append(error("CNS-SOLVER-SOLUTION_CARDINALITY", "SOLUTION_CARDINALITY_MISMATCH", "/solution_cardinality"))
-    if typed["status"] == "UNIQUE" and not any(core[key] for key in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents")):
+    empty_unique = typed["status"] == "UNIQUE" and not any(core[key] for key in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents"))
+    if empty_unique:
         errors.append(error("CNS-SOLVER-NONEMPTY_UNIQUE", "EMPTY_UNIQUE_SOLUTION", "/selected_solution"))
     expected_sequence = [entry["id"] for entry in registry_entries if entry["order"] <= 30]
     if (
@@ -510,6 +540,8 @@ def validate_s3(
         errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/stage_validator_contract_sha256"))
     if core["semantic_object_set_sha256"] != canonical_sha(semantic_object_set(core)):
         errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/selected_solution/semantic_object_set_sha256"))
+    if core["solution_id"] != f"SOL-{core['semantic_object_set_sha256'][:24]}":
+        errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/selected_solution/solution_id"))
     mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
     event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
     relation_by_key = {item["relation_key"]: item for item in core["resolved_relations"]}
@@ -552,6 +584,12 @@ def validate_s3(
     if typed["status"] == "UNIQUE" and typed["ambiguity_certificate"] is not None:
         errors.append(error("CNS-SOLVER-AMBIGUITY_CERTIFICATE", "AMBIGUITY_CERTIFICATE_INVALID", "/ambiguity_certificate"))
     emission = typed["selected_solution"]["queryir_emission_record"]
+    projection_rules = inputs.get("PROJECTION_RULE_SET", load_yaml(PROJECTION_RULE_SET))
+    expected_projection_sha = input_hashes.get(
+        "PROJECTION_RULE_SET", sha_bytes(PROJECTION_RULE_SET.read_bytes())
+    )
+    if emission["projection_rule_set_sha256"] != expected_projection_sha:
+        errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/selected_solution/queryir_emission_record/projection_rule_set_sha256"))
     if emission["semantic_solution_core_sha256"] != canonical_sha(core):
         errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/selected_solution/queryir_emission_record/semantic_solution_core_sha256"))
     core_failure = validate_core_minimality(core, emission)
@@ -568,8 +606,10 @@ def validate_s3(
     witnesses = {item["semantic_object_id"] for item in emission["minimality_witness"]["retained_object_witnesses"]}
     if retained != witnesses or retained != material_ids(core):
         errors.append(error("CNS-SOLVER-MINIMALITY", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
-    enumerated = finite_solution_count(core, emission)
-    if typed["solution_cardinality"] != ("ONE" if enumerated == 1 else "ZERO" if enumerated == 0 else "MULTIPLE"):
+    semantic_errors = validate_semantic_authority(core, inputs, require_complete=True)
+    errors.extend(semantic_errors)
+    enumerated = 0 if semantic_errors else finite_solution_count(core, emission, inputs)
+    if (not semantic_errors or empty_unique) and typed["solution_cardinality"] != ("ONE" if enumerated == 1 else "ZERO" if enumerated == 0 else "MULTIPLE"):
         errors.append(error("CNS-SOLVER-SOLUTION_CARDINALITY", "SOLUTION_CARDINALITY_MISMATCH", "/solution_cardinality"))
     return ordered(errors)
 
@@ -632,6 +672,7 @@ def validate_s4(
                         errors.append(error("CNS-EMIT-TRACE_VALUE_HASH", "TRACE_VALUE_HASH_MISMATCH", f"/selected_solution/queryir_emission_record/field_traces/{index}"))
     if query_ir != emitted:
         errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/"))
+    errors.extend(validate_queryir_projection(core, emitted, inputs))
     if not rooted_witness_paths_valid(emission) or material_ids(core) != set(emission["minimality_witness"]["retained_semantic_object_ids"]):
         errors.append(error("CNS-EMIT-LICENSE_COVERAGE", "LICENSE_DAG_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     return ordered(errors)
@@ -649,6 +690,9 @@ def resolved_object_hash(path: Path) -> tuple[str, int]:
 
 
 def run_schema_gate() -> dict[str, Any]:
+    global _SCHEMA_GATE_CACHE
+    if _SCHEMA_GATE_CACHE is not None:
+        return copy.deepcopy(_SCHEMA_GATE_CACHE)
     completed = subprocess.run(
         ["node", str(SCHEMA_GATE)],
         cwd=HERE,
@@ -666,10 +710,14 @@ def run_schema_gate() -> dict[str, Any]:
         or result.get("valid_fixture_count") != 27
     ):
         raise RuntimeError("AJV strict schema gate count/result mismatch")
+    _SCHEMA_GATE_CACHE = copy.deepcopy(result)
     return result
 
 
 def schema_valid(schema_name: str, value: Any) -> bool:
+    cache_key = (schema_name, canonical_sha(value))
+    if cache_key in _SCHEMA_VALID_CACHE:
+        return _SCHEMA_VALID_CACHE[cache_key]
     completed = subprocess.run(
         ["node", str(SCHEMA_GATE), "--validate-schema", schema_name],
         cwd=HERE,
@@ -677,7 +725,9 @@ def schema_valid(schema_name: str, value: Any) -> bool:
         check=False,
         capture_output=True,
     )
-    return completed.returncode == 0
+    valid = completed.returncode == 0
+    _SCHEMA_VALID_CACHE[cache_key] = valid
+    return valid
 
 
 def semantic_object_set(core: dict[str, Any]) -> dict[str, Any]:
@@ -696,6 +746,361 @@ def semantic_object_set(core: dict[str, Any]) -> dict[str, Any]:
 def refresh_core_hashes(core: dict[str, Any]) -> None:
     core["semantic_object_set_sha256"] = canonical_sha(semantic_object_set(core))
     core["solution_id"] = f"SOL-{core['semantic_object_set_sha256'][:24]}"
+
+
+def _entity_type_lookup(inputs: dict[str, Any]) -> dict[str, str]:
+    """Return only entity/type pairs carried by content-addressed compiler inputs."""
+    result: dict[str, str] = {}
+    ast = inputs.get("CLAUSE_AST", {})
+    for mention in ast.get("surface_mentions", []):
+        if len(mention["candidate_entity_ids"]) == 1 and len(mention["candidate_entity_types"]) == 1:
+            result[mention["candidate_entity_ids"][0]] = mention["candidate_entity_types"][0]
+    for frame in inputs.get("EVENT_FRAME", {}).get("frames", []):
+        for slot in frame.get("participant_slots", []):
+            domain = slot["domain"]
+            if len(domain["entity_ids"]) == 1 and len(domain["entity_types"]) == 1:
+                result[domain["entity_ids"][0]] = domain["entity_types"][0]
+    return result
+
+
+def _mention_assertion(ast: dict[str, Any], surface_mention_id: str) -> str:
+    mentions = {item["surface_mention_id"]: item for item in ast.get("surface_mentions", [])}
+    mention = mentions[surface_mention_id]
+    containing = mention["containing_node_id"]
+    applicable = [
+        marker
+        for marker in ast.get("assertion_markers", [])
+        if surface_mention_id in marker["scope_target_candidate_ids"]
+        or containing in marker["scope_target_candidate_ids"]
+    ]
+    if any(marker["marker_kind"] == "EXCLUSION" for marker in applicable):
+        return "EXCLUDED"
+    if any(marker["marker_kind"] == "HYPOTHETICAL" for marker in applicable):
+        return "HYPOTHETICAL"
+    if sum(marker["marker_kind"] == "NEGATOR" for marker in applicable) % 2:
+        return "NEGATED"
+    return "AFFIRMED"
+
+
+def _expected_fixed_mentions(inputs: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    ast = inputs.get("CLAUSE_AST", {})
+    expected: dict[str, dict[str, Any]] = {}
+    for item in ast.get("surface_mentions", []):
+        if len(item["candidate_entity_ids"]) != 1 or len(item["candidate_entity_types"]) != 1:
+            continue
+        expected[item["surface_mention_id"]] = {
+            "entity_id": item["candidate_entity_ids"][0],
+            "entity_type": item["candidate_entity_types"][0],
+            "assertion_status": _mention_assertion(ast, item["surface_mention_id"]),
+            "temporal_scope": "GENERAL",
+        }
+    return expected
+
+
+def _expected_fixed_events(inputs: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    event_frame = inputs.get("EVENT_FRAME", {})
+    specimens = {
+        item["specimen_slot_id"]: item
+        for item in event_frame.get("specimen_slots", [])
+    }
+    expected: dict[str, dict[str, Any]] = {}
+    for frame in event_frame.get("frames", []):
+        if frame["frame_status"] != "FIXED" or len(frame["event_type_domain"]) != 1:
+            continue
+        slots = {item["slot_id"]: item for item in frame["participant_slots"]}
+
+        def fixed_entities(slot_ids: list[str]) -> list[str]:
+            values: list[str] = []
+            for slot_id in slot_ids:
+                slot = slots[slot_id]
+                if slot["binding_status"] != "FIXED" or len(slot["domain"]["entity_ids"]) != 1:
+                    return []
+                values.append(slot["domain"]["entity_ids"][0])
+            return values
+
+        identity = frame["normalized_identity"]
+        method_id = None
+        if identity["method_slot_id"] is not None:
+            method = fixed_entities([identity["method_slot_id"]])
+            method_id = method[0] if len(method) == 1 else None
+        specimen_code = "NOT_APPLICABLE"
+        if identity["specimen_slot_ids"]:
+            specimen = specimens[identity["specimen_slot_ids"][0]]
+            if specimen["binding_status"] == "FIXED" and len(specimen["specimen_code_domain"]) == 1:
+                specimen_code = specimen["specimen_code_domain"][0]
+        expected[frame["frame_id"]] = {
+            "event_type": frame["event_type_domain"][0],
+            "actor_entity_ids": fixed_entities(identity["actor_slot_ids"]),
+            "target_entity_ids": fixed_entities(identity["target_slot_ids"]),
+            "method_entity_id": method_id,
+            "specimen_code": specimen_code,
+            "assertion_status": frame["assertion"]["assertion_status"],
+            "finding_polarity": frame["assertion"]["finding_polarity"],
+            "temporal_scope": frame["assertion"]["temporal_scope"],
+        }
+    return expected
+
+
+def _selector_types(selector: dict[str, Any], entity_types: dict[str, str]) -> set[str]:
+    return set(selector["entity_types"]) | {
+        entity_types[entity_id]
+        for entity_id in selector["entity_ids"]
+        if entity_id in entity_types
+    }
+
+
+def _matching_projection_profiles(
+    core: dict[str, Any], inputs: dict[str, Any]
+) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    projection = inputs.get("PROJECTION_RULE_SET", load_yaml(PROJECTION_RULE_SET))
+    entity_types = _entity_type_lookup(inputs)
+    matches: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for relation in core["resolved_relations"]:
+        subject_types = _selector_types(relation["subject_selector"], entity_types)
+        object_types = _selector_types(relation["object_selector"], entity_types)
+        for profile in projection.get("semantic_projection_profiles", []):
+            when = profile["when"]
+            if relation["predicate"] != when["predicate"]:
+                continue
+            if subject_types != {when["subject_entity_type"]} or object_types != {when["object_entity_type"]}:
+                continue
+            compatible_events = [
+                event
+                for event in core["resolved_events"]
+                if event["event_type"] == when["event_type"]
+                and event["assertion_status"] == when["assertion_status"]
+                and (
+                    not when.get("event_target_equals_relation_object")
+                    or set(event["target_entity_ids"]) == set(relation["object_selector"]["entity_ids"])
+                )
+            ]
+            if compatible_events:
+                matches.append((relation, profile))
+    return matches
+
+
+def validate_semantic_authority(
+    core: dict[str, Any], inputs: dict[str, Any], require_complete: bool = True
+) -> list[dict[str, str]]:
+    """Recompute semantic authorization from actual AST/frame/mapping inputs."""
+    errors: list[dict[str, str]] = []
+    expected_mentions = _expected_fixed_mentions(inputs)
+    actual_mentions = {item["surface_mention_id"]: item for item in core["resolved_mentions"]}
+    for surface_id, mention in actual_mentions.items():
+        expected = expected_mentions.get(surface_id)
+        if expected is None or any(
+            mention[key] != expected[key] for key in ("entity_id", "entity_type")
+        ):
+            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "INPUT_HASH_MISMATCH", "/selected_solution/resolved_mentions"))
+            break
+        if any(
+            mention[key] != expected[key]
+            for key in ("assertion_status", "temporal_scope")
+        ):
+            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "ASSERTION_SCOPE_UNRESOLVED", "/selected_solution/resolved_mentions"))
+            break
+    if require_complete and set(actual_mentions) != set(expected_mentions):
+        errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "INPUT_HASH_MISMATCH", "/selected_solution/resolved_mentions"))
+
+    expected_events = _expected_fixed_events(inputs)
+    actual_events = {item["frame_id"]: item for item in core["resolved_events"]}
+    for frame_id, event in actual_events.items():
+        expected = expected_events.get(frame_id)
+        compared = {key: event[key] for key in expected} if expected else None
+        if expected is None or compared != expected:
+            errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", "/selected_solution/resolved_events"))
+            break
+    if require_complete and set(actual_events) != set(expected_events):
+        errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", "/selected_solution/resolved_events"))
+
+    mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
+    entity_types = _entity_type_lookup(inputs)
+    predicate_matrix = inputs.get("PREDICATE_TYPE_MAPPING", {}).get("predicate_type_matrix", {})
+    event_mapping = inputs.get("EVENT_RELATION_MAPPING", {}).get("event_mapping", {})
+    for relation in core["resolved_relations"]:
+        roots = relation["root_keys"]
+        basis_mentions = [mention_by_key[root] for root in roots if root in mention_by_key]
+        basis_events = [event_by_key[root] for root in roots if root in event_by_key]
+        selector_ids = set(relation["subject_selector"]["entity_ids"] + relation["object_selector"]["entity_ids"])
+        if selector_ids - {item["entity_id"] for item in basis_mentions} and relation["derivation_mode"] == "DIRECT_MENTION_DERIVED":
+            errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
+        matrix = predicate_matrix.get(relation["predicate"])
+        if matrix is None or _selector_types(relation["subject_selector"], entity_types) - set(matrix["subject_types"]) or _selector_types(relation["object_selector"], entity_types) - set(matrix["object_types"]):
+            errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
+        if relation["derivation_mode"] == "EVENT_DERIVED":
+            if not basis_events or any(relation["predicate"] not in event_mapping.get(item["event_type"], {}).get("predicates", {}) for item in basis_events):
+                errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
+
+    profiles = _matching_projection_profiles(core, inputs)
+    wh_present = any(item["marker_kind"] == "WH_FOCUS" for item in inputs.get("CLAUSE_AST", {}).get("assertion_markers", []))
+    if require_complete and wh_present and len(profiles) != 1:
+        errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
+    if len(profiles) == 1:
+        relation, profile = profiles[0]
+        expected_roles = {
+            (item["role_namespace"], item["role_value"], "REQUIRED")
+            for item in profile["required_roles"]
+        }
+        actual_roles = {
+            (item["role_namespace"], item["role_value"], item["activation_policy"])
+            for item in core["semantic_roles"]
+        }
+        if require_complete and actual_roles != expected_roles:
+            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "ASSERTION_SCOPE_UNRESOLVED", "/selected_solution/semantic_roles"))
+        relation_subject = relation["subject_selector"]
+        expected_narratives = {
+            (
+                item["topic_scope"],
+                item["semantic_role"],
+                tuple(item["required_anchor_predicates"]),
+                canonical_sha(relation_subject),
+                "REQUIRED",
+            )
+            for item in profile["required_narrative_intents"]
+        }
+        actual_narratives = {
+            (
+                item["topic_scope"],
+                item["semantic_role"],
+                tuple(item["required_anchor_predicates"]),
+                canonical_sha(item["entity_selector"]),
+                item["activation_policy"],
+            )
+            for item in core["narrative_intents"]
+        }
+        if require_complete and actual_narratives != expected_narratives:
+            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "ASSERTION_SCOPE_UNRESOLVED", "/selected_solution/narrative_intents"))
+        relation_key = relation["relation_key"]
+        if any(item["root_keys"] != [relation_key] for item in core["semantic_roles"] + core["narrative_intents"]):
+            errors.append(error("CNS-SOLVER-LICENSE_DAG", "LICENSE_DAG_INVALID", "/selected_solution"))
+    return ordered(errors)
+
+
+def validate_queryir_projection(
+    core: dict[str, Any], query_ir: dict[str, Any], inputs: dict[str, Any]
+) -> list[dict[str, str]]:
+    """Compare every semantic QueryIR array with a deterministic core projection."""
+    errors: list[dict[str, str]] = []
+
+    def translated(identifier: str) -> str:
+        prefixes = {"RM": "M", "RE": "E", "RR": "R", "RN": "N", "RQ": "Q"}
+        for source, target in prefixes.items():
+            if identifier.startswith(source):
+                return f"{target}{int(identifier[len(source):]):02d}"
+        raise ValueError(identifier)
+
+    ast = inputs.get("CLAUSE_AST", {})
+    frame_object = inputs.get("EVENT_FRAME", {})
+    ast_mentions = {item["surface_mention_id"]: item for item in ast.get("surface_mentions", [])}
+    frames = {item["frame_id"]: item for item in frame_object.get("frames", [])}
+    material_nodes = sorted(
+        (item for item in ast.get("nodes", []) if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (item["source_span"]["start_char"], item["source_span"]["end_char"]),
+    )
+    expected_clause_spans = [item["source_span"] for item in material_nodes]
+    actual_clause_spans = [item["source_span"] for item in query_ir["clauses"]]
+    if actual_clause_spans != expected_clause_spans or [item["order"] for item in query_ir["clauses"]] != list(range(1, len(material_nodes) + 1)):
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/clauses"))
+
+    core_mentions = {
+        translated(item["mention_key"]): item for item in core["resolved_mentions"]
+    }
+    query_mentions = {item["mention_id"]: item for item in query_ir["mentions"]}
+    if set(core_mentions) != set(query_mentions):
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/mentions"))
+    for mention_id, core_item in core_mentions.items():
+        output = query_mentions.get(mention_id, {})
+        source = ast_mentions.get(core_item["surface_mention_id"], {})
+        expected = {
+            "entity_id": core_item["entity_id"],
+            "entity_type": core_item["entity_type"],
+            "assertion_status": core_item["assertion_status"],
+            "temporal_scope": core_item["temporal_scope"],
+            "source_span": source.get("source_span"),
+        }
+        if any(output.get(key) != value for key, value in expected.items()):
+            errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/mentions"))
+            break
+
+    core_events = {translated(item["event_key"]): item for item in core["resolved_events"]}
+    query_events = {item["event_id"]: item for item in query_ir["events"]}
+    if set(core_events) != set(query_events):
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/events"))
+    for event_id, core_item in core_events.items():
+        output = query_events.get(event_id, {})
+        frame = frames.get(core_item["frame_id"], {})
+        expected = {
+            "event_type": core_item["event_type"],
+            "actor_entity_ids": core_item["actor_entity_ids"],
+            "target_entity_id": core_item["target_entity_ids"][0] if len(core_item["target_entity_ids"]) == 1 else None,
+            "method_entity_id": core_item["method_entity_id"],
+            "specimen_code": core_item["specimen_code"],
+            "assertion_status": core_item["assertion_status"],
+            "finding_polarity": core_item["finding_polarity"],
+            "temporal_scope": core_item["temporal_scope"],
+            "source_span": frame.get("source_spans", [None])[0],
+        }
+        if any(output.get(key) != value for key, value in expected.items()):
+            errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/events"))
+            break
+
+    core_relations = {translated(item["relation_key"]): item for item in core["resolved_relations"]}
+    query_relations = {item["intent_id"]: item for item in query_ir["relation_intents"]}
+    if set(core_relations) != set(query_relations):
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/relation_intents"))
+    for intent_id, core_item in core_relations.items():
+        output = query_relations.get(intent_id, {})
+        expected = {
+            "predicate": core_item["predicate"],
+            "subject_selector": core_item["subject_selector"],
+            "object_selector": core_item["object_selector"],
+            "activation_policy": core_item["activation_policy"],
+            "derivation_mode": core_item["derivation_mode"],
+            "basis_ids": sorted(translated(root) for root in core_item["root_keys"]),
+        }
+        actual_basis = sorted(output.get("basis_ids", []))
+        if any(output.get(key) != value for key, value in expected.items() if key != "basis_ids") or actual_basis != expected["basis_ids"]:
+            errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/relation_intents"))
+            break
+
+    core_roles = {
+        translated(item["role_key"]): (
+            item["role_namespace"], item["role_value"], item["activation_policy"]
+        )
+        for item in core["semantic_roles"]
+    }
+    query_roles = {
+        item["role_id"]: (
+            item["role_namespace"], item["role_value"], item["activation_policy"]
+        )
+        for item in query_ir["required_roles"]
+    }
+    if core_roles != query_roles:
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/required_roles"))
+
+    core_narratives = {
+        translated(item["narrative_key"]): (
+            item["topic_scope"], item["semantic_role"], item["entity_selector"],
+            item["required_anchor_predicates"], item["activation_policy"],
+        )
+        for item in core["narrative_intents"]
+    }
+    query_narratives = {
+        item["narrative_intent_id"]: (
+            item["topic_scope"], item["semantic_role"], item["entity_selector"],
+            item["required_anchor_predicates"], item["activation_policy"],
+        )
+        for item in query_ir["narrative_intents"]
+    }
+    if core_narratives != query_narratives:
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/narrative_intents"))
+    if query_ir["forbidden_relation_intents"] != core["forbidden_relations"]:
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/forbidden_relation_intents"))
+    projection_hash = sha_bytes(PROJECTION_RULE_SET.read_bytes())
+    if query_ir["producer"]["configuration_sha256"] != projection_hash:
+        errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/producer/configuration_sha256"))
+    return ordered(errors)
 
 
 def validate_actual_reference(reference: dict[str, Any]) -> bool:
@@ -834,6 +1239,7 @@ def recompute_declared_derived(value: dict[str, Any], paths: list[str]) -> None:
             core = solution_core(value)
             semantic = {key: core[key] for key in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents")}
             selected["semantic_object_set_sha256"] = canonical_sha(semantic)
+            selected["solution_id"] = f"SOL-{selected['semantic_object_set_sha256'][:24]}"
         elif name.endswith("dag_sha256") and selected is not None:
             dag = selected["queryir_emission_record"]["license_dag"]
             body = dict(dag)
@@ -844,6 +1250,15 @@ def recompute_declared_derived(value: dict[str, Any], paths: list[str]) -> None:
             body = dict(witness)
             body.pop("witness_sha256", None)
             witness["witness_sha256"] = canonical_sha(body)
+        elif name.endswith("query_ir_sha256") and selected is not None:
+            emission = selected["queryir_emission_record"]
+            emission["query_ir_sha256"] = canonical_sha(emission["query_ir"])
+        elif name.endswith("field_traces.emitted_value_sha256") and selected is not None:
+            emission = selected["queryir_emission_record"]
+            for trace in emission["field_traces"]:
+                trace["emitted_value_sha256"] = canonical_sha(
+                    pointer_get(emission["query_ir"], trace["query_ir_json_pointer"])
+                )
 
 
 def normalized_by_request_id() -> dict[str, dict[str, Any]]:
@@ -900,13 +1315,19 @@ def run_positive() -> list[dict[str, Any]]:
 def run_minimality() -> list[dict[str, Any]]:
     core = load_json(FIXTURES / "typed-solution-exposure-positive.json")
     emission = load_json(FIXTURES / "queryir-emission-record-exposure-positive.json")
+    _, inputs, _ = load_stage_result("S3")
     results = []
     for path in sorted(FIXTURES.glob("minimality-removal-probe-*.json")):
         probe = load_json(path)
         candidate = apply_patch(core, probe["mutation"])
         refresh_core_hashes(candidate)
-        observed = validate_core_minimality(candidate, emission)
-        enumerated_after_removal = 1 if not observed else 0
+        semantic_errors = validate_semantic_authority(
+            candidate, inputs, require_complete=True
+        )
+        observed = (
+            [semantic_errors[0]["constraint_id"]] if semantic_errors else []
+        )
+        enumerated_after_removal = finite_solution_count(candidate, emission, inputs)
         results.append(
             {
                 "probe_id": probe["probe_id"],
@@ -937,7 +1358,15 @@ def run_negative() -> list[dict[str, Any]]:
         elif stage == "S1_CLAUSE_AST":
             errors = validate_s1(mutated, normalized[mutated["request_id"]])
         elif stage == "S2_EVENT_FRAME":
-            errors = validate_s2(mutated, normalized[mutated["request_id"]])
+            paired_ast = (
+                load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+                if case.get("paired_actual_object_paths")
+                and "clause-ast" in case["paired_actual_object_paths"][0]
+                else None
+            )
+            errors = validate_s2(
+                mutated, normalized[mutated["request_id"]], paired_ast
+            )
         elif stage == "S3_TYPED_SOLVER":
             s3_record, s3_inputs, _ = load_stage_result("S3")
             s3_hashes = {item["object_kind"]: item["canonical_sha256"] for item in s3_record["actual_input_objects"]}
@@ -945,7 +1374,11 @@ def run_negative() -> list[dict[str, Any]]:
         elif stage == "S4_QUERYIR_EMISSION":
             _, s4_inputs, _ = load_stage_result("S4")
             if "solver_result_version" in mutated:
-                query_ir = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+                query_ir = (
+                    copy.deepcopy(mutated["selected_solution"]["queryir_emission_record"]["query_ir"])
+                    if case.get("query_ir_from_mutated_emission")
+                    else load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
+                )
                 errors = validate_s4(mutated, query_ir, s4_inputs)
             else:
                 typed = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))

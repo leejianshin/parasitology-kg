@@ -1,5 +1,5 @@
-projection_rule_set_version: "0.1-candidate"
-projection_rule_set_id: "clonorchis_p9b1q_queryir_projection_rules_v0_1"
+projection_rule_set_version: "0.2-candidate"
+projection_rule_set_id: "clonorchis_p9b1q_queryir_projection_rules_v0_2"
 status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
 input_schema: "typed-constraint-result-schema-candidate.yml"
 emission_record_schema: "queryir-emission-record-schema-candidate.yml"
@@ -41,6 +41,43 @@ rules:
     operation: BYTE_IDENTICAL_DEEP_COPY
     input_pointer: /selected_solution/queryir_emission_record/query_ir
     output_pointer: /
+
+# This table is executable input, not explanatory prose.  It closes the former
+# gap in which any schema-valid role could be attached to an otherwise valid
+# relation.  A profile is selected only when every listed relation/event/entity
+# condition is true.  The emitted semantic objects are then exact sets.
+semantic_projection_profiles:
+  - profile_id: SPR-DIAGNOSTIC-EXPOSURE-CLUE
+    when:
+      predicate: has_diagnostic_clue
+      subject_entity_type: disease
+      object_entity_type: behavior
+      event_type: EXPOSURE
+      event_target_equals_relation_object: true
+      assertion_status: AFFIRMED
+    required_roles:
+      - role_namespace: TOPIC_SCOPE
+        role_value: diagnosis
+      - role_namespace: EVIDENCE_ROLE
+        role_value: epidemiologic_exposure_clue
+    required_narrative_intents:
+      - topic_scope: diagnosis
+        semantic_role: diagnostic_evidence_integration
+        required_anchor_predicates: [has_diagnostic_clue]
+        selector_from: RELATION_SUBJECT
+      - topic_scope: diagnosis
+        semantic_role: diagnostic_confirmation_limit
+        required_anchor_predicates: [has_diagnostic_clue]
+        selector_from: RELATION_SUBJECT
+
+semantic_projection_closure:
+  profile_selection: EXACT_ALL_CONDITIONS
+  no_matching_profile: FAIL_CLOSED
+  more_than_one_matching_profile: AMBIGUOUS_NO_QUERYIR
+  required_roles: EXACT_SET_NO_OMISSION_NO_ADDITION
+  required_narrative_intents: EXACT_SET_NO_OMISSION_NO_ADDITION
+  queryir_semantic_arrays: EXACT_PROJECTION_FROM_TYPED_CORE
+  synchronized_output_and_trace_mutation: FAIL_CLOSED_BY_CORE_RECOMPUTATION
 
 forbidden_operations:
   - parse_query_text
