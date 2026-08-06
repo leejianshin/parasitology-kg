@@ -1,5 +1,5 @@
-contract_version: "0.2-candidate"
-contract_id: "clonorchis_p9b1q_query_ir_semantic_validator_v0_2"
+contract_version: "0.3-candidate"
+contract_id: "clonorchis_p9b1q_query_ir_semantic_validator_v0_3"
 status: "DESIGN_CANDIDATE_NO_IMPLEMENTATION_AUTHORIZED"
 
 inputs:
@@ -14,16 +14,16 @@ output:
   type: "SCHEMA_VALID_PRIVATE_MACHINE_VALIDATION_RESULT"
   schema: "phase9/clonorchis-sinensis/p9b1q/semantic-validation-result-schema-candidate.yml"
   fields:
-    schema_version: "0.1-candidate"
+    schema_version: "0.2-candidate"
     request_id: "EXACT_REQUEST_ID"
     request_sha256: "CANONICAL_ACTUAL_REQUEST_SHA256"
     query_ir_sha256: "CANONICAL_ACTUAL_QUERY_IR_SHA256"
     result: "PASS_OR_FAIL_CLOSED"
-    fail_codes: "ORDERED_UNIQUE_ENUM_ARRAY"
-    executable_relation_intent_ids: "ORDERED_UNIQUE_R_IDS"
-    executable_narrative_intent_ids: "ORDERED_UNIQUE_N_IDS"
-    prohibited_relation_intent_ids: "ORDERED_UNIQUE_F_IDS"
-    superseded_event_ids: "ORDERED_UNIQUE_E_IDS"
+    fail_codes: "ENUM_ORDINAL_ASCENDING_UNIQUE"
+    executable_relation_intent_ids: "NUMERIC_SUFFIX_ASCENDING_UNIQUE_R_IDS"
+    executable_narrative_intent_ids: "NUMERIC_SUFFIX_ASCENDING_UNIQUE_N_IDS"
+    prohibited_relation_intent_ids: "NUMERIC_SUFFIX_ASCENDING_UNIQUE_F_IDS"
+    superseded_event_ids: "NUMERIC_SUFFIX_ASCENDING_UNIQUE_E_IDS"
   student_visible: false
   invalid_request_boundary: >-
     An object that fails the frozen P9-A request Schema is rejected before
@@ -211,10 +211,45 @@ algorithms:
 
   result_serialization:
     - "construct exactly one semantic-validation result object after all stages"
+    - "finalize each result array as a mathematical set before ordering"
+    - "sort fail_codes by the exact ordinal of the frozen fail_codes list below"
+    - "sort each R/N/F/E array by the frozen deterministic ID ordering below"
     - "validate it against semantic-validation-result-schema-candidate.yml"
     - "PASS lists every and only executable R/N and has no fail codes"
     - "FAIL_CLOSED lists no executable R/N and has at least one ordered fail code"
     - "hash the canonical result bytes only after Schema validation"
+
+deterministic_result_array_ordering:
+  applies_to:
+    - "fail_codes"
+    - "executable_relation_intent_ids"
+    - "executable_narrative_intent_ids"
+    - "prohibited_relation_intent_ids"
+    - "superseded_event_ids"
+  fail_codes:
+    authority: "the exact top-to-bottom fail_codes list in this contract"
+    comparator: "ASCENDING_ZERO_BASED_ENUM_ORDINAL"
+    duplicate_policy: "PROHIBITED"
+  prefixed_ids:
+    arrays_are_sorted_independently: true
+    prefix_is_constant_within_each_array: [R, N, F, E]
+    decimal_suffix_parse: "BASE_10_UNSIGNED_INTEGER"
+    comparator_tuple:
+      - "numeric suffix ascending"
+      - "suffix codepoint length ascending"
+      - "complete raw ID UTF-8 bytes lexicographically ascending"
+    rationale: >-
+      The secondary and tertiary keys deterministically order distinct strings
+      with the same numeric value, for example R02 before R002, without changing
+      the existing frozen ID patterns.
+    locale_or_platform_collation: "PROHIBITED"
+    duplicate_policy: "PROHIBITED"
+  empty_or_singleton_array: "ALREADY_CANONICALLY_ORDERED"
+  execution_point: "AFTER_SET_FINALIZATION_BEFORE_SCHEMA_VALIDATION_AND_HASHING"
+  verifier_rule: >-
+    A received semantic-validation object whose members are valid but whose
+    array order differs from this algorithm is not the deterministic canonical
+    result and must fail the binding recomputation check.
 
 fail_codes:
   - "REQUEST_HASH_OR_ID_MISMATCH"

@@ -1,5 +1,5 @@
-contract_version: "0.3-candidate"
-contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_3"
+contract_version: "0.4-candidate"
+contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_4"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 
 compatibility:
@@ -8,7 +8,7 @@ compatibility:
   p9a_audit_schema: "UNCHANGED_1.3"
   p9b1_retrieval_result_schema: "UNCHANGED_1.1"
   query_ir_schema: "CANDIDATE_0.3"
-  semantic_validation_result_schema: "CANDIDATE_0.1"
+  semantic_validation_result_schema: "CANDIDATE_0.2"
   private_sidecar_schema: "CANDIDATE_0.2"
   new_p9a_reason_code: false
   new_student_visible_state: false
@@ -114,6 +114,7 @@ binding_chain:
       - "semantic_validation.knowledge_version == request.knowledge_version"
       - "semantic_validation contract/schema/mapping hashes equal the corresponding schema_artifacts digests"
       - "semantic_validation result and executable intent IDs equal deterministic recomputation from the same request and QueryIR"
+      - "semantic_validation arrays exactly equal the deterministic order frozen by query-ir-semantic-validator-contract.yml v0.3"
   request_to_retrieval_result:
     assertions:
       - "retrieval_result.request_id == request.request_id"
@@ -252,6 +253,7 @@ tamper_and_mismatch_policy:
   executor_executable_or_build_drift: "FAIL_CLOSED"
   component_configuration_drift: "FAIL_CLOSED"
   semantic_validation_recompute_mismatch: "FAIL_CLOSED"
+  semantic_validation_array_order_mismatch: "FAIL_CLOSED"
   semantic_validation_schema_or_contract_hash_mismatch: "FAIL_CLOSED"
   normative_artifact_identity_or_path_mismatch: "FAIL_CLOSED"
   runtime_bundle_logical_digest_or_manifest_digest_mismatch: "FAIL_CLOSED"
@@ -275,6 +277,7 @@ acceptance_probes:
     - "normative contract key resolves to substituted bytes or a noncanonical path"
     - "runtime bundle logical digest is replaced by the manifest file-byte digest"
     - "semantic-validation result reports PASS with zero executable R/N"
+    - "semantic-validation array membership is unchanged but one array is reordered"
     - "sidecar state summary is changed without changing the actual audit/response objects"
     - "executor artifact changes while result object is reused"
     - "query semantic exclusion is mislabeled as a P9-A authority exclusion"

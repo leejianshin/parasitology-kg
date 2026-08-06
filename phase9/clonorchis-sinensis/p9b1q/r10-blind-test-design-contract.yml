@@ -1,5 +1,5 @@
-contract_version: "1.2"
-contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_2"
+contract_version: "1.3"
+contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_3"
 status: "DESIGN_CANDIDATE_NOT_YET_FROZEN"
 
 purpose: >-
@@ -59,12 +59,12 @@ persistence:
 suite_shape:
   planned_semantic_case_count: 24
   planned_binding_positive_probe_count: 2
-  planned_binding_negative_probe_count: 16
-  planned_total_execution_count: 42
+  planned_binding_negative_probe_count: 17
+  planned_total_execution_count: 43
   language: "zh-CN"
   request_schema_version: "1.0"
   query_ir_schema_candidate_version: "0.3-candidate"
-  semantic_validation_result_schema_candidate_version: "0.1-candidate"
+  semantic_validation_result_schema_candidate_version: "0.2-candidate"
   sidecar_schema_candidate_version: "0.2-candidate"
   top_k: 12
   categories:
@@ -132,6 +132,7 @@ binding_integrity_probes:
     - "query-semantic exclusion is mislabeled as a P9-A authority exclusion"
     - "semantic-validation result is changed to PASS with zero executable R/N or mismatched request/QueryIR/artifact hashes"
     - "sidecar state summary is changed without changing the actual validation, retrieval, audit, or response objects"
+    - "semantic-validation array membership is preserved but fail-code or R/N/F/E order is changed"
   mutation_basis: >-
     Each negative probe mutates exactly one field or object of a frozen positive
     chain; all unchanged objects retain their original bytes and hashes.
@@ -152,6 +153,7 @@ case_record_requirements:
     - "exact forbidden relation intent set"
     - "expected ambiguity type where applicable"
     - "OR_SELECTION options exactly cover all OR_BRANCH members in the ALT group"
+    - "semantic-validation fail-code and R/N/F/E arrays exactly match the frozen deterministic order"
     - "explicit allowed-optional semantic objects; default optional set is empty"
   expected_retrieval_assertions:
     - "required claim IDs for executable cases"
@@ -196,7 +198,8 @@ acceptance_gates:
   sidecar_schema_and_content_address_resolution: "ALL_POSITIVE_CHAINS"
   end_to_end_binding_positive_probes: "2/2"
   semantic_validation_result_schema: "ALL_POSITIVE_AND_NEGATIVE_CHAINS"
-  end_to_end_binding_negative_probes: "16/16_FAIL_CLOSED_AT_EXPECTED_STAGE"
+  semantic_validation_result_array_ordering: "ZERO_NONCANONICAL_ORDER"
+  end_to_end_binding_negative_probes: "17/17_FAIL_CLOSED_AT_EXPECTED_STAGE"
   combined_gate: >-
     A case passes only when its QueryIR, prohibitions, retrieval behavior,
     candidate license, provenance, and determinism all pass. Recall alone can
@@ -217,7 +220,7 @@ review_execution:
     - "per-case pass/fail without disclosing text until review completion"
     - "source/locator and deterministic hashes"
     - "exact/no-extra semantic-object and plan-precision results"
-    - "all 18 end-to-end binding probe results and failure stages"
+    - "all 19 end-to-end binding probe results and failure stages"
     - "repository mutation check"
   verdicts: [PASS, CHANGES_REQUIRED, INVALID_AUDIT_COMMITMENT]
 
