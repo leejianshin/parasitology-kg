@@ -1,16 +1,19 @@
-# P9-B1Q：Scoped QueryIR设计原子
+# P9-B1Q：Scoped QueryIR设计与本地实现
 
-本目录只冻结P9-B1查询解释层的候选设计，不实现解析器、模型调用、检索改造、
-响应生成或学生发布。
+本目录冻结P9-B1查询解释层设计；本地确定性参考实现位于
+`scripts/p9b1q_scoped_query_ir.py`，公开回归位于
+`tests/test_p9b1q_scoped_query_ir.py`。不调用模型、网络或学生数据。
 
 ## 状态与基线
 
-- 设计状态：`DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW`
+- 设计状态：`DESIGN_CANDIDATE_INDEPENDENT_REVIEW_PASS`
+- 实现状态：`LOCAL_IMPLEMENTATION_PENDING_R10_BLIND_REVIEW`
 - 实现基线：`accf29d144412b5634de17b77c53f153b8ac7f7d`
 - 架构裁决：`ADAPT_EXECUTOR_REPLACE_QUERY_INTERPRETATION_LAYER`
 - P9-A合同：保持冻结，不作修改
 - P9-B2：未启动
-- 模型调用、网络调用、推送和Pull Request：均未授权
+- R10秘密套件：已由独立上下文预冻结并以公开承诺提交锁定；实现方不可读
+- 模型调用、网络调用、推送和Pull Request：均未发生
 
 R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完整QueryPlan仅
 `9/24`。因此本设计停止继续增加词面规则，改为先冻结“原始查询如何被解释为带
@@ -28,6 +31,10 @@ R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完
 8. `ambiguity-fail-closed-rules.yml`：歧义分类及关闭式失败规则；
 9. `r9-failure-coverage-matrix.yml`：R9聚合失败类型到新设计字段和验收断言的映射；
 10. `r10-blind-test-design-contract.yml`：下一轮真正held-out的预冻结与验收合同。
+11. `query-interpreter-config.yml`：正式实体别名及通用语义解析配置；
+12. `scripts/p9b1q_scoped_query_ir.py`：解释、语义校验、图执行、P9-A响应/审计及
+    内容寻址sidecar绑定的确定性本地实现；
+13. `tests/test_p9b1q_scoped_query_ir.py`：公开语义与端到端篡改负向回归。
 
 ## 核心边界
 
@@ -43,7 +50,7 @@ R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完
   叙述意图及其必要锚定关系，才可进入后续material claim阶段；
 - OR歧义必须以`ALT组+具体分支句`完整列出全部候选；OR、CONDITION、
   HYPOTHETICAL及未解决同指不得被静默物化为肯定事实；
-- 本目录的候选设计通过独立只读复审之前，不得选择或实现Query Interpreter路线。
+- R10结果公布前不得依据秘密题目修改实现；失败套件揭盲后只能降级为公开回归。
 
 ## 与P9-A的兼容方式
 

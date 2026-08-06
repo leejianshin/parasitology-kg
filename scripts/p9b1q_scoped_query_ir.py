@@ -1,0 +1,2439 @@
+#!/usr/bin/env python3
+"""Deterministic Scoped QueryIR and bound graph execution for P9-B1Q.
+
+This module implements the contracts frozen under ``phase9/.../p9b1q``.  It
+uses only the reviewed local authority bundle.  It does not call a model, the
+network, or student data, and it never places claim/source/citation/answer
+content in QueryIR.
+"""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import hashlib
+import json
+import re
+import unicodedata
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterable, Iterator
+
+import yaml
+
+try:
+    from scripts import p9b1_local_retrieval as p9b1
+except ModuleNotFoundError:  # Direct ``python scripts/...py`` execution.
+    import p9b1_local_retrieval as p9b1
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PHASE9 = Path("phase9/clonorchis-sinensis")
+P9B1Q = PHASE9 / "p9b1q"
+CONFIG_PATH = P9B1Q / "query-interpreter-config.yml"
+QUERY_IR_SCHEMA_PATH = P9B1Q / "query-ir-schema-candidate.yml"
+SEMANTIC_SCHEMA_PATH = P9B1Q / "semantic-validation-result-schema-candidate.yml"
+SIDECAR_SCHEMA_PATH = P9B1Q / "execution-binding-sidecar-schema-candidate.yml"
+SEMANTIC_CONTRACT_PATH = P9B1Q / "query-ir-semantic-contract.yml"
+VALIDATOR_CONTRACT_PATH = P9B1Q / "query-ir-semantic-validator-contract.yml"
+MAPPING_PATH = P9B1Q / "event-predicate-type-role-mapping.yml"
+BINDING_CONTRACT_PATH = P9B1Q / "request-queryir-retrieval-audit-binding.yml"
+AMBIGUITY_RULES_PATH = P9B1Q / "ambiguity-fail-closed-rules.yml"
+
+NORMATIVE_SCHEMA_PATHS = {
+    "p9a_request_schema": PHASE9 / "request-schema.yml",
+    "p9a_response_schema": PHASE9 / "response-schema.yml",
+    "p9a_audit_schema": PHASE9 / "audit-log-schema.yml",
+    "retrieval_result_schema": PHASE9 / "retrieval-result-schema.yml",
+    "semantic_validation_result_schema": SEMANTIC_SCHEMA_PATH,
+    "query_ir_schema": QUERY_IR_SCHEMA_PATH,
+    "query_ir_semantic_contract": SEMANTIC_CONTRACT_PATH,
+    "query_ir_semantic_validator_contract": VALIDATOR_CONTRACT_PATH,
+    "event_predicate_type_role_mapping": MAPPING_PATH,
+    "p9b1_retrieval_contract": PHASE9 / "p9b1-retrieval-contract.yml",
+    "p9a_release_boundary": PHASE9 / "release-boundary.yml",
+    "p9a_reviewer_evidence_admission": PHASE9 / "reviewer-evidence-admission.yml",
+    "request_queryir_retrieval_audit_binding_contract": BINDING_CONTRACT_PATH,
+    "ambiguity_fail_closed_rules": AMBIGUITY_RULES_PATH,
+    "sidecar_schema": SIDECAR_SCHEMA_PATH,
+}
+NORMATIVE_AUTHORITY_PATHS = {
+    "runtime_bundle": PHASE9 / "runtime-bundle-manifest.yml",
+    "runtime_authority_projection": PHASE9 / "runtime-authority-projection.yml",
+    "runtime_contract": PHASE9 / "runtime-contract.yml",
+    "reviewed_nodes": Path("derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"),
+    "reviewed_edges": Path("derived/clonorchis-sinensis/pcms-v1/edges.jsonl"),
+    "entity_type_schema": Path("schema/entity-types.yml"),
+    "relation_type_schema": Path("schema/relation-types.yml"),
+    "pcms_authority_review": (
+        Path("phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml")
+    ),
+    "source_registry": Path("sources/registry.yml"),
+}
+
+_DATE_TIME_RE = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+)
+_CLAUSE_SPLIT_RE = re.compile(r"[，,；;。！？!?]+")
+_ID_RE = re.compile(r"^(?P<prefix>[A-Z]+)(?P<suffix>[0-9]+)$")
+
+
+def _read_yaml(path: Path) -> Any:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def canonical_bytes(value: Any) -> bytes:
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def canonical_sha256(value: Any) -> str:
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+class SchemaValidationError(ValueError):
+    pass
+
+
+def _schema_type_matches(value: Any, expected: str) -> bool:
+    return {
+        "object": lambda: isinstance(value, dict),
+        "array": lambda: isinstance(value, list),
+        "string": lambda: isinstance(value, str),
+        "integer": lambda: isinstance(value, int) and not isinstance(value, bool),
+        "number": lambda: isinstance(value, (int, float)) and not isinstance(value, bool),
+        "boolean": lambda: isinstance(value, bool),
+        "null": lambda: value is None,
+    }[expected]()
+
+
+class LocalSchemaValidator:
+    """Closed Draft-2020-12 subset covering every frozen local Schema keyword."""
+
+    def __init__(self, schema: dict[str, Any]):
+        self.schema = schema
+
+    def validate(self, instance: Any) -> None:
+        self._validate(instance, self.schema, "$")
+
+    def is_valid(self, instance: Any, schema: Any) -> bool:
+        try:
+            self._validate(instance, schema, "$")
+        except SchemaValidationError:
+            return False
+        return True
+
+    def _resolve(self, ref: str) -> Any:
+        if not ref.startswith("#/"):
+            raise SchemaValidationError(f"unsupported non-local $ref: {ref}")
+        value: Any = self.schema
+        for token in ref[2:].split("/"):
+            token = token.replace("~1", "/").replace("~0", "~")
+            if not isinstance(value, dict) or token not in value:
+                raise SchemaValidationError(f"unresolvable $ref: {ref}")
+            value = value[token]
+        return value
+
+    def _fail(self, path: str, message: str) -> None:
+        raise SchemaValidationError(f"schema validation failed at {path}: {message}")
+
+    def _validate(self, value: Any, schema: Any, path: str) -> None:
+        if schema is True:
+            return
+        if schema is False:
+            self._fail(path, "false Schema")
+        if not isinstance(schema, dict):
+            self._fail(path, "invalid Schema node")
+        if "$ref" in schema:
+            self._validate(value, self._resolve(schema["$ref"]), path)
+            siblings = {key: item for key, item in schema.items() if key != "$ref"}
+            if siblings:
+                self._validate(value, siblings, path)
+            return
+
+        expected = schema.get("type")
+        if expected is not None:
+            types = expected if isinstance(expected, list) else [expected]
+            if not any(_schema_type_matches(value, item) for item in types):
+                self._fail(path, f"expected type {types}")
+        if "const" in schema and canonical_bytes(value) != canonical_bytes(schema["const"]):
+            self._fail(path, "const mismatch")
+        if "enum" in schema and not any(
+            canonical_bytes(value) == canonical_bytes(item) for item in schema["enum"]
+        ):
+            self._fail(path, "enum mismatch")
+
+        if isinstance(value, dict):
+            missing = [key for key in schema.get("required", []) if key not in value]
+            if missing:
+                self._fail(path, f"missing required properties {missing}")
+            properties = schema.get("properties", {})
+            for key, item in value.items():
+                if key in properties:
+                    self._validate(item, properties[key], f"{path}.{key}")
+                elif schema.get("additionalProperties") is False:
+                    self._fail(path, f"unexpected property {key}")
+                elif isinstance(schema.get("additionalProperties"), (dict, bool)):
+                    self._validate(
+                        item, schema["additionalProperties"], f"{path}.{key}"
+                    )
+        if isinstance(value, list):
+            if len(value) < schema.get("minItems", 0):
+                self._fail(path, "too few items")
+            if "maxItems" in schema and len(value) > schema["maxItems"]:
+                self._fail(path, "too many items")
+            if schema.get("uniqueItems"):
+                items = [canonical_bytes(item) for item in value]
+                if len(set(items)) != len(items):
+                    self._fail(path, "duplicate items")
+            if "items" in schema:
+                for index, item in enumerate(value):
+                    self._validate(item, schema["items"], f"{path}[{index}]")
+            if "contains" in schema:
+                count = sum(self.is_valid(item, schema["contains"]) for item in value)
+                if count < schema.get("minContains", 1):
+                    self._fail(path, "minContains not met")
+                if "maxContains" in schema and count > schema["maxContains"]:
+                    self._fail(path, "maxContains exceeded")
+        if isinstance(value, str):
+            if len(value) < schema.get("minLength", 0):
+                self._fail(path, "minLength not met")
+            if "maxLength" in schema and len(value) > schema["maxLength"]:
+                self._fail(path, "maxLength exceeded")
+            if "pattern" in schema and re.search(schema["pattern"], value) is None:
+                self._fail(path, f"pattern mismatch: {schema['pattern']}")
+            if schema.get("format") == "date-time" and not _DATE_TIME_RE.match(value):
+                self._fail(path, "invalid date-time")
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if "minimum" in schema and value < schema["minimum"]:
+                self._fail(path, "below minimum")
+            if "maximum" in schema and value > schema["maximum"]:
+                self._fail(path, "above maximum")
+
+        for child in schema.get("allOf", []):
+            self._validate(value, child, path)
+        if "anyOf" in schema and not any(
+            self.is_valid(value, child) for child in schema["anyOf"]
+        ):
+            self._fail(path, "anyOf mismatch")
+        if "oneOf" in schema:
+            count = sum(self.is_valid(value, child) for child in schema["oneOf"])
+            if count != 1:
+                self._fail(path, f"oneOf matched {count} branches")
+        if "not" in schema and self.is_valid(value, schema["not"]):
+            self._fail(path, "forbidden by not")
+        if "if" in schema:
+            branch = "then" if self.is_valid(value, schema["if"]) else "else"
+            if branch in schema:
+                self._validate(value, schema[branch], path)
+
+
+def validate_schema(instance: Any, schema_path: Path, root: Path = ROOT) -> None:
+    LocalSchemaValidator(_read_yaml(root / schema_path)).validate(instance)
+
+
+@dataclass(frozen=True)
+class Span:
+    start: int
+    end: int
+    text: str
+
+    def public(self) -> dict[str, Any]:
+        return {"start_char": self.start, "end_char": self.end, "text": self.text}
+
+
+@dataclass(frozen=True)
+class ClauseSpec:
+    clause_id: str
+    order: int
+    span: Span
+    operator: str
+    parent_id: str | None
+    alternative_group_id: str | None
+
+    def public(self) -> dict[str, Any]:
+        return {
+            "clause_id": self.clause_id,
+            "order": self.order,
+            "source_span": self.span.public(),
+            "discourse_operator": self.operator,
+            "parent_clause_id": self.parent_id,
+            "alternative_group_id": self.alternative_group_id,
+        }
+
+
+def _iter_occurrences(text: str, term: str) -> Iterator[tuple[int, int]]:
+    if not term:
+        return
+    lower = text.lower()
+    needle = term.lower()
+    start = 0
+    while True:
+        index = lower.find(needle, start)
+        if index < 0:
+            break
+        yield index, index + len(term)
+        start = index + max(1, len(term))
+
+
+def _span(text: str, start: int, end: int) -> Span:
+    return Span(start, end, text[start:end])
+
+
+def _contains_any(text: str, terms: Iterable[str]) -> bool:
+    lower = text.lower()
+    return any(term.lower() in lower for term in terms)
+
+
+def _load_configuration(root: Path) -> dict[str, Any]:
+    return _read_yaml(root / CONFIG_PATH)
+
+
+def _entity_aliases(
+    index: p9b1.RetrievalIndex, config: dict[str, Any]
+) -> dict[str, tuple[str, ...]]:
+    extensions = config.get("entity_alias_extensions", {})
+    result: dict[str, tuple[str, ...]] = {}
+    for entity_id, entity in index.entities.items():
+        values = {
+            str(entity.get("name_zh", "")).strip(),
+            *(str(item).strip() for item in entity.get("aliases", [])),
+            *(str(item).strip() for item in extensions.get(entity_id, [])),
+        }
+        values.discard("")
+        result[entity_id] = tuple(sorted(values, key=lambda item: (-len(item), item)))
+    return result
+
+
+def _clause_specs(query: str, config: dict[str, Any]) -> list[ClauseSpec]:
+    chunks: list[Span] = []
+    start = 0
+    for match in _CLAUSE_SPLIT_RE.finditer(query):
+        if start < match.start() and query[start:match.start()].strip():
+            left = start
+            right = match.start()
+            while left < right and query[left].isspace():
+                left += 1
+            while right > left and query[right - 1].isspace():
+                right -= 1
+            chunks.append(_span(query, left, right))
+        start = match.end()
+    if start < len(query) and query[start:].strip():
+        left, right = start, len(query)
+        while left < right and query[left].isspace():
+            left += 1
+        while right > left and query[right - 1].isspace():
+            right -= 1
+        chunks.append(_span(query, left, right))
+    if not chunks:
+        chunks = [_span(query, 0, len(query))]
+
+    # Preserve an auditable ROOT for a material OR and add concrete branch
+    # clauses.  A lexical "or" is never resolved silently.
+    if len(chunks) == 1:
+        chunk = chunks[0]
+        connectors = sorted(config["discourse"]["or"], key=len, reverse=True)
+        split_match: tuple[int, int] | None = None
+        for connector in connectors:
+            for left, right in _iter_occurrences(chunk.text, connector):
+                absolute_left = chunk.start + left
+                absolute_right = chunk.start + right
+                if connector == "或" and query[absolute_right:absolute_right + 4].startswith("未充分"):
+                    continue
+                if left >= 2 and len(chunk.text) - right >= 2:
+                    split_match = (absolute_left, absolute_right)
+                    break
+            if split_match:
+                break
+        if split_match:
+            left_end, right_start = split_match
+            left_start = chunk.start
+            while left_start < left_end and query[left_start].isspace():
+                left_start += 1
+            right_end = chunk.end
+            while right_start < right_end and query[right_start].isspace():
+                right_start += 1
+            while right_end > right_start and query[right_end - 1].isspace():
+                right_end -= 1
+            return [
+                ClauseSpec("C01", 1, chunk, "ROOT", None, None),
+                ClauseSpec("C02", 2, _span(query, left_start, left_end), "OR", "C01", "ALT01"),
+                ClauseSpec("C03", 3, _span(query, right_start, right_end), "OR", "C01", "ALT01"),
+            ]
+
+    result: list[ClauseSpec] = []
+    alt_counter = 1
+    for index, chunk in enumerate(chunks, 1):
+        text = chunk.text
+        operator = "ROOT" if index == 1 else "AND"
+        parent = None if index == 1 else "C01"
+        alt: str | None = None
+        if index > 1 and _contains_any(text, config["discourse"]["condition"]):
+            operator = "CONDITION"
+        elif index > 1 and _contains_any(text, config["discourse"]["override"]):
+            operator = "OVERRIDE"
+        elif index > 1 and _contains_any(text, config["discourse"]["contrast"]):
+            operator = "CONTRAST"
+        if index > 1 and _contains_any(text, config["discourse"]["or"]):
+            operator = "OR"
+            alt = f"ALT{alt_counter:02d}"
+            alt_counter += 1
+        result.append(ClauseSpec(f"C{index:02d}", index, chunk, operator, parent, alt))
+    return result
+
+
+def _clause_for_span(clauses: list[ClauseSpec], span: Span) -> ClauseSpec:
+    matches = [
+        clause for clause in clauses
+        if clause.span.start <= span.start and span.end <= clause.span.end
+    ]
+    return min(matches, key=lambda item: item.span.end - item.span.start) if matches else clauses[0]
+
+
+def _scope_window(query: str, span: Span, radius: int = 18) -> str:
+    return query[max(0, span.start - radius):min(len(query), span.end + radius)]
+
+
+def _assertion_status(
+    query: str, span: Span, clause: ClauseSpec, config: dict[str, Any]
+) -> str:
+    window = _scope_window(query, span)
+    if clause.operator == "CONDITION" or _contains_any(window, config["discourse"]["hypothetical"]):
+        return "HYPOTHETICAL"
+    if _contains_any(window, config["discourse"]["exclusion"]):
+        return "EXCLUDED"
+    # Negated diagnostic findings are represented at event polarity; the method
+    # mention itself remains affirmed.  Other explicitly negated entities do not.
+    if _contains_any(window, config["polarity"]["negative"]):
+        return "AFFIRMED"
+    return "AFFIRMED"
+
+
+def _temporal_scope(
+    query: str, span: Span, config: dict[str, Any]
+) -> str:
+    window = _scope_window(query, span, 24)
+    for scope, terms in (
+        ("HISTORICAL", config["temporal"]["historical"]),
+        ("CURRENT", config["temporal"]["current"]),
+        ("FUTURE", config["temporal"]["future"]),
+    ):
+        if _contains_any(window, terms):
+            return scope
+    return "GENERAL"
+
+
+def _mention_objects(
+    request: dict[str, Any], clauses: list[ClauseSpec], index: p9b1.RetrievalIndex,
+    config: dict[str, Any],
+) -> list[dict[str, Any]]:
+    query = request["query_text"]
+    candidates: list[tuple[int, int, str]] = []
+    for entity_id, aliases in _entity_aliases(index, config).items():
+        for alias in aliases:
+            for start, end in _iter_occurrences(query, alias):
+                candidates.append((start, end, entity_id))
+    # Longest alias wins only for the same entity/span overlap; semantically
+    # distinct nested entities are retained when their spans differ.
+    unique: dict[tuple[int, int, str], tuple[int, int, str]] = {item: item for item in candidates}
+    by_length = sorted(unique, key=lambda item: (-(item[1] - item[0]), item[0], item[2]))
+    selected: list[tuple[int, int, str]] = []
+    for candidate in by_length:
+        start, end, _ = candidate
+        if any(not (end <= kept_start or kept_end <= start) for kept_start, kept_end, _ in selected):
+            continue
+        selected.append(candidate)
+    ordered = sorted(selected, key=lambda item: (item[0], -(item[1] - item[0]), item[2]))
+    result: list[dict[str, Any]] = []
+    for number, (start, end, entity_id) in enumerate(ordered, 1):
+        span = _span(query, start, end)
+        clause = _clause_for_span(clauses, span)
+        result.append({
+            "mention_id": f"M{number:02d}",
+            "clause_id": clause.clause_id,
+            "source_span": span.public(),
+            "entity_id": entity_id,
+            "entity_type": index.entities[entity_id]["entity_type"],
+            "assertion_status": _assertion_status(query, span, clause, config),
+            "temporal_scope": _temporal_scope(query, span, config),
+            "reference_ids": [],
+        })
+    return result
+
+
+def _mentions_by_entity(mentions: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    result: dict[str, list[dict[str, Any]]] = {}
+    for mention in mentions:
+        result.setdefault(mention["entity_id"], []).append(mention)
+    return result
+
+
+def _event_span(query: str, clause: ClauseSpec, bound: list[dict[str, Any]]) -> Span:
+    if not bound:
+        return clause.span
+    start = min(item["source_span"]["start_char"] for item in bound)
+    end = max(item["source_span"]["end_char"] for item in bound)
+    return _span(query, start, end)
+
+
+def _diagnostic_polarity(text: str, config: dict[str, Any]) -> str:
+    lowered = text.lower()
+    if any(term.lower() in lowered for term in config["polarity"]["double_negative_prefix"]):
+        return "POSITIVE"
+    negative_positions = [
+        lowered.find(term.lower()) for term in config["polarity"]["negative"]
+        if term.lower() in lowered
+    ]
+    positive_positions = [
+        lowered.find(term.lower()) for term in config["polarity"]["positive"]
+        if term.lower() in lowered
+    ]
+    if negative_positions and (not positive_positions or min(negative_positions) <= min(positive_positions)):
+        return "NEGATIVE"
+    if positive_positions:
+        return "POSITIVE"
+    return "UNSPECIFIED"
+
+
+def _first_mentions_of_type(
+    mentions: list[dict[str, Any]], entity_type: str, clause_id: str | None = None
+) -> list[dict[str, Any]]:
+    return [
+        item for item in mentions
+        if item["entity_type"] == entity_type
+        and (clause_id is None or item["clause_id"] == clause_id)
+    ]
+
+
+def _event_objects(
+    request: dict[str, Any], clauses: list[ClauseSpec], mentions: list[dict[str, Any]],
+    index: p9b1.RetrievalIndex, config: dict[str, Any], mapping: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    query = request["query_text"]
+    events: list[dict[str, Any]] = []
+    ambiguities: list[dict[str, Any]] = []
+    event_no = 1
+
+    def add_event(
+        event_type: str, clause: ClauseSpec, bound: list[dict[str, Any]],
+        actors: list[str], target: str | None, *, method: str | None = None,
+        specimen: str = "NOT_APPLICABLE", polarity: str = "NOT_APPLICABLE",
+        status: str = "AFFIRMED", temporal: str | None = None,
+    ) -> None:
+        nonlocal event_no
+        span = _event_span(query, clause, bound)
+        events.append({
+            "event_id": f"E{event_no:02d}",
+            "clause_id": clause.clause_id,
+            "source_span": span.public(),
+            "event_type": event_type,
+            "assertion_status": status,
+            "temporal_scope": temporal or _temporal_scope(query, span, config),
+            "actor_entity_ids": sorted(set(actors)),
+            "method_entity_id": method,
+            "specimen_code": specimen,
+            "target_entity_id": target,
+            "finding_polarity": polarity,
+            "mention_ids": sorted({item["mention_id"] for item in bound}),
+            "reference_ids": [],
+        })
+        event_no += 1
+
+    method_to_specimen = {
+        "diagnostic.stool_egg_microscopy": "STOOL",
+        "diagnostic.duodenal_fluid_egg_microscopy": "DUODENAL_FLUID",
+        "diagnostic.biliary_imaging": "NOT_APPLICABLE",
+    }
+    for clause in clauses:
+        clause_mentions = [item for item in mentions if item["clause_id"] == clause.clause_id]
+        methods = [item for item in clause_mentions if item["entity_type"] == "diagnostic_method"]
+        targets = [item for item in clause_mentions if item["entity_type"] in {"life_cycle_stage", "pathological_process"}]
+        disease = [item for item in clause_mentions if item["entity_type"] == "disease"]
+        hosts = [item for item in clause_mentions if item["entity_type"] == "host"]
+        for method in methods:
+            method_start = method["source_span"]["start_char"]
+            method_end = method["source_span"]["end_char"]
+            window = query[
+                max(clause.span.start, method_start - 20):
+                min(clause.span.end, method_end + 20)
+            ]
+            polarity = _diagnostic_polarity(window, config)
+            event_status = "HYPOTHETICAL" if (
+                clause.operator == "CONDITION"
+                or _contains_any(clause.span.text, config["discourse"]["hypothetical"])
+            ) else (
+                "EXCLUDED" if _contains_any(clause.span.text, config["discourse"]["exclusion"])
+                else "AFFIRMED"
+            )
+            bound = [method, *targets[:1], *disease[:1], *hosts[:1]]
+            actor_ids = [item["entity_id"] for item in [*disease[:1], *targets[:1], *hosts[:1]]]
+            if polarity == "UNSPECIFIED" and _contains_any(clause.span.text, ("结果", "检出", "阴性", "阳性")):
+                ambiguity_no = len(ambiguities) + 1
+                ambiguities.append({
+                    "ambiguity_id": f"A{ambiguity_no:02d}",
+                    "ambiguity_type": "FINDING_POLARITY",
+                    "source_spans": [clause.span.public()],
+                    "affected_ids": [f"E{event_no:02d}"],
+                    "candidate_options": [
+                        {"option_id": f"OPT{ambiguity_no * 2 - 1:02d}", "option_kind": "FINDING_POLARITY", "finding_polarity": "POSITIVE"},
+                        {"option_id": f"OPT{ambiguity_no * 2:02d}", "option_kind": "FINDING_POLARITY", "finding_polarity": "NEGATIVE"},
+                    ],
+                    "resolution_status": "UNRESOLVED",
+                })
+            add_event(
+                "DIAGNOSTIC_FINDING", clause, bound, actor_ids,
+                targets[0]["entity_id"] if targets else None,
+                method=method["entity_id"], specimen=method_to_specimen[method["entity_id"]],
+                polarity=polarity, status=event_status,
+            )
+
+        clause_text = clause.span.text
+        present_ids = {item["entity_id"] for item in clause_mentions}
+        present_types = {item["entity_type"] for item in clause_mentions}
+        predicate_cues = {
+            predicate for predicate, cues in config["predicate_cues"].items()
+            if _contains_any(clause_text, cues)
+        }
+        event_types: set[str] = set()
+        if (
+            predicate_cues & {"has_diagnostic_clue", "risk_increased_by", "transmitted_via"}
+            or _contains_any(clause_text, config["role_cues"]["epidemiologic_exposure_clue"])
+        ) and (
+            "behavior" in present_types
+            or _contains_any(clause_text, config["role_cues"]["epidemiologic_exposure_clue"])
+        ):
+            event_types.add("EXPOSURE")
+        if predicate_cues & {"develops_into", "has_life_cycle_stage"}:
+            event_types.add("DEVELOPMENT")
+        if predicate_cues & {"has_definitive_host", "has_first_intermediate_host", "has_second_intermediate_host", "has_reservoir_host"}:
+            event_types.add("HOST_ROLE")
+        if predicate_cues & {"transmitted_via", "infective_stage_for"} and _contains_any(clause_text, ("摄入", "食入", "吃", "生食", "经口")):
+            event_types.add("INGESTION")
+        if "sheds_stage" in predicate_cues:
+            event_types.add("SHEDDING")
+        if predicate_cues & {"present_in_environment", "transmission_supported_by"}:
+            event_types.add("ENVIRONMENT_PRESENCE")
+        if predicate_cues & {"infects", "causes"}:
+            event_types.add("INFECTION")
+        if "parasitizes_site" in predicate_cues:
+            event_types.add("PARASITISM")
+        if predicate_cues & {"pathogenic_stage_for", "has_pathological_process", "occurs_in", "manifests_as", "has_complication", "epidemiologically_associated_with"}:
+            event_types.add("PATHOLOGICAL_PROCESS")
+        if "treated_by" in predicate_cues:
+            event_types.add("TREATMENT")
+        if predicate_cues & {"controlled_by", "targets"} or "intervention" in present_types:
+            event_types.add("CONTROL")
+        if "classified_as" in predicate_cues:
+            event_types.add("HAZARD_CLASSIFICATION")
+        if _contains_any(clause_text, config["topic_cues"]["source_traceability"]):
+            event_types.add("SOURCE_TRACEABILITY")
+
+        for event_type in sorted(event_types):
+            if event_type == "DIAGNOSTIC_FINDING":
+                continue
+            rule = mapping["event_mapping"][event_type]
+            actors = [item for item in clause_mentions if item["entity_type"] in rule["allowed_actor_types"]]
+            targets_allowed = rule.get("allowed_target_types", [])
+            targets2 = [item for item in clause_mentions if item["entity_type"] in targets_allowed]
+            if event_type in {"CONTROL", "TREATMENT", "HAZARD_CLASSIFICATION"}:
+                if event_type == "CONTROL":
+                    actors = [
+                        item for item in clause_mentions
+                        if item["entity_type"] in {"parasite", "disease"}
+                    ]
+                    targets2 = [item for item in clause_mentions if item["entity_type"] in {"intervention", "institution_policy"}]
+                elif event_type == "TREATMENT":
+                    targets2 = [item for item in clause_mentions if item["entity_type"] == "treatment"]
+                else:
+                    targets2 = [item for item in clause_mentions if item["entity_type"] == "hazard_classification"]
+            elif event_type == "HOST_ROLE":
+                targets2 = [item for item in clause_mentions if item["entity_type"] == "host"]
+            if not actors and event_type == "DEVELOPMENT":
+                actors = [item for item in clause_mentions if item["entity_type"] == "life_cycle_stage"][:1]
+            bound = list(dict.fromkeys(item["mention_id"] for item in [*actors, *targets2]))
+            bound_mentions = [next(item for item in mentions if item["mention_id"] == mid) for mid in bound]
+            if not bound_mentions:
+                continue
+            status = "HYPOTHETICAL" if (
+                clause.operator == "CONDITION"
+                or _contains_any(clause_text, config["discourse"]["hypothetical"])
+            ) else (
+                "EXCLUDED" if _contains_any(clause_text, config["discourse"]["exclusion"]) else "AFFIRMED"
+            )
+            # Each material target is its own normalized event.  Combining two
+            # interventions or stages into one event would make polarity,
+            # exclusion and later override scope impossible to audit.
+            event_targets = targets2 or [None]
+            for target_mention in event_targets:
+                local_bound = [*actors]
+                if target_mention is not None:
+                    local_bound.append(target_mention)
+                if not local_bound:
+                    continue
+                add_event(
+                    event_type, clause, local_bound,
+                    [item["entity_id"] for item in actors],
+                    target_mention["entity_id"] if target_mention else None,
+                    status=status,
+                )
+
+    return events, ambiguities
+
+
+def _resolve_event_overrides(
+    clauses: list[ClauseSpec], events: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Resolve only an explicit later event with the same normalized identity."""
+    clause_by_id = {item.clause_id: item for item in clauses}
+    results: list[dict[str, Any]] = []
+
+    def identity(event: dict[str, Any]) -> tuple[Any, ...]:
+        return (
+            event["event_type"],
+            tuple(event["actor_entity_ids"]),
+            event["method_entity_id"],
+            event["specimen_code"],
+            event["target_entity_id"],
+        )
+
+    for later_index, later in enumerate(events):
+        later_clause = clause_by_id[later["clause_id"]]
+        if later_clause.operator != "OVERRIDE":
+            continue
+        for earlier in reversed(events[:later_index]):
+            if identity(earlier) != identity(later):
+                continue
+            material_conflict = (
+                earlier["finding_polarity"] != later["finding_polarity"]
+                or earlier["assertion_status"] != later["assertion_status"]
+            )
+            if not material_conflict:
+                continue
+            results.append({
+                "override_id": f"OVR{len(results) + 1:02d}",
+                "override_clause_id": later["clause_id"],
+                "earlier_event_id": earlier["event_id"],
+                "later_event_id": later["event_id"],
+                "same_normalized_event_identity": True,
+                "resolution_status": "RESOLVED",
+            })
+            break
+    return results
+
+
+def _selector(entity_ids: Iterable[str], entity_types: Iterable[str]) -> dict[str, Any]:
+    return {
+        "entity_ids": sorted(set(entity_ids)),
+        "entity_types": sorted(set(entity_types)),
+    }
+
+
+def _event_participants(
+    event: dict[str, Any], mentions_by_id: dict[str, dict[str, Any]], token: str
+) -> tuple[set[str], set[str]]:
+    entity_ids: set[str] = set()
+    entity_types: set[str] = set()
+    if token == "method_entity_id" and event["method_entity_id"]:
+        entity_ids.add(event["method_entity_id"])
+        entity_types.add("diagnostic_method")
+        return entity_ids, entity_types
+    formal_types = {
+        "parasite", "life_cycle_stage", "host", "disease", "anatomical_site",
+        "pathological_process", "clinical_manifestation", "diagnostic_method",
+        "treatment", "intervention", "behavior", "environment",
+        "institution_policy", "hazard_classification",
+    }
+    if token not in formal_types:
+        return entity_ids, entity_types
+    participant_ids = set(event["actor_entity_ids"])
+    if event["target_entity_id"]:
+        participant_ids.add(event["target_entity_id"])
+    if event["method_entity_id"]:
+        participant_ids.add(event["method_entity_id"])
+    for mention_id in event["mention_ids"]:
+        participant_ids.add(mentions_by_id[mention_id]["entity_id"])
+    for mention in mentions_by_id.values():
+        if mention["entity_id"] in participant_ids and mention["entity_type"] == token:
+            entity_ids.add(mention["entity_id"])
+    if entity_ids:
+        entity_types.add(token)
+    return entity_ids, entity_types
+
+
+def _relation_intents(
+    request: dict[str, Any], clauses: list[ClauseSpec], mentions: list[dict[str, Any]],
+    events: list[dict[str, Any]], config: dict[str, Any], mapping: dict[str, Any],
+    superseded_event_ids: set[str] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    query = request["query_text"]
+    mentions_by_id = {item["mention_id"]: item for item in mentions}
+    relations: list[dict[str, Any]] = []
+    prohibitions: list[dict[str, Any]] = []
+
+    def add_relation(
+        predicate: str, clause: ClauseSpec, basis: list[str], subject: dict[str, Any],
+        obj: dict[str, Any], mode: str = "EVENT_DERIVED",
+        policy: str = "REQUIRED",
+    ) -> None:
+        if not (subject["entity_ids"] or subject["entity_types"]):
+            return
+        if not (obj["entity_ids"] or obj["entity_types"]):
+            return
+        key = (predicate, canonical_sha256(subject), canonical_sha256(obj), tuple(sorted(basis)), policy)
+        for item in relations:
+            current = (
+                item["predicate"], canonical_sha256(item["subject_selector"]),
+                canonical_sha256(item["object_selector"]), tuple(sorted(item["basis_ids"])),
+                item["activation_policy"],
+            )
+            if current == key:
+                return
+        relations.append({
+            "intent_id": f"R{len(relations) + 1:02d}",
+            "clause_ids": [clause.clause_id],
+            "source_spans": [clause.span.public()],
+            "predicate": predicate,
+            "subject_selector": subject,
+            "object_selector": obj,
+            "assertion_status": "AFFIRMED",
+            "temporal_scope": _temporal_scope(query, clause.span, config),
+            "activation_policy": policy,
+            "derivation_mode": mode,
+            "basis_ids": sorted(set(basis)),
+        })
+
+    superseded_event_ids = superseded_event_ids or set()
+    for event in events:
+        if event["event_id"] in superseded_event_ids:
+            continue
+        clause = next(item for item in clauses if item.clause_id == event["clause_id"])
+        event_rule = mapping["event_mapping"][event["event_type"]]
+        predicates = event_rule.get("predicates", {})
+        expressed = {
+            predicate for predicate, cues in config["predicate_cues"].items()
+            if _contains_any(clause.span.text, cues)
+        }
+        # Diagnostic positive/negative event semantics are explicit: positive
+        # may license its requested relation; negative creates no affirmation.
+        executable = event["assertion_status"] == "AFFIRMED" and (
+            event["event_type"] != "DIAGNOSTIC_FINDING"
+            or event["finding_polarity"] == "POSITIVE"
+        )
+        selected_predicates = set(predicates) & expressed
+        if event["event_type"] == "EXPOSURE" and _contains_any(
+            clause.span.text, ("证据", "线索", "诊断", "意义", "说明")
+        ):
+            selected_predicates.add("has_diagnostic_clue")
+        if event["event_type"] == "CONTROL" and event["target_entity_id"]:
+            target_type = next(
+                (
+                    mention["entity_type"] for mention in mentions_by_id.values()
+                    if mention["entity_id"] == event["target_entity_id"]
+                ),
+                None,
+            )
+            if target_type in {"intervention", "institution_policy"}:
+                selected_predicates.add("controlled_by")
+        if event["event_type"] == "DIAGNOSTIC_FINDING" and not selected_predicates:
+            selected_predicates = {"has_diagnostic_clue"}
+            if event["finding_polarity"] == "POSITIVE" and event["method_entity_id"] != "diagnostic.biliary_imaging":
+                selected_predicates.add("diagnosed_by")
+        if (
+            event["event_type"] == "DIAGNOSTIC_FINDING"
+            and event["method_entity_id"] == "diagnostic.biliary_imaging"
+            and not any(
+                mentions_by_id[mid]["entity_type"] == "disease"
+                for mid in event["mention_ids"]
+            )
+        ):
+            selected_predicates.discard("has_diagnostic_clue")
+        for predicate in sorted(selected_predicates):
+            derivation = predicates[predicate]
+            subject_ids: set[str] = set()
+            subject_types: set[str] = set()
+            object_ids: set[str] = set()
+            object_types: set[str] = set()
+            for token in derivation["subject_from"]:
+                ids, types = _event_participants(event, mentions_by_id, token)
+                subject_ids.update(ids)
+                subject_types.update(types)
+            for token in derivation["object_from"]:
+                ids, types = _event_participants(event, mentions_by_id, token)
+                object_ids.update(ids)
+                object_types.update(types)
+            matrix = mapping["predicate_type_matrix"][predicate]
+            if not subject_ids:
+                explicit = [
+                    m for m in mentions if m["clause_id"] == clause.clause_id
+                    and m["entity_type"] in matrix["subject_types"]
+                ]
+                subject_ids.update(m["entity_id"] for m in explicit)
+                subject_types.update(m["entity_type"] for m in explicit)
+            if not object_ids:
+                explicit = [
+                    m for m in mentions if m["clause_id"] == clause.clause_id
+                    and m["entity_type"] in matrix["object_types"]
+                ]
+                object_ids.update(m["entity_id"] for m in explicit)
+                object_types.update(m["entity_type"] for m in explicit)
+            open_question = _contains_any(
+                clause.span.text,
+                ("什么", "哪些", "谁", "哪种", "哪一", "如何判断", "能否确证", "是否确诊", "用于确证", "诊断证据", "确证证据"),
+            ) or _contains_any(
+                query,
+                ("什么", "哪些", "谁", "哪种", "哪一", "如何判断", "能否确证", "是否确诊", "用于确证", "诊断证据", "确证证据"),
+            )
+            if not subject_ids and open_question:
+                subject_types.update(matrix["subject_types"])
+            if not object_ids and open_question:
+                object_types.update(matrix["object_types"])
+            subject = _selector(subject_ids, subject_types)
+            obj = _selector(object_ids, object_types)
+            if executable:
+                add_relation(predicate, clause, [event["event_id"]], subject, obj)
+            elif subject["entity_ids"] or subject["entity_types"]:
+                if obj["entity_ids"] or obj["entity_types"]:
+                    prohibitions.append({
+                        "prohibition_id": f"F{len(prohibitions) + 1:02d}",
+                        "clause_ids": [clause.clause_id],
+                        "source_spans": [clause.span.public()],
+                        "predicate": predicate,
+                        "subject_selector": subject,
+                        "object_selector": obj,
+                        "reason": (
+                            "HYPOTHETICAL_ONLY" if event["assertion_status"] == "HYPOTHETICAL"
+                            else "EXPLICIT_EXCLUSION" if event["assertion_status"] == "EXCLUDED"
+                            else "EXPLICIT_NEGATION"
+                        ),
+                        "basis_ids": [event["event_id"]],
+                    })
+
+    # Direct formal questions with an unknown counterpart use open type slots.
+    for clause in clauses:
+        clause_mentions = [m for m in mentions if m["clause_id"] == clause.clause_id and m["assertion_status"] == "AFFIRMED"]
+        for predicate, cues in config["predicate_cues"].items():
+            if not _contains_any(clause.span.text, cues):
+                continue
+            if any(r["predicate"] == predicate and clause.clause_id in r["clause_ids"] for r in relations):
+                continue
+            matrix = mapping["predicate_type_matrix"][predicate]
+            subject_mentions = [m for m in clause_mentions if m["entity_type"] in matrix["subject_types"]]
+            object_mentions = [m for m in clause_mentions if m["entity_type"] in matrix["object_types"]]
+            if predicate == "has_diagnostic_clue" and not subject_mentions and any(
+                m["entity_type"] in matrix["subject_types"] for m in mentions
+            ):
+                # The cross-clause evidence binder below will produce the
+                # concrete relation with both auditable mentions.
+                continue
+            subject = _selector(
+                (m["entity_id"] for m in subject_mentions),
+                () if subject_mentions else matrix["subject_types"],
+            )
+            obj = _selector(
+                (m["entity_id"] for m in object_mentions),
+                () if object_mentions else matrix["object_types"],
+            )
+            basis = [m["mention_id"] for m in [*subject_mentions, *object_mentions]]
+            open_relation_request = _contains_any(
+                clause.span.text,
+                ("什么", "哪些", "哪条", "哪类", "如何", "关系", "路径", "链"),
+            )
+            if not basis and open_relation_request and clause_mentions:
+                basis = [m["mention_id"] for m in clause_mentions]
+            if basis:
+                add_relation(predicate, clause, basis, subject, obj, "DIRECT_MENTION_DERIVED")
+
+    # Ordered host-event language is normalized through reviewed entity types,
+    # not through a frozen question string.  Snail/fish/human roles are fixed
+    # by the formal host ontology and are emitted as three directed relations.
+    affirmed_hosts = [
+        item for item in mentions
+        if item["entity_type"] == "host" and item["assertion_status"] == "AFFIRMED"
+    ]
+    if len(affirmed_hosts) >= 2 and _contains_any(query, ("宿主角色", "各是什么角色", "分别是什么角色", "先后", "最后")):
+        host_predicates = {
+            "host.freshwater_snails_suitable_for_clonorchis": "has_first_intermediate_host",
+            "host.freshwater_fish": "has_second_intermediate_host",
+            "host.human": "has_definitive_host",
+            "host.domestic_dogs_cats_pigs": "has_reservoir_host",
+            "host.piscivorous_mammals": "has_reservoir_host",
+        }
+        for host in affirmed_hosts:
+            predicate = host_predicates.get(host["entity_id"])
+            if predicate is None:
+                continue
+            clause = next(item for item in clauses if item.clause_id == host["clause_id"])
+            add_relation(
+                predicate, clause, [host["mention_id"]],
+                _selector((), ("parasite",)),
+                _selector((host["entity_id"],), ()),
+                "DIRECT_MENTION_DERIVED",
+            )
+
+    # An explicit request for a complete/continuous developmental path may
+    # leave individual stages unnamed.  It licenses an open typed edge query,
+    # while the graph executor—not the interpreter—selects reviewed edges.
+    if (
+        "life_cycle" in _topics(query, config, clauses)
+        and _contains_any(query, ("完整", "连续", "路径", "链", "发育", "成熟"))
+        and not any(item["predicate"] == "develops_into" for item in relations)
+    ):
+        roots = [
+            item for item in mentions
+            if item["assertion_status"] == "AFFIRMED"
+            and item["entity_type"] in {"host", "life_cycle_stage", "parasite", "anatomical_site"}
+        ]
+        if roots:
+            clause = next(item for item in clauses if item.clause_id == roots[0]["clause_id"])
+            add_relation(
+                "develops_into", clause, [item["mention_id"] for item in roots],
+                _selector((), ("life_cycle_stage",)),
+                _selector((), ("life_cycle_stage",)),
+                "DIRECT_MENTION_DERIVED",
+            )
+
+    # Evidence questions commonly place the exposure/imaging proposition before
+    # a comma and the disease/evidence-role question after it.  Bind the exact
+    # mentions across those sibling clauses instead of inventing an implicit
+    # event participant.
+    disease_mentions = [m for m in mentions if m["entity_type"] == "disease" and m["assertion_status"] == "AFFIRMED"]
+    clue_mentions = [
+        m for m in mentions
+        if m["entity_type"] in {"behavior", "diagnostic_method"}
+        and m["assertion_status"] == "AFFIRMED"
+    ]
+    if disease_mentions and clue_mentions and _contains_any(
+        query, ("证据", "线索", "辅助", "意义", "说明")
+    ):
+        existing_pairs = {
+            (
+                tuple(r["subject_selector"]["entity_ids"]),
+                tuple(r["object_selector"]["entity_ids"]),
+            )
+            for r in relations if r["predicate"] == "has_diagnostic_clue"
+        }
+        for clue in clue_mentions:
+            pair = ((disease_mentions[0]["entity_id"],), (clue["entity_id"],))
+            if pair in existing_pairs:
+                continue
+            clause_ids = sorted(
+                {disease_mentions[0]["clause_id"], clue["clause_id"]},
+                key=lambda cid: int(cid[1:]),
+            )
+            bound_clauses = [next(c for c in clauses if c.clause_id == cid) for cid in clause_ids]
+            relations.append({
+                "intent_id": f"R{len(relations) + 1:02d}",
+                "clause_ids": clause_ids,
+                "source_spans": [c.span.public() for c in bound_clauses],
+                "predicate": "has_diagnostic_clue",
+                "subject_selector": _selector((disease_mentions[0]["entity_id"],), ()),
+                "object_selector": _selector((clue["entity_id"],), ()),
+                "assertion_status": "AFFIRMED",
+                "temporal_scope": clue["temporal_scope"],
+                "activation_policy": "REQUIRED",
+                "derivation_mode": "DIRECT_MENTION_DERIVED",
+                "basis_ids": [disease_mentions[0]["mention_id"], clue["mention_id"]],
+            })
+
+    # A reviewed clue that is explicitly described as non-confirmatory must
+    # carry its pathogen-confirmation comparator.  This rule is closed: it
+    # emits only a typed open diagnostic-method slot and never a claim ID.
+    nonconfirmatory = _contains_any(
+        query,
+        (
+            "不能单独确诊", "不能作为确证", "不属于确证", "不是确证",
+            "只是线索", "仅是线索", "非确证", "辅助线索",
+        ),
+    )
+    if nonconfirmatory:
+        clue_relations = [
+            item for item in relations
+            if item["predicate"] == "has_diagnostic_clue"
+        ]
+        for clue_relation in clue_relations:
+            clause = next(
+                item for item in clauses
+                if item.clause_id == clue_relation["clause_ids"][0]
+            )
+            add_relation(
+                "diagnosed_by",
+                clause,
+                clue_relation["basis_ids"],
+                clue_relation["subject_selector"],
+                _selector((), ("diagnostic_method",)),
+                "CLOSED_CONTRAST_DERIVED",
+                "REQUIRED_CONTRAST",
+            )
+
+    return relations, prohibitions
+
+
+def _topics(
+    query: str, config: dict[str, Any], clauses: list[ClauseSpec] | None = None
+) -> list[str]:
+    if clauses is None:
+        return [
+            topic for topic, cues in config["topic_cues"].items()
+            if _contains_any(query, cues)
+        ]
+    activated: list[str] = []
+    for topic, cues in config["topic_cues"].items():
+        for clause in clauses:
+            if not _contains_any(clause.span.text, cues):
+                continue
+            if (
+                clause.operator == "CONDITION"
+                or _contains_any(clause.span.text, config["discourse"]["hypothetical"])
+                or _contains_any(clause.span.text, config["discourse"]["exclusion"])
+            ):
+                continue
+            activated.append(topic)
+            break
+    return activated
+
+
+def _narratives_and_roles(
+    request: dict[str, Any], clauses: list[ClauseSpec], mentions: list[dict[str, Any]],
+    events: list[dict[str, Any]], relations: list[dict[str, Any]],
+    config: dict[str, Any], superseded_event_ids: set[str] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    query = request["query_text"]
+    topics = _topics(query, config, clauses)
+    narratives: list[dict[str, Any]] = []
+    roles: list[dict[str, Any]] = []
+    superseded_event_ids = superseded_event_ids or set()
+    affirmed_mentions = [item for item in mentions if item["assertion_status"] == "AFFIRMED"]
+
+    def add_role(namespace: str, value: str, clause: ClauseSpec, basis: list[str], policy: str = "REQUIRED") -> None:
+        key = (namespace, value, tuple(sorted(basis)), policy)
+        if any((r["role_namespace"], r["role_value"], tuple(sorted(r["basis_ids"])), r["activation_policy"]) == key for r in roles):
+            return
+        roles.append({
+            "role_id": f"Q{len(roles) + 1:02d}",
+            "clause_ids": [clause.clause_id],
+            "role_namespace": namespace,
+            "role_value": value,
+            "activation_policy": policy,
+            "basis_ids": sorted(set(basis)),
+        })
+
+    for topic in topics:
+        basis = [item["mention_id"] for item in affirmed_mentions]
+        if basis:
+            add_role("TOPIC_SCOPE", topic, clauses[0], basis)
+
+    for role_value, cues in config["role_cues"].items():
+        if not _contains_any(query, cues):
+            continue
+        basis_mentions = [
+            item for item in affirmed_mentions
+            if item["entity_type"] in {"behavior", "diagnostic_method", "disease", "life_cycle_stage"}
+        ] or affirmed_mentions
+        if not basis_mentions:
+            continue
+        clause = _clause_for_span(
+            clauses,
+            Span(
+                basis_mentions[0]["source_span"]["start_char"],
+                basis_mentions[0]["source_span"]["end_char"],
+                basis_mentions[0]["source_span"]["text"],
+            ),
+        )
+        if role_value == "not_confirmatory":
+            boundary_value = (
+                "imaging_is_not_confirmation"
+                if any(item["entity_id"] == "diagnostic.biliary_imaging" for item in basis_mentions)
+                else "exposure_is_not_confirmation"
+                if any(item["entity_type"] == "behavior" for item in basis_mentions)
+                else "diagnostic_clue_is_not_confirmation"
+            )
+            add_role(
+                "SEMANTIC_BOUNDARY", boundary_value, clause,
+                [item["mention_id"] for item in basis_mentions],
+            )
+        else:
+            add_role(
+                "EVIDENCE_ROLE", role_value, clause,
+                [item["mention_id"] for item in basis_mentions],
+            )
+
+    nonconfirmatory = any(
+        item["role_value"] in {
+            "epidemiologic_exposure_clue", "imaging_auxiliary_clue", "not_confirmatory",
+        }
+        for item in roles
+    )
+    contrast_relations = [
+        item for item in relations
+        if item["derivation_mode"] == "CLOSED_CONTRAST_DERIVED"
+    ]
+    if nonconfirmatory and contrast_relations:
+        for relation in contrast_relations:
+            clause = next(
+                item for item in clauses
+                if item.clause_id == relation["clause_ids"][0]
+            )
+            add_role(
+                "EVIDENCE_ROLE", "pathogen_confirmation", clause,
+                relation["basis_ids"], "REQUIRED_CONTRAST",
+            )
+
+    for relation in relations:
+        if relation["predicate"] == "classified_as":
+            clause = next(c for c in clauses if c.clause_id == relation["clause_ids"][0])
+            add_role(
+                "SEMANTIC_BOUNDARY",
+                "hazard_class_is_not_individual_certainty",
+                clause,
+                relation["basis_ids"],
+            )
+        elif relation["predicate"] in {"treated_by", "controlled_by"} and _contains_any(
+            query, ("疗效", "效果", "根除", "必然", "一定", "百分之百", "100%")
+        ):
+            clause = next(c for c in clauses if c.clause_id == relation["clause_ids"][0])
+            add_role(
+                "SEMANTIC_BOUNDARY",
+                "recommendation_is_not_quantified_effect",
+                clause,
+                relation["basis_ids"],
+            )
+
+    if "morphology" in topics:
+        stage_mentions = [item for item in affirmed_mentions if item["entity_type"] == "life_cycle_stage"]
+        if stage_mentions:
+            clause = _clause_for_span(
+                clauses,
+                Span(
+                    stage_mentions[0]["source_span"]["start_char"],
+                    stage_mentions[0]["source_span"]["end_char"],
+                    stage_mentions[0]["source_span"]["text"],
+                ),
+            )
+            narratives.append({
+                "narrative_intent_id": "N01",
+                "clause_ids": [clause.clause_id],
+                "source_spans": [clause.span.public()],
+                "entity_selector": _selector((m["entity_id"] for m in stage_mentions), ()),
+                "topic_scope": "morphology",
+                "semantic_role": "narrative_fact",
+                "assertion_status": "AFFIRMED",
+                "temporal_scope": "GENERAL",
+                "activation_policy": "REQUIRED",
+                "derivation_mode": "DIRECT_MENTION_DERIVED",
+                "basis_ids": [m["mention_id"] for m in stage_mentions],
+                "required_anchor_predicates": [],
+            })
+
+    diagnostic_events = [
+        event for event in events
+        if event["event_type"] in {"DIAGNOSTIC_FINDING", "EXPOSURE"}
+        and event["assertion_status"] == "AFFIRMED"
+        and event["event_id"] not in superseded_event_ids
+    ]
+    for semantic_role in ("diagnostic_evidence_integration", "diagnostic_confirmation_limit"):
+        if "diagnosis" not in topics:
+            continue
+        anchors = [item for item in relations if item["predicate"] == "has_diagnostic_clue"]
+        if not anchors:
+            continue
+        anchor = anchors[0]
+        basis_mentions = [
+            item for item in mentions
+            if item["mention_id"] in anchor["basis_ids"]
+            and item["entity_type"] in {"diagnostic_method", "disease"}
+        ]
+        if basis_mentions and all(item.startswith("M") for item in anchor["basis_ids"]):
+            narratives.append({
+                "narrative_intent_id": f"N{len(narratives) + 1:02d}",
+                "clause_ids": anchor["clause_ids"],
+                "source_spans": anchor["source_spans"],
+                "entity_selector": _selector((m["entity_id"] for m in basis_mentions), ()),
+                "topic_scope": "diagnosis",
+                "semantic_role": semantic_role,
+                "assertion_status": "AFFIRMED",
+                "temporal_scope": anchor["temporal_scope"],
+                "activation_policy": "REQUIRED",
+                "derivation_mode": "DIRECT_MENTION_DERIVED",
+                "basis_ids": [m["mention_id"] for m in basis_mentions],
+                "required_anchor_predicates": ["has_diagnostic_clue"],
+            })
+            continue
+        if not diagnostic_events:
+            continue
+        event = diagnostic_events[0]
+        event_mentions = [
+            item for item in mentions if item["mention_id"] in event["mention_ids"]
+            and item["entity_type"] in {"diagnostic_method", "disease"}
+        ]
+        if event_mentions:
+            narratives.append({
+                "narrative_intent_id": f"N{len(narratives) + 1:02d}",
+                "clause_ids": [event["clause_id"]],
+                "source_spans": [event["source_span"]],
+                "entity_selector": _selector((m["entity_id"] for m in event_mentions), ()),
+                "topic_scope": "diagnosis",
+                "semantic_role": semantic_role,
+                "assertion_status": "AFFIRMED",
+                "temporal_scope": event["temporal_scope"],
+                "activation_policy": "REQUIRED",
+                "derivation_mode": "EVENT_DERIVED",
+                "basis_ids": [event["event_id"]],
+                "required_anchor_predicates": ["has_diagnostic_clue"],
+            })
+
+    return narratives, roles
+
+
+def _or_ambiguities(
+    clauses: list[ClauseSpec], ambiguities: list[dict[str, Any]]
+) -> None:
+    groups: dict[str, list[ClauseSpec]] = {}
+    for clause in clauses:
+        if clause.alternative_group_id:
+            groups.setdefault(clause.alternative_group_id, []).append(clause)
+    for alt, branches in sorted(groups.items()):
+        if len(branches) < 2:
+            continue
+        ambiguity_number = len(ambiguities) + 1
+        option_start = sum(len(item["candidate_options"]) for item in ambiguities) + 1
+        ambiguities.append({
+            "ambiguity_id": f"A{ambiguity_number:02d}",
+            "ambiguity_type": "OR_SELECTION",
+            "source_spans": [branch.span.public() for branch in branches],
+            "affected_ids": [branch.clause_id for branch in branches],
+            "candidate_options": [
+                {
+                    "option_id": f"OPT{option_start + offset:02d}",
+                    "option_kind": "OR_BRANCH",
+                    "alternative_group_id": alt,
+                    "branch_clause_id": branch.clause_id,
+                }
+                for offset, branch in enumerate(branches)
+            ],
+            "resolution_status": "UNRESOLVED",
+        })
+
+
+def interpret_request(
+    request: dict[str, Any], *, root: Path = ROOT
+) -> dict[str, Any]:
+    """Interpret one validated P9-A request as a closed Scoped QueryIR object."""
+    p9b1.validate_request(request, root)
+    index = p9b1.build_index(root)
+    config = _load_configuration(root)
+    mapping = _read_yaml(root / MAPPING_PATH)
+    clauses = _clause_specs(request["query_text"], config)
+    mentions = _mention_objects(request, clauses, index, config)
+    events, ambiguities = _event_objects(
+        request, clauses, mentions, index, config, mapping
+    )
+    overrides = _resolve_event_overrides(clauses, events)
+    superseded_event_ids = {item["earlier_event_id"] for item in overrides}
+    relations, prohibitions = _relation_intents(
+        request, clauses, mentions, events, config, mapping, superseded_event_ids
+    )
+    narratives, roles = _narratives_and_roles(
+        request, clauses, mentions, events, relations, config, superseded_event_ids
+    )
+    _or_ambiguities(clauses, ambiguities)
+
+    if ambiguities:
+        status = "AMBIGUOUS"
+        relations = []
+        narratives = []
+        roles = []
+    elif not relations and not narratives:
+        status = "UNSUPPORTED"
+        ambiguities = [{
+            "ambiguity_id": "A01",
+            "ambiguity_type": "UNSUPPORTED_INTENT",
+            "source_spans": [clauses[0].span.public()],
+            "affected_ids": [clauses[0].clause_id],
+            "candidate_options": [
+                {"option_id": "OPT01", "option_kind": "UNSUPPORTED"}
+            ],
+            "resolution_status": "UNRESOLVED",
+        }]
+    else:
+        status = "VALID"
+
+    configuration_sha = file_sha256(root / CONFIG_PATH)
+    query_ir = {
+        "query_ir_version": "0.3-candidate",
+        "request_id": request["request_id"],
+        "request_sha256": canonical_sha256(request),
+        "knowledge_version": request["knowledge_version"],
+        "span_basis": "REQUEST_QUERY_TEXT_UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN",
+        "interpretation_status": status,
+        "producer": {
+            **config["producer"],
+            "implementation_kind": "DETERMINISTIC",
+            "configuration_sha256": configuration_sha,
+        },
+        "clauses": [item.public() for item in clauses],
+        "mentions": mentions,
+        "events": events,
+        "relation_intents": relations,
+        "narrative_intents": narratives,
+        "required_roles": roles,
+        "forbidden_relation_intents": prohibitions,
+        "resolved_references": [],
+        "resolved_overrides": overrides,
+        "ambiguities": ambiguities,
+    }
+    return query_ir
+
+
+def _id_sort_key(value: str) -> tuple[int, int, bytes]:
+    match = _ID_RE.match(value)
+    if match is None:
+        raise ValueError(f"invalid prefixed ID: {value}")
+    suffix = match.group("suffix")
+    return int(suffix, 10), len(suffix), value.encode("utf-8")
+
+
+def _ordered_ids(values: Iterable[str]) -> list[str]:
+    return sorted(set(values), key=_id_sort_key)
+
+
+def _failure_result(
+    request: dict[str, Any], query_ir: dict[str, Any], fail_codes: Iterable[str],
+    *, root: Path,
+) -> dict[str, Any]:
+    contract = _read_yaml(root / VALIDATOR_CONTRACT_PATH)
+    order = {code: index for index, code in enumerate(contract["fail_codes"])}
+    codes = sorted(set(fail_codes), key=lambda item: order[item])
+    return {
+        "schema_version": "0.2-candidate",
+        "validation_id": f"SV-{canonical_sha256(query_ir)[:24]}",
+        "request_schema_valid": True,
+        "request_id": request["request_id"],
+        "request_sha256": canonical_sha256(request),
+        "query_ir_sha256": canonical_sha256(query_ir),
+        "knowledge_version": request["knowledge_version"],
+        "query_ir_schema_valid": "QUERY_IR_SCHEMA_INVALID" not in codes,
+        "query_ir_interpretation_status": (
+            None if "QUERY_IR_SCHEMA_INVALID" in codes else query_ir.get("interpretation_status")
+        ),
+        "query_ir_schema_sha256": file_sha256(root / QUERY_IR_SCHEMA_PATH),
+        "semantic_contract_sha256": file_sha256(root / SEMANTIC_CONTRACT_PATH),
+        "semantic_validator_contract_sha256": file_sha256(root / VALIDATOR_CONTRACT_PATH),
+        "event_mapping_sha256": file_sha256(root / MAPPING_PATH),
+        "result": "FAIL_CLOSED",
+        "fail_codes": codes,
+        "executable_relation_intent_ids": [],
+        "executable_narrative_intent_ids": [],
+        "prohibited_relation_intent_ids": _ordered_ids(
+            item.get("prohibition_id", "F00") for item in query_ir.get("forbidden_relation_intents", [])
+        ),
+        "superseded_event_ids": [],
+    }
+
+
+def validate_query_ir(
+    request: dict[str, Any], query_ir: dict[str, Any], *, root: Path = ROOT
+) -> dict[str, Any]:
+    """Execute the deterministic semantic contract and return its closed result."""
+    p9b1.validate_request(request, root)
+    fail_codes: list[str] = []
+    if query_ir.get("request_id") != request["request_id"] or query_ir.get("request_sha256") != canonical_sha256(request):
+        fail_codes.append("REQUEST_HASH_OR_ID_MISMATCH")
+    try:
+        validate_schema(query_ir, QUERY_IR_SCHEMA_PATH, root)
+    except (SchemaValidationError, ValueError):
+        fail_codes.append("QUERY_IR_SCHEMA_INVALID")
+    if fail_codes:
+        result = _failure_result(request, query_ir, fail_codes, root=root)
+        validate_schema(result, SEMANTIC_SCHEMA_PATH, root)
+        return result
+
+    query = request["query_text"]
+    ids: dict[str, dict[str, Any]] = {}
+    identifier_fields = {
+        "clauses": "clause_id",
+        "mentions": "mention_id",
+        "events": "event_id",
+        "relation_intents": "intent_id",
+        "narrative_intents": "narrative_intent_id",
+        "required_roles": "role_id",
+        "forbidden_relation_intents": "prohibition_id",
+        "resolved_references": "reference_id",
+        "resolved_overrides": "override_id",
+        "ambiguities": "ambiguity_id",
+    }
+    for collection in (
+        "clauses", "mentions", "events", "relation_intents", "narrative_intents",
+        "required_roles", "forbidden_relation_intents", "resolved_references",
+        "resolved_overrides", "ambiguities",
+    ):
+        for item in query_ir[collection]:
+            identifier = item.get(identifier_fields[collection])
+            if identifier and identifier in ids:
+                fail_codes.append("DUPLICATE_OR_DANGLING_ID")
+            elif identifier:
+                ids[identifier] = item
+
+    def check_span(span: dict[str, Any]) -> bool:
+        start, end = span["start_char"], span["end_char"]
+        return 0 <= start < end <= len(query) and query[start:end] == span["text"]
+
+    for collection in query_ir.values():
+        if isinstance(collection, list):
+            for item in collection:
+                if not isinstance(item, dict):
+                    continue
+                spans: list[dict[str, Any]] = []
+                if "source_span" in item:
+                    spans.append(item["source_span"])
+                spans.extend(item.get("source_spans", []))
+                if "anaphor_span" in item:
+                    spans.append(item["anaphor_span"])
+                if any(not check_span(span) for span in spans):
+                    fail_codes.append("SPAN_MISMATCH")
+
+    clause_ids = {item["clause_id"] for item in query_ir["clauses"]}
+    clause_by_id = {item["clause_id"]: item for item in query_ir["clauses"]}
+    if len(clause_ids) != len(query_ir["clauses"]):
+        fail_codes.append("CLAUSE_GRAPH_INVALID")
+    for item in query_ir["clauses"]:
+        if item["parent_clause_id"] is not None and item["parent_clause_id"] not in clause_ids:
+            fail_codes.append("CLAUSE_GRAPH_INVALID")
+    index = p9b1.build_index(root)
+    for mention in query_ir["mentions"]:
+        entity = index.entities.get(mention["entity_id"])
+        if entity is None:
+            fail_codes.append("UNKNOWN_OR_UNREVIEWED_ENTITY")
+        elif entity["entity_type"] != mention["entity_type"]:
+            fail_codes.append("ENTITY_TYPE_MISMATCH")
+
+    mapping = _read_yaml(root / MAPPING_PATH)
+    mentions = {item["mention_id"]: item for item in query_ir["mentions"]}
+    events = {item["event_id"]: item for item in query_ir["events"]}
+    superseded: set[str] = set()
+    for override in query_ir["resolved_overrides"]:
+        earlier = events.get(override["earlier_event_id"])
+        later = events.get(override["later_event_id"])
+        clause = clause_by_id.get(override["override_clause_id"])
+        if earlier is None or later is None or clause is None:
+            fail_codes.append("OVERRIDE_INVALID_OR_AMBIGUOUS")
+            continue
+        earlier_identity = (
+            earlier["event_type"], tuple(earlier["actor_entity_ids"]),
+            earlier["method_entity_id"], earlier["specimen_code"],
+            earlier["target_entity_id"],
+        )
+        later_identity = (
+            later["event_type"], tuple(later["actor_entity_ids"]),
+            later["method_entity_id"], later["specimen_code"],
+            later["target_entity_id"],
+        )
+        if (
+            earlier_identity != later_identity
+            or later["source_span"]["start_char"] <= earlier["source_span"]["start_char"]
+            or clause["discourse_operator"] != "OVERRIDE"
+            or (
+                earlier["finding_polarity"] == later["finding_polarity"]
+                and earlier["assertion_status"] == later["assertion_status"]
+            )
+        ):
+            fail_codes.append("OVERRIDE_INVALID_OR_AMBIGUOUS")
+        superseded.add(earlier["event_id"])
+    for event in events.values():
+        rule = mapping["event_mapping"].get(event["event_type"])
+        if rule is None:
+            fail_codes.append("EVENT_FIELD_OR_TYPE_MISMATCH")
+            continue
+        if any(mid not in mentions for mid in event["mention_ids"]):
+            fail_codes.append("DUPLICATE_OR_DANGLING_ID")
+        clause = clause_by_id.get(event["clause_id"])
+        if clause is None or not (
+            clause["source_span"]["start_char"] <= event["source_span"]["start_char"]
+            and event["source_span"]["end_char"] <= clause["source_span"]["end_char"]
+        ):
+            fail_codes.append("EVENT_FIELD_OR_TYPE_MISMATCH")
+        actor_types = {
+            index.entities[entity_id]["entity_type"]
+            for entity_id in event["actor_entity_ids"]
+            if entity_id in index.entities
+        }
+        if actor_types - set(rule["allowed_actor_types"]):
+            fail_codes.append("EVENT_FIELD_OR_TYPE_MISMATCH")
+        if event["target_entity_id"]:
+            target = index.entities.get(event["target_entity_id"])
+            if target is None or target["entity_type"] not in rule.get("allowed_target_types", []):
+                fail_codes.append("EVENT_FIELD_OR_TYPE_MISMATCH")
+        if event["event_type"] == "DIAGNOSTIC_FINDING":
+            if event["finding_polarity"] not in {"POSITIVE", "NEGATIVE"} and query_ir["interpretation_status"] == "VALID":
+                fail_codes.append("EVENT_FIELD_OR_TYPE_MISMATCH")
+        elif event["method_entity_id"] is not None or event["specimen_code"] != "NOT_APPLICABLE" or event["finding_polarity"] != "NOT_APPLICABLE":
+            fail_codes.append("EVENT_FIELD_OR_TYPE_MISMATCH")
+
+    executable_relations: list[str] = []
+    for relation in query_ir["relation_intents"]:
+        predicate = relation["predicate"]
+        matrix = mapping["predicate_type_matrix"].get(predicate)
+        if matrix is None:
+            fail_codes.append("UNKNOWN_PREDICATE_OR_ROLE")
+            continue
+        subject_types = set(relation["subject_selector"]["entity_types"])
+        object_types = set(relation["object_selector"]["entity_types"])
+        for entity_id in relation["subject_selector"]["entity_ids"]:
+            entity = index.entities.get(entity_id)
+            if entity is None or entity["entity_type"] not in matrix["subject_types"]:
+                fail_codes.append("RELATION_DIRECTION_OR_SELECTOR_INVALID")
+        for entity_id in relation["object_selector"]["entity_ids"]:
+            entity = index.entities.get(entity_id)
+            if entity is None or entity["entity_type"] not in matrix["object_types"]:
+                fail_codes.append("RELATION_DIRECTION_OR_SELECTOR_INVALID")
+        if subject_types - set(matrix["subject_types"]) or object_types - set(matrix["object_types"]):
+            fail_codes.append("RELATION_DIRECTION_OR_SELECTOR_INVALID")
+        for basis in relation["basis_ids"]:
+            if basis.startswith("E"):
+                event = events.get(basis)
+                if event is None:
+                    fail_codes.append("DUPLICATE_OR_DANGLING_ID")
+                elif predicate not in mapping["event_mapping"][event["event_type"]].get("predicates", {}):
+                    fail_codes.append("EVENT_INTENT_DERIVATION_MISMATCH")
+                elif event["assertion_status"] != "AFFIRMED" or (
+                    event["event_type"] == "DIAGNOSTIC_FINDING" and event["finding_polarity"] != "POSITIVE"
+                ):
+                    fail_codes.append("NO_AFFIRMED_SEMANTIC_ROOT")
+                elif event["event_id"] in superseded:
+                    fail_codes.append("NO_AFFIRMED_SEMANTIC_ROOT")
+            elif basis.startswith("M"):
+                mention = mentions.get(basis)
+                if mention is None:
+                    fail_codes.append("DUPLICATE_OR_DANGLING_ID")
+                elif mention["assertion_status"] != "AFFIRMED":
+                    fail_codes.append("NO_AFFIRMED_SEMANTIC_ROOT")
+        executable_relations.append(relation["intent_id"])
+
+    role_catalog = mapping["role_catalog"]
+    contrast_relation_bases = {
+        tuple(item["basis_ids"])
+        for item in query_ir["relation_intents"]
+        if item["derivation_mode"] == "CLOSED_CONTRAST_DERIVED"
+        and item["activation_policy"] == "REQUIRED_CONTRAST"
+    }
+    for role in query_ir["required_roles"]:
+        catalog = role_catalog.get(role["role_namespace"], {})
+        if role["role_value"] not in catalog:
+            fail_codes.append("UNKNOWN_PREDICATE_OR_ROLE")
+        if role["activation_policy"] == "REQUIRED_CONTRAST" and tuple(role["basis_ids"]) not in contrast_relation_bases:
+            fail_codes.append("ROLE_AUTHORITY_OR_CONTRAST_INVALID")
+        for basis in role["basis_ids"]:
+            if basis.startswith("E") and (
+                basis not in events
+                or events[basis]["assertion_status"] != "AFFIRMED"
+                or basis in superseded
+            ):
+                fail_codes.append("ROLE_AUTHORITY_OR_CONTRAST_INVALID")
+            elif basis.startswith("M") and (
+                basis not in mentions or mentions[basis]["assertion_status"] != "AFFIRMED"
+            ):
+                fail_codes.append("ROLE_AUTHORITY_OR_CONTRAST_INVALID")
+
+    executable_narratives: list[str] = []
+    for narrative in query_ir["narrative_intents"]:
+        if narrative["semantic_role"] not in mapping["narrative_intent_mapping"]:
+            fail_codes.append("NARRATIVE_INTENT_INVALID")
+        executable_narratives.append(narrative["narrative_intent_id"])
+
+    for relation in query_ir["relation_intents"]:
+        for prohibition in query_ir["forbidden_relation_intents"]:
+            if (
+                relation["predicate"] == prohibition["predicate"]
+                and canonical_bytes(relation["subject_selector"])
+                == canonical_bytes(prohibition["subject_selector"])
+                and canonical_bytes(relation["object_selector"])
+                == canonical_bytes(prohibition["object_selector"])
+            ):
+                fail_codes.append("REQUIRED_FORBIDDEN_INTENT_CONFLICT")
+
+    if query_ir["interpretation_status"] != "VALID" or query_ir["ambiguities"]:
+        fail_codes.append("UNRESOLVED_AMBIGUITY")
+    if not executable_relations and not executable_narratives:
+        fail_codes.append("NO_EXECUTABLE_INTENT")
+
+    if fail_codes:
+        result = _failure_result(request, query_ir, fail_codes, root=root)
+    else:
+        result = {
+            "schema_version": "0.2-candidate",
+            "validation_id": f"SV-{canonical_sha256(query_ir)[:24]}",
+            "request_schema_valid": True,
+            "request_id": request["request_id"],
+            "request_sha256": canonical_sha256(request),
+            "query_ir_sha256": canonical_sha256(query_ir),
+            "knowledge_version": request["knowledge_version"],
+            "query_ir_schema_valid": True,
+            "query_ir_interpretation_status": "VALID",
+            "query_ir_schema_sha256": file_sha256(root / QUERY_IR_SCHEMA_PATH),
+            "semantic_contract_sha256": file_sha256(root / SEMANTIC_CONTRACT_PATH),
+            "semantic_validator_contract_sha256": file_sha256(root / VALIDATOR_CONTRACT_PATH),
+            "event_mapping_sha256": file_sha256(root / MAPPING_PATH),
+            "result": "PASS",
+            "fail_codes": [],
+            "executable_relation_intent_ids": _ordered_ids(executable_relations),
+            "executable_narrative_intent_ids": _ordered_ids(executable_narratives),
+            "prohibited_relation_intent_ids": _ordered_ids(
+                item["prohibition_id"] for item in query_ir["forbidden_relation_intents"]
+            ),
+            "superseded_event_ids": _ordered_ids(
+                item["earlier_event_id"] for item in query_ir["resolved_overrides"]
+            ),
+        }
+    validate_schema(result, SEMANTIC_SCHEMA_PATH, root)
+    return result
+
+
+def _selector_matches(
+    selector: dict[str, Any], entity_id: str | None, index: p9b1.RetrievalIndex
+) -> bool:
+    if entity_id is None:
+        return False
+    if selector["entity_ids"] and entity_id not in selector["entity_ids"]:
+        return False
+    if selector["entity_types"] and index.entities[entity_id]["entity_type"] not in selector["entity_types"]:
+        return False
+    return True
+
+
+def _license_record(
+    record: p9b1.ClaimRecord, query_ir: dict[str, Any], index: p9b1.RetrievalIndex
+) -> list[str]:
+    licenses: list[str] = []
+    for relation in query_ir["relation_intents"]:
+        if record.claim_kind != "relation" or record.predicate != relation["predicate"]:
+            continue
+        if _selector_matches(relation["subject_selector"], record.subject, index) and _selector_matches(relation["object_selector"], record.object, index):
+            licenses.append(relation["intent_id"])
+    for narrative in query_ir["narrative_intents"]:
+        if record.claim_kind != "narrative":
+            continue
+        selector = narrative["entity_selector"]
+        if any(_selector_matches(selector, entity_id, index) for entity_id in record.entity_ids):
+            if narrative["semantic_role"] == "narrative_fact" or narrative["semantic_role"] in record.semantic_roles:
+                licenses.append(narrative["narrative_intent_id"])
+    return _ordered_ids(licenses)
+
+
+def _matching_prohibition(
+    record: p9b1.ClaimRecord, query_ir: dict[str, Any], index: p9b1.RetrievalIndex
+) -> str | None:
+    if record.claim_kind != "relation":
+        return None
+    for prohibition in query_ir["forbidden_relation_intents"]:
+        if record.predicate != prohibition["predicate"]:
+            continue
+        if _selector_matches(prohibition["subject_selector"], record.subject, index) and _selector_matches(prohibition["object_selector"], record.object, index):
+            return prohibition["prohibition_id"]
+    return None
+
+
+def execute_query_ir(
+    request: dict[str, Any], query_ir: dict[str, Any], semantic_validation: dict[str, Any],
+    *, root: Path = ROOT, top_k: int = 12,
+) -> tuple[dict[str, Any] | None, dict[str, list[str]], list[dict[str, Any]]]:
+    """Execute only candidates licensed by an exact matching R/N intent."""
+    if semantic_validation["result"] != "PASS":
+        return None, {}, []
+    if not isinstance(top_k, int) or isinstance(top_k, bool) or not 1 <= top_k <= 50:
+        raise ValueError("top_k must be an integer from 1 through 50")
+    index = p9b1.build_index(root)
+    licensed: list[tuple[p9b1.ClaimRecord, list[str]]] = []
+    excluded: list[dict[str, Any]] = []
+    all_intent_ids = _ordered_ids([
+        *(item["intent_id"] for item in query_ir["relation_intents"]),
+        *(item["narrative_intent_id"] for item in query_ir["narrative_intents"]),
+    ])
+    for record in index.records:
+        prohibition_id = _matching_prohibition(record, query_ir, index)
+        license_ids = _license_record(record, query_ir, index)
+        if license_ids and prohibition_id is None:
+            licensed.append((record, license_ids))
+        else:
+            excluded.append({
+                "claim_id": record.claim_id,
+                "reason": (
+                    "FORBIDDEN_RELATION_MATCH" if prohibition_id
+                    else "NO_AFFIRMED_INTENT_LICENSE"
+                ),
+                "prohibition_id": prohibition_id,
+                "evaluated_intent_ids": all_intent_ids,
+            })
+    relation_order = {
+        intent_id: index_no
+        for index_no, intent_id in enumerate([
+            *semantic_validation["executable_relation_intent_ids"],
+            *semantic_validation["executable_narrative_intent_ids"],
+        ])
+    }
+    licensed.sort(key=lambda item: (
+        min(relation_order[intent] for intent in item[1]), item[0].claim_id
+    ))
+    selected = licensed[:top_k]
+    candidates: list[dict[str, Any]] = []
+    license_map: dict[str, list[str]] = {}
+    for rank, (record, license_ids) in enumerate(selected, 1):
+        license_map[record.claim_id] = license_ids
+        candidates.append({
+            "rank": rank,
+            "score": 20_000 - rank,
+            "score_features": [f"query_ir_license:{intent}" for intent in license_ids],
+            **record.payload(),
+        })
+    result = {
+        "schema_version": "1.1",
+        "request_id": request["request_id"],
+        "request_sha256": canonical_sha256(request),
+        "knowledge_version": request["knowledge_version"],
+        "normalized_query": p9b1.normalize_query(request["query_text"]),
+        "status": "RETRIEVED" if candidates else "NO_MATCH",
+        "top_k": top_k,
+        "candidate_count": len(candidates),
+        "excluded_candidate_count": len(index.records) - len(licensed),
+        "runtime_bundle_sha256": index.bundle_sha256,
+        "index_sha256": index.index_sha256,
+        "candidates": candidates,
+    }
+    validate_schema(result, PHASE9 / "retrieval-result-schema.yml", root)
+    return result, license_map, excluded
+
+
+def run_scoped_query(
+    request: dict[str, Any], *, root: Path = ROOT, top_k: int = 12
+) -> dict[str, Any]:
+    query_ir = interpret_request(request, root=root)
+    semantic_validation = validate_query_ir(request, query_ir, root=root)
+    retrieval_result, licenses, exclusions = execute_query_ir(
+        request, query_ir, semantic_validation, root=root, top_k=top_k
+    )
+    return {
+        "request": copy.deepcopy(request),
+        "query_ir": query_ir,
+        "semantic_validation": semantic_validation,
+        "retrieval_result": retrieval_result,
+        "candidate_license_intent_ids": licenses,
+        "query_semantic_exclusions": exclusions,
+    }
+
+
+class BindingValidationError(ValueError):
+    def __init__(self, stage: str, message: str):
+        super().__init__(f"{stage}: {message}")
+        self.stage = stage
+
+
+class ContentAddressedStore:
+    """Small deterministic private store used by the binding contract/tests."""
+
+    def __init__(self) -> None:
+        self._bytes: dict[str, bytes] = {}
+
+    def put_bytes(self, data: bytes, *, artifact: bool) -> tuple[str, str, int]:
+        digest = hashlib.sha256(data).hexdigest()
+        kind = "artifacts" if artifact else "objects"
+        address = f"private-audit://{kind}/sha256/{digest}"
+        self._bytes[address] = bytes(data)
+        return digest, address, len(data)
+
+    def put_object(self, value: Any) -> dict[str, Any]:
+        digest, address, length = self.put_bytes(canonical_bytes(value), artifact=False)
+        return {
+            "content_sha256": digest,
+            "content_address": address,
+            "media_type": "application/json",
+            "byte_length": length,
+        }
+
+    def put_artifact(self, data: bytes) -> dict[str, Any]:
+        digest, address, length = self.put_bytes(data, artifact=True)
+        return {
+            "artifact_sha256": digest,
+            "content_address": address,
+            "byte_length": length,
+        }
+
+    def resolve(self, address: str) -> bytes:
+        try:
+            return self._bytes[address]
+        except KeyError as exc:
+            raise BindingValidationError(
+                "RESOLVE_ALL_NON_NULL_OBJECT_AND_ARTIFACT_ADDRESSES",
+                f"unresolvable address {address}",
+            ) from exc
+
+    def clone(self) -> "ContentAddressedStore":
+        other = ContentAddressedStore()
+        other._bytes = dict(self._bytes)
+        return other
+
+    def replace_for_test(self, address: str, data: bytes) -> None:
+        """Explicit test-only mutation; validation must reject it."""
+        self._bytes[address] = bytes(data)
+
+
+def _artifact_ref(store: ContentAddressedStore, path: Path) -> dict[str, Any]:
+    return store.put_artifact(path.read_bytes())
+
+
+def _object_ref(
+    store: ContentAddressedStore, kind: str, value: dict[str, Any]
+) -> dict[str, Any]:
+    return {"object_kind": kind, **store.put_object(value)}
+
+
+def _component_ref(
+    store: ContentAddressedStore, component_kind: str, implementation_kind: str,
+    executable: bytes, configuration: bytes,
+) -> dict[str, Any]:
+    executable_ref = store.put_artifact(executable)
+    configuration_ref = store.put_artifact(configuration)
+    build_manifest = canonical_bytes({
+        "component_kind": component_kind,
+        "implementation_kind": implementation_kind,
+        "executable_artifact_sha256": executable_ref["artifact_sha256"],
+        "configuration_sha256": configuration_ref["artifact_sha256"],
+        "build_format": "P9B1Q_DETERMINISTIC_COMPONENT_V1",
+    })
+    build_ref = store.put_artifact(build_manifest)
+    return {
+        "component_kind": component_kind,
+        "implementation_kind": implementation_kind,
+        "executable_artifact_sha256": executable_ref["artifact_sha256"],
+        "executable_artifact_address": executable_ref["content_address"],
+        "executable_artifact_byte_length": executable_ref["byte_length"],
+        "build_manifest_sha256": build_ref["artifact_sha256"],
+        "build_manifest_address": build_ref["content_address"],
+        "build_manifest_byte_length": build_ref["byte_length"],
+        "configuration_sha256": configuration_ref["artifact_sha256"],
+        "configuration_address": configuration_ref["content_address"],
+        "configuration_byte_length": configuration_ref["byte_length"],
+    }
+
+
+def _p9a_response_and_audit(
+    request: dict[str, Any], execution: dict[str, Any], *, root: Path
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    retrieval = execution["retrieval_result"]
+    request_hash = canonical_sha256(request)
+    runtime = _read_yaml(root / PHASE9 / "runtime-contract.yml")
+    source_commit = runtime["authority"]["source_commit"]
+    canonical_input = runtime["authority"]["canonical_input_sha256"]
+    bundle_sha = p9b1.verify_runtime_bundle(root)["bundle_sha256"]
+    audit_id = f"AUD-{request_hash[:24]}"
+    if retrieval is None:
+        response = None
+        audit = {
+            "schema_version": "1.3",
+            "audit_id": audit_id,
+            "request_schema_version": "1.0",
+            "request_id": request["request_id"],
+            "request_sha256": request_hash,
+            "response_schema_version": "1.2",
+            "response_sha256": None,
+            "started_at": "1970-01-01T00:00:00Z",
+            "completed_at": "1970-01-01T00:00:00Z",
+            "knowledge_authority": {
+                "knowledge_version": request["knowledge_version"],
+                "source_commit": source_commit,
+                "canonical_input_sha256": canonical_input,
+                "runtime_bundle_sha256": bundle_sha,
+                "hash_verified": True,
+            },
+            "retrieval": {
+                "candidate_claim_ids": [],
+                "admitted_claim_ids": [],
+                "excluded_candidates": [],
+            },
+            "decision": {
+                "disposition": "ABSTAIN",
+                "reason_codes": ["HARD_GATE_FAILED"],
+                "material_claim_ids": [],
+                "coverage_gaps": ["NOT_COVERED"],
+            },
+            "output_validation": {
+                "result": "FAIL_CLOSED",
+                "hard_fail_codes": ["NO_SAFE_ADMITTED_ANSWER"],
+                "student_visible_citation_count": 0,
+            },
+            "privacy": {
+                "student_identifier_logged": False,
+                "public_export_allowed": False,
+            },
+        }
+        validate_schema(audit, PHASE9 / "audit-log-schema.yml", root)
+        return response, audit
+
+    candidates = retrieval["candidates"]
+    citations: list[dict[str, Any]] = []
+    material_claims: list[dict[str, Any]] = []
+    answer_units: list[dict[str, Any]] = []
+    statements: list[str] = []
+    for claim_number, candidate in enumerate(candidates, 1):
+        citation_ids: list[str] = []
+        for citation in candidate["citations"]:
+            citation_id = f"CIT-{len(citations) + 1:03d}"
+            citation_ids.append(citation_id)
+            citations.append({
+                "citation_id": citation_id,
+                "claim_id": candidate["claim_id"],
+                **citation,
+                "visible_to_student": True,
+            })
+        scalar_qualifiers = {
+            key: value for key, value in candidate["qualifiers"].items()
+            if isinstance(value, (str, int, float, bool)) and not isinstance(value, (list, dict))
+        }
+        material_claims.append({
+            "claim_id": candidate["claim_id"],
+            "entity_ids": candidate["entity_ids"],
+            "qualifiers": scalar_qualifiers,
+        })
+        answer_units.append({
+            "unit_id": f"UNIT-{claim_number:03d}",
+            "unit_type": "MATERIAL_CLAIM",
+            "claim_id": candidate["claim_id"],
+            "citation_ids": citation_ids,
+        })
+        statements.append(candidate["statement_zh"])
+    response = {
+        "schema_version": "1.2",
+        "request_id": request["request_id"],
+        "knowledge_version": request["knowledge_version"],
+        "source_commit": source_commit,
+        "runtime_bundle_sha256": bundle_sha,
+        "disposition": "ANSWER",
+        "answer_units": answer_units,
+        "answer_text": "；".join(statements) + "。",
+        "material_claims": material_claims,
+        "citations": citations,
+        "coverage_gaps": [],
+        "validation": {
+            "result": "PASS",
+            "checked_contract_id": "clonorchis_p9a_controlled_rag_v1",
+            "hard_fail_codes": [],
+        },
+    }
+    validate_schema(response, PHASE9 / "response-schema.yml", root)
+    response_hash = canonical_sha256(response)
+    claim_ids = [candidate["claim_id"] for candidate in candidates]
+    audit = {
+        "schema_version": "1.3",
+        "audit_id": audit_id,
+        "request_schema_version": "1.0",
+        "request_id": request["request_id"],
+        "request_sha256": request_hash,
+        "response_schema_version": "1.2",
+        "response_sha256": response_hash,
+        "started_at": "1970-01-01T00:00:00Z",
+        "completed_at": "1970-01-01T00:00:00Z",
+        "knowledge_authority": {
+            "knowledge_version": request["knowledge_version"],
+            "source_commit": source_commit,
+            "canonical_input_sha256": canonical_input,
+            "runtime_bundle_sha256": bundle_sha,
+            "hash_verified": True,
+        },
+        "retrieval": {
+            "candidate_claim_ids": claim_ids,
+            "admitted_claim_ids": claim_ids,
+            "excluded_candidates": [],
+        },
+        "decision": {
+            "disposition": "ANSWER",
+            "reason_codes": ["FULLY_COVERED"],
+            "material_claim_ids": claim_ids,
+            "coverage_gaps": [],
+        },
+        "output_validation": {
+            "result": "PASS",
+            "hard_fail_codes": [],
+            "student_visible_citation_count": len(citations),
+        },
+        "privacy": {
+            "student_identifier_logged": False,
+            "public_export_allowed": False,
+        },
+    }
+    validate_schema(audit, PHASE9 / "audit-log-schema.yml", root)
+    return response, audit
+
+
+def build_bound_execution(
+    request: dict[str, Any], *, root: Path = ROOT, top_k: int = 12
+) -> tuple[dict[str, Any], ContentAddressedStore, dict[str, Any]]:
+    """Create one complete content-addressed private execution chain."""
+    execution = run_scoped_query(request, root=root, top_k=top_k)
+    response, audit = _p9a_response_and_audit(request, execution, root=root)
+    store = ContentAddressedStore()
+
+    schema_artifacts = {
+        name: _artifact_ref(store, root / path)
+        for name, path in NORMATIVE_SCHEMA_PATHS.items()
+    }
+    authority_artifacts = {
+        name: _artifact_ref(store, root / path)
+        for name, path in NORMATIVE_AUTHORITY_PATHS.items()
+    }
+    objects: dict[str, Any] = {
+        "request": _object_ref(store, "REQUEST", request),
+        "query_ir": _object_ref(store, "QUERY_IR", execution["query_ir"]),
+        "semantic_validation": _object_ref(
+            store, "SEMANTIC_VALIDATION", execution["semantic_validation"]
+        ),
+        "retrieval_result": (
+            _object_ref(store, "RETRIEVAL_RESULT", execution["retrieval_result"])
+            if execution["retrieval_result"] is not None else None
+        ),
+        "audit_record": _object_ref(store, "AUDIT_RECORD", audit),
+        "response": _object_ref(store, "RESPONSE", response) if response else None,
+    }
+    executable = (root / Path(__file__).relative_to(ROOT)).read_bytes()
+    interpreter_config = (root / CONFIG_PATH).read_bytes()
+    validator_config = canonical_bytes({
+        "semantic_contract_sha256": file_sha256(root / SEMANTIC_CONTRACT_PATH),
+        "validator_contract_sha256": file_sha256(root / VALIDATOR_CONTRACT_PATH),
+        "mapping_sha256": file_sha256(root / MAPPING_PATH),
+    })
+    executor_config = canonical_bytes({
+        "mapping_sha256": file_sha256(root / MAPPING_PATH),
+        "retrieval_contract_sha256": file_sha256(root / PHASE9 / "p9b1-retrieval-contract.yml"),
+        "top_k": top_k,
+    })
+    components = {
+        "interpreter": _component_ref(
+            store, "QUERY_INTERPRETER", "DETERMINISTIC", executable, interpreter_config
+        ),
+        "semantic_validator": _component_ref(
+            store, "QUERY_IR_SEMANTIC_VALIDATOR", "DETERMINISTIC", executable, validator_config
+        ),
+        "graph_executor": _component_ref(
+            store, "GRAPH_EXECUTOR", "DETERMINISTIC", executable, executor_config
+        ),
+    }
+    semantic = execution["semantic_validation"]
+    disposition = (
+        "QUERY_IR_VALID_RETRIEVED" if semantic["result"] == "PASS"
+        else "QUERY_IR_FAIL_CLOSED"
+    )
+    response_hash = canonical_sha256(response) if response else None
+    state_summary = {
+        "semantic_validation_result": semantic["result"],
+        "semantic_executable_intent_count": len(
+            semantic["executable_relation_intent_ids"]
+        ) + len(semantic["executable_narrative_intent_ids"]),
+        "retrieval_present": execution["retrieval_result"] is not None,
+        "audit_disposition": audit["decision"]["disposition"],
+        "audit_output_validation_result": audit["output_validation"]["result"],
+        "audit_hard_fail_codes": audit["output_validation"]["hard_fail_codes"],
+        "audit_response_sha256": audit["response_sha256"],
+        "response_present": response is not None,
+        "response_disposition": response["disposition"] if response else None,
+        "response_validation_result": response["validation"]["result"] if response else None,
+    }
+    runtime_manifest = _read_yaml(root / PHASE9 / "runtime-bundle-manifest.yml")
+    sidecar = {
+        "binding_schema_version": "0.2-candidate",
+        "binding_id": f"BIND-{canonical_sha256(request)[:24]}",
+        "audit_id": audit["audit_id"],
+        "request_id": request["request_id"],
+        "knowledge_version": request["knowledge_version"],
+        "disposition": disposition,
+        "canonicalization": "SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE_SHA256",
+        "created_at": "1970-01-01T00:00:00Z",
+        "runtime_bundle_sha256": runtime_manifest["bundle_sha256"],
+        "schema_artifacts": schema_artifacts,
+        "authority_artifacts": authority_artifacts,
+        "objects": objects,
+        "state_summary": state_summary,
+        "components": components,
+        "query_semantic_exclusions": execution["query_semantic_exclusions"][:50],
+    }
+    validate_schema(sidecar, SIDECAR_SCHEMA_PATH, root)
+    bundle = {
+        "execution": execution,
+        "response": response,
+        "audit": audit,
+        "sidecar": sidecar,
+        "sidecar_sha256": canonical_sha256(sidecar),
+        "response_sha256": response_hash,
+    }
+    return sidecar, store, bundle
+
+
+def _resolve_checked(
+    store: ContentAddressedStore, ref: dict[str, Any], *, artifact: bool,
+    stage: str,
+) -> bytes:
+    address_key = "content_address"
+    digest_key = "artifact_sha256" if artifact else "content_sha256"
+    data = store.resolve(ref[address_key])
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != ref[digest_key] or len(data) != ref["byte_length"]:
+        raise BindingValidationError(stage, "digest or byte length mismatch")
+    if not ref[address_key].endswith(digest):
+        raise BindingValidationError(stage, "content address suffix mismatch")
+    return data
+
+
+def validate_bound_execution(
+    sidecar: dict[str, Any], store: ContentAddressedStore, *, root: Path = ROOT,
+) -> dict[str, Any]:
+    """Resolve and deterministically recompute the full bound execution chain."""
+    try:
+        validate_schema(sidecar, SIDECAR_SCHEMA_PATH, root)
+    except Exception as exc:
+        raise BindingValidationError("SIDECAR_SCHEMA", str(exc)) from exc
+
+    artifacts: dict[str, bytes] = {}
+    for group_name, paths in (
+        ("schema_artifacts", NORMATIVE_SCHEMA_PATHS),
+        ("authority_artifacts", NORMATIVE_AUTHORITY_PATHS),
+    ):
+        actual_group = sidecar[group_name]
+        if set(actual_group) != set(paths):
+            raise BindingValidationError(
+                "PARSE_AND_VALIDATE_NORMATIVE_ARTIFACTS", "artifact key set mismatch"
+            )
+        for name, path in paths.items():
+            data = _resolve_checked(
+                store, actual_group[name], artifact=True,
+                stage="VERIFY_BYTE_LENGTH_AND_ADDRESS_DIGEST",
+            )
+            if data != (root / path).read_bytes():
+                raise BindingValidationError(
+                    "PARSE_AND_VALIDATE_NORMATIVE_ARTIFACTS",
+                    f"normative artifact substitution: {name}",
+                )
+            artifacts[name] = data
+
+    objects: dict[str, Any] = {}
+    for name, ref in sidecar["objects"].items():
+        if ref is None:
+            objects[name] = None
+            continue
+        data = _resolve_checked(
+            store, ref, artifact=False, stage="VERIFY_BYTE_LENGTH_AND_ADDRESS_DIGEST"
+        )
+        try:
+            value = json.loads(data)
+        except json.JSONDecodeError as exc:
+            raise BindingValidationError("PARSE_AND_VALIDATE_ACTUAL_OBJECTS", str(exc)) from exc
+        if canonical_bytes(value) != data:
+            raise BindingValidationError(
+                "PARSE_AND_VALIDATE_ACTUAL_OBJECTS", "object bytes are not canonical"
+            )
+        objects[name] = value
+
+    request = objects["request"]
+    query_ir = objects["query_ir"]
+    semantic = objects["semantic_validation"]
+    retrieval = objects["retrieval_result"]
+    audit = objects["audit_record"]
+    response = objects["response"]
+    try:
+        p9b1.validate_request(request, root)
+        validate_schema(query_ir, QUERY_IR_SCHEMA_PATH, root)
+        validate_schema(semantic, SEMANTIC_SCHEMA_PATH, root)
+        validate_schema(audit, PHASE9 / "audit-log-schema.yml", root)
+        if retrieval is not None:
+            validate_schema(retrieval, PHASE9 / "retrieval-result-schema.yml", root)
+        if response is not None:
+            validate_schema(response, PHASE9 / "response-schema.yml", root)
+    except Exception as exc:
+        raise BindingValidationError("PARSE_AND_VALIDATE_ACTUAL_OBJECTS", str(exc)) from exc
+
+    if query_ir != interpret_request(request, root=root):
+        raise BindingValidationError(
+            "VERIFY_REQUEST_QUERY_IR_AND_SEMANTIC_VALIDATION_BINDING",
+            "QueryIR deterministic recomputation mismatch",
+        )
+    recomputed_semantic = validate_query_ir(request, query_ir, root=root)
+    if semantic != recomputed_semantic:
+        raise BindingValidationError(
+            "RECOMPUTE_QUERY_IR_SEMANTIC_VALIDATION",
+            "semantic validation deterministic recomputation mismatch",
+        )
+
+    component_artifacts: dict[str, dict[str, bytes]] = {}
+    for component_name, component in sidecar["components"].items():
+        component_artifacts[component_name] = {}
+        for prefix in ("executable_artifact", "build_manifest", "configuration"):
+            ref = {
+                "artifact_sha256": component[f"{prefix}_sha256"] if prefix != "build_manifest" else component["build_manifest_sha256"],
+                "content_address": component[f"{prefix}_address"] if prefix != "build_manifest" else component["build_manifest_address"],
+                "byte_length": component[f"{prefix}_byte_length"] if prefix != "build_manifest" else component["build_manifest_byte_length"],
+            }
+            component_artifacts[component_name][prefix] = _resolve_checked(
+                store, ref, artifact=True,
+                stage="VERIFY_COMPONENT_EXECUTABLE_BUILD_AND_CONFIGURATION_HASHES",
+            )
+    current_executable = (root / Path(__file__).relative_to(ROOT)).read_bytes()
+    for component_name, component in sidecar["components"].items():
+        executable_data = component_artifacts[component_name]["executable_artifact"]
+        if executable_data != current_executable:
+            raise BindingValidationError(
+                "VERIFY_COMPONENT_EXECUTABLE_BUILD_AND_CONFIGURATION_HASHES",
+                "component executable drift",
+            )
+        expected_build = canonical_bytes({
+            "component_kind": component["component_kind"],
+            "implementation_kind": component["implementation_kind"],
+            "executable_artifact_sha256": component["executable_artifact_sha256"],
+            "configuration_sha256": component["configuration_sha256"],
+            "build_format": "P9B1Q_DETERMINISTIC_COMPONENT_V1",
+        })
+        if component_artifacts[component_name]["build_manifest"] != expected_build:
+            raise BindingValidationError(
+                "VERIFY_COMPONENT_EXECUTABLE_BUILD_AND_CONFIGURATION_HASHES",
+                "component build manifest mismatch",
+            )
+
+    expected_configs = {
+        "interpreter": (root / CONFIG_PATH).read_bytes(),
+        "semantic_validator": canonical_bytes({
+            "semantic_contract_sha256": file_sha256(root / SEMANTIC_CONTRACT_PATH),
+            "validator_contract_sha256": file_sha256(root / VALIDATOR_CONTRACT_PATH),
+            "mapping_sha256": file_sha256(root / MAPPING_PATH),
+        }),
+        "graph_executor": canonical_bytes({
+            "mapping_sha256": file_sha256(root / MAPPING_PATH),
+            "retrieval_contract_sha256": file_sha256(root / PHASE9 / "p9b1-retrieval-contract.yml"),
+            "top_k": retrieval["top_k"] if retrieval is not None else 12,
+        }),
+    }
+    for component_name, expected_config in expected_configs.items():
+        if component_artifacts[component_name]["configuration"] != expected_config:
+            raise BindingValidationError(
+                "VERIFY_COMPONENT_EXECUTABLE_BUILD_AND_CONFIGURATION_HASHES",
+                f"{component_name} configuration drift",
+            )
+
+    runtime_manifest = _read_yaml(root / PHASE9 / "runtime-bundle-manifest.yml")
+    logical_bundle_sha = runtime_manifest["bundle_sha256"]
+    if sidecar["runtime_bundle_sha256"] != logical_bundle_sha:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS",
+            "logical runtime bundle digest mismatch",
+        )
+    if retrieval is not None and retrieval["runtime_bundle_sha256"] != logical_bundle_sha:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS",
+            "retrieval runtime bundle mismatch",
+        )
+    if audit["knowledge_authority"]["runtime_bundle_sha256"] != logical_bundle_sha:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS",
+            "audit runtime bundle mismatch",
+        )
+    if response is not None and response["runtime_bundle_sha256"] != logical_bundle_sha:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS",
+            "response runtime bundle mismatch",
+        )
+
+    if semantic["result"] == "PASS":
+        expected_retrieval, expected_licenses, expected_exclusions = execute_query_ir(
+            request, query_ir, semantic, root=root,
+            top_k=retrieval["top_k"] if retrieval else 12,
+        )
+        if retrieval != expected_retrieval:
+            raise BindingValidationError(
+                "RECOMPUTE_RETRIEVAL_FROM_EXACT_QUERY_IR_AND_COMPONENTS_IF_STARTED",
+                "retrieval deterministic recomputation mismatch",
+            )
+        expected_exclusions = expected_exclusions[:50]
+        if sidecar["query_semantic_exclusions"] != expected_exclusions:
+            raise BindingValidationError(
+                "VERIFY_CANDIDATE_LICENSE_AND_PRIVATE_SEMANTIC_EXCLUSIONS",
+                "query semantic exclusions mismatch",
+            )
+        for candidate in retrieval["candidates"]:
+            features = {
+                item.removeprefix("query_ir_license:")
+                for item in candidate["score_features"]
+                if item.startswith("query_ir_license:")
+            }
+            if features != set(expected_licenses[candidate["claim_id"]]):
+                raise BindingValidationError(
+                    "VERIFY_CANDIDATE_LICENSE_AND_PRIVATE_SEMANTIC_EXCLUSIONS",
+                    "candidate intent license mismatch",
+                )
+    elif retrieval is not None:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS",
+            "FAIL_CLOSED semantic result has a retrieval object",
+        )
+
+    expected_response, expected_audit = _p9a_response_and_audit(
+        request,
+        {
+            "retrieval_result": retrieval,
+            "semantic_validation": semantic,
+        },
+        root=root,
+    )
+    if response != expected_response or audit != expected_audit:
+        raise BindingValidationError(
+            "VERIFY_P9A_RESPONSE_AND_AUDIT_CROSS_OBJECT_SEMANTICS",
+            "response or audit recomputation mismatch",
+        )
+    expected_summary = {
+        "semantic_validation_result": semantic["result"],
+        "semantic_executable_intent_count": len(semantic["executable_relation_intent_ids"]) + len(semantic["executable_narrative_intent_ids"]),
+        "retrieval_present": retrieval is not None,
+        "audit_disposition": audit["decision"]["disposition"],
+        "audit_output_validation_result": audit["output_validation"]["result"],
+        "audit_hard_fail_codes": audit["output_validation"]["hard_fail_codes"],
+        "audit_response_sha256": audit["response_sha256"],
+        "response_present": response is not None,
+        "response_disposition": response["disposition"] if response else None,
+        "response_validation_result": response["validation"]["result"] if response else None,
+    }
+    if sidecar["state_summary"] != expected_summary:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS", "state summary mismatch"
+        )
+    if sidecar["audit_id"] != audit["audit_id"] or sidecar["request_id"] != request["request_id"]:
+        raise BindingValidationError(
+            "VERIFY_SIDECAR_DISPOSITION_CONDITIONS", "sidecar identity mismatch"
+        )
+    return {
+        "binding_id": sidecar["binding_id"],
+        "result": "PASS",
+        "request_sha256": canonical_sha256(request),
+        "query_ir_sha256": canonical_sha256(query_ir),
+        "semantic_validation_sha256": canonical_sha256(semantic),
+        "retrieval_result_sha256": canonical_sha256(retrieval) if retrieval else None,
+        "audit_sha256": canonical_sha256(audit),
+        "response_sha256": canonical_sha256(response) if response else None,
+        "sidecar_sha256": canonical_sha256(sidecar),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--request", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--top-k", type=int, default=12)
+    args = parser.parse_args()
+    request = _read_yaml(args.request)
+    execution = run_scoped_query(request, top_k=args.top_k)
+    output = json.dumps(execution, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    if args.output:
+        args.output.write_text(output, encoding="utf-8")
+    else:
+        print(output, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

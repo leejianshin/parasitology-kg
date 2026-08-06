@@ -1,0 +1,107 @@
+configuration_version: "1.0"
+configuration_id: "clonorchis_p9b1q_deterministic_interpreter_v1"
+implementation_kind: "DETERMINISTIC"
+
+entity_alias_extensions:
+  parasite.clonorchis_sinensis: [肝吸虫, 华支睾吸虫]
+  disease.clonorchiasis: [肝吸虫病, 华支睾吸虫病, 华支睾吸虫感染]
+  diagnostic.stool_egg_microscopy: [粪检, 便检, 粪便检查, 粪便镜检, 粪便检卵, 大便检卵]
+  diagnostic.duodenal_fluid_egg_microscopy: [十二指肠液检查, 十二指肠液检卵, 十二指肠引流液检查, 十二指肠引流液检卵]
+  diagnostic.biliary_imaging: [影像检查, 影像学检查, 胆道影像, 超声, B超, CT, MRI, 磁共振]
+  behavior.raw_undercooked_freshwater_fish_consumption: [生食淡水鱼, 吃生鱼, 鱼生, 未充分加热淡水鱼]
+  environment.freshwater_environment: [淡水, 水体, 水域, 河塘]
+  host.human: [人, 人体, 人类, 患者, 感染者]
+  host.freshwater_fish: [淡水鱼, 鱼]
+  host.freshwater_snails_suitable_for_clonorchis: [淡水螺, 螺类, 螺]
+  host.domestic_dogs_cats_pigs: [犬猫猪, 家养动物]
+  host.piscivorous_mammals: [食鱼哺乳动物]
+  stage.clonorchis_egg: [虫卵, 卵]
+  stage.clonorchis_miracidium: [毛蚴]
+  stage.clonorchis_sporocyst: [胞蚴]
+  stage.clonorchis_redia: [雷蚴]
+  stage.clonorchis_cercaria: [尾蚴]
+  stage.clonorchis_metacercaria: [囊蚴]
+  stage.clonorchis_adult: [成虫]
+  anatomy.biliary_system: [胆道系统, 胆道]
+  anatomy.intrahepatic_small_medium_bile_ducts: [肝内胆管, 小中型胆管, 小、中型胆管]
+  treatment.praziquantel: [吡喹酮]
+  treatment.albendazole: [阿苯达唑]
+  hazard.iarc_group_1_carcinogenic_to_humans: [IARC1类, 1类致癌物, Group1]
+  intervention.avoid_raw_undercooked_freshwater_fish: [避免生食淡水鱼, 不吃生鱼, 拒食生鱼]
+  intervention.improved_sanitation: [改善卫生设施, 改厕, 厕所设施]
+  intervention.one_health_integrated_control: [One Health, 全健康, 综合防控, 协同防控]
+  intervention.reduce_human_fecal_contamination: [减少人粪污染, 人粪无害化]
+  intervention.reduce_animal_fecal_contamination: [减少动物粪便污染, 动物粪污治理]
+
+discourse:
+  contrast: [但是, 但, 然而, 不过, 而]
+  override: [后来, 随后, 复查, 再查, 改为, 最终, 之后]
+  condition: [如果, 若, 假如, 只要, 除非]
+  hypothetical: [假设, 假如, 如果, 若, 可能, 设想]
+  exclusion: [不涉及, 不讨论, 不考虑, 不采用, 不包括, 无关]
+  or: [或者, 还是, 或]
+
+polarity:
+  negative: [阴性, 未检出, 没检出, 没有检出, 未见, 查无, 找不到, 没找到, 未发现, 没发现, 未能观察见, 没能观察见, 没有观察见]
+  positive: [阳性, 异常, 检出, 查见, 查到, 发现, 观察见, 看到, 找到]
+  double_negative_prefix: [并非没有, 不是没有, 不能说没有, 不可说没有]
+
+temporal:
+  historical: [曾经, 既往, 过去, 此前, 居住史, 暴露史, 食用史]
+  current: [目前, 当前, 现在, 本次, 此次]
+  future: [今后, 未来, 预防, 防控, 避免]
+
+predicate_cues:
+  has_life_cycle_stage: [虫期, 阶段, 生活史组成]
+  develops_into: [发育, 连续变化, 连续转换, 成熟, 变为, 变成, 转化, 形成, 变化链, 发育链, 从卵到成虫, 从虫卵到成虫]
+  has_definitive_host: [终宿主, 最终宿主]
+  has_first_intermediate_host: [第一中间宿主, 首个中间宿主]
+  has_second_intermediate_host: [第二中间宿主, 次级中间宿主]
+  has_reservoir_host: [保虫宿主, 储存宿主]
+  infective_stage_for: [感染阶段, 感染期, 可感染人, 感染人的形态, 哪个虫期感染]
+  pathogenic_stage_for: [致病阶段, 致病期]
+  diagnostic_stage_for: [诊断阶段, 诊断期]
+  infects: [感染人, 感染人体, 建立感染]
+  parasitizes_site: [寄生部位, 寄生于, 定居于, 寄居于, 胆管成熟]
+  causes: [导致疾病, 引起疾病, 致病]
+  has_pathological_process: [病理改变, 病理过程]
+  occurs_in: [发生部位, 发生于]
+  manifests_as: [临床表现, 表现为, 症状]
+  has_complication: [并发症, 并发]
+  epidemiologically_associated_with: [流行病学相关, 相关性]
+  diagnosed_by: [确证证据, 病原学确证, 确诊方法, 用于确证]
+  classified_as: [致癌分类, 危害分类, IARC, 1类致癌]
+  has_diagnostic_clue: [诊断线索, 暴露线索, 辅助线索, 辅助诊断]
+  treated_by: [治疗, 用药, 药物, 首选药, 替代药]
+  transmitted_via: [传播方式, 经口感染, 生食感染, 摄入感染]
+  transmission_supported_by: [传播环境, 环境维持传播]
+  risk_increased_by: [危险因素, 增加风险, 暴露风险]
+  controlled_by: [防控措施, 预防措施, 控制措施, 综合防控, 协同治理, 综合治理]
+  sheds_stage: [排出虫卵, 随粪排出, 排泄物进入, 排卵, 排出阶段]
+  present_in_environment: [进入淡水, 进入水体, 进入水域, 存在于水体, 水中虫卵, 污染水体]
+  targets: [针对环节, 作用环节, 切断环节, 阻断环节]
+
+topic_cues:
+  morphology: [形态, 外形, 结构, 大小, 尺寸, 卵盖, 肩峰, 小疣, 识别特征]
+  diagnosis: [诊断, 确诊, 确证, 检查, 检测, 证据, 线索, 阴性, 阳性]
+  life_cycle: [生活史, 发育, 虫期, 阶段, 变化链, 发育链]
+  transmission: [传播, 感染途径, 经口, 摄入, 排出, 入水]
+  host_roles: [宿主, 中间宿主, 终宿主, 保虫宿主]
+  one_health: [One Health, 全健康, 人动物环境, 人—动物—环境]
+  exposure: [暴露, 流行区, 居住史, 生食史]
+  control: [防控, 防治, 预防, 控制, 干预, 改厕, 粪污]
+  boundary: [边界, 不能单独, 不等于, 不可外推, 知识库未覆盖, 证据不足]
+  treatment: [治疗, 用药, 药物, 吡喹酮, 阿苯达唑]
+  carcinogenicity: [致癌, IARC, 肿瘤, 癌]
+  stage_roles: [感染阶段, 致病阶段, 诊断阶段]
+  source_traceability: [来源, 出处, 引文, 定位, 回查, 溯源]
+
+role_cues:
+  epidemiologic_exposure_clue: [流行病学线索, 暴露线索, 流行区, 流行地区, 居住史, 生食史]
+  imaging_auxiliary_clue: [影像辅助线索, 影像学线索, 辅助诊断线索, 胆道影像异常]
+  pathogen_confirmation: [病原学确证, 确证证据, 检出虫卵, 虫卵阳性]
+  not_confirmatory: [不能单独确诊, 不能作为确证, 不属于确证, 只是线索, 非确证]
+
+producer:
+  producer_id: "clonorchis-p9b1q-deterministic-interpreter"
+  producer_version: "1.0"
