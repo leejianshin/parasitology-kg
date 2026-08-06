@@ -1,6 +1,6 @@
-contract_version: "0.1-candidate"
-contract_id: "clonorchis_p9b1q_stage_semantic_validators_v0_1"
-status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
+contract_version: "0.2-candidate"
+contract_id: "clonorchis_p9b1q_stage_semantic_validators_v0_2"
+status: "FROZEN_FOR_FOURTH_INDEPENDENT_READ_ONLY_REVIEW"
 result_schema: "stage-semantic-validation-result-schema-candidate.yml"
 canonicalization_profile: "object-canonicalization-and-hash-chain.yml"
 constraint_registry: "constraint-id-registry.yml"
@@ -18,10 +18,21 @@ reference_execution:
   required_counts:
     positive: 9
     minimality: 8
-    negative: 17
+    negative: 20
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
+  schema_gate:
+    runner: strict-schema-gate.mjs
+    dependency_manifest: package.json
+    dependency_lock: package-lock.json
+    install: "npm ci --ignore-scripts --no-audit --no-fund"
+    invocation: "node strict-schema-gate.mjs"
+    engine: "AJV 8.17.1 Draft 2020-12"
+    strict: true
+    required_compiled_schema_count: 12
+    required_fixture_pair_count: 27
+    required_valid_fixture_count: 27
 
 common_executable_interface:
   invocation: "validate(stage_id, actual_object_store, normative_artifact_store) -> validation_result"
@@ -138,6 +149,8 @@ validators:
       - "every retained semantic object has a valid removal witness"
       - "semantic universe and every removal probe resolve from their declared path, pass minimality-proof-schema-candidate.yml, and match the bound canonical hash"
       - "each removal probe is replayed against the actual typed-solution core and frozen constraint set; the candidate hash and unsatisfied constraints must match"
+      - "semantic_object_set_sha256 and solution_id are recomputed after each removal before registered constraints execute"
+      - "all 2^8 subsets of the frozen eight-object semantic universe are enumerated; exactly one inclusion-minimal solution is required for UNIQUE/ONE"
   S4_QUERYIR_EMISSION:
     validator_id: p9b1q-stage-semantic-validator-s4
     required_actual_inputs:
@@ -176,6 +189,7 @@ validators:
       - "every nonempty source_id resolves inside its declared actual object kind and every source span equals the normalized request slice"
       - "TYPED_SOLUTION bindings resolve to a separately persisted canonical core object, never to an embedded or self-referential digest"
       - "all material QueryIR IDs occur in license DAG and minimality witness"
+      - "every persisted license_path_node_ids begins at a zero-indegree DAG root, follows declared edges, and terminates at the witness semantic object"
       - "S4 performs extraction and validation only; it cannot add, remove, reorder, or rewrite semantic content"
   S5_RUNTIME_BINDING:
     validator_id: p9b1q-stage-semantic-validator-s5

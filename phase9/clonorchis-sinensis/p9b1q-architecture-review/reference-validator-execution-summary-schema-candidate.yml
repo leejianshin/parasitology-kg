@@ -19,6 +19,7 @@ required:
   - positive_pass_count
   - minimality_pass_count
   - negative_pass_count
+  - schema_gate
 properties:
   summary_version: {const: "0.1-candidate"}
   validator_id: {const: p9b1q-reference-stage-semantic-validator}
@@ -43,13 +44,27 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 17
-    maxItems: 17
+    minItems: 20
+    maxItems: 20
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
   positive_pass_count: {const: 9}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 17}
+  negative_pass_count: {const: 20}
+  schema_gate:
+    type: object
+    additionalProperties: false
+    required: [gate_id, ajv_version, strict, compiled_schema_count, fixture_pair_count, valid_fixture_count, result, runner_sha256, lockfile_sha256]
+    properties:
+      gate_id: {const: p9b1q-ajv-draft2020-strict}
+      ajv_version: {const: "8.17.1"}
+      strict: {const: true}
+      compiled_schema_count: {const: 12}
+      fixture_pair_count: {const: 27}
+      valid_fixture_count: {const: 27}
+      result: {const: PASS}
+      runner_sha256: {$ref: "#/$defs/sha256"}
+      lockfile_sha256: {$ref: "#/$defs/sha256"}
 $defs:
   sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
   constraint_id: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}

@@ -1,0 +1,53 @@
+revision_id: P9B1Q-ARCHITECTURE-REVISION-4
+status: FROZEN_FOR_FOURTH_INDEPENDENT_READ_ONLY_REVIEW
+parent_commit: e40359005a309cd5dedf621e2f16ea0f171a01ad
+frozen_implementation_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
+scope: REVIEW_ONLY_ARCHITECTURE_EVIDENCE
+closed_findings:
+  incomplete_reference_validator:
+    closure:
+      - every S0-S5 invocation performs locked AJV Draft 2020-12 strict Schema validation
+      - all persisted actual inputs and outputs are resolved by exact bytes, hash and length
+      - S3 binds every declared authority/configuration input and executes registered constraints in registry order
+      - S4 validates VALID status, exact projection, complete trace sources/spans and rooted license coverage
+      - S5 validates the complete stage/request/retrieval/response/audit chain and an external object-store binding of the sidecar
+  stale_minimality_candidates:
+    closure:
+      - each removal recomputes semantic_object_set_sha256 and deterministic solution_id before constraints execute
+      - every removal candidate is rebound to its actual canonical hash
+      - all 256 subsets of the frozen eight-object semantic universe are enumerated
+      - exactly one inclusion-minimal solution is observed for the positive fixture and zero after each retained-object removal
+  nonrooted_license_witnesses:
+    closure:
+      - every persisted license path begins at a zero-indegree root
+      - every consecutive pair is a declared DAG edge
+      - every path terminates at the witness semantic object
+  unreplayable_schema_gate:
+    closure:
+      - package.json and package-lock.json pin AJV 8.17.1 and yaml 2.8.1
+      - strict-schema-gate.mjs compiles 12 local Schemas and validates 27 frozen positive pairs
+      - the runner and lockfile exact-byte hashes are bound into the execution summary and S5 chain
+negative_evidence:
+  positive_cases: 9
+  minimality_removal_cases: 8
+  negative_cases: 20
+  newly_frozen_attacks:
+    - EVENT_MAPPING_ACTUAL_HASH_MISMATCH
+    - LICENSE_WITNESS_PATH_NOT_ROOTED
+    - INVALID_QUERYIR_STATUS_WITH_INTERNALLY_CONSISTENT_TRACE
+  repeat_runs: 3
+  required_repeat_result: BYTE_IDENTICAL
+schema_gate:
+  engine: AJV_8_17_1_DRAFT_2020_12
+  strict: true
+  compiled_schemas: 12
+  positive_fixture_pairs: 27
+  required_result: PASS
+boundaries:
+  frozen_runtime_modified: false
+  p9a_modified: false
+  model_or_network_at_runtime: false
+  r11_frozen: false
+  pushed: false
+  pr_created: false
+  p9b2_started: false

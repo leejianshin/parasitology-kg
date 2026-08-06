@@ -48,11 +48,12 @@ $defs:
   object_reference:
     type: object
     additionalProperties: false
-    required: [object_kind, path, schema_id, canonical_sha256]
+    required: [object_kind, path, schema_id, canonical_sha256, byte_length]
     properties:
       object_kind: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,95}$"}
       path:
         type: string
-        pattern: "^(fixtures/[A-Za-z0-9._-]+\\.json|[A-Za-z0-9._-]+\\.(yml|py))$"
+        pattern: "^(fixtures/[A-Za-z0-9._-]+\\.json|[A-Za-z0-9._-]+\\.(json|yml|py|mjs)|schema/[A-Za-z0-9._/-]+\\.yml|phase9/clonorchis-sinensis/[A-Za-z0-9._/-]+\\.yml)$"
       schema_id: {type: string, minLength: 1, maxLength: 512}
       canonical_sha256: {$ref: "#/$defs/sha256"}
+      byte_length: {type: integer, minimum: 1}

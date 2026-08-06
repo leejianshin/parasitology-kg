@@ -1,0 +1,13 @@
+{
+  "name": "p9b1q-architecture-schema-gate",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "schema-gate": "node strict-schema-gate.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "yaml": "2.8.1"
+  }
+}
