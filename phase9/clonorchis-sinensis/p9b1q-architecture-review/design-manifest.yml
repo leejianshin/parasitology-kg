@@ -1,0 +1,26 @@
+manifest_id: P9B1Q-ARCHITECTURE-REVIEW-DESIGN-MANIFEST-v1
+status: FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW
+baseline_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
+hash_algorithm: SHA256_RAW_FILE_BYTES
+
+protected_baseline_files:
+  scripts/p9b1q_scoped_query_ir.py: 96d0cd294d2bc69e2e14d2b72c8290c987575cf29bace7571dbc0936c095d240
+  tests/test_p9b1q_scoped_query_ir.py: 9503309026c197e33dc8329e400b8e6d8427e113baf42120877a1d04e033cb6d
+  phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml: 0f05011151071d986b16af45d0bee32154c548193addcba3ef0330757f629931
+
+design_files:
+  README.md: ce086d7dc02b6bb6097eb12af63544a159fab0af701e5a0cd72a9e07b6b8c3ab
+  architecture-review-v1.yml: e9910da26cbd5075f938733b65795babf163b7b582b092dd8f07be22ec2e8d73
+  clause-ast-schema-candidate.yml: cf16e9a0de73a2f59f7da32197c468a2854150a79320e8cba9a1a8a6c0f8fb7d
+  event-frame-schema-candidate.yml: 9e930fd9284d86eac612b45192ec483449115a2a6a05c1da929a894fb3922a1d
+  typed-constraint-result-schema-candidate.yml: 92422a7846d508a12d7ed9c46ea93bae4ca6d62e74e389bdeb5be63d51085181
+  typed-constraint-solver-contract.yml: 6c38c3a63b354bb5c21458c201b7956f436790298d5cbbe78e75f2e46594dfee
+  compiler-pipeline-contract.yml: 487db47b90c17b8b908d28bf3190702989e9556d6c929dd2eaf58677c1b8869e
+  failure-to-stage-matrix.yml: e56d0be975f959d909bf4f42e3ce3dc5e4328e754a9300893d4f90a20a90a6e6
+
+review_boundaries:
+  implementation_mutation: false
+  R10_secret_body_in_repository: false
+  model_or_network_use: false
+  push_or_PR: false
+  P9B2_start: false

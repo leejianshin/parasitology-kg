@@ -1,0 +1,166 @@
+review_version: "1.0"
+review_id: "clonorchis_p9b1q_architecture_review_v1"
+status: "DESIGN_ONLY_IMPLEMENTATION_FROZEN"
+
+frozen_implementation:
+  commit: "6ac0e4b2978e5fb41e7b90e27ced17826d35a394"
+  branch_at_review: "agent/phase9b1-local-retrieval"
+  mutation_allowed_in_this_atom: false
+  protected_paths:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+    - "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+  p9a_contract_mutation_allowed: false
+  p9b2_start_allowed: false
+  model_or_network_call_allowed: false
+
+r10_evidence_boundary:
+  suite_id: "p9b1q-r10-zhcn-6a9e41c7"
+  canonical_content_sha256: "152696dbd93ffa39adcaaa7bc792c84039dd7f3e85880e59f268e88fefde5ea9"
+  target_commit: "6ac0e4b2978e5fb41e7b90e27ced17826d35a394"
+  verdict: "CHANGES_REQUIRED"
+  secret_case_body_read_by_architecture_author: false
+  evidence_used_here: "AGGREGATE_COUNTS_AND_FAILURE_LAYERS_ONLY"
+  aggregate_results:
+    query_ir_schema_valid: "24/24"
+    semantic_result_schema_valid: "24/24"
+    deterministic_three_runs: "24/24"
+    forbidden_candidates_not_activated: "24/24"
+    exact_query_ir_structure: "0/24"
+    exact_semantic_result: "8/24"
+    top12_required_claim_recall: "15/24"
+    exact_candidate_license: "12/24"
+    zero_extra_material_candidate: "12/24"
+    positive_binding_probes: "0/2"
+    negative_binding_probes: "0/17_MUTATION_BASIS_NOT_ESTABLISHED"
+  lifecycle_after_this_review:
+    role: "CONFIDENTIAL_DIAGNOSTIC_REGRESSION_NOT_FINAL_HELDOUT"
+    may_remain_private: true
+    may_gate_adapted_implementation_as_final_heldout: false
+    future_final_acceptance_requires_new_suite: true
+
+central_finding: >-
+  The implementation is deterministic and Schema-valid, but it is not a
+  deterministic semantic compiler. It constructs QueryIR directly from local
+  lexical observations without first producing a complete scope tree, normalized
+  event frames, and a globally solved typed constraint system. Local consistency
+  therefore coexists with systematic structural disagreement.
+
+root_causes:
+  clause_structure:
+    observed_r10_mismatch_cases: 24
+    current_mechanism:
+      - "punctuation-first flat splitting"
+      - "special cases for OR/condition/contrast/override"
+      - "no explicit operator tree or attachment alternatives"
+    architectural_failure: >-
+      Punctuation segments are treated as semantic clauses. Connectives and
+      question focus are not represented as compositional operators, so negation,
+      conditions, alternatives and later overrides cannot share one authoritative
+      scope graph.
+    required_replacement: "CLAUSE_AST_WITH_EXACT_SPANS_AND_TYPED_OPERATOR_NODES"
+
+  mention_and_reference_resolution:
+    observed_r10_mismatch_cases: 22
+    current_mechanism:
+      - "global alias occurrence scan"
+      - "greedy overlap resolution"
+      - "no antecedent or attachment constraint solving"
+    architectural_failure: >-
+      Alias recognition collapses candidate generation and semantic resolution.
+      A surface form is either accepted or dropped before syntactic scope and
+      event-role constraints are available; unresolved reference alternatives are
+      not preserved for fail-closed adjudication.
+    required_replacement: "MENTION_LATTICE_RESOLVED_ONLY_BY_TYPED_CONSTRAINTS"
+
+  negation_and_temporal_scope:
+    observed_event_mismatch_cases: 23
+    current_mechanism:
+      - "fixed-radius text windows"
+      - "first matching positive/negative marker"
+      - "clause-wide hypothetical or exclusion flags"
+    architectural_failure: >-
+      Polarity is inferred independently for each mention/event without a scope
+      operator that identifies what proposition is negated, excluded,
+      hypothetical, historical or future. Double negation and object negation can
+      therefore be deterministic but attach to the wrong event.
+    required_replacement: "ASSERTION_ENVELOPE_DERIVED_FROM_AST_SCOPE_PATH"
+
+  event_identity_and_override:
+    observed_override_mismatch_cases: 1
+    current_mechanism:
+      - "event identity assembled after local event creation"
+      - "later marker plus hand-built equality tuple"
+    architectural_failure: >-
+      Identity is not a first-class typed object. Method, specimen, target and
+      participants may be unresolved when override matching runs, so same-event
+      and different-event interpretations cannot be compared globally.
+    required_replacement: "NORMALIZED_EVENT_SIGNATURE_SOLVED_BEFORE_OVERRIDE"
+
+  ambiguity:
+    observed_r10_mismatch_cases: 10
+    interpretation_status_mismatch_cases: 9
+    current_mechanism:
+      - "enumerated detectors for OR and selected missing polarities"
+      - "no count of globally satisfying interpretations"
+    architectural_failure: >-
+      Ambiguity is detected by marker-specific branches instead of by solution
+      cardinality. The system can label a single local ambiguity while missing a
+      referent, attachment or direction ambiguity elsewhere, or can retrieve from
+      one arbitrarily selected parse.
+    required_replacement: "ZERO_ONE_MULTIPLE_SOLUTION_SEMANTICS"
+
+  relation_and_role_license:
+    observed_relation_mismatch_cases: 22
+    observed_role_mismatch_cases: 22
+    current_mechanism:
+      - "topic/predicate cue activation"
+      - "open selector fallback"
+      - "post hoc relation and role construction"
+    architectural_failure: >-
+      Relation direction, selector content, required contrast and prohibitions are
+      emitted before all event, scope and entity constraints are jointly proven.
+      Recall may remain high because broad typed selectors license graph records,
+      but plan precision and exact candidate license fall.
+    required_replacement: "UNIQUE_TYPED_SOLUTION_THEN_PURE_QUERYIR_EMISSION"
+
+why_public_regression_was_misleading:
+  public_tests_passed: "25/25"
+  explanation:
+    - "public cases exercised intended local branches"
+    - "tests checked selected fields more often than complete semantic-object equality"
+    - "implementation and public tests shared the same decomposition assumptions"
+    - "Schema validity proved shape, not semantic uniqueness or minimality"
+    - "retrieval recall could mask pre-retrieval over-broad or missing plans"
+  governance_conclusion: >-
+    Future public tests must be generated from stage contracts and metamorphic
+    invariants, not only from examples that the implementation author can see.
+
+architecture_decision:
+  decision: "REPLACE_DIRECT_QUERYIR_CONSTRUCTION_WITH_FOUR_STAGE_COMPILER"
+  pipeline:
+    - "CLAUSE_AST"
+    - "EVENT_FRAME"
+    - "TYPED_CONSTRAINT_SOLVER"
+    - "QUERY_IR_EMITTER"
+  preserved_components:
+    - "P9-A request/response/audit contracts"
+    - "reviewed entity and relation authority"
+    - "P9-B1 verified local index and exact candidate provenance"
+    - "content-addressed execution sidecar concept"
+  replaced_component:
+    - "direct lexical-to-QueryIR interpretation path in 6ac0e4b"
+  non_decisions:
+    - "no model-assisted parser authorized"
+    - "no new medical claims or ontology relations"
+    - "no R10 case-specific patching"
+    - "no retrieval/rerank workaround for interpretation failures"
+
+closure_gate_for_review_atom:
+  new_files_only_relative_to_6ac0e4b: true
+  clause_ast_schema_frozen: true
+  event_frame_schema_frozen: true
+  typed_solver_contract_frozen: true
+  compiler_contract_frozen: true
+  implementation_plan_frozen: true
+  implementation_started: false

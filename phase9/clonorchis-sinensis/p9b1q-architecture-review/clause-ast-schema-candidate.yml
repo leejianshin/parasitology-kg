@@ -1,0 +1,218 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/clause-ast-v0.1"
+title: "P9-B1Q deterministic Clause AST candidate"
+description: >-
+  Lossless scoped syntax over request.query_text. It records surface mention
+  candidates but resolves no medical entity, event, relation, claim or answer.
+type: object
+additionalProperties: false
+required:
+  - clause_ast_version
+  - request_id
+  - request_sha256
+  - knowledge_version
+  - span_basis
+  - producer
+  - root_node_id
+  - nodes
+  - surface_mentions
+  - assertion_markers
+  - attachment_sets
+properties:
+  clause_ast_version: {const: "0.1-candidate"}
+  request_id: {$ref: "#/$defs/request_id"}
+  request_sha256: {$ref: "#/$defs/sha256"}
+  knowledge_version: {const: "clonorchis_pcms_v1"}
+  span_basis:
+    const: "REQUEST_QUERY_TEXT_UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN"
+  producer:
+    type: object
+    additionalProperties: false
+    required: [producer_id, producer_version, executable_sha256, configuration_sha256]
+    properties:
+      producer_id: {const: "p9b1q-clause-ast-compiler"}
+      producer_version: {type: string, minLength: 1, maxLength: 64}
+      executable_sha256: {$ref: "#/$defs/sha256"}
+      configuration_sha256: {$ref: "#/$defs/sha256"}
+  root_node_id: {type: string, pattern: "^S[0-9]{3}$"}
+  nodes:
+    type: array
+    minItems: 1
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "#/$defs/ast_node"}
+  surface_mentions:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "#/$defs/surface_mention"}
+  assertion_markers:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "#/$defs/assertion_marker"}
+  attachment_sets:
+    type: array
+    maxItems: 128
+    uniqueItems: true
+    items: {$ref: "#/$defs/attachment_set"}
+$defs:
+  sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  request_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  source_span:
+    type: object
+    additionalProperties: false
+    required: [start_char, end_char, text]
+    properties:
+      start_char: {type: integer, minimum: 0, maximum: 2000}
+      end_char: {type: integer, minimum: 1, maximum: 2000}
+      text: {type: string, minLength: 1, maxLength: 2000}
+  ast_node:
+    type: object
+    additionalProperties: false
+    required:
+      - node_id
+      - node_kind
+      - source_span
+      - operator_span
+      - parent_node_id
+      - child_node_ids
+      - scope_role
+      - assertion_marker_ids
+    properties:
+      node_id: {type: string, pattern: "^S[0-9]{3}$"}
+      node_kind:
+        enum:
+          - ROOT
+          - PROPOSITION
+          - COORDINATION
+          - CONDITION
+          - CONTRAST
+          - OVERRIDE
+          - ALTERNATIVE_GROUP
+          - QUESTION
+      source_span: {$ref: "#/$defs/source_span"}
+      operator_span:
+        oneOf:
+          - {$ref: "#/$defs/source_span"}
+          - {type: "null"}
+      parent_node_id:
+        oneOf:
+          - {type: string, pattern: "^S[0-9]{3}$"}
+          - {type: "null"}
+      child_node_ids:
+        type: array
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^S[0-9]{3}$"}
+      scope_role:
+        enum:
+          - WHOLE_REQUEST
+          - MATERIAL_PROPOSITION
+          - COORDINATE_MEMBER
+          - CONDITION_ANTECEDENT
+          - CONDITION_CONSEQUENT
+          - CONTRAST_LEFT
+          - CONTRAST_RIGHT
+          - OVERRIDE_EARLIER
+          - OVERRIDE_LATER
+          - ALTERNATIVE_BRANCH
+          - QUESTION_FOCUS
+          - NON_MATERIAL_CONTEXT
+      assertion_marker_ids:
+        type: array
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^K[0-9]{3}$"}
+    allOf:
+      - if: {properties: {node_kind: {const: ROOT}}}
+        then:
+          properties:
+            parent_node_id: {type: "null"}
+            scope_role: {const: WHOLE_REQUEST}
+      - if: {properties: {node_kind: {enum: [COORDINATION, CONDITION, CONTRAST, OVERRIDE, ALTERNATIVE_GROUP]}}}
+        then:
+          properties: {child_node_ids: {type: array, minItems: 2}}
+      - if: {properties: {node_kind: {const: PROPOSITION}}}
+        then:
+          properties: {child_node_ids: {type: array, maxItems: 0}}
+  surface_mention:
+    type: object
+    additionalProperties: false
+    required:
+      - surface_mention_id
+      - containing_node_id
+      - source_span
+      - normalized_surface
+      - candidate_entity_ids
+      - candidate_entity_types
+      - candidate_origin
+    properties:
+      surface_mention_id: {type: string, pattern: "^U[0-9]{3}$"}
+      containing_node_id: {type: string, pattern: "^S[0-9]{3}$"}
+      source_span: {$ref: "#/$defs/source_span"}
+      normalized_surface: {type: string, minLength: 1, maxLength: 256}
+      candidate_entity_ids:
+        type: array
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+      candidate_entity_types:
+        type: array
+        maxItems: 14
+        uniqueItems: true
+        items: {$ref: "#/$defs/entity_type"}
+      candidate_origin:
+        enum: [FORMAL_ALIAS_EXACT, FORMAL_ALIAS_NORMALIZED, WH_TYPED_SLOT, PRONOMINAL]
+  assertion_marker:
+    type: object
+    additionalProperties: false
+    required: [marker_id, containing_node_id, marker_kind, source_span]
+    properties:
+      marker_id: {type: string, pattern: "^K[0-9]{3}$"}
+      containing_node_id: {type: string, pattern: "^S[0-9]{3}$"}
+      marker_kind:
+        enum:
+          - NEGATOR
+          - EXCLUSION
+          - HYPOTHETICAL
+          - HISTORICAL
+          - CURRENT
+          - FUTURE
+          - CONNECTIVE
+          - WH_FOCUS
+      source_span: {$ref: "#/$defs/source_span"}
+  attachment_set:
+    type: object
+    additionalProperties: false
+    required: [attachment_set_id, dependent_id, candidate_governor_ids, status]
+    properties:
+      attachment_set_id: {type: string, pattern: "^AT[0-9]{3}$"}
+      dependent_id: {type: string, pattern: "^(S|U|K)[0-9]{3}$"}
+      candidate_governor_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^S[0-9]{3}$"}
+      status: {enum: [UNIQUE, UNRESOLVED]}
+  entity_type:
+    enum:
+      - parasite
+      - life_cycle_stage
+      - host
+      - disease
+      - anatomical_site
+      - pathological_process
+      - clinical_manifestation
+      - diagnostic_method
+      - treatment
+      - intervention
+      - behavior
+      - environment
+      - institution_policy
+      - hazard_classification

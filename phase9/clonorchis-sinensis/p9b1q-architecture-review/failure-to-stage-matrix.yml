@@ -1,0 +1,137 @@
+matrix_id: P9B1Q-R10-ARCHITECTURE-FAILURE-TO-STAGE-v0.1
+status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+evidence_boundary: aggregate_R10_findings_only_no_secret_case_body
+
+baseline_observation:
+  implementation_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
+  schema_valid_QueryIR: 24/24
+  deterministic_runs: 24/24
+  exact_QueryIR: 0/24
+  exact_semantic_result: 8/24
+  required_Top12_recall: 15/24
+  exact_candidate_license: 12/24
+  zero_extra_material_semantics: 12/24
+
+failure_classes:
+  clause_structure:
+    observed: 24/24_clause_mismatch
+    first_authoritative_stage: S1_Clause_AST
+    systemic_cause: flat_split_and_special_case_rewrite_without_tree_or_scope
+    required_representation:
+      - rooted_non_crossing_clause_tree
+      - explicit_coordination_condition_contrast_override_OR_nodes
+      - exact_operator_and_assertion_spans
+      - explicit_attachment_alternatives
+    acceptance_gate: exact_AST_or_structured_ambiguity_before_event_construction
+    forbidden_late_fix: relation_or_retrieval_reranking
+  surface_mentions_and_resolution:
+    observed: 22/24_mention_mismatch
+    first_authoritative_stage: S1_then_S3
+    systemic_cause: greedy_alias_selection_collapses_candidate_domains_too_early
+    required_representation:
+      - all_authority_candidate_ids
+      - exact_spans
+      - FIXED_OR_COMPETING_resolution_domain
+      - typed_participant_constraints
+    acceptance_gate: one_solver_solution_or_AMBIGUOUS
+    forbidden_late_fix: preferred_alias_or_longest_match_default
+  event_frames:
+    observed: 23/24_event_mismatch
+    first_authoritative_stage: S2_Event_Frame
+    systemic_cause: event_objects_are_post_hoc_and_assertion_is_not_bound_to_method_specimen_identity
+    required_representation:
+      - typed_event_domain
+      - participant_slots
+      - AST_derived_assertion_scope
+      - diagnostic_method_specimen_target_polarity_binding
+      - assertion_independent_event_identity
+    acceptance_gate: every_assertion_and_override_targets_one_explicit_frame_or_remains_competing
+    forbidden_late_fix: global_negated_role_set
+  negation_and_polarity:
+    observed: diagnostic_cases_became_UNSUPPORTED_and_negated_mentions_activated_or_suppressed_wrong_semantics
+    first_authoritative_stage: S1_scope_plus_S2_assertion_plus_S3_constraints
+    systemic_cause: fixed_window_markers_and_clause_global_polarity
+    required_representation:
+      - scope_path
+      - parity_for_nested_negation
+      - separate_exclusion_hypothetical_and_temporal_status
+      - event_specific_polarity
+    acceptance_gate: polarity_is_recomputable_from_AST_path_and_event_binding
+    forbidden_late_fix: adding_more_negation_strings
+  event_identity_and_coreference:
+    observed: mixed_events_and_overrides_not_preserved_as_the_same_or_distinct_event
+    first_authoritative_stage: S2_then_S3
+    systemic_cause: identity_is_inferred_after_relation_activation_and_uses_proximity
+    required_representation:
+      - normalized_identity_signature
+      - SAME_EVENT_OR_DISTINCT_EVENT_hypotheses
+      - explicit_override_target_and_dimension
+    acceptance_gate: identity_constraints_leave_one_solution_or_structured_ambiguity
+    forbidden_late_fix: nearest_event_attachment
+  ambiguity_and_interpretation_status:
+    observed:
+      ambiguity_mismatch: 10/24
+      interpretation_status_mismatch: 9/24
+      ambiguity_became_VALID_and_retrieved: 1_case
+    first_authoritative_stage: S3_Typed_Constraint_Solver
+    systemic_cause: ambiguity_is_detector_output_instead_of_number_of_valid_solutions
+    required_representation:
+      - solution_cardinality
+      - competing_solution_fingerprints
+      - differing_variable_ids
+      - no_rank_or_tie_break
+    acceptance_gate: ZERO_ONE_MULTIPLE_maps_to_UNSUPPORTED_UNIQUE_AMBIGUOUS
+    forbidden_late_fix: confidence_threshold
+  relation_direction_and_permission:
+    observed:
+      relation_intent_mismatch: 22/24
+      semantic_role_mismatch: 22/24
+      forbidden_intent_mismatch: 5/24
+    first_authoritative_stage: S3_solver_then_S4_pure_emitter
+    systemic_cause: lexical_topic_and_role_cues_can_open_relations_before_event_direction_is_proved
+    required_representation:
+      - event_or_explicit_relation_root
+      - frozen_typed_direction_signature
+      - participant_derived_selectors
+      - rooted_acyclic_license_DAG
+      - inclusion_minimal_semantic_object_set
+    acceptance_gate: exact_license_and_zero_extra_semantic_objects
+    forbidden_late_fix: fixed_relation_group_order_or_topic_expansion
+  narratives_and_overrides:
+    observed:
+      narrative_mismatch: 1/24
+      override_mismatch: 1/24
+    first_authoritative_stage: S1_S2_S3
+    systemic_cause: narrative_and_override_are_side_effect_flags_not_scoped_semantic_objects
+    required_representation:
+      - explicit_AST_override_node
+      - event_targeted_override_hypothesis
+      - narrative_rooted_in_same_activated_relation
+    acceptance_gate: exact_target_dimension_and_no_unlicensed_narrative
+    forbidden_late_fix: output_string_postprocessing
+  end_to_end_binding:
+    observed:
+      positive_binding: 0/2
+      negative_binding: 0/17_due_to_unestablished_positive_basis
+    first_authoritative_stage: S5_binding
+    systemic_cause: a_schema_valid_but_semantically_wrong_QueryIR_cannot_establish_the_positive_chain
+    required_representation:
+      - actual_stage_objects
+      - canonical_hash_chain
+      - semantic_validation_PASS
+      - exact_retrieval_and_response_binding
+    acceptance_gate: all_positive_chains_PASS_before_each_single_point_tamper_is_executed
+    forbidden_late_fix: validating_manifest_hash_strings_without_actual_objects
+
+cross_layer_rule:
+  statement: >-
+    The first authoritative stage owns the failure. A later stage must reject an
+    invalid or ambiguous earlier object and may never repair it. Retrieval quality
+    cannot compensate for compiler semantic error.
+
+regression_policy:
+  public_tests: retained_but_reclassified_as_known_examples
+  R10:
+    classification: CONFIDENTIAL_DIAGNOSTIC_REGRESSION_NOT_FINAL_HELDOUT
+    reason: aggregate_results_have_now_informed_architecture_design
+  next_final_blind: independently_freeze_R11_after_design_review_before_implementation

@@ -1,0 +1,315 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/event-frame-v0.1"
+title: "P9-B1Q normalized Event Frame candidate"
+description: >-
+  Typed event hypotheses derived losslessly from one Clause AST. Competing
+  bindings remain explicit; no frame directly selects a claim, citation or answer.
+type: object
+additionalProperties: false
+required:
+  - event_frame_version
+  - request_id
+  - request_sha256
+  - knowledge_version
+  - clause_ast_sha256
+  - ontology_sha256
+  - event_mapping_sha256
+  - producer
+  - frames
+  - reference_hypotheses
+  - override_hypotheses
+properties:
+  event_frame_version: {const: "0.1-candidate"}
+  request_id: {$ref: "#/$defs/request_id"}
+  request_sha256: {$ref: "#/$defs/sha256"}
+  knowledge_version: {const: "clonorchis_pcms_v1"}
+  clause_ast_sha256: {$ref: "#/$defs/sha256"}
+  ontology_sha256: {$ref: "#/$defs/sha256"}
+  event_mapping_sha256: {$ref: "#/$defs/sha256"}
+  producer:
+    type: object
+    additionalProperties: false
+    required: [producer_id, producer_version, executable_sha256, configuration_sha256]
+    properties:
+      producer_id: {const: "p9b1q-event-frame-compiler"}
+      producer_version: {type: string, minLength: 1, maxLength: 64}
+      executable_sha256: {$ref: "#/$defs/sha256"}
+      configuration_sha256: {$ref: "#/$defs/sha256"}
+  frames:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "#/$defs/event_frame"}
+  reference_hypotheses:
+    type: array
+    maxItems: 128
+    uniqueItems: true
+    items: {$ref: "#/$defs/reference_hypothesis"}
+  override_hypotheses:
+    type: array
+    maxItems: 64
+    uniqueItems: true
+    items: {$ref: "#/$defs/override_hypothesis"}
+$defs:
+  sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  request_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  source_span:
+    type: object
+    additionalProperties: false
+    required: [start_char, end_char, text]
+    properties:
+      start_char: {type: integer, minimum: 0, maximum: 2000}
+      end_char: {type: integer, minimum: 1, maximum: 2000}
+      text: {type: string, minLength: 1, maxLength: 2000}
+  event_type:
+    enum:
+      - DIAGNOSTIC_FINDING
+      - EXPOSURE
+      - DEVELOPMENT
+      - HOST_ROLE
+      - INGESTION
+      - SHEDDING
+      - ENVIRONMENT_PRESENCE
+      - INFECTION
+      - PARASITISM
+      - PATHOLOGICAL_PROCESS
+      - TREATMENT
+      - CONTROL
+      - HAZARD_CLASSIFICATION
+      - SOURCE_TRACEABILITY
+  entity_type:
+    enum:
+      - parasite
+      - life_cycle_stage
+      - host
+      - disease
+      - anatomical_site
+      - pathological_process
+      - clinical_manifestation
+      - diagnostic_method
+      - treatment
+      - intervention
+      - behavior
+      - environment
+      - institution_policy
+      - hazard_classification
+  entity_domain:
+    type: object
+    additionalProperties: false
+    required: [entity_ids, entity_types]
+    properties:
+      entity_ids:
+        type: array
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+      entity_types:
+        type: array
+        minItems: 1
+        maxItems: 14
+        uniqueItems: true
+        items: {$ref: "#/$defs/entity_type"}
+  participant_slot:
+    type: object
+    additionalProperties: false
+    required:
+      - slot_id
+      - semantic_role
+      - source_ids
+      - domain
+      - binding_status
+    properties:
+      slot_id: {type: string, pattern: "^V[0-9]{3}$"}
+      semantic_role:
+        enum: [ACTOR, TARGET, THEME, METHOD, SPECIMEN, LOCATION, EXPERIENCER]
+      source_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^(S|U)[0-9]{3}$"}
+      domain: {$ref: "#/$defs/entity_domain"}
+      binding_status: {enum: [FIXED, OPEN_TYPED, COMPETING]}
+  assertion_envelope:
+    type: object
+    additionalProperties: false
+    required:
+      - assertion_status
+      - finding_polarity
+      - temporal_scope
+      - governing_ast_node_ids
+      - marker_ids
+    properties:
+      assertion_status:
+        enum: [AFFIRMED, NEGATED, EXCLUDED, HYPOTHETICAL, UNKNOWN]
+      finding_polarity:
+        enum: [POSITIVE, NEGATIVE, UNSPECIFIED, NOT_APPLICABLE]
+      temporal_scope:
+        enum: [HISTORICAL, CURRENT, FUTURE, GENERAL, UNKNOWN]
+      governing_ast_node_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^S[0-9]{3}$"}
+      marker_ids:
+        type: array
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^K[0-9]{3}$"}
+  diagnostic_binding:
+    type: object
+    additionalProperties: false
+    required: [method_slot_id, specimen_code, target_slot_ids, polarity_source_ids]
+    properties:
+      method_slot_id: {type: string, pattern: "^V[0-9]{3}$"}
+      specimen_code:
+        enum: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE, UNRESOLVED]
+      target_slot_ids:
+        type: array
+        maxItems: 8
+        uniqueItems: true
+        items: {type: string, pattern: "^V[0-9]{3}$"}
+      polarity_source_ids:
+        type: array
+        minItems: 1
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^(S|K|U)[0-9]{3}$"}
+  normalized_identity:
+    type: object
+    additionalProperties: false
+    required:
+      - event_type_domain
+      - actor_slot_ids
+      - method_slot_id
+      - specimen_code
+      - target_slot_ids
+    properties:
+      event_type_domain:
+        type: array
+        minItems: 1
+        maxItems: 14
+        uniqueItems: true
+        items: {$ref: "#/$defs/event_type"}
+      actor_slot_ids:
+        type: array
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^V[0-9]{3}$"}
+      method_slot_id:
+        oneOf:
+          - {type: string, pattern: "^V[0-9]{3}$"}
+          - {type: "null"}
+      specimen_code:
+        enum: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE, UNRESOLVED]
+      target_slot_ids:
+        type: array
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^V[0-9]{3}$"}
+  event_frame:
+    type: object
+    additionalProperties: false
+    required:
+      - frame_id
+      - event_type_domain
+      - source_ast_node_ids
+      - source_spans
+      - participant_slots
+      - assertion
+      - diagnostic_binding
+      - normalized_identity
+      - frame_status
+    properties:
+      frame_id: {type: string, pattern: "^EF[0-9]{3}$"}
+      event_type_domain:
+        type: array
+        minItems: 1
+        maxItems: 14
+        uniqueItems: true
+        items: {$ref: "#/$defs/event_type"}
+      source_ast_node_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^S[0-9]{3}$"}
+      source_spans:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {$ref: "#/$defs/source_span"}
+      participant_slots:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {$ref: "#/$defs/participant_slot"}
+      assertion: {$ref: "#/$defs/assertion_envelope"}
+      diagnostic_binding:
+        oneOf:
+          - {$ref: "#/$defs/diagnostic_binding"}
+          - {type: "null"}
+      normalized_identity: {$ref: "#/$defs/normalized_identity"}
+      frame_status: {enum: [FIXED, COMPETING, INCOMPLETE]}
+    allOf:
+      - if:
+          properties:
+            event_type_domain: {contains: {const: DIAGNOSTIC_FINDING}}
+        then:
+          properties:
+            diagnostic_binding: {$ref: "#/$defs/diagnostic_binding"}
+      - if:
+          properties:
+            event_type_domain:
+              not: {contains: {const: DIAGNOSTIC_FINDING}}
+        then:
+          properties:
+            diagnostic_binding: {type: "null"}
+  reference_hypothesis:
+    type: object
+    additionalProperties: false
+    required: [reference_hypothesis_id, anaphor_source_id, candidate_referent_ids, status]
+    properties:
+      reference_hypothesis_id: {type: string, pattern: "^RH[0-9]{3}$"}
+      anaphor_source_id: {type: string, pattern: "^(S|U)[0-9]{3}$"}
+      candidate_referent_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^(S|U|EF|V)[0-9]{3}$"}
+      status: {enum: [UNIQUE, UNRESOLVED]}
+  override_hypothesis:
+    type: object
+    additionalProperties: false
+    required:
+      - override_hypothesis_id
+      - override_ast_node_id
+      - earlier_frame_ids
+      - later_frame_ids
+      - identity_constraint
+      - status
+    properties:
+      override_hypothesis_id: {type: string, pattern: "^OH[0-9]{3}$"}
+      override_ast_node_id: {type: string, pattern: "^S[0-9]{3}$"}
+      earlier_frame_ids:
+        type: array
+        minItems: 1
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^EF[0-9]{3}$"}
+      later_frame_ids:
+        type: array
+        minItems: 1
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^EF[0-9]{3}$"}
+      identity_constraint: {const: SAME_NORMALIZED_IDENTITY_EXCLUDING_ASSERTION}
+      status: {enum: [UNIQUE, UNRESOLVED, NO_MATCH]}

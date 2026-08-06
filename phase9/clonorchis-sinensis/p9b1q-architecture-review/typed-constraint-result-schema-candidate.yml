@@ -1,0 +1,481 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/typed-constraint-result-v0.1"
+title: "P9-B1Q typed constraint solver result candidate"
+description: >-
+  Closed-world solver outcome. Exactly one solution may be emitted to QueryIR;
+  zero or multiple solutions prohibit retrieval.
+type: object
+additionalProperties: false
+required:
+  - solver_result_version
+  - request_id
+  - request_sha256
+  - knowledge_version
+  - clause_ast_sha256
+  - event_frame_sha256
+  - ontology_sha256
+  - relation_mapping_sha256
+  - semantic_role_mapping_sha256
+  - constraint_set_sha256
+  - solver
+  - status
+  - solution_cardinality
+  - selected_solution
+  - ambiguity_certificate
+  - unsatisfied_constraints
+  - solver_trace_sha256
+properties:
+  solver_result_version: {const: "0.1-candidate"}
+  request_id: {$ref: "#/$defs/request_id"}
+  request_sha256: {$ref: "#/$defs/sha256"}
+  knowledge_version: {const: "clonorchis_pcms_v1"}
+  clause_ast_sha256: {$ref: "#/$defs/sha256"}
+  event_frame_sha256: {$ref: "#/$defs/sha256"}
+  ontology_sha256: {$ref: "#/$defs/sha256"}
+  relation_mapping_sha256: {$ref: "#/$defs/sha256"}
+  semantic_role_mapping_sha256: {$ref: "#/$defs/sha256"}
+  constraint_set_sha256: {$ref: "#/$defs/sha256"}
+  solver:
+    type: object
+    additionalProperties: false
+    required: [solver_id, solver_version, executable_sha256, configuration_sha256]
+    properties:
+      solver_id: {const: "p9b1q-typed-constraint-solver"}
+      solver_version: {type: string, minLength: 1, maxLength: 64}
+      executable_sha256: {$ref: "#/$defs/sha256"}
+      configuration_sha256: {$ref: "#/$defs/sha256"}
+  status: {enum: [UNIQUE, AMBIGUOUS, UNSUPPORTED, INVALID]}
+  solution_cardinality: {enum: [ZERO, ONE, MULTIPLE]}
+  selected_solution:
+    oneOf:
+      - {$ref: "#/$defs/typed_solution"}
+      - {type: "null"}
+  ambiguity_certificate:
+    oneOf:
+      - {$ref: "#/$defs/ambiguity_certificate"}
+      - {type: "null"}
+  unsatisfied_constraints:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {type: string, pattern: "^CNS-[A-Z0-9_]{3,96}$"}
+  solver_trace_sha256: {$ref: "#/$defs/sha256"}
+allOf:
+  - if: {properties: {status: {const: UNIQUE}}}
+    then:
+      properties:
+        solution_cardinality: {const: ONE}
+        selected_solution: {$ref: "#/$defs/typed_solution"}
+        ambiguity_certificate: {type: "null"}
+        unsatisfied_constraints: {type: array, maxItems: 0}
+  - if: {properties: {status: {const: AMBIGUOUS}}}
+    then:
+      properties:
+        solution_cardinality: {const: MULTIPLE}
+        selected_solution: {type: "null"}
+        ambiguity_certificate: {$ref: "#/$defs/ambiguity_certificate"}
+        unsatisfied_constraints: {type: array, maxItems: 0}
+  - if: {properties: {status: {const: UNSUPPORTED}}}
+    then:
+      properties:
+        solution_cardinality: {const: ZERO}
+        selected_solution: {type: "null"}
+        ambiguity_certificate: {type: "null"}
+        unsatisfied_constraints: {type: array, minItems: 1}
+  - if: {properties: {status: {const: INVALID}}}
+    then:
+      properties:
+        solution_cardinality: {const: ZERO}
+        selected_solution: {type: "null"}
+        ambiguity_certificate: {type: "null"}
+        unsatisfied_constraints: {type: array, minItems: 1}
+$defs:
+  sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  request_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  entity_type:
+    enum:
+      - parasite
+      - life_cycle_stage
+      - host
+      - disease
+      - anatomical_site
+      - pathological_process
+      - clinical_manifestation
+      - diagnostic_method
+      - treatment
+      - intervention
+      - behavior
+      - environment
+      - institution_policy
+      - hazard_classification
+  event_type:
+    enum:
+      - DIAGNOSTIC_FINDING
+      - EXPOSURE
+      - DEVELOPMENT
+      - HOST_ROLE
+      - INGESTION
+      - SHEDDING
+      - ENVIRONMENT_PRESENCE
+      - INFECTION
+      - PARASITISM
+      - PATHOLOGICAL_PROCESS
+      - TREATMENT
+      - CONTROL
+      - HAZARD_CLASSIFICATION
+      - SOURCE_TRACEABILITY
+  predicate:
+    enum:
+      - has_life_cycle_stage
+      - develops_into
+      - has_definitive_host
+      - has_first_intermediate_host
+      - has_second_intermediate_host
+      - has_paratenic_host
+      - has_reservoir_host
+      - has_vector
+      - infective_stage_for
+      - pathogenic_stage_for
+      - diagnostic_stage_for
+      - infects
+      - parasitizes_site
+      - causes
+      - has_pathological_process
+      - occurs_in
+      - manifests_as
+      - has_complication
+      - epidemiologically_associated_with
+      - diagnosed_by
+      - classified_as
+      - has_diagnostic_clue
+      - treated_by
+      - transmitted_via
+      - transmission_supported_by
+      - risk_increased_by
+      - controlled_by
+      - sheds_stage
+      - present_in_environment
+      - targets
+  topic_scope:
+    enum:
+      - morphology
+      - diagnosis
+      - life_cycle
+      - transmission
+      - host_roles
+      - one_health
+      - exposure
+      - control
+      - boundary
+      - treatment
+      - carcinogenicity
+      - stage_roles
+      - source_traceability
+  id_array:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {type: string, pattern: "^[A-Z][A-Z0-9]*[0-9]{2,3}$"}
+  selector:
+    type: object
+    additionalProperties: false
+    required: [entity_ids, entity_types]
+    properties:
+      entity_ids:
+        type: array
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+      entity_types:
+        type: array
+        maxItems: 14
+        uniqueItems: true
+        items: {$ref: "#/$defs/entity_type"}
+    anyOf:
+      - properties: {entity_ids: {type: array, minItems: 1}}
+      - properties: {entity_types: {type: array, minItems: 1}}
+  resolved_mention:
+    type: object
+    additionalProperties: false
+    required: [mention_key, surface_mention_id, entity_id, entity_type, assertion_status, temporal_scope]
+    properties:
+      mention_key: {type: string, pattern: "^RM[0-9]{3}$"}
+      surface_mention_id: {type: string, pattern: "^U[0-9]{3}$"}
+      entity_id: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+      entity_type: {$ref: "#/$defs/entity_type"}
+      assertion_status: {enum: [AFFIRMED, NEGATED, EXCLUDED, HYPOTHETICAL, UNKNOWN]}
+      temporal_scope: {enum: [HISTORICAL, CURRENT, FUTURE, GENERAL, UNKNOWN]}
+  resolved_event:
+    type: object
+    additionalProperties: false
+    required:
+      - event_key
+      - frame_id
+      - event_type
+      - actor_entity_ids
+      - method_entity_id
+      - specimen_code
+      - target_entity_ids
+      - finding_polarity
+      - assertion_status
+      - temporal_scope
+    properties:
+      event_key: {type: string, pattern: "^RE[0-9]{3}$"}
+      frame_id: {type: string, pattern: "^EF[0-9]{3}$"}
+      event_type: {$ref: "#/$defs/event_type"}
+      actor_entity_ids:
+        type: array
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+      method_entity_id:
+        oneOf:
+          - {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+          - {type: "null"}
+      specimen_code: {enum: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE]}
+      target_entity_ids:
+        type: array
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
+      finding_polarity: {enum: [POSITIVE, NEGATIVE, NOT_APPLICABLE]}
+      assertion_status: {enum: [AFFIRMED, NEGATED, EXCLUDED, HYPOTHETICAL]}
+      temporal_scope: {enum: [HISTORICAL, CURRENT, FUTURE, GENERAL]}
+  resolved_relation:
+    type: object
+    additionalProperties: false
+    required:
+      - relation_key
+      - predicate
+      - subject_selector
+      - object_selector
+      - activation_policy
+      - derivation_mode
+      - root_keys
+    properties:
+      relation_key: {type: string, pattern: "^RR[0-9]{3}$"}
+      predicate: {$ref: "#/$defs/predicate"}
+      subject_selector: {$ref: "#/$defs/selector"}
+      object_selector: {$ref: "#/$defs/selector"}
+      activation_policy: {enum: [REQUIRED, OPTIONAL_CONTEXT, REQUIRED_CONTRAST]}
+      derivation_mode: {enum: [EVENT_DERIVED, DIRECT_MENTION_DERIVED, CLOSED_CONTRAST_DERIVED]}
+      root_keys:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^(RM|RE)[0-9]{3}$"}
+  semantic_role:
+    type: object
+    additionalProperties: false
+    required: [role_key, role_namespace, role_value, activation_policy, root_keys]
+    properties:
+      role_key: {type: string, pattern: "^RQ[0-9]{3}$"}
+      role_namespace: {enum: [TOPIC_SCOPE, EVIDENCE_ROLE, SEMANTIC_BOUNDARY, CONTROL_ROLE]}
+      role_value: {type: string, minLength: 1, maxLength: 128}
+      activation_policy: {enum: [REQUIRED, REQUIRED_CONTRAST]}
+      root_keys:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^(RM|RE|RR)[0-9]{3}$"}
+    allOf:
+      - if: {properties: {role_namespace: {const: TOPIC_SCOPE}}}
+        then: {properties: {role_value: {$ref: "#/$defs/topic_scope"}}}
+      - if: {properties: {role_namespace: {const: EVIDENCE_ROLE}}}
+        then:
+          properties:
+            role_value:
+              enum: [epidemiologic_exposure_clue, imaging_auxiliary_clue, pathogen_confirmation]
+      - if: {properties: {role_namespace: {const: SEMANTIC_BOUNDARY}}}
+        then:
+          properties:
+            role_value:
+              enum:
+                - diagnostic_clue_is_not_confirmation
+                - exposure_is_not_confirmation
+                - imaging_is_not_confirmation
+                - association_is_not_causality
+                - recommendation_is_not_quantified_effect
+                - hazard_class_is_not_individual_certainty
+                - missing_coverage_must_not_be_filled_from_model_knowledge
+                - diagnostic_evidence_integration
+                - diagnostic_confirmation_limit
+                - evidence_integration_required
+                - pathogen_evidence_required_for_confirmation
+                - cannot_confirm_alone
+                - not_confirmatory
+      - if: {properties: {role_namespace: {const: CONTROL_ROLE}}}
+        then:
+          properties:
+            role_value:
+              enum:
+                - recommendation_not_local_effect
+                - recommendation_not_quantified_effect
+                - universal_elimination_claim_false
+                - mechanism_and_recommendation
+                - interrupt_egg_entry_to_intermediate_host_waters
+  narrative_intent:
+    type: object
+    additionalProperties: false
+    required: [narrative_key, entity_selector, topic_scope, semantic_role, activation_policy, root_keys, required_anchor_predicates]
+    properties:
+      narrative_key: {type: string, pattern: "^RN[0-9]{3}$"}
+      entity_selector: {$ref: "#/$defs/selector"}
+      topic_scope: {$ref: "#/$defs/topic_scope"}
+      semantic_role: {enum: [narrative_fact, diagnostic_evidence_integration, diagnostic_confirmation_limit]}
+      activation_policy: {enum: [REQUIRED, OPTIONAL_CONTEXT, REQUIRED_CONTRAST]}
+      root_keys:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^(RM|RE|RR)[0-9]{3}$"}
+      required_anchor_predicates:
+        type: array
+        maxItems: 8
+        uniqueItems: true
+        items: {$ref: "#/$defs/predicate"}
+  forbidden_relation:
+    type: object
+    additionalProperties: false
+    required: [forbidden_key, predicate, subject_selector, object_selector, reason, root_keys]
+    properties:
+      forbidden_key: {type: string, pattern: "^RF[0-9]{3}$"}
+      predicate: {$ref: "#/$defs/predicate"}
+      subject_selector: {$ref: "#/$defs/selector"}
+      object_selector: {$ref: "#/$defs/selector"}
+      reason: {enum: [EXPLICIT_NEGATION, EXPLICIT_EXCLUSION, HYPOTHETICAL_ONLY, TEMPORAL_MISMATCH]}
+      root_keys:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^(RM|RE)[0-9]{3}$"}
+  resolved_reference:
+    type: object
+    additionalProperties: false
+    required: [reference_key, hypothesis_id, referent_key]
+    properties:
+      reference_key: {type: string, pattern: "^RREF[0-9]{3}$"}
+      hypothesis_id: {type: string, pattern: "^RH[0-9]{3}$"}
+      referent_key: {type: string, pattern: "^(RM|RE)[0-9]{3}$"}
+  resolved_override:
+    type: object
+    additionalProperties: false
+    required: [override_key, hypothesis_id, earlier_event_key, later_event_key, overridden_dimension]
+    properties:
+      override_key: {type: string, pattern: "^ROV[0-9]{3}$"}
+      hypothesis_id: {type: string, pattern: "^OH[0-9]{3}$"}
+      earlier_event_key: {type: string, pattern: "^RE[0-9]{3}$"}
+      later_event_key: {type: string, pattern: "^RE[0-9]{3}$"}
+      overridden_dimension: {enum: [ASSERTION_STATUS, FINDING_POLARITY, TEMPORAL_SCOPE]}
+  typed_solution:
+    type: object
+    additionalProperties: false
+    required:
+      - solution_id
+      - resolved_mentions
+      - resolved_events
+      - resolved_relations
+      - semantic_roles
+      - narrative_intents
+      - forbidden_relations
+      - resolved_references
+      - resolved_overrides
+      - satisfied_constraint_ids
+      - semantic_object_set_sha256
+    properties:
+      solution_id: {type: string, pattern: "^SOL-[0-9a-f]{24}$"}
+      resolved_mentions:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/resolved_mention"}
+      resolved_events:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/resolved_event"}
+      resolved_relations:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/resolved_relation"}
+      semantic_roles:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/semantic_role"}
+      narrative_intents:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/narrative_intent"}
+      forbidden_relations:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/forbidden_relation"}
+      resolved_references:
+        type: array
+        maxItems: 128
+        uniqueItems: true
+        items: {$ref: "#/$defs/resolved_reference"}
+      resolved_overrides:
+        type: array
+        maxItems: 64
+        uniqueItems: true
+        items: {$ref: "#/$defs/resolved_override"}
+      satisfied_constraint_ids:
+        type: array
+        minItems: 1
+        maxItems: 1024
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_]{3,96}$"}
+      semantic_object_set_sha256: {$ref: "#/$defs/sha256"}
+  ambiguity_certificate:
+    type: object
+    additionalProperties: false
+    required:
+      - ambiguity_type
+      - differing_variable_ids
+      - solution_fingerprint_sha256s
+      - common_constraint_ids
+    properties:
+      ambiguity_type:
+        enum:
+          - ENTITY_RESOLUTION
+          - CLAUSE_ATTACHMENT
+          - NEGATION_SCOPE
+          - COORDINATION_SCOPE
+          - METHOD_SPECIMEN_BINDING
+          - FINDING_POLARITY
+          - TEMPORAL_SCOPE
+          - REFERENCE_RESOLUTION
+          - RELATION_DIRECTION
+          - DISCOURSE_OVERRIDE
+          - OR_SELECTION
+      differing_variable_ids:
+        type: array
+        minItems: 1
+        maxItems: 128
+        uniqueItems: true
+        items: {type: string, pattern: "^(AT|U|V|EF|OH|RH)[0-9]{3}$"}
+      solution_fingerprint_sha256s:
+        type: array
+        minItems: 2
+        maxItems: 64
+        uniqueItems: true
+        items: {$ref: "#/$defs/sha256"}
+      common_constraint_ids:
+        type: array
+        minItems: 1
+        maxItems: 1024
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_]{3,96}$"}

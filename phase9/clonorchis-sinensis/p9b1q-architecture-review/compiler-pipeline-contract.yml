@@ -1,0 +1,214 @@
+contract_id: P9B1Q-DETERMINISTIC-COMPILER-PIPELINE-v0.1
+status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+architecture: Clause_AST_to_Event_Frame_to_Typed_Constraint_Solver_to_QueryIR
+
+frozen_baseline:
+  commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
+  mutation_allowed: false
+  role: preserved_failed_R10_implementation_baseline
+
+invariants:
+  - every_stage_consumes_a_valid_content_addressed_object_from_the_prior_stage
+  - no_stage_may_read_retrieval_results_or_claim_content_to_change_interpretation
+  - no_later_stage_may_repair_or_silently_replace_an_earlier_stage_failure
+  - each_semantic_object_has_a_trace_to_exact_request_spans_and_formal_authority
+  - ambiguity_is_solution_cardinality_not_a_confidence_threshold
+  - a_unique_solution_is_emitted_without_additional_semantic_inference
+  - all_failures_close_before_retrieval
+
+stages:
+  S0_request_normalization:
+    input: frozen_P9A_bound_request
+    output: canonical_normalized_request
+    responsibilities:
+      - Unicode_and_whitespace_normalization_only
+      - preserve_exact_raw_to_normalized_span_mapping
+      - compute_request_id_and_canonical_request_sha256
+    forbidden:
+      - synonym_expansion
+      - entity_resolution
+      - semantic_rewrite
+  S1_clause_ast:
+    input:
+      - canonical_normalized_request
+      - frozen_clause_grammar_config
+    output_schema: clause-ast-schema-candidate.yml
+    responsibilities:
+      - construct_rooted_non_crossing_clause_tree
+      - preserve_coordination_condition_contrast_override_and_OR_structure
+      - record_all_assertion_markers_and_attachment_alternatives
+      - produce_surface_mentions_with_authority_derived_candidate_domains
+    gate:
+      pass: valid_AST_with_complete_span_coverage_and_no_crossing_nodes
+      fail: INVALID_or_AMBIGUOUS_attachment_object_no_event_compilation
+  S2_event_frame:
+    input:
+      - valid_clause_ast
+      - frozen_event_ontology
+      - frozen_entity_ontology
+      - frozen_event_mapping
+    output_schema: event-frame-schema-candidate.yml
+    responsibilities:
+      - construct_typed_event_domains_from_predicates_and_participants
+      - bind_assertion_and_temporal_scope_via_AST_paths
+      - keep_method_specimen_target_polarity_on_one_diagnostic_event
+      - expose_event_coreference_and_override_hypotheses
+      - compute_assertion_independent_event_identity_signatures
+    gate:
+      pass: every_frame_is_typed_and_every_assertion_has_explicit_scope
+      fail: INVALID_or_preserved_competing_hypotheses_for_solver
+  S3_typed_constraint_solver:
+    input:
+      - valid_clause_ast
+      - valid_event_frame_object
+      - frozen_authority_and_mapping_objects
+      - frozen_constraint_set
+    output_schema: typed-constraint-result-schema-candidate.yml
+    semantic_contract: typed-constraint-solver-contract.yml
+    responsibilities:
+      - solve_attachment_entity_event_assertion_identity_and_relation_variables_jointly
+      - enforce_formal_direction_role_and_prohibition_mappings
+      - enforce_inclusion_minimal_semantic_object_set
+      - return_UNIQUE_AMBIGUOUS_UNSUPPORTED_or_INVALID_with_proof_artifacts
+    gate:
+      pass: status_UNIQUE_and_exactly_one_selected_solution
+      fail: no_QueryIR_and_no_retrieval
+  S4_queryir_emitter:
+    input:
+      - UNIQUE_typed_constraint_result
+      - frozen_QueryIR_schema_and_semantic_contract
+    output: existing_P9B1Q_QueryIR_object
+    responsibilities:
+      - project_selected_solution_fields_to_QueryIR_without_new_inference
+      - preserve_all_license_DAG_edges_and_source_span_bindings
+      - populate_explicit_empty_arrays_where_required
+      - canonicalize_ordered_unique_arrays
+      - compute_queryir_sha256
+    purity_rule: same_unique_solution_and_contract_hashes_produce_byte_identical_QueryIR
+    forbidden:
+      - lexical_matching
+      - adding_topic_defaults
+      - widening_selectors
+      - resolving_ambiguity
+  S5_existing_semantic_validator_and_binding:
+    input:
+      - emitted_QueryIR
+      - all_stage_objects_and_hashes
+      - existing_runtime_bundle_and_sidecar_contracts
+    output:
+      - semantic_validation_result
+      - compiler_binding_sidecar
+    responsibilities:
+      - independently_recompute_stage_and_QueryIR_hashes
+      - ensure_actual_objects_equal_bound_summaries
+      - verify_QueryIR_semantics_against_formal_authority
+      - authorize_retrieval_only_after_all_checks_PASS
+    authority_rule: sidecar_is_a_mirror_not_authority
+
+cross_stage_binding:
+  required_chain:
+    - request_sha256
+    - normalized_request_sha256
+    - clause_ast_sha256
+    - event_frame_sha256
+    - constraint_result_sha256
+    - queryir_sha256
+    - semantic_validation_result_sha256
+    - retrieval_request_and_result_sha256_when_executed
+    - P9A_request_response_audit_hashes_when_a_response_exists
+  mismatch_disposition: FAIL_CLOSED_NO_RETRIEVAL_NO_RESPONSE
+  recomputation: all_hashes_recomputed_from_actual_canonical_objects_not_manifest_strings
+
+status_mapping:
+  invalid_request_or_stage_object: INVALID
+  zero_semantically_valid_solutions: UNSUPPORTED
+  multiple_semantically_valid_solutions: AMBIGUOUS
+  exactly_one_solution_and_all_validators_pass: VALID
+  any_hash_schema_semantic_or_binding_failure: FAIL_CLOSED
+
+test_contract:
+  public_unit_and_property_tests:
+    Clause_AST:
+      - punctuation_invariance_where_scope_is_unchanged
+      - coordination_and_OR_branch_completeness
+      - nested_and_double_negation_parity
+      - negated_mention_does_not_activate_relation
+      - contrast_condition_and_override_attachment
+    Event_Frame:
+      - diagnostic_method_specimen_polarity_binding
+      - assertion_independent_event_identity
+      - same_event_and_distinct_event_pairs
+      - historical_hypothetical_and_current_separation
+      - participant_type_domain_preservation
+    Solver:
+      - unique_zero_and_multiple_solution_cardinality
+      - no_heuristic_tie_break
+      - event_relation_direction_exactness
+      - role_and_prohibition_rooted_DAG
+      - set_inclusion_minimality_and_zero_extra_semantic_objects
+    Emitter_and_binding:
+      - pure_projection_byte_determinism
+      - every_QueryIR_object_has_a_solver_basis
+      - every_stage_hash_tamper_fails_closed
+      - no_retrieval_on_non_unique_or_invalid_status
+  metamorphic_tests:
+    - equivalent_punctuation_preserves_solution
+    - reordered_independent_conjuncts_preserve_semantic_object_set
+    - double_negation_changes_only_assertion_polarity_as_formally_defined
+    - adding_a_negated_unrelated_mention_adds_no_relation_or_role
+    - swapping_method_and_specimen_between_events_changes_event_identity_and_must_not_cross_bind
+  diagnostic_regression:
+    R10:
+      lifecycle: CONFIDENTIAL_DIAGNOSTIC_REGRESSION_NOT_FINAL_HELDOUT
+      body: remains_outside_repository
+      allowed_use: aggregate_failure_categories_and_private_post_implementation_diagnostic_run
+      prohibited_use: final_unseen_generalization_claim
+  future_final_blind:
+    suite_id: R11_TO_BE_ASSIGNED_BY_NEW_INDEPENDENT_CONTEXT
+    freeze_order: after_design_PASS_before_any_compiler_implementation
+    persistence: repository_external_redundant_read_only_copies_plus_manifest_and_SHA256SUMS
+    required_coverage:
+      - clause_boundaries_and_attachment
+      - nested_double_and_mention_only_negation
+      - method_specimen_event_identity_and_mixed_polarity
+      - unresolved_coreference_and_OR
+      - relation_direction_and_license_minimality
+      - exact_QueryIR_and_end_to_end_hash_binding
+    success_gates:
+      exact_QueryIR: 1.0
+      exact_semantic_validation_result: 1.0
+      required_Top12_recall: 1.0
+      source_and_locator_integrity: 1.0
+      exact_candidate_license: 1.0
+      zero_extra_material_semantics: 1.0
+      positive_binding: ALL_PASS
+      negative_tamper: ALL_FAIL_CLOSED
+
+implementation_sequence_after_separate_authorization:
+  C1_clause_ast_compiler:
+    scope: implement_S0_and_S1_only
+    retrieval_allowed: false
+  C2_event_frame_compiler:
+    scope: implement_S2_against_frozen_S1_objects
+    retrieval_allowed: false
+  C3_typed_constraint_solver:
+    scope: implement_S3_and_proof_certificates
+    retrieval_allowed: false
+  C4_pure_QueryIR_emitter:
+    scope: implement_S4_and_compare_with_existing_validator_in_shadow_mode
+    retrieval_allowed: false
+  C5_runtime_binding:
+    scope: bind_S5_to_existing_P9B1_retrieval_without_changing_formal_authority
+    retrieval_allowed: test_only_after_all_stage_gates_pass
+  C6_independent_blind_review:
+    scope: holder_runs_pre_frozen_R11_without_code_changes
+    pass_effect: may_request_P9_B1Q_closure_decision
+    fail_effect: architecture_review_before_any_new_lexical_rule
+
+release_boundaries:
+  P9A_contract_change_allowed: false
+  P9B1_frozen_index_or_authority_change_allowed: false
+  model_or_network_call_allowed: false
+  student_use_allowed: false
+  push_or_PR_allowed_by_this_contract: false
+  P9B2_start_allowed: false

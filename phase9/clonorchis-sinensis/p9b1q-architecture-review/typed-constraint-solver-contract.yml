@@ -1,0 +1,231 @@
+contract_id: P9B1Q-TYPED-CONSTRAINT-SOLVER-CONTRACT-v0.1
+status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+scope: P9-B1Q architecture review only
+
+purpose:
+  summary: >-
+    Deterministically solve the semantic alternatives preserved by Clause AST and
+    Event Frame objects. The solver proves one licensed semantic interpretation,
+    proves that none exists, or emits a structured ambiguity certificate. It does
+    not retrieve claims, rank interpretations, or manufacture a preferred reading.
+  prohibited:
+    - heuristic ranking used to collapse multiple valid interpretations
+    - lexical cue directly licensing a relation without a typed event or mention root
+    - retrieval score influencing semantic interpretation
+    - claim_id, source_id, locator, citation, answer text, or model output as input
+    - unregistered entity, predicate, event type, or semantic role
+
+content_addressed_inputs:
+  required:
+    - normalized_request_object
+    - clause_ast_object
+    - event_frame_object
+    - frozen_entity_ontology
+    - frozen_relation_ontology
+    - frozen_event_relation_mapping
+    - frozen_semantic_role_mapping
+    - frozen_constraint_set
+  binding_rule: >-
+    Every object is canonicalized independently and SHA-256 bound in the solver
+    result. A mismatch, missing object, or non-canonical hash is INVALID and no
+    QueryIR may be emitted.
+
+variable_families:
+  attachment:
+    source: clause_ast.attachment_sets
+    values: listed_candidate_parent_node_ids_only
+  entity_resolution:
+    source: clause_ast.surface_mentions.entity_candidate_ids
+    values: authority_registered_entity_ids_only
+  event_type:
+    source: event_frame.event_type_domain
+    values: frozen_event_type_enum_only
+  participant_binding:
+    source: event_frame.participants
+    values: FIXED_OR_OPEN_TYPED_OR_COMPETING_AS_DECLARED
+  assertion_scope:
+    source: event_frame.assertion
+    values: frozen_assertion_status_and_finding_polarity_only
+  temporal_scope:
+    source: event_frame.assertion.time_scope
+    values: CURRENT_OR_HISTORICAL_OR_HYPOTHETICAL_OR_FUTURE_OR_UNSPECIFIED
+  diagnostic_binding:
+    source: event_frame.diagnostic_binding
+    values: method_specimen_target_polarity_combinations_allowed_by_mapping
+  event_coreference:
+    source: event_frame.reference_hypotheses
+    values: SAME_EVENT_OR_DISTINCT_EVENT_AS_LISTED
+  override_binding:
+    source: event_frame.override_hypotheses
+    values: listed_target_event_and_overridden_dimension_only
+  relation_direction:
+    source: frozen_event_relation_mapping
+    values: registered_subject_predicate_object_type_signatures_only
+  semantic_requirement:
+    source: frozen_semantic_role_mapping
+    values: roles_and_prohibitions_rooted_in_activated_typed_relations_only
+
+constraint_families:
+  C01_ast_integrity:
+    rules:
+      - exactly_one_root
+      - all_non_root_nodes_have_one_parent
+      - parent_child_spans_are_nested
+      - sibling_spans_do_not_cross
+      - operators_and_assertion_markers_are_inside_their_scope_nodes
+  C02_attachment:
+    rules:
+      - every_unresolved_attachment_selects_exactly_one_listed_candidate
+      - a_unique_attachment_must_select_its_declared_parent
+      - no_parent_can_be_invented_or_selected_by_distance_tie_break
+  C03_entity_resolution:
+    rules:
+      - every_fixed_mention_selects_exactly_one_registered_candidate
+      - every_competing_mention_selects_exactly_one_listed_candidate
+      - entity_type_must_match_the_participant_slot_type_domain
+      - unresolved_multiple_solutions_remain_ambiguity
+  C04_assertion_and_negation:
+    composition:
+      method: AST_SCOPE_PATH_COMPOSITION
+      negation_parity: ODD_IS_NEGATED_EVEN_IS_AFFIRMED
+      exclusions: >-
+        EXCLUSION markers constrain the selected alternative or participant and do
+        not negate an unrelated event in the same clause.
+      object_vs_event: >-
+        A negated object mention is not an event negation unless the AST scope path
+        places the negator over the event predicate.
+      mention_only: >-
+        A negated or hypothetical mention cannot activate its relation, semantic
+        role, neighborhood, or coverage group unless another affirmed event licenses it.
+      temporal_separation: >-
+        Historical, current, hypothetical, and future assertions are solved as
+        separate dimensions and cannot cancel each other merely by lexical proximity.
+  C05_event_identity:
+    identity_signature_fields:
+      - normalized_event_type
+      - actor_or_subject_binding
+      - target_or_object_binding
+      - method_binding
+      - specimen_binding
+      - anatomical_site_binding
+      - temporal_scope
+    assertion_excluded_from_identity: true
+    rules:
+      - same_event_requires_compatible_identity_signatures
+      - distinct_event_requires_at_least_one_identity_dimension_difference
+      - an_override_may_change_only_its_declared_dimension
+      - mixed_positive_and_negative_findings_bind_to_their_own_method_specimen_event
+      - pronoun_or_ellipsis_coreference_is_not_selected_when_multiple_signatures_remain_valid
+  C06_diagnostic_method_specimen_event:
+    rules:
+      - method_specimen_target_must_be_allowed_by_frozen_mapping
+      - polarity_binds_to_one_diagnostic_event_not_to_a_global_evidence_role
+      - not_confirmatory_roles_do_not_become_pathogen_confirmation
+      - an_affirmed_not_confirmatory_event_deterministically_requires_the_registered_confirmation_contrast_only_when_the_formal_role_mapping_requires_it
+  C07_event_relation_derivation:
+    rules:
+      - every_relation_has_exactly_one_event_or_explicit_relation_mention_basis
+      - event_derived_relation_predicate_and_direction_equal_the_frozen_event_mapping
+      - relation_subject_and_object_selectors_are_derived_from_event_participants
+      - a_narrative_intent_is_emitted_only_when_licensed_by_the_same_basis
+      - event_or_relation_mentions_cannot_license_unrelated_predicates
+  C08_open_selectors:
+    rules:
+      - an_open_typed_selector_requires_an_explicit_WH_or_unknown_argument_slot
+      - the_selector_type_is_the_intersection_of_question_slot_and_relation_signature
+      - empty_or_unbounded_selectors_are_invalid
+      - no_concrete_entity_is_fabricated_to_close_an_open_slot
+  C09_or_and_alternatives:
+    rules:
+      - every_OR_group_contains_at_least_two_distinct_branches
+      - all_and_only_surface_branches_are_represented
+      - no_branch_can_be_dropped_by_a_parent_clause_summary
+      - branch_specific_negation_and_participants_remain_local_to_the_branch
+  C10_semantic_role_and_prohibition:
+    rules:
+      - every_required_role_has_a_path_to_an_activated_typed_relation
+      - every_forbidden_intent_has_a_path_to_an_explicit_negated_or_excluded_basis
+      - role_activation_is_query_specific_not_topic_wide
+      - prohibited_material_is_never_reintroduced_by_coverage_expansion
+  C11_minimal_semantic_object_set:
+    objective: SET_INCLUSION_MINIMALITY_NOT_SCORE_MAXIMIZATION
+    rules:
+      - retain_every_object_required_to_satisfy_the_query
+      - reject_any_solution_with_an_extra_relation_role_narrative_or_event_not_required_by_a_constraint
+      - two_distinct_inclusion_minimal_solutions_produce_AMBIGUOUS_not_a_tie_break
+  C12_license_dag:
+    allowed_root_types:
+      - AFFIRMED_EVENT
+      - EXPLICIT_RELATION_MENTION
+      - EXPLICIT_QUESTION_SLOT
+      - EXPLICIT_NEGATED_OR_EXCLUDED_BASIS
+    required_edges:
+      - root_to_event_or_relation
+      - event_to_typed_relation
+      - typed_relation_to_selector
+      - typed_relation_to_semantic_role_or_narrative
+      - negated_basis_to_forbidden_intent
+    rules:
+      - every_emitted_semantic_object_has_at_least_one_rooted_path
+      - graph_is_acyclic
+      - a_role_is_not_an_independent_root
+      - a_topic_label_is_not_an_independent_root
+
+solution_cardinality:
+  computation: enumerate_all_constraint_satisfying_inclusion_minimal_solutions
+  zero:
+    if_input_or_binding_invalid: INVALID
+    otherwise: UNSUPPORTED
+  one: UNIQUE
+  more_than_one: AMBIGUOUS
+  forbidden_resolution_methods:
+    - first_match
+    - longest_match
+    - nearest_span
+    - relation_priority
+    - retrieval_score
+    - fixed_group_order
+    - hidden_default
+
+deterministic_output:
+  schema: typed-constraint-result-schema-candidate.yml
+  set_finalization_order:
+    identifiers: PREFIX_THEN_DECIMAL_SUFFIX_THEN_SUFFIX_LENGTH_THEN_RAW_UTF8
+    enum_codes: FROZEN_ENUM_DECLARATION_ORDER
+    semantic_objects: TYPE_THEN_DIRECTION_THEN_CANONICAL_SELECTOR_BYTES
+  execution_order:
+    - verify_all_input_hashes
+    - construct_variables_and_domains
+    - apply_constraints_in_frozen_constraint_id_order
+    - enumerate_inclusion_minimal_solutions
+    - construct_status_and_certificate
+    - canonicalize_ordered_unique_arrays
+    - validate_result_schema_and_semantics
+    - compute_result_sha256
+
+fail_closed_conditions:
+  - INPUT_HASH_MISMATCH
+  - AST_INTEGRITY_VIOLATION
+  - UNKNOWN_ENTITY_OR_TYPE
+  - UNKNOWN_EVENT_TYPE
+  - UNKNOWN_PREDICATE_OR_ROLE
+  - EMPTY_SELECTOR
+  - EVENT_RELATION_DERIVATION_MISMATCH
+  - ASSERTION_SCOPE_UNRESOLVED
+  - EVENT_IDENTITY_UNRESOLVED
+  - OR_BRANCH_COVERAGE_MISMATCH
+  - LICENSE_DAG_UNROOTED_OR_CYCLIC
+  - NON_MINIMAL_SEMANTIC_OBJECT_SET
+  - OUTPUT_SCHEMA_OR_SEMANTIC_VALIDATION_FAILURE
+
+audit_requirements:
+  retain:
+    - canonical_input_hashes
+    - variable_domain_hash
+    - constraint_set_hash
+    - selected_solution_or_ambiguity_certificate
+    - unsatisfied_constraint_ids_or_minimal_unsat_core
+    - result_sha256
+    - solver_executable_sha256
+    - solver_config_sha256
+  privacy_boundary: no_secret_heldout_body_in_repository_or_audit_log
