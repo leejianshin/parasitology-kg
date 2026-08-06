@@ -1,5 +1,5 @@
 matrix_id: P9B1Q-R10-ARCHITECTURE-FAILURE-TO-STAGE-v0.1
-status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+status: REVISED_DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW
 evidence_boundary: aggregate_R10_findings_only_no_secret_case_body
 
 baseline_observation:

@@ -1,0 +1,89 @@
+{
+  "clause_ast_version": "0.2-candidate",
+  "request_id": "P9B1Q-ARCH-FIXTURE-002",
+  "request_sha256": "150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5",
+  "normalized_request_sha256": "69bd2acfcf3e4f227dc9a294d3a86720b5296b35ff374297287b1e196659d2dd",
+  "knowledge_version": "clonorchis_pcms_v1",
+  "entity_ontology_sha256": "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e",
+  "clause_grammar_config_sha256": "163598ca6f638c794e6e227e21f3175d6d45b2b7e4df2ce28b1be668d5df3c62",
+  "canonicalization_profile_sha256": "372c7f194c91e24e09a1230c8089204cebe662960d4f3299f6c6bc5e885953fc",
+  "stage_validator_contract_sha256": "09927d151905a29cbff2d712824cd83206da3e402d42bf4178fbf560608f7a51",
+  "span_basis": "REQUEST_QUERY_TEXT_UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN",
+  "producer": {
+    "producer_id": "p9b1q-clause-ast-compiler",
+    "producer_version": "0.2-fixture",
+    "executable_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "configuration_sha256": "163598ca6f638c794e6e227e21f3175d6d45b2b7e4df2ce28b1be668d5df3c62"
+  },
+  "root_node_id": "S000",
+  "nodes": [
+    {
+      "node_id": "S000",
+      "node_kind": "ROOT",
+      "source_span": {
+        "start_char": 0,
+        "end_char": 7,
+        "text": "粪便检卵阳性。"
+      },
+      "operator_span": null,
+      "parent_node_id": null,
+      "child_node_ids": [
+        "S001"
+      ],
+      "scope_role": "WHOLE_REQUEST",
+      "assertion_marker_ids": []
+    },
+    {
+      "node_id": "S001",
+      "node_kind": "PROPOSITION",
+      "source_span": {
+        "start_char": 0,
+        "end_char": 7,
+        "text": "粪便检卵阳性。"
+      },
+      "operator_span": null,
+      "parent_node_id": "S000",
+      "child_node_ids": [],
+      "scope_role": "MATERIAL_PROPOSITION",
+      "assertion_marker_ids": []
+    }
+  ],
+  "surface_mentions": [
+    {
+      "surface_mention_id": "U001",
+      "containing_node_id": "S001",
+      "source_span": {
+        "start_char": 0,
+        "end_char": 4,
+        "text": "粪便检卵"
+      },
+      "normalized_surface": "粪便检卵",
+      "candidate_entity_ids": [
+        "diagnostic.stool_egg_microscopy"
+      ],
+      "candidate_entity_types": [
+        "diagnostic_method"
+      ],
+      "candidate_origin": "FORMAL_ALIAS_EXACT"
+    },
+    {
+      "surface_mention_id": "U002",
+      "containing_node_id": "S001",
+      "source_span": {
+        "start_char": 2,
+        "end_char": 4,
+        "text": "检卵"
+      },
+      "normalized_surface": "检卵",
+      "candidate_entity_ids": [
+        "stage.clonorchis_egg"
+      ],
+      "candidate_entity_types": [
+        "life_cycle_stage"
+      ],
+      "candidate_origin": "FORMAL_ALIAS_NORMALIZED"
+    }
+  ],
+  "assertion_markers": [],
+  "attachment_sets": []
+}

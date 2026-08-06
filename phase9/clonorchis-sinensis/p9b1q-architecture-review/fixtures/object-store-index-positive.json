@@ -1,0 +1,36 @@
+{
+  "index_version": "0.1-fixture",
+  "request_id": "P9B1Q-ARCH-FIXTURE-001",
+  "objects": [
+    {
+      "object_kind": "P9A_REQUEST",
+      "path": "request-exposure-positive.json",
+      "canonical_sha256": "f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f"
+    },
+    {
+      "object_kind": "NORMALIZED_REQUEST",
+      "path": "normalized-request-exposure-positive.json",
+      "canonical_sha256": "2017e70cf8df03a6feaba4f110b47c2a592404bd154043b56957c326e7e7a207"
+    },
+    {
+      "object_kind": "CLAUSE_AST",
+      "path": "clause-ast-exposure-positive.json",
+      "canonical_sha256": "d3b8e427835e7de9a089708c8c4c105d38503f9f73f3e8c054370fe842f2539a"
+    },
+    {
+      "object_kind": "EVENT_FRAME",
+      "path": "event-frame-exposure-positive.json",
+      "canonical_sha256": "7348e6e768c74c23f5a717dd89bab33d776d636213be2878879dd6af3bd0032e"
+    },
+    {
+      "object_kind": "TYPED_CONSTRAINT_RESULT",
+      "path": "typed-result-exposure-positive.json",
+      "canonical_sha256": "9067b5b7b43b43132b5b7d0f2c70fdb9502b3484bde2ed05f04ea9773e5eaa3b"
+    },
+    {
+      "object_kind": "QUERY_IR",
+      "path": "queryir-exposure-positive.json",
+      "canonical_sha256": "f28aceca8112f98ffa238b6eb5ffe705085ada7116cdb3a6d6f54ddf31b1f091"
+    }
+  ]
+}

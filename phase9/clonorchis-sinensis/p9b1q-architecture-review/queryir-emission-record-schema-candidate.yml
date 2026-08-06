@@ -1,0 +1,267 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/queryir-emission-record-v0.1"
+title: "P9-B1Q complete QueryIR emission record candidate"
+description: >-
+  A UNIQUE solver solution carries the complete, already constructed QueryIR and
+  a pointer-complete provenance trace. S4 may only verify and extract query_ir; it
+  performs no parsing, resolution, licensing, selector widening, or other inference.
+type: object
+additionalProperties: false
+required:
+  - emission_record_version
+  - request_id
+  - request_sha256
+  - normalized_request_sha256
+  - clause_ast_sha256
+  - event_frame_sha256
+  - semantic_solution_core_sha256
+  - query_ir_schema_sha256
+  - projection_rule_set_sha256
+  - query_ir
+  - query_ir_sha256
+  - field_traces
+  - license_dag
+  - minimality_witness
+properties:
+  emission_record_version: {const: "0.1-candidate"}
+  request_id: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+  request_sha256: {$ref: "#/$defs/sha256"}
+  normalized_request_sha256: {$ref: "#/$defs/sha256"}
+  clause_ast_sha256: {$ref: "#/$defs/sha256"}
+  event_frame_sha256: {$ref: "#/$defs/sha256"}
+  semantic_solution_core_sha256:
+    description: >-
+      Canonical hash of typed_solution with queryir_emission_record omitted;
+      this explicit exclusion prevents a self-referential digest.
+    $ref: "#/$defs/sha256"
+  query_ir_schema_sha256: {$ref: "#/$defs/sha256"}
+  projection_rule_set_sha256: {$ref: "#/$defs/sha256"}
+  query_ir:
+    $ref: "../p9b1q/query-ir-schema-candidate.yml"
+  query_ir_sha256: {$ref: "#/$defs/sha256"}
+  field_traces:
+    type: array
+    minItems: 1
+    maxItems: 8192
+    uniqueItems: true
+    items: {$ref: "#/$defs/field_trace"}
+  license_dag: {$ref: "#/$defs/license_dag"}
+  minimality_witness: {$ref: "#/$defs/minimality_witness"}
+$defs:
+  sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  source_span:
+    type: object
+    additionalProperties: false
+    required: [start_char, end_char, text]
+    properties:
+      start_char: {type: integer, minimum: 0, maximum: 2000}
+      end_char: {type: integer, minimum: 1, maximum: 2000}
+      text: {type: string, minLength: 1, maxLength: 2000}
+  source_binding:
+    type: object
+    additionalProperties: false
+    required: [object_kind, object_sha256, source_ids, source_spans]
+    properties:
+      object_kind:
+        enum:
+          - NORMALIZED_REQUEST
+          - CLAUSE_AST
+          - EVENT_FRAME
+          - TYPED_SOLUTION
+          - CONSTRAINT_SET
+          - ENTITY_ONTOLOGY
+          - RELATION_ONTOLOGY
+          - EVENT_RELATION_MAPPING
+          - SEMANTIC_ROLE_MAPPING
+      object_sha256: {$ref: "#/$defs/sha256"}
+      source_ids:
+        type: array
+        maxItems: 64
+        uniqueItems: true
+        items: {type: string, pattern: "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"}
+      source_spans:
+        type: array
+        maxItems: 64
+        uniqueItems: true
+        items: {$ref: "#/$defs/source_span"}
+  field_trace:
+    type: object
+    additionalProperties: false
+    required:
+      - trace_id
+      - query_ir_json_pointer
+      - emitted_value_sha256
+      - source_bindings
+      - constraint_ids
+      - projection_rule_id
+    properties:
+      trace_id: {type: string, pattern: "^TR[0-9]{4}$"}
+      query_ir_json_pointer:
+        type: string
+        minLength: 1
+        maxLength: 1024
+        pattern: "^/"
+      emitted_value_sha256: {$ref: "#/$defs/sha256"}
+      source_bindings:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {$ref: "#/$defs/source_binding"}
+      constraint_ids:
+        type: array
+        minItems: 1
+        maxItems: 64
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+      projection_rule_id: {type: string, pattern: "^PRJ-[A-Z0-9_-]{3,96}$"}
+  license_node:
+    type: object
+    additionalProperties: false
+    required: [node_id, node_kind, semantic_object_id, source_binding_ids]
+    properties:
+      node_id: {type: string, pattern: "^LN[0-9]{4}$"}
+      node_kind:
+        enum:
+          - AFFIRMED_EVENT_ROOT
+          - EXPLICIT_RELATION_ROOT
+          - EXPLICIT_QUESTION_SLOT_ROOT
+          - NEGATED_OR_EXCLUDED_ROOT
+          - RELATION
+          - SELECTOR
+          - SEMANTIC_ROLE
+          - NARRATIVE
+          - PROHIBITION
+          - REFERENCE
+          - OVERRIDE
+      semantic_object_id:
+        type: string
+        pattern: "^(ROOT|M|E|R|N|Q|F|REF|OVR)[0-9]{0,4}$"
+      source_binding_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^TR[0-9]{4}$"}
+  license_edge:
+    type: object
+    additionalProperties: false
+    required: [edge_id, from_node_id, to_node_id, edge_kind, constraint_ids]
+    properties:
+      edge_id: {type: string, pattern: "^LE[0-9]{4}$"}
+      from_node_id: {type: string, pattern: "^LN[0-9]{4}$"}
+      to_node_id: {type: string, pattern: "^LN[0-9]{4}$"}
+      edge_kind:
+        enum:
+          - ROOTS_EVENT_OR_RELATION
+          - EVENT_DERIVES_RELATION
+          - RELATION_CONSTRAINS_SELECTOR
+          - RELATION_LICENSES_ROLE
+          - RELATION_LICENSES_NARRATIVE
+          - NEGATED_BASIS_LICENSES_PROHIBITION
+          - REFERENCE_BINDS_OBJECT
+          - OVERRIDE_BINDS_EVENTS
+      constraint_ids:
+        type: array
+        minItems: 1
+        maxItems: 32
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+  license_dag:
+    type: object
+    additionalProperties: false
+    required: [nodes, edges, topological_order, dag_sha256]
+    properties:
+      nodes:
+        type: array
+        minItems: 1
+        maxItems: 2048
+        uniqueItems: true
+        items: {$ref: "#/$defs/license_node"}
+      edges:
+        type: array
+        maxItems: 4096
+        uniqueItems: true
+        items: {$ref: "#/$defs/license_edge"}
+      topological_order:
+        type: array
+        minItems: 1
+        maxItems: 2048
+        uniqueItems: true
+        items: {type: string, pattern: "^LN[0-9]{4}$"}
+      dag_sha256:
+        description: "Canonical SHA-256 of license_dag with dag_sha256 omitted."
+        $ref: "#/$defs/sha256"
+  retained_object_witness:
+    type: object
+    additionalProperties: false
+    required:
+      - semantic_object_id
+      - query_ir_json_pointer
+      - supporting_constraint_ids
+      - license_path_node_ids
+      - removal_unsatisfied_constraint_ids
+      - removal_probe_sha256
+    properties:
+      semantic_object_id:
+        type: string
+        pattern: "^(M|E|R|N|Q|F|REF|OVR)[0-9]{2,3}$"
+      query_ir_json_pointer: {type: string, minLength: 1, maxLength: 1024, pattern: "^/"}
+      supporting_constraint_ids:
+        type: array
+        minItems: 1
+        maxItems: 64
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+      license_path_node_ids:
+        type: array
+        minItems: 1
+        maxItems: 64
+        uniqueItems: true
+        items: {type: string, pattern: "^LN[0-9]{4}$"}
+      removal_unsatisfied_constraint_ids:
+        type: array
+        minItems: 1
+        maxItems: 64
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+      removal_probe_sha256: {$ref: "#/$defs/sha256"}
+  minimality_witness:
+    type: object
+    additionalProperties: false
+    required:
+      - semantic_universe_sha256
+      - retained_semantic_object_ids
+      - retained_object_witnesses
+      - omitted_object_ids
+      - omitted_object_exclusion_constraint_ids
+      - witness_sha256
+    properties:
+      semantic_universe_sha256: {$ref: "#/$defs/sha256"}
+      retained_semantic_object_ids:
+        type: array
+        minItems: 1
+        maxItems: 2048
+        uniqueItems: true
+        items: {type: string, pattern: "^(M|E|R|N|Q|F|REF|OVR)[0-9]{2,3}$"}
+      retained_object_witnesses:
+        type: array
+        minItems: 1
+        maxItems: 2048
+        uniqueItems: true
+        items: {$ref: "#/$defs/retained_object_witness"}
+      omitted_object_ids:
+        type: array
+        maxItems: 2048
+        uniqueItems: true
+        items: {type: string, pattern: "^(M|E|R|N|Q|F|REF|OVR)[0-9]{2,3}$"}
+      omitted_object_exclusion_constraint_ids:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+      witness_sha256:
+        description: "Canonical SHA-256 of minimality_witness with witness_sha256 omitted."
+        $ref: "#/$defs/sha256"

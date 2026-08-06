@@ -1,0 +1,26 @@
+{
+  "normalized_request_version": "0.1-candidate",
+  "request_id": "P9B1Q-ARCH-FIXTURE-002",
+  "request_sha256": "150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5",
+  "knowledge_version": "clonorchis_pcms_v1",
+  "locale": "zh-CN",
+  "raw_query_text": "粪便检卵阳性。",
+  "normalized_query_text": "粪便检卵阳性。",
+  "normalization_operations": [
+    "NONE"
+  ],
+  "raw_to_normalized_spans": [
+    {
+      "raw_start": 0,
+      "raw_end": 7,
+      "normalized_start": 0,
+      "normalized_end": 7
+    }
+  ],
+  "producer": {
+    "producer_id": "p9b1q-request-normalizer",
+    "producer_version": "0.1-fixture",
+    "executable_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "configuration_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  }
+}

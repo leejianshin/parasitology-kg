@@ -1,0 +1,61 @@
+grammar_version: "0.1-candidate"
+grammar_id: "zh_cn_scoped_clause_grammar_v0_1"
+status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
+scope: "structural grammar only; no parasite, disease, entity, relation, claim, or answer lexicon"
+
+span_model:
+  unit: UNICODE_CODEPOINT
+  indexing: ZERO_BASED_HALF_OPEN
+  punctuation_is_preserved_in_parent_operator_nodes: true
+
+node_operators:
+  COORDINATION:
+    surface_classes: [并列连词, 并列标点]
+    minimum_branches: 2
+  CONDITION:
+    surface_classes: [条件前件标记, 条件后件标记]
+    required_roles: [CONDITION_ANTECEDENT, CONDITION_CONSEQUENT]
+  CONTRAST:
+    surface_classes: [转折标记, 对照标记]
+    required_roles: [CONTRAST_LEFT, CONTRAST_RIGHT]
+  OVERRIDE:
+    surface_classes: [后项覆盖标记]
+    required_roles: [OVERRIDE_EARLIER, OVERRIDE_LATER]
+  ALTERNATIVE_GROUP:
+    surface_classes: [选择连词, 斜线, 选择问式]
+    minimum_branches: 2
+  QUESTION:
+    surface_classes: [疑问代词, 疑问语气标点]
+    required_roles: [QUESTION_FOCUS]
+
+assertion_marker_classes:
+  NEGATOR:
+    composition: SCOPE_PATH_PARITY
+    may_target: [PROPOSITION_OR_OPERATOR_S_NODE, SURFACE_MENTION_U_NODE]
+  EXCLUSION:
+    composition: TARGET_LOCAL
+    may_target: [ALTERNATIVE_BRANCH_S_NODE, SURFACE_MENTION_U_NODE]
+  HYPOTHETICAL:
+    composition: PROPOSITION_LOCAL
+  HISTORICAL:
+    composition: EVENT_TIME_LOCAL
+  CURRENT:
+    composition: EVENT_TIME_LOCAL
+  FUTURE:
+    composition: EVENT_TIME_LOCAL
+  WH_FOCUS:
+    composition: QUESTION_SLOT_LOCAL
+
+attachment_policy:
+  candidate_generation: "all grammatically compatible governors within the smallest containing operator subtree"
+  selection_in_parser: false
+  selection_by_typed_solver_only: true
+  no_candidate: INVALID
+  one_candidate: UNIQUE
+  multiple_candidates: UNRESOLVED
+  prohibited_defaults: [nearest_span, first_match, longest_match, fixed_priority]
+
+completeness:
+  every_material_codepoint_covered: true
+  every_operator_and_assertion_marker_has_exact_span: true
+  every_unresolved_attachment_is_preserved: true

@@ -1,0 +1,139 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/constraint-set-v0.1"
+title: "P9-B1Q executable typed constraint set candidate"
+type: object
+additionalProperties: false
+required:
+  - constraint_set_version
+  - constraint_set_id
+  - knowledge_version
+  - canonicalization_profile_sha256
+  - constraint_registry_sha256
+  - authority_object_hashes
+  - selected_constraints
+  - execution_policy
+properties:
+  constraint_set_version: {const: "0.1-candidate"}
+  constraint_set_id: {const: "clonorchis_p9b1q_typed_constraints_v0_1"}
+  knowledge_version: {const: "clonorchis_pcms_v1"}
+  canonicalization_profile_sha256: {$ref: "#/$defs/sha256"}
+  constraint_registry_sha256: {$ref: "#/$defs/sha256"}
+  authority_object_hashes:
+    type: object
+    additionalProperties: false
+    required:
+      - entity_ontology_sha256
+      - relation_ontology_sha256
+      - predicate_type_mapping_sha256
+      - event_relation_mapping_sha256
+      - semantic_role_mapping_sha256
+    properties:
+      entity_ontology_sha256: {$ref: "#/$defs/sha256"}
+      relation_ontology_sha256: {$ref: "#/$defs/sha256"}
+      predicate_type_mapping_sha256: {$ref: "#/$defs/sha256"}
+      event_relation_mapping_sha256: {$ref: "#/$defs/sha256"}
+      semantic_role_mapping_sha256: {$ref: "#/$defs/sha256"}
+  selected_constraints:
+    type: array
+    minItems: 42
+    maxItems: 42
+    uniqueItems: true
+    prefixItems:
+      - {const: CNS-NORM-LOSSLESS_ROUNDTRIP}
+      - {const: CNS-NORM-REQUEST_BINDING}
+      - {const: CNS-AST-SINGLE_ROOT}
+      - {const: CNS-AST-ID_UNIQUE}
+      - {const: CNS-AST-REF_INTEGRITY}
+      - {const: CNS-AST-SPAN_ORDER}
+      - {const: CNS-AST-SPAN_TEXT_MATCH}
+      - {const: CNS-AST-NONCROSSING}
+      - {const: CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY}
+      - {const: CNS-AST-SCOPE_TARGET_INTEGRITY}
+      - {const: CNS-EF-ID_UNIQUE}
+      - {const: CNS-EF-REF_INTEGRITY}
+      - {const: CNS-EF-NONEMPTY_FIXED_DOMAIN}
+      - {const: CNS-EF-SLOT_TYPE}
+      - {const: CNS-EF-DIAGNOSTIC_BINDING}
+      - {const: CNS-EF-SPECIMEN_SOURCE}
+      - {const: CNS-EF-IDENTITY_CONSISTENCY}
+      - {const: CNS-EF-REFERENCE_DOMAIN}
+      - {const: CNS-EF-OVERRIDE_DOMAIN}
+      - {const: CNS-SOLVER-REGISTRY_MEMBERSHIP}
+      - {const: CNS-SOLVER-HASH_BINDING}
+      - {const: CNS-SOLVER-SOLUTION_CARDINALITY}
+      - {const: CNS-SOLVER-NONEMPTY_UNIQUE}
+      - {const: CNS-SOLVER-ENTITY_RESOLUTION}
+      - {const: CNS-SOLVER-ASSERTION_SCOPE}
+      - {const: CNS-SOLVER-EVENT_IDENTITY}
+      - {const: CNS-SOLVER-EVENT_RELATION_DERIVATION}
+      - {const: CNS-SOLVER-LICENSE_DAG}
+      - {const: CNS-SOLVER-MINIMALITY}
+      - {const: CNS-SOLVER-AMBIGUITY_CERTIFICATE}
+      - {const: CNS-EMIT-QUERYIR_SCHEMA}
+      - {const: CNS-EMIT-VALID_STATUS}
+      - {const: CNS-EMIT-LEAF_TRACE_COVERAGE}
+      - {const: CNS-EMIT-TRACE_VALUE_HASH}
+      - {const: CNS-EMIT-PROJECTION_ONLY}
+      - {const: CNS-EMIT-LICENSE_COVERAGE}
+      - {const: CNS-EMIT-MINIMALITY_WITNESS}
+      - {const: CNS-BIND-ACTUAL_OBJECT_HASH}
+      - {const: CNS-BIND-CANONICAL_PROFILE}
+      - {const: CNS-BIND-REQUEST_CHAIN}
+      - {const: CNS-BIND-RETRIEVAL_CHAIN}
+      - {const: CNS-BIND-RESPONSE_AUDIT_CHAIN}
+    items: false
+  execution_policy:
+    type: object
+    additionalProperties: false
+    required: [order, enumerate_all_minimal_solutions, heuristic_tie_break, later_stage_repair]
+    properties:
+      order: {const: REGISTRY_VALIDATION_ORDER_ASCENDING}
+      enumerate_all_minimal_solutions: {const: true}
+      heuristic_tie_break: {const: false}
+      later_stage_repair: {const: false}
+$defs:
+  sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+  constraint_id:
+    enum:
+      - CNS-NORM-LOSSLESS_ROUNDTRIP
+      - CNS-NORM-REQUEST_BINDING
+      - CNS-AST-SINGLE_ROOT
+      - CNS-AST-ID_UNIQUE
+      - CNS-AST-REF_INTEGRITY
+      - CNS-AST-SPAN_ORDER
+      - CNS-AST-SPAN_TEXT_MATCH
+      - CNS-AST-NONCROSSING
+      - CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY
+      - CNS-AST-SCOPE_TARGET_INTEGRITY
+      - CNS-EF-ID_UNIQUE
+      - CNS-EF-REF_INTEGRITY
+      - CNS-EF-NONEMPTY_FIXED_DOMAIN
+      - CNS-EF-SLOT_TYPE
+      - CNS-EF-DIAGNOSTIC_BINDING
+      - CNS-EF-SPECIMEN_SOURCE
+      - CNS-EF-IDENTITY_CONSISTENCY
+      - CNS-EF-REFERENCE_DOMAIN
+      - CNS-EF-OVERRIDE_DOMAIN
+      - CNS-SOLVER-REGISTRY_MEMBERSHIP
+      - CNS-SOLVER-HASH_BINDING
+      - CNS-SOLVER-SOLUTION_CARDINALITY
+      - CNS-SOLVER-NONEMPTY_UNIQUE
+      - CNS-SOLVER-ENTITY_RESOLUTION
+      - CNS-SOLVER-ASSERTION_SCOPE
+      - CNS-SOLVER-EVENT_IDENTITY
+      - CNS-SOLVER-EVENT_RELATION_DERIVATION
+      - CNS-SOLVER-LICENSE_DAG
+      - CNS-SOLVER-MINIMALITY
+      - CNS-SOLVER-AMBIGUITY_CERTIFICATE
+      - CNS-EMIT-QUERYIR_SCHEMA
+      - CNS-EMIT-VALID_STATUS
+      - CNS-EMIT-LEAF_TRACE_COVERAGE
+      - CNS-EMIT-TRACE_VALUE_HASH
+      - CNS-EMIT-PROJECTION_ONLY
+      - CNS-EMIT-LICENSE_COVERAGE
+      - CNS-EMIT-MINIMALITY_WITNESS
+      - CNS-BIND-ACTUAL_OBJECT_HASH
+      - CNS-BIND-CANONICAL_PROFILE
+      - CNS-BIND-REQUEST_CHAIN
+      - CNS-BIND-RETRIEVAL_CHAIN
+      - CNS-BIND-RESPONSE_AUDIT_CHAIN

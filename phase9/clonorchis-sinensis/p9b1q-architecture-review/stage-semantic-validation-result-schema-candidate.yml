@@ -1,0 +1,151 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/stage-semantic-validation-result-v0.1"
+title: "P9-B1Q stage semantic validation result candidate"
+type: object
+additionalProperties: false
+required:
+  - validation_result_version
+  - request_id
+  - stage
+  - result
+  - canonicalization_profile_sha256
+  - validator_contract_sha256
+  - validator
+  - actual_input_objects
+  - actual_output_object
+  - verified_constraint_ids
+  - errors
+  - result_sha256
+properties:
+  validation_result_version: {const: "0.1-candidate"}
+  request_id: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+  stage: {enum: [S0_NORMALIZED_REQUEST, S1_CLAUSE_AST, S2_EVENT_FRAME, S3_TYPED_SOLVER, S4_QUERYIR_EMISSION, S5_RUNTIME_BINDING]}
+  result: {enum: [PASS, FAIL_CLOSED]}
+  canonicalization_profile_sha256: {$ref: "#/$defs/sha256"}
+  validator_contract_sha256: {$ref: "#/$defs/sha256"}
+  validator:
+    type: object
+    additionalProperties: false
+    required: [validator_id, validator_version, executable_sha256, configuration_sha256]
+    properties:
+      validator_id: {type: string, pattern: "^p9b1q-stage-semantic-validator-s[0-5]$"}
+      validator_version: {type: string, minLength: 1, maxLength: 64}
+      executable_sha256: {$ref: "#/$defs/sha256"}
+      configuration_sha256: {$ref: "#/$defs/sha256"}
+  actual_input_objects:
+    type: array
+    minItems: 1
+    maxItems: 32
+    uniqueItems: true
+    items: {$ref: "#/$defs/object_reference"}
+  actual_output_object:
+    oneOf:
+      - {$ref: "#/$defs/object_reference"}
+      - {type: "null"}
+  verified_constraint_ids:
+    type: array
+    minItems: 1
+    maxItems: 256
+    uniqueItems: true
+    items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+  errors:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "#/$defs/validation_error"}
+  result_sha256:
+    description: >-
+      Canonical SHA-256 of this validation result with result_sha256 omitted;
+      the explicit omission prevents a self-referential digest.
+    $ref: "#/$defs/sha256"
+allOf:
+  - if: {properties: {result: {const: PASS}}}
+    then:
+      properties:
+        actual_output_object: {$ref: "#/$defs/object_reference"}
+        errors: {type: array, maxItems: 0}
+  - if: {properties: {result: {const: FAIL_CLOSED}}}
+    then:
+      properties:
+        errors: {type: array, minItems: 1}
+$defs:
+  sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+  object_reference:
+    type: object
+    additionalProperties: false
+    required: [object_kind, schema_id, canonical_sha256, byte_length]
+    properties:
+      object_kind:
+        enum:
+          - P9A_REQUEST
+          - NORMALIZED_REQUEST
+          - CLAUSE_AST
+          - EVENT_FRAME
+          - TYPED_CONSTRAINT_RESULT
+          - QUERYIR_EMISSION_RECORD
+          - QUERY_IR
+          - SEMANTIC_VALIDATION_RESULT
+          - RETRIEVAL_RESULT
+          - P9A_RESPONSE
+          - P9A_AUDIT_RECORD
+          - STAGE_SEMANTIC_VALIDATION_RESULT
+          - EXECUTION_BINDING_SIDECAR
+          - ENTITY_ONTOLOGY
+          - RELATION_ONTOLOGY
+          - PREDICATE_TYPE_MAPPING
+          - EVENT_RELATION_MAPPING
+          - SEMANTIC_ROLE_MAPPING
+          - CLAUSE_GRAMMAR_CONFIG
+          - CANONICALIZATION_PROFILE
+          - STAGE_VALIDATOR_CONTRACT
+          - CONSTRAINT_REGISTRY
+          - CONSTRAINT_REGISTRY_SCHEMA
+          - CONSTRAINT_SET
+          - CONSTRAINT_SET_SCHEMA
+          - QUERY_IR_SCHEMA
+          - PROJECTION_RULE_SET
+      schema_id: {type: string, minLength: 1, maxLength: 256}
+      canonical_sha256: {$ref: "#/$defs/sha256"}
+      byte_length: {type: integer, minimum: 2, maximum: 16777216}
+  validation_error:
+    type: object
+    additionalProperties: false
+    required: [failure_code, constraint_id, object_kind, json_pointer, observed_value_sha256]
+    properties:
+      failure_code:
+        enum:
+          - SCHEMA_INVALID
+          - INPUT_HASH_MISMATCH
+          - NORMALIZATION_NOT_LOSSLESS
+          - DUPLICATE_ID
+          - DANGLING_REFERENCE
+          - SPAN_ORDER_INVALID
+          - SPAN_TEXT_MISMATCH
+          - MULTIPLE_ROOTS
+          - GRAPH_CYCLE
+          - ATTACHMENT_CARDINALITY_INVALID
+          - SCOPE_TARGET_INVALID
+          - EMPTY_FIXED_DOMAIN
+          - SLOT_TYPE_MISMATCH
+          - DIAGNOSTIC_BINDING_INVALID
+          - SPECIMEN_SOURCE_MISSING
+          - EVENT_IDENTITY_MISMATCH
+          - REFERENCE_DOMAIN_INVALID
+          - OVERRIDE_DOMAIN_INVALID
+          - UNKNOWN_CONSTRAINT_ID
+          - SOLUTION_CARDINALITY_MISMATCH
+          - EMPTY_UNIQUE_SOLUTION
+          - EVENT_RELATION_DERIVATION_MISMATCH
+          - LICENSE_DAG_INVALID
+          - MINIMALITY_WITNESS_INVALID
+          - AMBIGUITY_CERTIFICATE_INVALID
+          - QUERYIR_NOT_VALID
+          - TRACE_COVERAGE_INCOMPLETE
+          - TRACE_VALUE_HASH_MISMATCH
+          - NON_PURE_PROJECTION
+          - ACTUAL_OBJECT_BINDING_MISMATCH
+          - REQUEST_RESPONSE_AUDIT_MISMATCH
+      constraint_id: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+      object_kind: {type: string, minLength: 1, maxLength: 96}
+      json_pointer: {type: string, minLength: 1, maxLength: 1024, pattern: "^/"}
+      observed_value_sha256: {$ref: "#/$defs/sha256"}

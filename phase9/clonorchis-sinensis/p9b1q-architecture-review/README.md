@@ -1,6 +1,6 @@
 # P9-B1Q architecture review
 
-Status: design candidate awaiting independent, read-only review.
+Status: first architecture design revision awaiting independent, read-only review.
 
 This atom freezes `6ac0e4b2978e5fb41e7b90e27ced17826d35a394` unchanged and
 replaces the next implementation direction—not the frozen code—with a four-stage
@@ -32,6 +32,19 @@ semantic errors stable instead of making them correct.
   emission, runtime binding, tests, and implementation slices.
 - `failure-to-stage-matrix.yml`: maps aggregate R10 failure classes to the first
   authoritative compiler stage; later stages may reject but never repair them.
+- `normalized-request-schema-candidate.yml` and `clause-grammar-config.yml`:
+  lossless S0 normalization and the structural-only S1 grammar authority.
+- `stage-semantic-validator-contract.yml` and its result Schema: executable,
+  fail-closed S0–S5 validation over actual content-addressed objects.
+- `constraint-id-registry.yml`, its Schema, and `constraint-set-v0.1.yml`:
+  the complete 42-check validation order with no dynamically invented rules.
+- `queryir-emission-record-schema-candidate.yml`: the UNIQUE solution's complete
+  QueryIR, pointer-complete field trace, rooted license DAG, and removal-based
+  minimality witness.
+- `object-canonicalization-and-hash-chain.yml`: per-object canonicalization and
+  the request → AST → frame → solution → QueryIR → audit hash chain.
+- `fixtures/`: positive actual objects plus isolated RFC 6902 negative mutations
+  for every S0–S5 stage.
 
 ## Boundaries
 

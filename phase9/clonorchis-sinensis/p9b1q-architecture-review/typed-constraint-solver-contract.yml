@@ -1,4 +1,4 @@
-contract_id: P9B1Q-TYPED-CONSTRAINT-SOLVER-CONTRACT-v0.1
+contract_id: P9B1Q-TYPED-CONSTRAINT-SOLVER-CONTRACT-v0.2
 status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
 scope: P9-B1Q architecture review only
 
@@ -35,29 +35,29 @@ variable_families:
     source: clause_ast.attachment_sets
     values: listed_candidate_parent_node_ids_only
   entity_resolution:
-    source: clause_ast.surface_mentions.entity_candidate_ids
+    source: clause_ast.surface_mentions[].candidate_entity_ids
     values: authority_registered_entity_ids_only
   event_type:
-    source: event_frame.event_type_domain
+    source: event_frame.frames[].event_type_domain
     values: frozen_event_type_enum_only
   participant_binding:
-    source: event_frame.participants
+    source: event_frame.frames[].participant_slots
     values: FIXED_OR_OPEN_TYPED_OR_COMPETING_AS_DECLARED
   assertion_scope:
-    source: event_frame.assertion
+    source: event_frame.frames[].assertion
     values: frozen_assertion_status_and_finding_polarity_only
   temporal_scope:
-    source: event_frame.assertion.time_scope
+    source: event_frame.frames[].assertion.temporal_scope
     values: CURRENT_OR_HISTORICAL_OR_HYPOTHETICAL_OR_FUTURE_OR_UNSPECIFIED
   diagnostic_binding:
-    source: event_frame.diagnostic_binding
+    source: event_frame.frames[].diagnostic_binding_plus_event_frame.specimen_slots
     values: method_specimen_target_polarity_combinations_allowed_by_mapping
   event_coreference:
     source: event_frame.reference_hypotheses
-    values: SAME_EVENT_OR_DISTINCT_EVENT_AS_LISTED
+    values: identity_relation_domain_values_as_listed
   override_binding:
     source: event_frame.override_hypotheses
-    values: listed_target_event_and_overridden_dimension_only
+    values: listed_target_event_and_overridden_dimension_domain_only
   relation_direction:
     source: frozen_event_relation_mapping
     values: registered_subject_predicate_object_type_signatures_only

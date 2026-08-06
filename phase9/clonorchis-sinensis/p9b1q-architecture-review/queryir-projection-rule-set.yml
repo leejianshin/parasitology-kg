@@ -1,0 +1,57 @@
+projection_rule_set_version: "0.1-candidate"
+projection_rule_set_id: "clonorchis_p9b1q_queryir_projection_rules_v0_1"
+status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
+input_schema: "typed-constraint-result-schema-candidate.yml"
+emission_record_schema: "queryir-emission-record-schema-candidate.yml"
+output_schema: "../p9b1q/query-ir-schema-candidate.yml"
+
+rules:
+  - id: PRJ-VERIFY_UNIQUE
+    operation: ASSERT_EQUAL
+    input_pointer: /status
+    expected_constant: UNIQUE
+  - id: PRJ-VERIFY_ONE
+    operation: ASSERT_EQUAL
+    input_pointer: /solution_cardinality
+    expected_constant: ONE
+  - id: PRJ-VERIFY_EMBEDDED_VALID
+    operation: ASSERT_EQUAL
+    input_pointer: /selected_solution/queryir_emission_record/query_ir/interpretation_status
+    expected_constant: VALID
+  - id: PRJ-VERIFY_CORE_HASH
+    operation: RECOMPUTE_HASH_EXCLUDING_POINTER
+    input_pointer: /selected_solution
+    excluded_pointer: /selected_solution/queryir_emission_record
+    expected_hash_pointer: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+  - id: PRJ-VERIFY_QUERYIR_HASH
+    operation: RECOMPUTE_CANONICAL_HASH
+    input_pointer: /selected_solution/queryir_emission_record/query_ir
+    expected_hash_pointer: /selected_solution/queryir_emission_record/query_ir_sha256
+  - id: PRJ-VERIFY_LEAF_TRACE
+    operation: VERIFY_EVERY_NONROOT_PROPERTY_VALUE_AND_ARRAY_ITEM_POINTER_EXACTLY_ONCE
+    input_pointer: /selected_solution/queryir_emission_record/query_ir
+    trace_pointer: /selected_solution/queryir_emission_record/field_traces
+  - id: PRJ-VERIFY_LICENSE_DAG
+    operation: VERIFY_ROOTED_ACYCLIC_MATERIAL_OBJECT_COVERAGE
+    input_pointer: /selected_solution/queryir_emission_record/license_dag
+  - id: PRJ-VERIFY_MINIMALITY
+    operation: VERIFY_REMOVAL_WITNESS_FOR_EVERY_MATERIAL_OBJECT
+    input_pointer: /selected_solution/queryir_emission_record/minimality_witness
+  - id: PRJ-EXTRACT_QUERYIR
+    operation: BYTE_IDENTICAL_DEEP_COPY
+    input_pointer: /selected_solution/queryir_emission_record/query_ir
+    output_pointer: /
+
+forbidden_operations:
+  - parse_query_text
+  - resolve_entity_or_reference
+  - infer_event_or_relation
+  - add_remove_or_reorder_semantic_objects
+  - widen_or_narrow_selector
+  - change_assertion_or_temporal_scope
+  - repair_trace_license_or_minimality_witness
+  - consult_retrieval_result
+
+determinism:
+  output_bytes: "exact canonical bytes of embedded query_ir"
+  any_rule_failure: "FAIL_CLOSED_NO_QUERYIR_NO_RETRIEVAL"

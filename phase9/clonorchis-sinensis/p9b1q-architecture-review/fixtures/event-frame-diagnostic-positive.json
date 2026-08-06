@@ -1,0 +1,128 @@
+{
+  "event_frame_version": "0.2-candidate",
+  "request_id": "P9B1Q-ARCH-FIXTURE-002",
+  "request_sha256": "150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5",
+  "normalized_request_sha256": "69bd2acfcf3e4f227dc9a294d3a86720b5296b35ff374297287b1e196659d2dd",
+  "knowledge_version": "clonorchis_pcms_v1",
+  "clause_ast_sha256": "26734eb9a871e0dbe772a0cf1ed229f8fcf544639ef26eec9e7d25c55e7dfa69",
+  "entity_ontology_sha256": "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e",
+  "event_relation_mapping_sha256": "5024b466e94fc0267cd34cabb86067523f267868a22480f150bbcdb0c7c68807",
+  "canonicalization_profile_sha256": "372c7f194c91e24e09a1230c8089204cebe662960d4f3299f6c6bc5e885953fc",
+  "stage_validator_contract_sha256": "09927d151905a29cbff2d712824cd83206da3e402d42bf4178fbf560608f7a51",
+  "producer": {
+    "producer_id": "p9b1q-event-frame-compiler",
+    "producer_version": "0.2-fixture",
+    "executable_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "configuration_sha256": "5024b466e94fc0267cd34cabb86067523f267868a22480f150bbcdb0c7c68807"
+  },
+  "frames": [
+    {
+      "frame_id": "EF001",
+      "event_type_domain": [
+        "DIAGNOSTIC_FINDING"
+      ],
+      "source_ast_node_ids": [
+        "S001"
+      ],
+      "source_spans": [
+        {
+          "start_char": 0,
+          "end_char": 6,
+          "text": "粪便检卵阳性"
+        }
+      ],
+      "participant_slots": [
+        {
+          "slot_id": "V001",
+          "semantic_role": "METHOD",
+          "source_ids": [
+            "U001"
+          ],
+          "domain": {
+            "entity_ids": [
+              "diagnostic.stool_egg_microscopy"
+            ],
+            "entity_types": [
+              "diagnostic_method"
+            ]
+          },
+          "binding_status": "FIXED"
+        },
+        {
+          "slot_id": "V002",
+          "semantic_role": "TARGET",
+          "source_ids": [
+            "U002"
+          ],
+          "domain": {
+            "entity_ids": [
+              "stage.clonorchis_egg"
+            ],
+            "entity_types": [
+              "life_cycle_stage"
+            ]
+          },
+          "binding_status": "FIXED"
+        }
+      ],
+      "assertion": {
+        "assertion_status": "AFFIRMED",
+        "finding_polarity": "POSITIVE",
+        "temporal_scope": "GENERAL",
+        "governing_ast_node_ids": [
+          "S001"
+        ],
+        "marker_ids": []
+      },
+      "diagnostic_binding": {
+        "method_slot_id": "V001",
+        "specimen_slot_id": "SP001",
+        "target_slot_ids": [
+          "V002"
+        ],
+        "polarity_source_ids": [
+          "S001"
+        ]
+      },
+      "normalized_identity": {
+        "event_type_domain": [
+          "DIAGNOSTIC_FINDING"
+        ],
+        "actor_slot_ids": [],
+        "method_slot_id": "V001",
+        "specimen_slot_ids": [
+          "SP001"
+        ],
+        "target_slot_ids": [
+          "V002"
+        ],
+        "anatomical_site_slot_ids": [],
+        "temporal_scope_domain": [
+          "GENERAL"
+        ]
+      },
+      "frame_status": "FIXED"
+    }
+  ],
+  "specimen_slots": [
+    {
+      "specimen_slot_id": "SP001",
+      "source_ids": [
+        "U001"
+      ],
+      "source_spans": [
+        {
+          "start_char": 0,
+          "end_char": 2,
+          "text": "粪便"
+        }
+      ],
+      "specimen_code_domain": [
+        "STOOL"
+      ],
+      "binding_status": "FIXED"
+    }
+  ],
+  "reference_hypotheses": [],
+  "override_hypotheses": []
+}

@@ -1,6 +1,7 @@
 review_version: "1.0"
 review_id: "clonorchis_p9b1q_architecture_review_v1"
-status: "DESIGN_ONLY_IMPLEMENTATION_FROZEN"
+status: "SUPERSEDED_BY_FIRST_ARCHITECTURE_DESIGN_REVISION"
+superseded_by: "architecture-review-revision1.yml"
 
 frozen_implementation:
   commit: "6ac0e4b2978e5fb41e7b90e27ced17826d35a394"

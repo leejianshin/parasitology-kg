@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/typed-constraint-result-v0.1"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/typed-constraint-result-v0.2"
 title: "P9-B1Q typed constraint solver result candidate"
 description: >-
   Closed-world solver outcome. Exactly one solution may be emitted to QueryIR;
@@ -10,12 +10,18 @@ required:
   - solver_result_version
   - request_id
   - request_sha256
+  - normalized_request_sha256
   - knowledge_version
   - clause_ast_sha256
   - event_frame_sha256
-  - ontology_sha256
-  - relation_mapping_sha256
+  - entity_ontology_sha256
+  - relation_ontology_sha256
+  - event_relation_mapping_sha256
+  - predicate_type_mapping_sha256
   - semantic_role_mapping_sha256
+  - canonicalization_profile_sha256
+  - stage_validator_contract_sha256
+  - constraint_registry_sha256
   - constraint_set_sha256
   - solver
   - status
@@ -25,15 +31,21 @@ required:
   - unsatisfied_constraints
   - solver_trace_sha256
 properties:
-  solver_result_version: {const: "0.1-candidate"}
+  solver_result_version: {const: "0.2-candidate"}
   request_id: {$ref: "#/$defs/request_id"}
   request_sha256: {$ref: "#/$defs/sha256"}
+  normalized_request_sha256: {$ref: "#/$defs/sha256"}
   knowledge_version: {const: "clonorchis_pcms_v1"}
   clause_ast_sha256: {$ref: "#/$defs/sha256"}
   event_frame_sha256: {$ref: "#/$defs/sha256"}
-  ontology_sha256: {$ref: "#/$defs/sha256"}
-  relation_mapping_sha256: {$ref: "#/$defs/sha256"}
+  entity_ontology_sha256: {$ref: "#/$defs/sha256"}
+  relation_ontology_sha256: {$ref: "#/$defs/sha256"}
+  event_relation_mapping_sha256: {$ref: "#/$defs/sha256"}
+  predicate_type_mapping_sha256: {$ref: "#/$defs/sha256"}
   semantic_role_mapping_sha256: {$ref: "#/$defs/sha256"}
+  canonicalization_profile_sha256: {$ref: "#/$defs/sha256"}
+  stage_validator_contract_sha256: {$ref: "#/$defs/sha256"}
+  constraint_registry_sha256: {$ref: "#/$defs/sha256"}
   constraint_set_sha256: {$ref: "#/$defs/sha256"}
   solver:
     type: object
@@ -58,7 +70,7 @@ properties:
     type: array
     maxItems: 256
     uniqueItems: true
-    items: {type: string, pattern: "^CNS-[A-Z0-9_]{3,96}$"}
+    items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
   solver_trace_sha256: {$ref: "#/$defs/sha256"}
 allOf:
   - if: {properties: {status: {const: UNIQUE}}}
@@ -390,6 +402,7 @@ $defs:
       - resolved_overrides
       - satisfied_constraint_ids
       - semantic_object_set_sha256
+      - queryir_emission_record
     properties:
       solution_id: {type: string, pattern: "^SOL-[0-9a-f]{24}$"}
       resolved_mentions:
@@ -437,8 +450,10 @@ $defs:
         minItems: 1
         maxItems: 1024
         uniqueItems: true
-        items: {type: string, pattern: "^CNS-[A-Z0-9_]{3,96}$"}
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
       semantic_object_set_sha256: {$ref: "#/$defs/sha256"}
+      queryir_emission_record:
+        $ref: "queryir-emission-record-schema-candidate.yml"
   ambiguity_certificate:
     type: object
     additionalProperties: false
@@ -478,4 +493,4 @@ $defs:
         minItems: 1
         maxItems: 1024
         uniqueItems: true
-        items: {type: string, pattern: "^CNS-[A-Z0-9_]{3,96}$"}
+        items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}

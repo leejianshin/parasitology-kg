@@ -1,0 +1,153 @@
+profile_version: "0.1-candidate"
+profile_id: "clonorchis_p9b1q_compiler_object_canonicalization_v0_1"
+status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
+
+compatibility:
+  existing_binding_contract: "phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml"
+  serialization: "SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE"
+  unicode_normalization_before_hash: "NONE"
+  arrays_preserve_order: true
+  objects_sort_keys_recursively: true
+  non_json_artifact_hashing: "SHA256_OVER_EXACT_RESOLVED_FILE_BYTES"
+
+runtime_json_object_canonicalization:
+  input_requirement: "JSON_SCHEMA_VALIDATED_NATIVE_JSON_WITHOUT_NONFINITE_NUMBERS"
+  algorithm_steps:
+    - "serialize null/boolean/string/number using the frozen existing binding implementation"
+    - "sort every object key by Unicode code point before serialization"
+    - "serialize arrays in their already contract-normalized order"
+    - "emit UTF-8 with no BOM and no insignificant whitespace"
+    - "compute lowercase SHA-256 over the exact emitted bytes"
+  persisted_bytes_must_equal_hashed_bytes: true
+  hash_of_manifest_string_without_actual_object: "FAIL_CLOSED"
+
+normative_file_canonicalization:
+  rule: "SHA256 over exact bytes resolved from the canonical repository path at the bound commit"
+  same_id_or_filename_from_another_path: "NOT_EQUIVALENT"
+  YAML_parse_and_reserialize_before_hash: false
+
+normative_subobject_canonicalization:
+  source_path: "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml"
+  parse: "YAML 1.2 safe data model"
+  serialization: "runtime JSON object canonicalization above"
+  objects:
+    PREDICATE_TYPE_MAPPING:
+      included_top_level_keys: [predicate_type_matrix]
+      canonical_sha256: "ec463903f5eb37921ef4393e903814a71ef7a3ee50a28c5bd673db8fe8186961"
+    EVENT_RELATION_MAPPING:
+      included_top_level_keys:
+        - event_field_defaults
+        - derivation_source_tokens
+        - event_to_relation_derivation
+        - direct_mention_to_relation_derivation
+        - event_mapping
+        - direct_relation_request
+      canonical_sha256: "5024b466e94fc0267cd34cabb86067523f267868a22480f150bbcdb0c7c68807"
+    SEMANTIC_ROLE_MAPPING:
+      included_top_level_keys:
+        - narrative_intent_mapping
+        - event_to_narrative_derivation
+        - direct_mention_to_narrative_derivation
+        - closed_contrast_intent_derivation
+        - role_catalog
+        - closed_contrast_derivations
+      canonical_sha256: "f70292f4c772ecf75c3d35643da3d1e764907cb35b05255b603293a0fd986166"
+
+object_chain:
+  S0_NORMALIZED_REQUEST:
+    actual_inputs: [P9A_REQUEST]
+    actual_output: NORMALIZED_REQUEST
+    independent_hash_fields: [request_sha256, normalized_request_sha256]
+  S1_CLAUSE_AST:
+    actual_inputs: [NORMALIZED_REQUEST, ENTITY_ONTOLOGY, CLAUSE_GRAMMAR_CONFIG]
+    actual_output: CLAUSE_AST
+    independent_hash_fields:
+      - normalized_request_sha256
+      - entity_ontology_sha256
+      - clause_grammar_config_sha256
+      - clause_ast_sha256
+  S2_EVENT_FRAME:
+    actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
+    actual_output: EVENT_FRAME
+    independent_hash_fields:
+      - normalized_request_sha256
+      - clause_ast_sha256
+      - entity_ontology_sha256
+      - event_relation_mapping_sha256
+      - event_frame_sha256
+  S3_TYPED_SOLVER:
+    actual_inputs:
+      - NORMALIZED_REQUEST
+      - CLAUSE_AST
+      - EVENT_FRAME
+      - ENTITY_ONTOLOGY
+      - RELATION_ONTOLOGY
+      - PREDICATE_TYPE_MAPPING
+      - EVENT_RELATION_MAPPING
+      - SEMANTIC_ROLE_MAPPING
+      - CONSTRAINT_REGISTRY
+      - CONSTRAINT_REGISTRY_SCHEMA
+      - CONSTRAINT_SET
+      - STAGE_VALIDATOR_CONTRACT
+    actual_output: TYPED_CONSTRAINT_RESULT
+    independent_hash_fields:
+      - request_sha256
+      - normalized_request_sha256
+      - clause_ast_sha256
+      - event_frame_sha256
+      - entity_ontology_sha256
+      - relation_ontology_sha256
+      - predicate_type_mapping_sha256
+      - event_relation_mapping_sha256
+      - semantic_role_mapping_sha256
+      - constraint_registry_sha256
+      - constraint_set_sha256
+      - stage_validator_contract_sha256
+      - canonicalization_profile_sha256
+  S4_QUERYIR_EMISSION:
+    actual_inputs:
+      - NORMALIZED_REQUEST
+      - CLAUSE_AST
+      - EVENT_FRAME
+      - TYPED_CONSTRAINT_RESULT
+      - QUERYIR_EMISSION_RECORD
+      - CONSTRAINT_SET
+      - ENTITY_ONTOLOGY
+      - RELATION_ONTOLOGY
+      - PREDICATE_TYPE_MAPPING
+      - EVENT_RELATION_MAPPING
+      - SEMANTIC_ROLE_MAPPING
+      - QUERY_IR_SCHEMA
+      - PROJECTION_RULE_SET
+    actual_output: QUERY_IR
+    independent_hash_fields:
+      - typed_constraint_result_sha256
+      - queryir_emission_record_sha256
+      - query_ir_schema_sha256
+      - projection_rule_set_sha256
+      - query_ir_sha256
+  S5_RUNTIME_BINDING:
+    actual_inputs:
+      - P9A_REQUEST
+      - NORMALIZED_REQUEST
+      - CLAUSE_AST
+      - EVENT_FRAME
+      - TYPED_CONSTRAINT_RESULT
+      - QUERYIR_EMISSION_RECORD
+      - QUERY_IR
+      - SEMANTIC_VALIDATION_RESULT
+      - STAGE_SEMANTIC_VALIDATION_RESULTS_S0_TO_S4
+      - RETRIEVAL_RESULT_IF_EXECUTED
+      - P9A_RESPONSE_IF_PRESENT
+      - P9A_AUDIT_RECORD
+    actual_output: EXECUTION_BINDING_SIDECAR
+    independent_hash_fields: "EVERY_RESOLVED_ACTUAL_OBJECT_CANONICAL_SHA256"
+
+binding_invariants:
+  - "request_id is identical across all request-derived objects"
+  - "every downstream bound hash equals recomputation over its actual resolved object"
+  - "every stage validation result binds the actual input and output object references"
+  - "an object hash cannot stand in for another object kind even when bytes happen to match"
+  - "aggregate ontology_sha256 is prohibited"
+  - "missing actual object, noncanonical persisted bytes, wrong path, or wrong object kind fails closed"
+  - "no retrieval object may exist unless S0 through S4 all PASS"

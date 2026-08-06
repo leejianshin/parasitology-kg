@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/event-frame-v0.1"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/event-frame-v0.2"
 title: "P9-B1Q normalized Event Frame candidate"
 description: >-
   Typed event hypotheses derived losslessly from one Clause AST. Competing
@@ -10,22 +10,29 @@ required:
   - event_frame_version
   - request_id
   - request_sha256
+  - normalized_request_sha256
   - knowledge_version
   - clause_ast_sha256
-  - ontology_sha256
-  - event_mapping_sha256
+  - entity_ontology_sha256
+  - event_relation_mapping_sha256
+  - canonicalization_profile_sha256
+  - stage_validator_contract_sha256
   - producer
   - frames
+  - specimen_slots
   - reference_hypotheses
   - override_hypotheses
 properties:
-  event_frame_version: {const: "0.1-candidate"}
+  event_frame_version: {const: "0.2-candidate"}
   request_id: {$ref: "#/$defs/request_id"}
   request_sha256: {$ref: "#/$defs/sha256"}
+  normalized_request_sha256: {$ref: "#/$defs/sha256"}
   knowledge_version: {const: "clonorchis_pcms_v1"}
   clause_ast_sha256: {$ref: "#/$defs/sha256"}
-  ontology_sha256: {$ref: "#/$defs/sha256"}
-  event_mapping_sha256: {$ref: "#/$defs/sha256"}
+  entity_ontology_sha256: {$ref: "#/$defs/sha256"}
+  event_relation_mapping_sha256: {$ref: "#/$defs/sha256"}
+  canonicalization_profile_sha256: {$ref: "#/$defs/sha256"}
+  stage_validator_contract_sha256: {$ref: "#/$defs/sha256"}
   producer:
     type: object
     additionalProperties: false
@@ -40,6 +47,11 @@ properties:
     maxItems: 256
     uniqueItems: true
     items: {$ref: "#/$defs/event_frame"}
+  specimen_slots:
+    type: array
+    maxItems: 128
+    uniqueItems: true
+    items: {$ref: "#/$defs/specimen_slot"}
   reference_hypotheses:
     type: array
     maxItems: 128
@@ -164,11 +176,10 @@ $defs:
   diagnostic_binding:
     type: object
     additionalProperties: false
-    required: [method_slot_id, specimen_code, target_slot_ids, polarity_source_ids]
+    required: [method_slot_id, specimen_slot_id, target_slot_ids, polarity_source_ids]
     properties:
       method_slot_id: {type: string, pattern: "^V[0-9]{3}$"}
-      specimen_code:
-        enum: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE, UNRESOLVED]
+      specimen_slot_id: {type: string, pattern: "^SP[0-9]{3}$"}
       target_slot_ids:
         type: array
         maxItems: 8
@@ -180,6 +191,31 @@ $defs:
         maxItems: 16
         uniqueItems: true
         items: {type: string, pattern: "^(S|K|U)[0-9]{3}$"}
+  specimen_slot:
+    type: object
+    additionalProperties: false
+    required: [specimen_slot_id, source_ids, source_spans, specimen_code_domain, binding_status]
+    properties:
+      specimen_slot_id: {type: string, pattern: "^SP[0-9]{3}$"}
+      source_ids:
+        type: array
+        minItems: 1
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^(S|U)[0-9]{3}$"}
+      source_spans:
+        type: array
+        minItems: 1
+        maxItems: 16
+        uniqueItems: true
+        items: {$ref: "#/$defs/source_span"}
+      specimen_code_domain:
+        type: array
+        minItems: 1
+        maxItems: 3
+        uniqueItems: true
+        items: {enum: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE]}
+      binding_status: {enum: [FIXED, COMPETING]}
   normalized_identity:
     type: object
     additionalProperties: false
@@ -187,8 +223,10 @@ $defs:
       - event_type_domain
       - actor_slot_ids
       - method_slot_id
-      - specimen_code
+      - specimen_slot_ids
       - target_slot_ids
+      - anatomical_site_slot_ids
+      - temporal_scope_domain
     properties:
       event_type_domain:
         type: array
@@ -205,13 +243,27 @@ $defs:
         oneOf:
           - {type: string, pattern: "^V[0-9]{3}$"}
           - {type: "null"}
-      specimen_code:
-        enum: [STOOL, DUODENAL_FLUID, NOT_APPLICABLE, UNRESOLVED]
+      specimen_slot_ids:
+        type: array
+        maxItems: 8
+        uniqueItems: true
+        items: {type: string, pattern: "^SP[0-9]{3}$"}
       target_slot_ids:
         type: array
         maxItems: 16
         uniqueItems: true
         items: {type: string, pattern: "^V[0-9]{3}$"}
+      anatomical_site_slot_ids:
+        type: array
+        maxItems: 16
+        uniqueItems: true
+        items: {type: string, pattern: "^V[0-9]{3}$"}
+      temporal_scope_domain:
+        type: array
+        minItems: 1
+        maxItems: 5
+        uniqueItems: true
+        items: {enum: [HISTORICAL, CURRENT, FUTURE, GENERAL, UNKNOWN]}
   event_frame:
     type: object
     additionalProperties: false
@@ -275,7 +327,12 @@ $defs:
   reference_hypothesis:
     type: object
     additionalProperties: false
-    required: [reference_hypothesis_id, anaphor_source_id, candidate_referent_ids, status]
+    required:
+      - reference_hypothesis_id
+      - anaphor_source_id
+      - candidate_referent_ids
+      - identity_relation_domain
+      - status
     properties:
       reference_hypothesis_id: {type: string, pattern: "^RH[0-9]{3}$"}
       anaphor_source_id: {type: string, pattern: "^(S|U)[0-9]{3}$"}
@@ -285,6 +342,12 @@ $defs:
         maxItems: 32
         uniqueItems: true
         items: {type: string, pattern: "^(S|U|EF|V)[0-9]{3}$"}
+      identity_relation_domain:
+        type: array
+        minItems: 1
+        maxItems: 2
+        uniqueItems: true
+        items: {enum: [SAME_EVENT, DISTINCT_EVENT]}
       status: {enum: [UNIQUE, UNRESOLVED]}
   override_hypothesis:
     type: object
@@ -295,6 +358,7 @@ $defs:
       - earlier_frame_ids
       - later_frame_ids
       - identity_constraint
+      - overridden_dimension_domain
       - status
     properties:
       override_hypothesis_id: {type: string, pattern: "^OH[0-9]{3}$"}
@@ -312,4 +376,10 @@ $defs:
         uniqueItems: true
         items: {type: string, pattern: "^EF[0-9]{3}$"}
       identity_constraint: {const: SAME_NORMALIZED_IDENTITY_EXCLUDING_ASSERTION}
+      overridden_dimension_domain:
+        type: array
+        minItems: 1
+        maxItems: 3
+        uniqueItems: true
+        items: {enum: [ASSERTION_STATUS, FINDING_POLARITY, TEMPORAL_SCOPE]}
       status: {enum: [UNIQUE, UNRESOLVED, NO_MATCH]}

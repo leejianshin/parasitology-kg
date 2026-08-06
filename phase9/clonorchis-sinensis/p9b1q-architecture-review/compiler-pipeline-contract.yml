@@ -1,4 +1,4 @@
-contract_id: P9B1Q-DETERMINISTIC-COMPILER-PIPELINE-v0.1
+contract_id: P9B1Q-DETERMINISTIC-COMPILER-PIPELINE-v0.2
 status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
 architecture: Clause_AST_to_Event_Frame_to_Typed_Constraint_Solver_to_QueryIR
 
@@ -19,7 +19,9 @@ invariants:
 stages:
   S0_request_normalization:
     input: frozen_P9A_bound_request
+    output_schema: normalized-request-schema-candidate.yml
     output: canonical_normalized_request
+    semantic_validator: "stage-semantic-validator-contract.yml#S0_NORMALIZED_REQUEST"
     responsibilities:
       - Unicode_and_whitespace_normalization_only
       - preserve_exact_raw_to_normalized_span_mapping
@@ -31,8 +33,10 @@ stages:
   S1_clause_ast:
     input:
       - canonical_normalized_request
+      - frozen_entity_ontology
       - frozen_clause_grammar_config
     output_schema: clause-ast-schema-candidate.yml
+    semantic_validator: "stage-semantic-validator-contract.yml#S1_CLAUSE_AST"
     responsibilities:
       - construct_rooted_non_crossing_clause_tree
       - preserve_coordination_condition_contrast_override_and_OR_structure
@@ -48,6 +52,7 @@ stages:
       - frozen_entity_ontology
       - frozen_event_mapping
     output_schema: event-frame-schema-candidate.yml
+    semantic_validator: "stage-semantic-validator-contract.yml#S2_EVENT_FRAME"
     responsibilities:
       - construct_typed_event_domains_from_predicates_and_participants
       - bind_assertion_and_temporal_scope_via_AST_paths
@@ -65,6 +70,9 @@ stages:
       - frozen_constraint_set
     output_schema: typed-constraint-result-schema-candidate.yml
     semantic_contract: typed-constraint-solver-contract.yml
+    constraint_set_schema: constraint-set-schema-candidate.yml
+    constraint_registry_schema: constraint-id-registry-schema-candidate.yml
+    semantic_validator: "stage-semantic-validator-contract.yml#S3_TYPED_SOLVER"
     responsibilities:
       - solve_attachment_entity_event_assertion_identity_and_relation_variables_jointly
       - enforce_formal_direction_role_and_prohibition_mappings
@@ -76,10 +84,16 @@ stages:
   S4_queryir_emitter:
     input:
       - UNIQUE_typed_constraint_result
+      - embedded_complete_QueryIR_emission_record
+      - actual_normalized_request_clause_AST_and_event_frame_resolved_from_trace
+      - actual_constraint_set_and_formal_authority_objects_resolved_from_trace
       - frozen_QueryIR_schema_and_semantic_contract
+      - frozen_projection_rule_set
     output: existing_P9B1Q_QueryIR_object
+    semantic_validator: "stage-semantic-validator-contract.yml#S4_QUERYIR_EMISSION"
     responsibilities:
-      - project_selected_solution_fields_to_QueryIR_without_new_inference
+      - validate_complete_emission_record_and_all_actual_source_objects
+      - extract_embedded_QueryIR_byte_identically_without_new_inference
       - preserve_all_license_DAG_edges_and_source_span_bindings
       - populate_explicit_empty_arrays_where_required
       - canonicalize_ordered_unique_arrays
@@ -98,6 +112,7 @@ stages:
     output:
       - semantic_validation_result
       - compiler_binding_sidecar
+    semantic_validator: "stage-semantic-validator-contract.yml#S5_RUNTIME_BINDING"
     responsibilities:
       - independently_recompute_stage_and_QueryIR_hashes
       - ensure_actual_objects_equal_bound_summaries

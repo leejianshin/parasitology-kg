@@ -1,0 +1,186 @@
+contract_version: "0.1-candidate"
+contract_id: "clonorchis_p9b1q_stage_semantic_validators_v0_1"
+status: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"
+result_schema: "stage-semantic-validation-result-schema-candidate.yml"
+canonicalization_profile: "object-canonicalization-and-hash-chain.yml"
+constraint_registry: "constraint-id-registry.yml"
+constraint_registry_schema: "constraint-id-registry-schema-candidate.yml"
+
+common_executable_interface:
+  invocation: "validate(stage_id, actual_object_store, normative_artifact_store) -> validation_result"
+  actual_object_resolution: "content address resolves to exact persisted canonical bytes"
+  validation_order:
+    - RESOLVE_ACTUAL_OBJECTS
+    - VERIFY_OBJECT_KIND_AND_HASH
+    - PARSE_JSON_OR_NORMATIVE_FILE
+    - VALIDATE_STAGE_OUTPUT_SCHEMA
+    - RUN_REGISTERED_CONSTRAINTS_IN_ORDER
+    - VALIDATE_RESULT_SCHEMA_AND_CONDITIONALS
+    - CANONICALIZE_RESULT_AND_COMPUTE_RESULT_SHA256
+  no_mutation_or_repair: true
+  stop_on_first_error: false
+  output_all_errors_in_registry_order: true
+  unregistered_constraint_or_failure_code: "FAIL_CLOSED"
+
+validators:
+  S0_NORMALIZED_REQUEST:
+    validator_id: p9b1q-stage-semantic-validator-s0
+    required_actual_inputs: [P9A_REQUEST]
+    required_actual_output: NORMALIZED_REQUEST
+    registered_constraints:
+      - CNS-NORM-LOSSLESS_ROUNDTRIP
+      - CNS-NORM-REQUEST_BINDING
+    checks:
+      - "raw-to-normalized span map is total and reversible"
+      - "normalization changes only the frozen Unicode/whitespace profile"
+      - "request_id and request_sha256 equal the actual P9A request"
+  S1_CLAUSE_AST:
+    validator_id: p9b1q-stage-semantic-validator-s1
+    required_actual_inputs: [NORMALIZED_REQUEST, ENTITY_ONTOLOGY, CLAUSE_GRAMMAR_CONFIG]
+    required_actual_output: CLAUSE_AST
+    registered_constraints:
+      - CNS-AST-SINGLE_ROOT
+      - CNS-AST-ID_UNIQUE
+      - CNS-AST-REF_INTEGRITY
+      - CNS-AST-SPAN_ORDER
+      - CNS-AST-SPAN_TEXT_MATCH
+      - CNS-AST-NONCROSSING
+      - CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY
+      - CNS-AST-SCOPE_TARGET_INTEGRITY
+    additional_checks:
+      - "root_node_id resolves to the only ROOT and only it has null parent"
+      - "all child, marker, mention, scope target, and attachment IDs resolve with the declared type"
+      - "start_char < end_char and text equals normalized request codepoint slice"
+      - "UNIQUE attachment or scope target has exactly one candidate; UNRESOLVED has at least two"
+      - "NEGATOR and EXCLUSION can scope over S proposition/operator or U mention/object"
+      - "every material request codepoint is covered by one proposition or operator span"
+  S2_EVENT_FRAME:
+    validator_id: p9b1q-stage-semantic-validator-s2
+    required_actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
+    required_actual_output: EVENT_FRAME
+    registered_constraints:
+      - CNS-EF-ID_UNIQUE
+      - CNS-EF-REF_INTEGRITY
+      - CNS-EF-NONEMPTY_FIXED_DOMAIN
+      - CNS-EF-SLOT_TYPE
+      - CNS-EF-DIAGNOSTIC_BINDING
+      - CNS-EF-SPECIMEN_SOURCE
+      - CNS-EF-IDENTITY_CONSISTENCY
+      - CNS-EF-REFERENCE_DOMAIN
+      - CNS-EF-OVERRIDE_DOMAIN
+    additional_checks:
+      - "every slot, specimen, frame, AST source, reference, and override ID resolves with type"
+      - "FIXED domains contain exactly one allowed value; COMPETING domains contain at least two"
+      - "diagnostic method, specimen, target, polarity and assertion belong to the same frame"
+      - "specimen source span equals an actual specimen expression or explicit typed unknown slot"
+      - "frame event_type_domain equals normalized_identity.event_type_domain"
+      - "identity contains actor, method, specimen, target, anatomical site and temporal domains"
+      - "reference identity_relation_domain explicitly contains all and only viable SAME_EVENT/DISTINCT_EVENT alternatives"
+      - "override dimension is selected only from overridden_dimension_domain"
+  S3_TYPED_SOLVER:
+    validator_id: p9b1q-stage-semantic-validator-s3
+    required_actual_inputs:
+      - NORMALIZED_REQUEST
+      - CLAUSE_AST
+      - EVENT_FRAME
+      - ENTITY_ONTOLOGY
+      - RELATION_ONTOLOGY
+      - PREDICATE_TYPE_MAPPING
+      - EVENT_RELATION_MAPPING
+      - SEMANTIC_ROLE_MAPPING
+      - CONSTRAINT_REGISTRY
+      - CONSTRAINT_REGISTRY_SCHEMA
+      - CONSTRAINT_SET
+    required_actual_output: TYPED_CONSTRAINT_RESULT
+    registered_constraints:
+      - CNS-SOLVER-REGISTRY_MEMBERSHIP
+      - CNS-SOLVER-HASH_BINDING
+      - CNS-SOLVER-SOLUTION_CARDINALITY
+      - CNS-SOLVER-NONEMPTY_UNIQUE
+      - CNS-SOLVER-ENTITY_RESOLUTION
+      - CNS-SOLVER-ASSERTION_SCOPE
+      - CNS-SOLVER-EVENT_IDENTITY
+      - CNS-SOLVER-EVENT_RELATION_DERIVATION
+      - CNS-SOLVER-LICENSE_DAG
+      - CNS-SOLVER-MINIMALITY
+      - CNS-SOLVER-AMBIGUITY_CERTIFICATE
+    additional_checks:
+      - "all constraint IDs occur exactly once in the bound registry and selected constraint set"
+      - "registry entry orders are exactly integers 1 through 42 with no duplicate or gap"
+      - "selected constraint IDs equal the complete registry ID sequence in registry validation order"
+      - "registry and constraint set both pass their frozen Schemas before any constraint executes"
+      - "ZERO/ONE/MULTIPLE equals actual enumerated inclusion-minimal solution cardinality"
+      - "UNIQUE for a nonempty query contains at least one material QueryIR object"
+      - "every relation direction and selector is exactly derived from one event or explicit relation root"
+      - "every emitted semantic object has a rooted acyclic license path"
+      - "every retained semantic object has a valid removal witness"
+  S4_QUERYIR_EMISSION:
+    validator_id: p9b1q-stage-semantic-validator-s4
+    required_actual_inputs:
+      - NORMALIZED_REQUEST
+      - CLAUSE_AST
+      - EVENT_FRAME
+      - TYPED_CONSTRAINT_RESULT
+      - QUERYIR_EMISSION_RECORD
+      - CONSTRAINT_SET
+      - ENTITY_ONTOLOGY
+      - RELATION_ONTOLOGY
+      - PREDICATE_TYPE_MAPPING
+      - EVENT_RELATION_MAPPING
+      - SEMANTIC_ROLE_MAPPING
+      - QUERY_IR_SCHEMA
+      - PROJECTION_RULE_SET
+    required_actual_output: QUERY_IR
+    registered_constraints:
+      - CNS-EMIT-QUERYIR_SCHEMA
+      - CNS-EMIT-VALID_STATUS
+      - CNS-EMIT-LEAF_TRACE_COVERAGE
+      - CNS-EMIT-TRACE_VALUE_HASH
+      - CNS-EMIT-PROJECTION_ONLY
+      - CNS-EMIT-LICENSE_COVERAGE
+      - CNS-EMIT-MINIMALITY_WITNESS
+    additional_checks:
+      - "solver status is UNIQUE and embedded query_ir interpretation_status is VALID"
+      - "actual emitted QueryIR canonical bytes equal embedded query_ir canonical bytes"
+      - "each non-root property-value and array-item JSON pointer has exactly one trace record"
+      - "trace value hash equals the actual value and all source objects resolve"
+      - "all material QueryIR IDs occur in license DAG and minimality witness"
+      - "S4 performs extraction and validation only; it cannot add, remove, reorder, or rewrite semantic content"
+  S5_RUNTIME_BINDING:
+    validator_id: p9b1q-stage-semantic-validator-s5
+    required_actual_inputs: "complete object chain declared by object-canonicalization-and-hash-chain.yml"
+    required_actual_output: EXECUTION_BINDING_SIDECAR
+    registered_constraints:
+      - CNS-BIND-ACTUAL_OBJECT_HASH
+      - CNS-BIND-CANONICAL_PROFILE
+      - CNS-BIND-REQUEST_CHAIN
+      - CNS-BIND-RETRIEVAL_CHAIN
+      - CNS-BIND-RESPONSE_AUDIT_CHAIN
+    additional_checks:
+      - "all prior stage validation results are PASS and bind the same actual objects"
+      - "the sidecar actual output object is independently resolved and hashed; its own summaries are never authority"
+      - "retrieval is absent for every non-VALID interpretation or failed stage"
+      - "retrieval, response and audit bind actual request and QueryIR objects under existing P9-A contracts"
+
+negative_fixture_contract:
+  manifest: "fixtures/stage-validator-negative-fixtures.yml"
+  mutation_format: "RFC6902_JSON_PATCH"
+  each_case_requires:
+    - fixture_id
+    - stage
+    - valid_base_object_path
+    - one_declared_semantic_fault_class
+    - one_or_more_RFC6902_operations_needed_to_realize_only_that_fault
+    - paired_actual_object_paths_when_cross_object_validation_is_required
+    - explicit_recompute_policy_for_non_authoritative_derived_hashes
+    - expected_result_FAIL_CLOSED
+    - exact_expected_constraint_id
+    - exact_expected_failure_code
+  execution_gate:
+    - "base object passes its Schema and stage semantic validator before mutation"
+    - "mutation is applied to a deep copy of canonical base object"
+    - "only hashes explicitly marked RECOMPUTE_DERIVED may be recomputed after mutation"
+    - "authority, source, request, contract, registry and expected-result hashes are never recomputed"
+    - "mutated object remains isolated from all other cases"
+    - "actual validator result equals expected constraint and failure code"
+    - "all cases run three times with byte-identical result"

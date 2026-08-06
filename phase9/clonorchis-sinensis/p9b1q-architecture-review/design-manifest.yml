@@ -1,5 +1,6 @@
 manifest_id: P9B1Q-ARCHITECTURE-REVIEW-DESIGN-MANIFEST-v1
-status: FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW
+status: SUPERSEDED_BY_DESIGN_MANIFEST_V0_2
+superseded_by: design-manifest-v0.2.yml
 baseline_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
 hash_algorithm: SHA256_RAW_FILE_BYTES
 

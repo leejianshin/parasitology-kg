@@ -1,0 +1,70 @@
+review_revision: "1.1"
+review_id: "clonorchis_p9b1q_architecture_review_first_revision"
+status: "DESIGN_ONLY_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
+parent_design_commit: "ac3f16d9c59a0ff822a06eaeb3bbb70249778fda"
+frozen_implementation_commit: "6ac0e4b2978e5fb41e7b90e27ced17826d35a394"
+
+scope:
+  implementation_mutation_allowed: false
+  model_or_network_allowed: false
+  p9a_mutation_allowed: false
+  r11_freeze_before_review_pass_allowed: false
+  push_or_pr_allowed: false
+  p9b2_start_allowed: false
+
+changes_required_resolution:
+  pure_queryir_projection:
+    status: RESOLVED_BY_DESIGN
+    artifacts:
+      - queryir-emission-record-schema-candidate.yml
+      - queryir-projection-rule-set.yml
+    closure: >-
+      A UNIQUE solution embeds the complete QueryIR and every non-root property
+      value and array item has exactly one trace. S4 validates then performs a
+      byte-identical deep copy; it cannot infer or repair semantic content.
+  executable_stage_semantics:
+    status: RESOLVED_BY_DESIGN
+    artifacts:
+      - stage-semantic-validator-contract.yml
+      - stage-semantic-validation-result-schema-candidate.yml
+      - fixtures/stage-validator-negative-fixtures.yml
+    closure: >-
+      S0 through S5 resolve actual objects, execute registered checks in frozen
+      order, and produce a Schema-closed PASS or FAIL_CLOSED result. Isolated
+      single-fault fixtures cover every stage.
+  missing_semantic_dimensions:
+    status: RESOLVED_BY_DESIGN
+    closure:
+      negation_target: "Clause AST markers target proposition/operator or mention/object IDs."
+      specimen_slot: "Event Frame carries an independently sourced SP slot and diagnostic binding."
+      event_identity: "Reference hypotheses expose SAME_EVENT/DISTINCT_EVENT domains over normalized signatures."
+      override_dimension: "Override hypotheses expose a closed overridden-dimension domain."
+      license_dag: "The emission record carries a rooted acyclic full-coverage permission graph."
+  independent_hash_chain:
+    status: RESOLVED_BY_DESIGN
+    artifacts:
+      - object-canonicalization-and-hash-chain.yml
+    closure: >-
+      Each runtime JSON object and normative file/subobject has a distinct
+      canonicalization rule and hash; manifest strings never substitute for
+      resolving and hashing the actual object.
+  frozen_constraints_and_minimality:
+    status: RESOLVED_BY_DESIGN
+    artifacts:
+      - constraint-id-registry-schema-candidate.yml
+      - constraint-id-registry.yml
+      - constraint-set-schema-candidate.yml
+      - constraint-set-v0.1.yml
+      - queryir-emission-record-schema-candidate.yml
+    closure: >-
+      Forty-two checks are selected exactly once in registry order. Every retained
+      material object includes a removal probe naming the registered constraint
+      that becomes unsatisfied; omitted objects are separately justified.
+
+review_gate:
+  required_verdict: PASS
+  only_after_pass:
+    - "A fresh independent context may freeze and persist R11 before implementation."
+  on_changes_required:
+    - "Do not freeze R11."
+    - "Return findings to this design atom without modifying the frozen implementation."

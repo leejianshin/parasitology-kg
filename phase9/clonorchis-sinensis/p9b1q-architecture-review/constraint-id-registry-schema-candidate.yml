@@ -1,0 +1,36 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/constraint-id-registry-v0.1"
+title: "P9-B1Q frozen constraint ID registry candidate"
+type: object
+additionalProperties: false
+required: [registry_version, registry_id, status, id_policy, entries]
+properties:
+  registry_version: {const: "0.1-candidate"}
+  registry_id: {const: "clonorchis_p9b1q_constraint_registry_v0_1"}
+  status: {const: "FROZEN_FOR_INDEPENDENT_READ_ONLY_REVIEW"}
+  id_policy: {const: "CNS-{STAGE}-{UPPER_SNAKE_NAME}; never dynamically created"}
+  entries:
+    type: array
+    minItems: 42
+    maxItems: 42
+    uniqueItems: true
+    items: {$ref: "#/$defs/entry"}
+$defs:
+  entry:
+    type: object
+    additionalProperties: false
+    required: [order, id, stage, operator, failure_code, witness]
+    properties:
+      order: {type: integer, minimum: 1, maximum: 42}
+      id: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+      stage:
+        enum:
+          - S0_NORMALIZED_REQUEST
+          - S1_CLAUSE_AST
+          - S2_EVENT_FRAME
+          - S3_TYPED_SOLVER
+          - S4_QUERYIR_EMISSION
+          - S5_RUNTIME_BINDING
+      operator: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,127}$"}
+      failure_code: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,127}$"}
+      witness: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,127}$"}
