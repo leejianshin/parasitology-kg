@@ -73,7 +73,7 @@ $defs:
   object_reference:
     type: object
     additionalProperties: false
-    required: [object_kind, schema_id, canonical_sha256, byte_length]
+    required: [object_kind, content_path, content_json_pointer, schema_id, canonical_sha256, byte_length]
     properties:
       object_kind:
         enum:
@@ -90,6 +90,7 @@ $defs:
           - P9A_AUDIT_RECORD
           - STAGE_SEMANTIC_VALIDATION_RESULT
           - EXECUTION_BINDING_SIDECAR
+          - EXECUTION_BINDING_SIDECAR_SCHEMA
           - ENTITY_ONTOLOGY
           - RELATION_ONTOLOGY
           - PREDICATE_TYPE_MAPPING
@@ -104,6 +105,18 @@ $defs:
           - CONSTRAINT_SET_SCHEMA
           - QUERY_IR_SCHEMA
           - PROJECTION_RULE_SET
+          - MINIMALITY_PROOF_SCHEMA
+          - SEMANTIC_UNIVERSE
+          - REMOVAL_PROBE
+          - TYPED_SOLUTION
+          - TYPED_SOLUTION_CORE_SCHEMA
+      content_path:
+        type: string
+        pattern: "^(fixtures/|phase9/|schema/|derived/|sources/)[A-Za-z0-9._/-]+\\.(json|jsonl|yml)$"
+      content_json_pointer:
+        oneOf:
+          - {type: string, pattern: "^/"}
+          - {type: "null"}
       schema_id: {type: string, minLength: 1, maxLength: 256}
       canonical_sha256: {$ref: "#/$defs/sha256"}
       byte_length: {type: integer, minimum: 2, maximum: 16777216}

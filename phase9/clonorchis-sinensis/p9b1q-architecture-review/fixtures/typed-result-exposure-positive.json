@@ -4,22 +4,22 @@
   "request_sha256": "f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f",
   "normalized_request_sha256": "2017e70cf8df03a6feaba4f110b47c2a592404bd154043b56957c326e7e7a207",
   "knowledge_version": "clonorchis_pcms_v1",
-  "clause_ast_sha256": "d3b8e427835e7de9a089708c8c4c105d38503f9f73f3e8c054370fe842f2539a",
-  "event_frame_sha256": "7348e6e768c74c23f5a717dd89bab33d776d636213be2878879dd6af3bd0032e",
+  "clause_ast_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
+  "event_frame_sha256": "5acb97187eecccdca8d7b313eec650822fc3f4292b15eb50f2883355086d537c",
   "entity_ontology_sha256": "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e",
   "relation_ontology_sha256": "4d5c56c9a9df8c65a49705b91c8c8081b43f17d8096a471398ae234fdb0584c5",
   "event_relation_mapping_sha256": "5024b466e94fc0267cd34cabb86067523f267868a22480f150bbcdb0c7c68807",
   "predicate_type_mapping_sha256": "ec463903f5eb37921ef4393e903814a71ef7a3ee50a28c5bd673db8fe8186961",
   "semantic_role_mapping_sha256": "f70292f4c772ecf75c3d35643da3d1e764907cb35b05255b603293a0fd986166",
-  "canonicalization_profile_sha256": "372c7f194c91e24e09a1230c8089204cebe662960d4f3299f6c6bc5e885953fc",
-  "stage_validator_contract_sha256": "09927d151905a29cbff2d712824cd83206da3e402d42bf4178fbf560608f7a51",
+  "canonicalization_profile_sha256": "65aa11c07913fe7d3f4e59161fea3c453bf3b67e8a66f34eaad88ea1c06b24c2",
+  "stage_validator_contract_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516",
   "constraint_registry_sha256": "184ebf60bc881584d8e8c62908e411624d8883e4255b7ef49e574c88714ac544",
-  "constraint_set_sha256": "fb7ec2e5e6a8cd943569dbc45442202b1a01b245dfd44b93efe08a8f01555aa6",
+  "constraint_set_sha256": "b9375db91c2d3ccc1bed3a4293c6ecec25568276fc4b10d4c0163563943bc876",
   "solver": {
     "solver_id": "p9b1q-typed-constraint-solver",
     "solver_version": "0.2-fixture",
     "executable_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-    "configuration_sha256": "fb7ec2e5e6a8cd943569dbc45442202b1a01b245dfd44b93efe08a8f01555aa6"
+    "configuration_sha256": "b9375db91c2d3ccc1bed3a4293c6ecec25568276fc4b10d4c0163563943bc876"
   },
   "status": "UNIQUE",
   "solution_cardinality": "ONE",
@@ -182,8 +182,8 @@
       "request_id": "P9B1Q-ARCH-FIXTURE-001",
       "request_sha256": "f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f",
       "normalized_request_sha256": "2017e70cf8df03a6feaba4f110b47c2a592404bd154043b56957c326e7e7a207",
-      "clause_ast_sha256": "d3b8e427835e7de9a089708c8c4c105d38503f9f73f3e8c054370fe842f2539a",
-      "event_frame_sha256": "7348e6e768c74c23f5a717dd89bab33d776d636213be2878879dd6af3bd0032e",
+      "clause_ast_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
+      "event_frame_sha256": "5acb97187eecccdca8d7b313eec650822fc3f4292b15eb50f2883355086d537c",
       "semantic_solution_core_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
       "query_ir_schema_sha256": "8a6a9812f5fda8cc06fb79e65829a78097064620fd8cbacc8a7e35091f367d8e",
       "projection_rule_set_sha256": "444aa859cd138cf4643650ffcae82cc88e3082902560f30cb3b74fcf17cd8bac",
@@ -440,10 +440,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -460,10 +464,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -480,10 +488,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -500,10 +512,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -520,10 +536,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -540,10 +560,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -560,10 +584,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -580,10 +608,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -600,10 +632,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -620,10 +656,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -640,10 +680,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -658,12 +702,24 @@
           "emitted_value_sha256": "02934b64a0f74d4caa96d24341bcdc0b58c077934b37615ba104b98590327cba",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "ROOT"
+                "S002",
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -678,12 +734,18 @@
           "emitted_value_sha256": "36fcce64e413948e24e84bba43f4e0184820443ffaa5fd775aeca909f15dca6a",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -698,12 +760,18 @@
           "emitted_value_sha256": "1f423e689869d1712ca438e994f491d16b5c9ae00d0903e397ee1319f898fa80",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -718,12 +786,18 @@
           "emitted_value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -738,12 +812,18 @@
           "emitted_value_sha256": "25659e75c30bd3dd22525623a14d901ec3ac6ecdb51f6c3bb81357f25ece6ae3",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -758,12 +838,18 @@
           "emitted_value_sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -778,12 +864,18 @@
           "emitted_value_sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -798,12 +890,18 @@
           "emitted_value_sha256": "f12e903919979f710b2d822e953cff2b8765af3b2209047e4c7380fe2322b568",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -818,12 +916,18 @@
           "emitted_value_sha256": "3c2ab89d49e4a377c57de2ad3ffece1f50569375a6d84714e82aad1ffabf62b8",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -838,12 +942,18 @@
           "emitted_value_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -858,12 +968,18 @@
           "emitted_value_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C01"
+                "S002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -878,12 +994,18 @@
           "emitted_value_sha256": "2095017e112acf4e14d32e8dcd2cdac33ea4dd4039ec5384f1a0fc9621f24c0e",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -898,12 +1020,18 @@
           "emitted_value_sha256": "8938fbaa8b5d7f4807ef800262317fcab153445143f1b9d6959b11f75b12001a",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -918,12 +1046,18 @@
           "emitted_value_sha256": "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -938,12 +1072,18 @@
           "emitted_value_sha256": "0fe71c4c571011212d26b6a34fcecebe3b1c6b960b491260592445545492a9a5",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -958,12 +1098,18 @@
           "emitted_value_sha256": "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -978,12 +1124,18 @@
           "emitted_value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -998,12 +1150,18 @@
           "emitted_value_sha256": "03c9acaeef4c2e785c99ec3cba0a13ac0219bdec035590fadb54dcbc42792faa",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1018,12 +1176,18 @@
           "emitted_value_sha256": "bdf29eb80b2fe24027f4c0fc3811a04f2db715a43854127004935e21b271efdd",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1038,12 +1202,18 @@
           "emitted_value_sha256": "1f423e689869d1712ca438e994f491d16b5c9ae00d0903e397ee1319f898fa80",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1058,12 +1228,18 @@
           "emitted_value_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
           "source_bindings": [
             {
-              "object_kind": "TYPED_SOLUTION",
-              "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
+              "object_kind": "CLAUSE_AST",
+              "object_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
               "source_ids": [
-                "C02"
+                "S004"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1081,9 +1257,21 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "ROOT"
+                "RM001",
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                },
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1101,9 +1289,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1121,9 +1315,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1141,9 +1341,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1161,9 +1367,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1181,9 +1393,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1201,9 +1419,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1221,9 +1445,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1241,9 +1471,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1261,9 +1497,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1281,9 +1523,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1301,9 +1549,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1321,9 +1575,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M01"
+                "RM001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1341,9 +1601,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1361,9 +1627,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1381,9 +1653,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1401,9 +1679,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1421,9 +1705,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1441,9 +1731,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1461,9 +1757,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1481,9 +1783,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1501,9 +1809,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1521,9 +1835,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1541,9 +1861,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1561,9 +1887,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "M02"
+                "RM002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 19,
+                  "end_char": 25,
+                  "text": "华支睾吸虫病"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1581,9 +1913,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "ROOT"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1601,9 +1939,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1621,9 +1965,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1641,9 +1991,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1661,9 +2017,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1681,9 +2043,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1701,9 +2069,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1721,9 +2095,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1741,9 +2121,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1761,9 +2147,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1781,9 +2173,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1801,9 +2199,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1821,9 +2225,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1841,9 +2251,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1861,9 +2277,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1881,9 +2303,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1901,9 +2329,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1921,9 +2355,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1941,9 +2381,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "E01"
+                "RE001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 8,
+                  "end_char": 13,
+                  "text": "生食淡水鱼"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1961,9 +2407,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "ROOT"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -1981,9 +2438,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2001,9 +2469,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2021,9 +2500,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2041,9 +2531,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2061,9 +2562,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2081,9 +2593,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2101,9 +2624,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2121,9 +2655,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2141,9 +2686,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2161,9 +2717,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2181,9 +2748,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2201,9 +2779,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2221,9 +2810,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2241,9 +2841,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2261,9 +2872,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2281,9 +2903,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2301,9 +2934,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2321,9 +2965,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2341,9 +2996,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2361,9 +3027,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2381,9 +3058,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2401,9 +3089,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2421,9 +3120,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2441,9 +3151,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2461,9 +3182,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2481,9 +3213,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2501,9 +3244,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2521,9 +3275,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2541,9 +3306,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2561,9 +3337,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "R01"
+                "RR001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2581,9 +3368,21 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "ROOT"
+                "RN001",
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2601,9 +3400,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2621,9 +3431,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2641,9 +3462,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2661,9 +3493,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2681,9 +3524,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2701,9 +3555,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2721,9 +3586,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2741,9 +3617,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2761,9 +3648,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2781,9 +3679,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2801,9 +3710,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2821,9 +3741,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2841,9 +3772,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2861,9 +3803,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2881,9 +3834,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2901,9 +3865,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2921,9 +3896,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2941,9 +3927,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2961,9 +3958,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -2981,9 +3989,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3001,9 +4020,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3021,9 +4051,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3041,9 +4082,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3061,9 +4113,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3081,9 +4144,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3101,9 +4175,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3121,9 +4206,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3141,9 +4237,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N01"
+                "RN001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3161,9 +4268,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3181,9 +4299,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3201,9 +4330,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3221,9 +4361,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3241,9 +4392,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3261,9 +4423,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3281,9 +4454,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3301,9 +4485,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3321,9 +4516,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3341,9 +4547,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3361,9 +4578,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3381,9 +4609,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3401,9 +4640,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3421,9 +4671,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3441,9 +4702,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3461,9 +4733,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3481,9 +4764,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3501,9 +4795,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3521,9 +4826,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3541,9 +4857,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3561,9 +4888,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3581,9 +4919,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3601,9 +4950,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3621,9 +4981,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3641,9 +5012,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3661,9 +5043,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3681,9 +5074,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3701,9 +5105,20 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "N02"
+                "RN002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 14,
+                  "text": "来自流行地区并有生食淡水鱼史"
+                },
+                {
+                  "start_char": 15,
+                  "end_char": 30,
+                  "text": "可以作为华支睾吸虫病的什么证据"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3721,9 +5136,16 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "ROOT"
+                "RQ001",
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3741,9 +5163,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3761,9 +5189,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3781,9 +5215,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3801,9 +5241,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3821,9 +5267,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3841,9 +5293,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3861,9 +5319,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3881,9 +5345,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3901,9 +5371,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3921,9 +5397,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q01"
+                "RQ001"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3941,9 +5423,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3961,9 +5449,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -3981,9 +5475,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4001,9 +5501,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4021,9 +5527,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4041,9 +5553,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4061,9 +5579,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4081,9 +5605,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4101,9 +5631,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4121,9 +5657,15 @@
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
               "source_ids": [
-                "Q02"
+                "RQ002"
               ],
-              "source_spans": []
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4140,10 +5682,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4160,10 +5706,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4180,10 +5730,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4200,10 +5754,14 @@
             {
               "object_kind": "TYPED_SOLUTION",
               "object_sha256": "9a2c906506c209cd554e111a7aaf1f4adbce79de350ab7f1826297e0cb6bb97b",
-              "source_ids": [
-                "ROOT"
-              ],
-              "source_spans": []
+              "source_ids": [],
+              "source_spans": [
+                {
+                  "start_char": 0,
+                  "end_char": 31,
+                  "text": "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+                }
+              ]
             }
           ],
           "constraint_ids": [
@@ -4349,7 +5907,7 @@
         "dag_sha256": "45cd5ed13037394fffda443e2cdf86c04d2c82d72d99a6144d4d86237656a8c0"
       },
       "minimality_witness": {
-        "semantic_universe_sha256": "60139fd680b5db77aecb8a0473368beba0efe8ff2ab27f7ee92a5ee234088345",
+        "semantic_universe_sha256": "fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf",
         "retained_semantic_object_ids": [
           "M01",
           "M02",
@@ -4365,122 +5923,131 @@
             "semantic_object_id": "M01",
             "query_ir_json_pointer": "/mentions/0",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-ENTITY_RESOLUTION"
             ],
             "license_path_node_ids": [
               "LN0001"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-ENTITY_RESOLUTION"
             ],
-            "removal_probe_sha256": "a1382425aabbd1768b9a6fe4b60d247cc71c8733352a93c4cfd49c874ee4536b"
+            "removal_probe_sha256": "d0466c4729ed34db8cd59b9a4ffec1f08138c8c6092101afd9556e70d12c9e8c",
+            "removal_probe_path": "fixtures/minimality-removal-probe-M01.json"
           },
           {
             "semantic_object_id": "M02",
             "query_ir_json_pointer": "/mentions/1",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-ENTITY_RESOLUTION"
             ],
             "license_path_node_ids": [
               "LN0002"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-ENTITY_RESOLUTION"
             ],
-            "removal_probe_sha256": "41dbdaded276e36b02346298a093457c75ffe8e05eedd1b5f0572553d20e298c"
+            "removal_probe_sha256": "bfdbf2b72cff662049ac9ec4e449b8118ea242dd99292a0c71debe63ed2f5578",
+            "removal_probe_path": "fixtures/minimality-removal-probe-M02.json"
           },
           {
             "semantic_object_id": "E01",
             "query_ir_json_pointer": "/events/0",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-EVENT_RELATION_DERIVATION"
             ],
             "license_path_node_ids": [
               "LN0003"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-EVENT_RELATION_DERIVATION"
             ],
-            "removal_probe_sha256": "2ef49446037bdef1f6f24e90469d95d251763fbe066c9c0a5eb33c3d0c4d3f88"
+            "removal_probe_sha256": "ed2648a9fa92c6df33d0663c56424c09eef4860a7303acfa21b16118cc8270cd",
+            "removal_probe_path": "fixtures/minimality-removal-probe-E01.json"
           },
           {
             "semantic_object_id": "R01",
             "query_ir_json_pointer": "/relation_intents/0",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-EVENT_RELATION_DERIVATION"
             ],
             "license_path_node_ids": [
               "LN0004"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-EVENT_RELATION_DERIVATION"
             ],
-            "removal_probe_sha256": "3c018b8d6261b60a5bfc4477597c29fbc11eba0885ebd6d8362211068d6bdd64"
+            "removal_probe_sha256": "7194fd6d3dfc15d249ccc3b1faac3a652e1a90c8efa3056e872c57aa30b30f39",
+            "removal_probe_path": "fixtures/minimality-removal-probe-R01.json"
           },
           {
             "semantic_object_id": "N01",
             "query_ir_json_pointer": "/narrative_intents/0",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
             "license_path_node_ids": [
               "LN0004",
               "LN0005"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
-            "removal_probe_sha256": "7b1887bef00bdaed86d0d985536db24ac6e2b3e2805e7ba7e542ee1100fbb1d9"
+            "removal_probe_sha256": "31c6f4bc7a4c59cd138a16fcf64bdb45a3bb248bfeba533fcd188dab22907335",
+            "removal_probe_path": "fixtures/minimality-removal-probe-N01.json"
           },
           {
             "semantic_object_id": "N02",
             "query_ir_json_pointer": "/narrative_intents/1",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
             "license_path_node_ids": [
               "LN0004",
               "LN0006"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
-            "removal_probe_sha256": "3ddec6fd3908adaf9979e3baa25aab3204b6cb6d72b0170ff140df713487784b"
+            "removal_probe_sha256": "d65d7142353e05aeed7479718c9b55787f32a1da39b740b35cd19255ec086e09",
+            "removal_probe_path": "fixtures/minimality-removal-probe-N02.json"
           },
           {
             "semantic_object_id": "Q01",
             "query_ir_json_pointer": "/required_roles/0",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
             "license_path_node_ids": [
               "LN0004",
               "LN0007"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
-            "removal_probe_sha256": "986c317a710be3635bc4b02bce21ffc2b98e1ea0b4b9174d69dcbc130ab38228"
+            "removal_probe_sha256": "30dd3a740b33353244dbaa0dede3fca8616a802960428eacaa44ff536a2fce58",
+            "removal_probe_path": "fixtures/minimality-removal-probe-Q01.json"
           },
           {
             "semantic_object_id": "Q02",
             "query_ir_json_pointer": "/required_roles/1",
             "supporting_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
             "license_path_node_ids": [
               "LN0004",
               "LN0008"
             ],
             "removal_unsatisfied_constraint_ids": [
-              "CNS-SOLVER-MINIMALITY"
+              "CNS-SOLVER-LICENSE_DAG"
             ],
-            "removal_probe_sha256": "99753504d7b271bfc73c61d7a46e5c0b9a9584a3193cbb291008ca73fd479c62"
+            "removal_probe_sha256": "598d7e6e7f8232ba4cce63796f61cb4dd5cb9cd5af81bd2459fc4a5834c4fb39",
+            "removal_probe_path": "fixtures/minimality-removal-probe-Q02.json"
           }
         ],
         "omitted_object_ids": [],
         "omitted_object_exclusion_constraint_ids": [],
-        "witness_sha256": "58a98875e1fb39184895dd56b06a80ef4ebc3e9f3f1663c85b73c28b7326ce88"
+        "witness_sha256": "39e3ea0489d5553578f8944342207f1fd461a6a2cdbc5df81af677af9812c6a7",
+        "semantic_universe_path": "fixtures/semantic-universe-exposure-positive.json"
       }
     }
   },

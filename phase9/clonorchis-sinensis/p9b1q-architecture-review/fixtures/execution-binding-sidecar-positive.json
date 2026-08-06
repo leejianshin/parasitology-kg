@@ -1,7 +1,9 @@
 {
-  "index_version": "0.2-fixture",
+  "sidecar_version": "0.1-candidate",
   "request_id": "P9B1Q-ARCH-FIXTURE-001",
-  "objects": [
+  "canonicalization_profile_sha256": "65aa11c07913fe7d3f4e59161fea3c453bf3b67e8a66f34eaad88ea1c06b24c2",
+  "validator_contract_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516",
+  "actual_objects": [
     {
       "object_kind": "P9A_REQUEST",
       "path": "fixtures/request-exposure-positive.json",
@@ -177,6 +179,15 @@
       "canonical_sha256": "6fa559eb62e31bd73107916002d55b71c2824f42af8afa28f14171b26f18f9e9"
     }
   ],
-  "sidecar_path": "fixtures/execution-binding-sidecar-positive.json",
-  "sidecar_sha256": "a596736f0c482521676e8a21be5883f3d356ce486a81c6831d7ae92f8ebc3d48"
+  "stage_validation_result_paths": [
+    "fixtures/stage-validation-s0-positive.json",
+    "fixtures/stage-validation-s1-positive.json",
+    "fixtures/stage-validation-s2-positive.json",
+    "fixtures/stage-validation-s3-positive.json",
+    "fixtures/stage-validation-s4-positive.json"
+  ],
+  "disposition": "QUERY_IR_VALID_RETRIEVED_ANSWERED",
+  "retrieval_executed": true,
+  "response_present": true,
+  "sidecar_sha256": "5d82dc1d920ce992e5612209ddd47d831d4293b0045c9a89bedbe286e483ccea"
 }

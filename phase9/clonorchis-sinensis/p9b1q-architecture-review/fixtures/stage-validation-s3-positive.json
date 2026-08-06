@@ -1,0 +1,127 @@
+{
+  "validation_result_version": "0.1-candidate",
+  "request_id": "P9B1Q-ARCH-FIXTURE-001",
+  "stage": "S3_TYPED_SOLVER",
+  "result": "PASS",
+  "canonicalization_profile_sha256": "65aa11c07913fe7d3f4e59161fea3c453bf3b67e8a66f34eaad88ea1c06b24c2",
+  "validator_contract_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516",
+  "validator": {
+    "validator_id": "p9b1q-stage-semantic-validator-s3",
+    "validator_version": "0.1-fixture",
+    "executable_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "configuration_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516"
+  },
+  "actual_input_objects": [
+    {
+      "object_kind": "NORMALIZED_REQUEST",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-exposure-positive.json",
+      "content_json_pointer": null,
+      "schema_id": "normalized-request-schema-candidate.yml",
+      "canonical_sha256": "2017e70cf8df03a6feaba4f110b47c2a592404bd154043b56957c326e7e7a207",
+      "byte_length": 857
+    },
+    {
+      "object_kind": "CLAUSE_AST",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-exposure-positive.json",
+      "content_json_pointer": null,
+      "schema_id": "clause-ast-schema-candidate.yml",
+      "canonical_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
+      "byte_length": 3849
+    },
+    {
+      "object_kind": "EVENT_FRAME",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-exposure-positive.json",
+      "content_json_pointer": null,
+      "schema_id": "event-frame-schema-candidate.yml",
+      "canonical_sha256": "5acb97187eecccdca8d7b313eec650822fc3f4292b15eb50f2883355086d537c",
+      "byte_length": 1926
+    },
+    {
+      "object_kind": "ENTITY_ONTOLOGY",
+      "content_path": "schema/entity-types.yml",
+      "content_json_pointer": null,
+      "schema_id": "schema/entity-types.yml",
+      "canonical_sha256": "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e",
+      "byte_length": 2456
+    },
+    {
+      "object_kind": "RELATION_ONTOLOGY",
+      "content_path": "schema/relation-types.yml",
+      "content_json_pointer": null,
+      "schema_id": "schema/relation-types.yml",
+      "canonical_sha256": "4d5c56c9a9df8c65a49705b91c8c8081b43f17d8096a471398ae234fdb0584c5",
+      "byte_length": 7948
+    },
+    {
+      "object_kind": "CONSTRAINT_REGISTRY",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml",
+      "content_json_pointer": null,
+      "schema_id": "constraint-id-registry-schema-candidate.yml",
+      "canonical_sha256": "184ebf60bc881584d8e8c62908e411624d8883e4255b7ef49e574c88714ac544",
+      "byte_length": 7782
+    },
+    {
+      "object_kind": "CONSTRAINT_SET",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml",
+      "content_json_pointer": null,
+      "schema_id": "constraint-set-schema-candidate.yml",
+      "canonical_sha256": "b9375db91c2d3ccc1bed3a4293c6ecec25568276fc4b10d4c0163563943bc876",
+      "byte_length": 2277
+    },
+    {
+      "object_kind": "MINIMALITY_PROOF_SCHEMA",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/minimality-proof-schema-candidate.yml",
+      "content_json_pointer": null,
+      "schema_id": "draft2020-12-schema",
+      "canonical_sha256": "5ad27b4d79676e710d4937bb21a2c4b4885f33d9c74e9345077f002ae591b467",
+      "byte_length": 3599
+    },
+    {
+      "object_kind": "PREDICATE_TYPE_MAPPING",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/authority-predicate-type-mapping.json",
+      "content_json_pointer": null,
+      "schema_id": "object-canonicalization-and-hash-chain.yml#/normative_subobject_canonicalization",
+      "canonical_sha256": "ec463903f5eb37921ef4393e903814a71ef7a3ee50a28c5bd673db8fe8186961",
+      "byte_length": 2669
+    },
+    {
+      "object_kind": "EVENT_RELATION_MAPPING",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/authority-event-relation-mapping.json",
+      "content_json_pointer": null,
+      "schema_id": "object-canonicalization-and-hash-chain.yml#/normative_subobject_canonicalization",
+      "canonical_sha256": "5024b466e94fc0267cd34cabb86067523f267868a22480f150bbcdb0c7c68807",
+      "byte_length": 8913
+    },
+    {
+      "object_kind": "SEMANTIC_ROLE_MAPPING",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/authority-semantic-role-mapping.json",
+      "content_json_pointer": null,
+      "schema_id": "object-canonicalization-and-hash-chain.yml#/normative_subobject_canonicalization",
+      "canonical_sha256": "f70292f4c772ecf75c3d35643da3d1e764907cb35b05255b603293a0fd986166",
+      "byte_length": 7974
+    }
+  ],
+  "actual_output_object": {
+    "object_kind": "TYPED_CONSTRAINT_RESULT",
+    "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/typed-result-exposure-positive.json",
+    "content_json_pointer": null,
+    "schema_id": "typed-constraint-result-schema-candidate.yml",
+    "canonical_sha256": "a10c6649df6036d68c9610f6149be738ccfb2e45ec5ee2272db95ffdeb8bec4b",
+    "byte_length": 127691
+  },
+  "verified_constraint_ids": [
+    "CNS-SOLVER-REGISTRY_MEMBERSHIP",
+    "CNS-SOLVER-HASH_BINDING",
+    "CNS-SOLVER-SOLUTION_CARDINALITY",
+    "CNS-SOLVER-NONEMPTY_UNIQUE",
+    "CNS-SOLVER-ENTITY_RESOLUTION",
+    "CNS-SOLVER-ASSERTION_SCOPE",
+    "CNS-SOLVER-EVENT_IDENTITY",
+    "CNS-SOLVER-EVENT_RELATION_DERIVATION",
+    "CNS-SOLVER-LICENSE_DAG",
+    "CNS-SOLVER-MINIMALITY",
+    "CNS-SOLVER-AMBIGUITY_CERTIFICATE"
+  ],
+  "errors": [],
+  "result_sha256": "de19a97502e05988cc4aa6442601aaf296039b3bb9c4c6ebe1b5cc49f0ff5e12"
+}

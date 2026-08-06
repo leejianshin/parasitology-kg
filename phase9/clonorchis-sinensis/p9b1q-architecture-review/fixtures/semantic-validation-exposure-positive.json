@@ -1,0 +1,26 @@
+{
+  "schema_version": "0.2-candidate",
+  "validation_id": "SV-f28aceca8112f98ffa238b6e",
+  "request_schema_valid": true,
+  "request_id": "P9B1Q-ARCH-FIXTURE-001",
+  "request_sha256": "f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f",
+  "query_ir_sha256": "f28aceca8112f98ffa238b6eb5ffe705085ada7116cdb3a6d6f54ddf31b1f091",
+  "knowledge_version": "clonorchis_pcms_v1",
+  "query_ir_schema_valid": true,
+  "query_ir_interpretation_status": "VALID",
+  "query_ir_schema_sha256": "8a6a9812f5fda8cc06fb79e65829a78097064620fd8cbacc8a7e35091f367d8e",
+  "semantic_contract_sha256": "e72231f37ffbbfc8d7285b9f0708cf9527d64853b338dfc7d9b51ece37374a47",
+  "semantic_validator_contract_sha256": "970ca3f9a21d991e958ebfcb274a31fb2eccb3c1a20dcd701aae526b934a5993",
+  "event_mapping_sha256": "1d8164f739d87ff60dd4e19339afbe002842b92419210611a794d3ed42ded695",
+  "result": "PASS",
+  "fail_codes": [],
+  "executable_relation_intent_ids": [
+    "R01"
+  ],
+  "executable_narrative_intent_ids": [
+    "N01",
+    "N02"
+  ],
+  "prohibited_relation_intent_ids": [],
+  "superseded_event_ids": []
+}

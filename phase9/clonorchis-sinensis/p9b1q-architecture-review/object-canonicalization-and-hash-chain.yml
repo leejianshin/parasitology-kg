@@ -89,6 +89,7 @@ object_chain:
       - CONSTRAINT_REGISTRY_SCHEMA
       - CONSTRAINT_SET
       - STAGE_VALIDATOR_CONTRACT
+      - MINIMALITY_PROOF_SCHEMA
     actual_output: TYPED_CONSTRAINT_RESULT
     independent_hash_fields:
       - request_sha256
@@ -110,6 +111,7 @@ object_chain:
       - CLAUSE_AST
       - EVENT_FRAME
       - TYPED_CONSTRAINT_RESULT
+      - TYPED_SOLUTION
       - QUERYIR_EMISSION_RECORD
       - CONSTRAINT_SET
       - ENTITY_ONTOLOGY
@@ -119,6 +121,10 @@ object_chain:
       - SEMANTIC_ROLE_MAPPING
       - QUERY_IR_SCHEMA
       - PROJECTION_RULE_SET
+      - SEMANTIC_UNIVERSE
+      - REMOVAL_PROBES
+      - MINIMALITY_PROOF_SCHEMA
+      - TYPED_SOLUTION_CORE_SCHEMA
     actual_output: QUERY_IR
     independent_hash_fields:
       - typed_constraint_result_sha256
@@ -140,6 +146,7 @@ object_chain:
       - RETRIEVAL_RESULT_IF_EXECUTED
       - P9A_RESPONSE_IF_PRESENT
       - P9A_AUDIT_RECORD
+      - EXECUTION_BINDING_SIDECAR_SCHEMA
     actual_output: EXECUTION_BINDING_SIDECAR
     independent_hash_fields: "EVERY_RESOLVED_ACTUAL_OBJECT_CANONICAL_SHA256"
 
@@ -151,3 +158,5 @@ binding_invariants:
   - "aggregate ontology_sha256 is prohibited"
   - "missing actual object, noncanonical persisted bytes, wrong path, or wrong object kind fails closed"
   - "no retrieval object may exist unless S0 through S4 all PASS"
+  - "typed solution cores, semantic universes and removal probes are persisted as independently resolvable canonical JSON objects"
+  - "a source ID is interpreted only in the namespace of its declared actual object kind and must resolve there"

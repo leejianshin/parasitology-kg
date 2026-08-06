@@ -1,0 +1,56 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/compiler-execution-binding-sidecar-v0.1"
+title: "P9-B1Q architecture execution binding sidecar"
+type: object
+additionalProperties: false
+required:
+  - sidecar_version
+  - request_id
+  - canonicalization_profile_sha256
+  - validator_contract_sha256
+  - actual_objects
+  - stage_validation_result_paths
+  - disposition
+  - retrieval_executed
+  - response_present
+  - sidecar_sha256
+properties:
+  sidecar_version: {const: "0.1-candidate"}
+  request_id: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+  canonicalization_profile_sha256: {$ref: "#/$defs/sha256"}
+  validator_contract_sha256: {$ref: "#/$defs/sha256"}
+  actual_objects:
+    type: array
+    minItems: 16
+    maxItems: 64
+    uniqueItems: true
+    items: {$ref: "#/$defs/object_reference"}
+  stage_validation_result_paths:
+    type: array
+    minItems: 5
+    maxItems: 5
+    uniqueItems: true
+    prefixItems:
+      - {const: "fixtures/stage-validation-s0-positive.json"}
+      - {const: "fixtures/stage-validation-s1-positive.json"}
+      - {const: "fixtures/stage-validation-s2-positive.json"}
+      - {const: "fixtures/stage-validation-s3-positive.json"}
+      - {const: "fixtures/stage-validation-s4-positive.json"}
+    items: false
+  disposition: {const: QUERY_IR_VALID_RETRIEVED_ANSWERED}
+  retrieval_executed: {const: true}
+  response_present: {const: true}
+  sidecar_sha256:
+    description: "Canonical SHA-256 of this sidecar with sidecar_sha256 omitted."
+    $ref: "#/$defs/sha256"
+$defs:
+  sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+  object_reference:
+    type: object
+    additionalProperties: false
+    required: [object_kind, path, schema_id, canonical_sha256]
+    properties:
+      object_kind: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,95}$"}
+      path: {type: string, pattern: "^fixtures/[A-Za-z0-9._-]+\\.json$"}
+      schema_id: {type: string, minLength: 1, maxLength: 512}
+      canonical_sha256: {$ref: "#/$defs/sha256"}

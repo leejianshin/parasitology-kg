@@ -78,6 +78,7 @@ stages:
       - enforce_formal_direction_role_and_prohibition_mappings
       - enforce_inclusion_minimal_semantic_object_set
       - return_UNIQUE_AMBIGUOUS_UNSUPPORTED_or_INVALID_with_proof_artifacts
+      - persist_unique_typed_solution_core_semantic_universe_and_executable_removal_probes_as_separate_content_addressed_objects
     gate:
       pass: status_UNIQUE_and_exactly_one_selected_solution
       fail: no_QueryIR_and_no_retrieval
@@ -87,6 +88,7 @@ stages:
       - embedded_complete_QueryIR_emission_record
       - actual_normalized_request_clause_AST_and_event_frame_resolved_from_trace
       - actual_constraint_set_and_formal_authority_objects_resolved_from_trace
+      - actual_typed_solution_core_semantic_universe_and_removal_probe_objects
       - frozen_QueryIR_schema_and_semantic_contract
       - frozen_projection_rule_set
     output: existing_P9B1Q_QueryIR_object

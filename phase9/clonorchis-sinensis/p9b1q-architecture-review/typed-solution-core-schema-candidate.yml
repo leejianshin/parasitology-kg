@@ -1,0 +1,66 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/typed-solution-core-v0.1"
+title: "P9-B1Q independently persisted UNIQUE typed solution core"
+type: object
+additionalProperties: false
+required:
+  - solution_id
+  - resolved_mentions
+  - resolved_events
+  - resolved_relations
+  - semantic_roles
+  - narrative_intents
+  - forbidden_relations
+  - resolved_references
+  - resolved_overrides
+  - satisfied_constraint_ids
+  - semantic_object_set_sha256
+properties:
+  solution_id: {type: string, pattern: "^SOL-[0-9a-f]{24}$"}
+  resolved_mentions:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/resolved_mention"}
+  resolved_events:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/resolved_event"}
+  resolved_relations:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/resolved_relation"}
+  semantic_roles:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/semantic_role"}
+  narrative_intents:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/narrative_intent"}
+  forbidden_relations:
+    type: array
+    maxItems: 256
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/forbidden_relation"}
+  resolved_references:
+    type: array
+    maxItems: 128
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/resolved_reference"}
+  resolved_overrides:
+    type: array
+    maxItems: 64
+    uniqueItems: true
+    items: {$ref: "typed-constraint-result-schema-candidate.yml#/$defs/resolved_override"}
+  satisfied_constraint_ids:
+    type: array
+    minItems: 1
+    maxItems: 1024
+    uniqueItems: true
+    items: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
+  semantic_object_set_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}

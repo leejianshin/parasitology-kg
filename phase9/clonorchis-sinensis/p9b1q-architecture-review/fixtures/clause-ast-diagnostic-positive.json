@@ -6,8 +6,8 @@
   "knowledge_version": "clonorchis_pcms_v1",
   "entity_ontology_sha256": "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e",
   "clause_grammar_config_sha256": "163598ca6f638c794e6e227e21f3175d6d45b2b7e4df2ce28b1be668d5df3c62",
-  "canonicalization_profile_sha256": "372c7f194c91e24e09a1230c8089204cebe662960d4f3299f6c6bc5e885953fc",
-  "stage_validator_contract_sha256": "09927d151905a29cbff2d712824cd83206da3e402d42bf4178fbf560608f7a51",
+  "canonicalization_profile_sha256": "65aa11c07913fe7d3f4e59161fea3c453bf3b67e8a66f34eaad88ea1c06b24c2",
+  "stage_validator_contract_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516",
   "span_basis": "REQUEST_QUERY_TEXT_UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN",
   "producer": {
     "producer_id": "p9b1q-clause-ast-compiler",

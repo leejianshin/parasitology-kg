@@ -1,0 +1,45 @@
+review_revision: "1.2"
+review_id: "clonorchis_p9b1q_architecture_first_revision_review_corrections"
+status: "DESIGN_ONLY_PENDING_SECOND_INDEPENDENT_READ_ONLY_REVIEW"
+changes_required_commit: "a13bd208f2567ed3dc041ff994e4d511dab1a341"
+frozen_implementation_commit: "6ac0e4b2978e5fb41e7b90e27ced17826d35a394"
+
+first_independent_review:
+  verdict: CHANGES_REQUIRED
+  r11_frozen: false
+  blockers:
+    - TRACE_SOURCE_OBJECT_UNRESOLVABLE
+    - MINIMALITY_PROBE_NOT_EXECUTABLE
+    - S5_POSITIVE_BASE_INCOMPLETE
+    - TWO_NEGATIVE_FIXTURES_EXPECTED_LATER_CONSTRAINT
+
+corrections:
+  trace_sources:
+    - "The typed solution core is persisted as fixtures/typed-solution-exposure-positive.json."
+    - "Every trace binds the actual typed-solution core or Clause AST canonical hash."
+    - "Every nonempty source ID resolves in that object's namespace."
+    - "Every trace carries one or more spans that equal normalized-request slices."
+  executable_minimality:
+    - "The semantic universe is a separately persisted Schema-valid object."
+    - "Each of eight retained objects binds an actual removal-probe path and canonical hash."
+    - "Each probe names a one-operation RFC 6902 removal, recomputed candidate hash, validator/configuration hashes, and expected unsatisfied registered constraints."
+  complete_s5_positive_base:
+    - "The sidecar binds 29 actual objects, including emission record, proofs, semantic validation, retrieval, P9-A response/audit, and five stage PASS results."
+    - "All actual paths and hashes are independently resolvable; the sidecar has an explicit self-hash exclusion."
+  negative_fixture_order:
+    - "Dangling scope target now expects CNS-AST-REF-INTEGRITY / DANGLING_REFERENCE."
+    - "Dangling method slot now expects CNS-EF-REF-INTEGRITY / DANGLING_REFERENCE."
+  strict_schema_and_fixture_closure:
+    - "All eleven local candidate Schemas compile under AJV Draft 2020-12 strict mode."
+    - "The Event Frame conditional contains checks declare their array instance type explicitly."
+    - "All source-span arrays are nonempty, unique, and exact normalized-query slices."
+    - "All 26 positive Schema fixtures validate after the executable hash chain is recomputed."
+    - "The S3/S4 result objects, S5 sidecar, object-store index, and negative-fixture base inventory bind the recomputed canonical objects."
+
+boundaries:
+  implementation_mutation: false
+  p9a_contract_mutation: false
+  model_or_network_use: false
+  push_or_pr: false
+  r11_freeze_before_second_review_pass: false
+  p9b2_start: false

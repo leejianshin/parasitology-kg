@@ -1,0 +1,56 @@
+{
+  "proof_object_version": "0.1-candidate",
+  "proof_object_kind": "SEMANTIC_UNIVERSE",
+  "request_id": "P9B1Q-ARCH-FIXTURE-001",
+  "query_ir_sha256": "f28aceca8112f98ffa238b6eb5ffe705085ada7116cdb3a6d6f54ddf31b1f091",
+  "semantic_objects": [
+    {
+      "semantic_object_id": "M01",
+      "object_kind": "MENTION",
+      "query_ir_json_pointer": "/mentions/0",
+      "canonical_sha256": "2cf4afa2687af4c8b600162b56521b7f6d0221832f38bf9a0a6382b2e9539ca3"
+    },
+    {
+      "semantic_object_id": "M02",
+      "object_kind": "MENTION",
+      "query_ir_json_pointer": "/mentions/1",
+      "canonical_sha256": "53853fac92825b016041d2b39498c8cac3b1f5f5505c57a998ca94b6c0c9e7d4"
+    },
+    {
+      "semantic_object_id": "E01",
+      "object_kind": "EVENT",
+      "query_ir_json_pointer": "/events/0",
+      "canonical_sha256": "a24151467f7d5dbd98addea1d1efc0c9230056d24189666011044a531904aeb1"
+    },
+    {
+      "semantic_object_id": "R01",
+      "object_kind": "RELATION_INTENT",
+      "query_ir_json_pointer": "/relation_intents/0",
+      "canonical_sha256": "b9863083d7fe1130715dbc6064254025471ba3f41f6be1dd54ef59e5f016a879"
+    },
+    {
+      "semantic_object_id": "N01",
+      "object_kind": "NARRATIVE_INTENT",
+      "query_ir_json_pointer": "/narrative_intents/0",
+      "canonical_sha256": "74361ca89b807708577763324b248ec7fe302c959aaf0f99e4749db7588d425e"
+    },
+    {
+      "semantic_object_id": "N02",
+      "object_kind": "NARRATIVE_INTENT",
+      "query_ir_json_pointer": "/narrative_intents/1",
+      "canonical_sha256": "da5e43122449bfeef1cf53fa7582e83b01ab666baf1e8bf3f465341ee4fcaa61"
+    },
+    {
+      "semantic_object_id": "Q01",
+      "object_kind": "REQUIRED_ROLE",
+      "query_ir_json_pointer": "/required_roles/0",
+      "canonical_sha256": "2cd43a3bc1de3e6c65cc4408792605d4d681fbc76e534c4d71f25d2f3a6dd9a8"
+    },
+    {
+      "semantic_object_id": "Q02",
+      "object_kind": "REQUIRED_ROLE",
+      "query_ir_json_pointer": "/required_roles/1",
+      "canonical_sha256": "fadbf7e6ce27875879a03f910f6ffb74e5c2ccfc5822fe08ebe866dfedd01e84"
+    }
+  ]
+}

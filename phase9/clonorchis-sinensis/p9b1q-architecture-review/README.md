@@ -1,6 +1,7 @@
 # P9-B1Q architecture review
 
-Status: first architecture design revision awaiting independent, read-only review.
+Status: first architecture design revision corrected after CHANGES_REQUIRED and
+awaiting a second independent, read-only review.
 
 This atom freezes `6ac0e4b2978e5fb41e7b90e27ced17826d35a394` unchanged and
 replaces the next implementation direction—not the frozen code—with a four-stage
@@ -45,6 +46,16 @@ semantic errors stable instead of making them correct.
   the request → AST → frame → solution → QueryIR → audit hash chain.
 - `fixtures/`: positive actual objects plus isolated RFC 6902 negative mutations
   for every S0–S5 stage.
+- `minimality-proof-schema-candidate.yml`: independently persisted semantic
+  universe plus eight replayable single-removal probes.
+- `execution-binding-sidecar-architecture-schema-candidate.yml`: a complete S5
+  positive chain binding 29 actual objects and five stage PASS results.
+- `design-manifest-v0.3.yml`: the raw-byte review inventory for the corrected
+  design, fixtures, and protected implementation/P9-A boundary.
+
+The corrected evidence set passes strict Draft 2020-12 compilation for all eleven
+local candidate Schemas, validates 26 positive fixtures, resolves all 189 QueryIR
+field traces to persisted source objects, and replays eight minimality probes.
 
 ## Boundaries
 

@@ -313,13 +313,14 @@ $defs:
     allOf:
       - if:
           properties:
-            event_type_domain: {contains: {const: DIAGNOSTIC_FINDING}}
+            event_type_domain: {type: array, contains: {const: DIAGNOSTIC_FINDING}}
         then:
           properties:
             diagnostic_binding: {$ref: "#/$defs/diagnostic_binding"}
       - if:
           properties:
             event_type_domain:
+              type: array
               not: {contains: {const: DIAGNOSTIC_FINDING}}
         then:
           properties:

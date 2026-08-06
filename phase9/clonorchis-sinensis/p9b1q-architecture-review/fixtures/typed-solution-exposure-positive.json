@@ -1,0 +1,155 @@
+{
+  "solution_id": "SOL-44c949792c62a160683f3686",
+  "resolved_mentions": [
+    {
+      "mention_key": "RM001",
+      "surface_mention_id": "U001",
+      "entity_id": "behavior.raw_undercooked_freshwater_fish_consumption",
+      "entity_type": "behavior",
+      "assertion_status": "AFFIRMED",
+      "temporal_scope": "GENERAL"
+    },
+    {
+      "mention_key": "RM002",
+      "surface_mention_id": "U002",
+      "entity_id": "disease.clonorchiasis",
+      "entity_type": "disease",
+      "assertion_status": "AFFIRMED",
+      "temporal_scope": "GENERAL"
+    }
+  ],
+  "resolved_events": [
+    {
+      "event_key": "RE001",
+      "frame_id": "EF001",
+      "event_type": "EXPOSURE",
+      "actor_entity_ids": [],
+      "method_entity_id": null,
+      "specimen_code": "NOT_APPLICABLE",
+      "target_entity_ids": [
+        "behavior.raw_undercooked_freshwater_fish_consumption"
+      ],
+      "finding_polarity": "NOT_APPLICABLE",
+      "assertion_status": "AFFIRMED",
+      "temporal_scope": "GENERAL"
+    }
+  ],
+  "resolved_relations": [
+    {
+      "relation_key": "RR001",
+      "predicate": "has_diagnostic_clue",
+      "subject_selector": {
+        "entity_ids": [
+          "disease.clonorchiasis"
+        ],
+        "entity_types": []
+      },
+      "object_selector": {
+        "entity_ids": [
+          "behavior.raw_undercooked_freshwater_fish_consumption"
+        ],
+        "entity_types": []
+      },
+      "activation_policy": "REQUIRED",
+      "derivation_mode": "DIRECT_MENTION_DERIVED",
+      "root_keys": [
+        "RM002",
+        "RM001"
+      ]
+    }
+  ],
+  "semantic_roles": [
+    {
+      "role_key": "RQ001",
+      "role_namespace": "TOPIC_SCOPE",
+      "role_value": "diagnosis",
+      "activation_policy": "REQUIRED",
+      "root_keys": [
+        "RR001"
+      ]
+    },
+    {
+      "role_key": "RQ002",
+      "role_namespace": "EVIDENCE_ROLE",
+      "role_value": "epidemiologic_exposure_clue",
+      "activation_policy": "REQUIRED",
+      "root_keys": [
+        "RR001"
+      ]
+    }
+  ],
+  "narrative_intents": [
+    {
+      "narrative_key": "RN001",
+      "entity_selector": {
+        "entity_ids": [
+          "disease.clonorchiasis"
+        ],
+        "entity_types": []
+      },
+      "topic_scope": "diagnosis",
+      "semantic_role": "diagnostic_evidence_integration",
+      "activation_policy": "REQUIRED",
+      "root_keys": [
+        "RR001"
+      ],
+      "required_anchor_predicates": [
+        "has_diagnostic_clue"
+      ]
+    },
+    {
+      "narrative_key": "RN002",
+      "entity_selector": {
+        "entity_ids": [
+          "disease.clonorchiasis"
+        ],
+        "entity_types": []
+      },
+      "topic_scope": "diagnosis",
+      "semantic_role": "diagnostic_confirmation_limit",
+      "activation_policy": "REQUIRED",
+      "root_keys": [
+        "RR001"
+      ],
+      "required_anchor_predicates": [
+        "has_diagnostic_clue"
+      ]
+    }
+  ],
+  "forbidden_relations": [],
+  "resolved_references": [],
+  "resolved_overrides": [],
+  "satisfied_constraint_ids": [
+    "CNS-NORM-LOSSLESS_ROUNDTRIP",
+    "CNS-NORM-REQUEST_BINDING",
+    "CNS-AST-SINGLE_ROOT",
+    "CNS-AST-ID_UNIQUE",
+    "CNS-AST-REF_INTEGRITY",
+    "CNS-AST-SPAN_ORDER",
+    "CNS-AST-SPAN_TEXT_MATCH",
+    "CNS-AST-NONCROSSING",
+    "CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY",
+    "CNS-AST-SCOPE_TARGET_INTEGRITY",
+    "CNS-EF-ID_UNIQUE",
+    "CNS-EF-REF_INTEGRITY",
+    "CNS-EF-NONEMPTY_FIXED_DOMAIN",
+    "CNS-EF-SLOT_TYPE",
+    "CNS-EF-DIAGNOSTIC_BINDING",
+    "CNS-EF-SPECIMEN_SOURCE",
+    "CNS-EF-IDENTITY_CONSISTENCY",
+    "CNS-EF-REFERENCE_DOMAIN",
+    "CNS-EF-OVERRIDE_DOMAIN",
+    "CNS-SOLVER-REGISTRY_MEMBERSHIP",
+    "CNS-SOLVER-HASH_BINDING",
+    "CNS-SOLVER-SOLUTION_CARDINALITY",
+    "CNS-SOLVER-NONEMPTY_UNIQUE",
+    "CNS-SOLVER-ENTITY_RESOLUTION",
+    "CNS-SOLVER-ASSERTION_SCOPE",
+    "CNS-SOLVER-EVENT_IDENTITY",
+    "CNS-SOLVER-EVENT_RELATION_DERIVATION",
+    "CNS-SOLVER-LICENSE_DAG",
+    "CNS-SOLVER-MINIMALITY",
+    "CNS-SOLVER-AMBIGUITY_CERTIFICATE"
+  ],
+  "semantic_object_set_sha256": "44c949792c62a160683f36867132ef63d80664c385010a97f98a9406d7f8b2e1"
+}

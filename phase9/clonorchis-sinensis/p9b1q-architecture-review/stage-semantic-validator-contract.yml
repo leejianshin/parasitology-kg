@@ -91,6 +91,7 @@ validators:
       - CONSTRAINT_REGISTRY
       - CONSTRAINT_REGISTRY_SCHEMA
       - CONSTRAINT_SET
+      - MINIMALITY_PROOF_SCHEMA
     required_actual_output: TYPED_CONSTRAINT_RESULT
     registered_constraints:
       - CNS-SOLVER-REGISTRY_MEMBERSHIP
@@ -114,6 +115,8 @@ validators:
       - "every relation direction and selector is exactly derived from one event or explicit relation root"
       - "every emitted semantic object has a rooted acyclic license path"
       - "every retained semantic object has a valid removal witness"
+      - "semantic universe and every removal probe resolve from their declared path, pass minimality-proof-schema-candidate.yml, and match the bound canonical hash"
+      - "each removal probe is replayed against the actual typed-solution core and frozen constraint set; the candidate hash and unsatisfied constraints must match"
   S4_QUERYIR_EMISSION:
     validator_id: p9b1q-stage-semantic-validator-s4
     required_actual_inputs:
@@ -121,6 +124,7 @@ validators:
       - CLAUSE_AST
       - EVENT_FRAME
       - TYPED_CONSTRAINT_RESULT
+      - TYPED_SOLUTION
       - QUERYIR_EMISSION_RECORD
       - CONSTRAINT_SET
       - ENTITY_ONTOLOGY
@@ -130,6 +134,10 @@ validators:
       - SEMANTIC_ROLE_MAPPING
       - QUERY_IR_SCHEMA
       - PROJECTION_RULE_SET
+      - MINIMALITY_PROOF_SCHEMA
+      - SEMANTIC_UNIVERSE
+      - REMOVAL_PROBES
+      - TYPED_SOLUTION_CORE_SCHEMA
     required_actual_output: QUERY_IR
     registered_constraints:
       - CNS-EMIT-QUERYIR_SCHEMA
@@ -144,12 +152,15 @@ validators:
       - "actual emitted QueryIR canonical bytes equal embedded query_ir canonical bytes"
       - "each non-root property-value and array-item JSON pointer has exactly one trace record"
       - "trace value hash equals the actual value and all source objects resolve"
+      - "every nonempty source_id resolves inside its declared actual object kind and every source span equals the normalized request slice"
+      - "TYPED_SOLUTION bindings resolve to a separately persisted canonical core object, never to an embedded or self-referential digest"
       - "all material QueryIR IDs occur in license DAG and minimality witness"
       - "S4 performs extraction and validation only; it cannot add, remove, reorder, or rewrite semantic content"
   S5_RUNTIME_BINDING:
     validator_id: p9b1q-stage-semantic-validator-s5
     required_actual_inputs: "complete object chain declared by object-canonicalization-and-hash-chain.yml"
     required_actual_output: EXECUTION_BINDING_SIDECAR
+    output_schema: "execution-binding-sidecar-architecture-schema-candidate.yml"
     registered_constraints:
       - CNS-BIND-ACTUAL_OBJECT_HASH
       - CNS-BIND-CANONICAL_PROFILE

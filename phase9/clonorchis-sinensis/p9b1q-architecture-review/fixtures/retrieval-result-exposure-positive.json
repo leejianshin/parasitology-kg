@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1",
+  "request_id": "P9B1Q-ARCH-FIXTURE-001",
+  "request_sha256": "f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f",
+  "knowledge_version": "clonorchis_pcms_v1",
+  "normalized_query": "来自流行地区并有生食淡水鱼史可以作为华支睾吸虫病的什么证据",
+  "status": "RETRIEVED",
+  "top_k": 12,
+  "candidate_count": 1,
+  "excluded_candidate_count": 47,
+  "runtime_bundle_sha256": "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f",
+  "index_sha256": "2a33d06cd812715adb42fe88a2f71fab9002b0c87240f70bafa3c25084ac70c3",
+  "candidates": [
+    {
+      "rank": 1,
+      "score": 19999,
+      "score_features": [
+        "query_ir_license:R01"
+      ],
+      "claim_id": "W2-ATOM-001",
+      "claim_kind": "relation",
+      "subject": "disease.clonorchiasis",
+      "predicate": "has_diagnostic_clue",
+      "object": "behavior.raw_undercooked_freshwater_fish_consumption",
+      "entity_ids": [
+        "disease.clonorchiasis",
+        "behavior.raw_undercooked_freshwater_fish_consumption"
+      ],
+      "statement_zh": "在流行地区，生食或未充分加热淡水鱼的经历可作为华支睾吸虫病的流行病学线索。",
+      "qualifiers": {
+        "confirmation_status": "not_confirmatory",
+        "region": "endemic_area",
+        "role": "epidemiological_clue",
+        "source_atom_id": "W2-ATOM-001"
+      },
+      "citations": [
+        {
+          "source_id": "source.cdc_dpdx_clonorchiasis_2024",
+          "source_label": "DPDx - Clonorchiasis",
+          "locator": "Clinical Presentation"
+        },
+        {
+          "source_id": "source.who_community_diagnosis_clonorchiasis",
+          "source_label": "Recommendations for community diagnosis",
+          "locator": "Clonorchiasis，网页第82–94行"
+        }
+      ]
+    }
+  ]
+}

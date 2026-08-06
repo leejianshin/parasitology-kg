@@ -1,0 +1,69 @@
+{
+  "validation_result_version": "0.1-candidate",
+  "request_id": "P9B1Q-ARCH-FIXTURE-001",
+  "stage": "S2_EVENT_FRAME",
+  "result": "PASS",
+  "canonicalization_profile_sha256": "65aa11c07913fe7d3f4e59161fea3c453bf3b67e8a66f34eaad88ea1c06b24c2",
+  "validator_contract_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516",
+  "validator": {
+    "validator_id": "p9b1q-stage-semantic-validator-s2",
+    "validator_version": "0.1-fixture",
+    "executable_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "configuration_sha256": "376585162f0c8f471bfea9778fda2fc53fa3a83a45b19cd04da1039f43184516"
+  },
+  "actual_input_objects": [
+    {
+      "object_kind": "NORMALIZED_REQUEST",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-exposure-positive.json",
+      "content_json_pointer": null,
+      "schema_id": "normalized-request-schema-candidate.yml",
+      "canonical_sha256": "2017e70cf8df03a6feaba4f110b47c2a592404bd154043b56957c326e7e7a207",
+      "byte_length": 857
+    },
+    {
+      "object_kind": "CLAUSE_AST",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-exposure-positive.json",
+      "content_json_pointer": null,
+      "schema_id": "clause-ast-schema-candidate.yml",
+      "canonical_sha256": "3450310cd72a9e42ee7da499d33d574d9f7e457e35566e4d6ff0214161e15b81",
+      "byte_length": 3849
+    },
+    {
+      "object_kind": "ENTITY_ONTOLOGY",
+      "content_path": "schema/entity-types.yml",
+      "content_json_pointer": null,
+      "schema_id": "schema/entity-types.yml",
+      "canonical_sha256": "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e",
+      "byte_length": 2456
+    },
+    {
+      "object_kind": "EVENT_RELATION_MAPPING",
+      "content_path": "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml",
+      "content_json_pointer": "/event_mapping",
+      "schema_id": "event-predicate-type-role-mapping.yml#/event_mapping",
+      "canonical_sha256": "5855cbd8273e3703fdc437847a6a1f29ab259bf772b63241f6b41cbd38bd447c",
+      "byte_length": 6121
+    }
+  ],
+  "actual_output_object": {
+    "object_kind": "EVENT_FRAME",
+    "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-exposure-positive.json",
+    "content_json_pointer": null,
+    "schema_id": "event-frame-schema-candidate.yml",
+    "canonical_sha256": "5acb97187eecccdca8d7b313eec650822fc3f4292b15eb50f2883355086d537c",
+    "byte_length": 1926
+  },
+  "verified_constraint_ids": [
+    "CNS-EF-ID_UNIQUE",
+    "CNS-EF-REF_INTEGRITY",
+    "CNS-EF-NONEMPTY_FIXED_DOMAIN",
+    "CNS-EF-SLOT_TYPE",
+    "CNS-EF-DIAGNOSTIC_BINDING",
+    "CNS-EF-SPECIMEN_SOURCE",
+    "CNS-EF-IDENTITY_CONSISTENCY",
+    "CNS-EF-REFERENCE_DOMAIN",
+    "CNS-EF-OVERRIDE_DOMAIN"
+  ],
+  "errors": [],
+  "result_sha256": "46464240d3bda97f1f3f5931cb808af12af15cebffc5ebde3117ed687b26477b"
+}
