@@ -1,5 +1,5 @@
-contract_version: "0.1-candidate"
-contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_1"
+contract_version: "0.2-candidate"
+contract_id: "clonorchis_p9b1q_request_queryir_retrieval_audit_binding_v0_2"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 
 compatibility:
@@ -7,7 +7,8 @@ compatibility:
   p9a_response_schema: "UNCHANGED_1.2"
   p9a_audit_schema: "UNCHANGED_1.3"
   p9b1_retrieval_result_schema: "UNCHANGED_1.1"
-  query_ir_schema: "CANDIDATE_0.1"
+  query_ir_schema: "CANDIDATE_0.2"
+  private_sidecar_schema: "CANDIDATE_0.1"
   new_p9a_reason_code: false
   new_student_visible_state: false
 
@@ -18,6 +19,8 @@ canonicalization:
   numbers: "JSON_SCHEMA_VALIDATED_NATIVE_JSON"
   arrays_preserve_order: true
   objects_sort_keys_recursively: true
+  persisted_object_bytes: "MUST_EQUAL_THE_CANONICAL_JSON_BYTES_USED_FOR_CONTENT_SHA256"
+  non_json_artifact_hashing: "SHA256_OVER_EXACT_RESOLVED_FILE_BYTES"
 
 actual_object_requirements:
   request: "ALWAYS_REQUIRED"
@@ -30,6 +33,27 @@ actual_object_requirements:
   audit_record: "ALWAYS_REQUIRED_UNDER_P9A_ONE_REQUEST_ONE_AUDIT"
   response: "FOLLOW_FROZEN_P9A_RESPONSE_AND_AUDIT_RULES"
   hash_without_corresponding_actual_object: "PROHIBITED"
+  persistence:
+    mode: "CONTENT_ADDRESSED_PRIVATE_OBJECT_STORE"
+    object_address_prefix: "private-audit://objects/sha256/"
+    artifact_address_prefix: "private-audit://artifacts/sha256/"
+    resolver_must_return_actual_bytes: true
+    address_digest_must_equal_actual_byte_sha256: true
+    json_object_bytes_must_be_canonical_serialization: true
+    missing_or_unresolvable_address: "FAIL_CLOSED"
+
+binding_validation_order:
+  - "SIDECAR_SCHEMA"
+  - "RESOLVE_ALL_NON_NULL_OBJECT_AND_ARTIFACT_ADDRESSES"
+  - "VERIFY_BYTE_LENGTH_AND_ADDRESS_DIGEST"
+  - "PARSE_AND_VALIDATE_ACTUAL_OBJECTS"
+  - "VERIFY_REQUEST_QUERY_IR_AND_SEMANTIC_VALIDATION_BINDING"
+  - "VERIFY_COMPONENT_EXECUTABLE_BUILD_AND_CONFIGURATION_HASHES"
+  - "RECOMPUTE_QUERY_IR_SEMANTIC_VALIDATION"
+  - "RECOMPUTE_RETRIEVAL_FROM_EXACT_QUERY_IR_AND_COMPONENTS_IF_STARTED"
+  - "VERIFY_CANDIDATE_LICENSE_AND_PRIVATE_SEMANTIC_EXCLUSIONS"
+  - "VERIFY_P9A_RESPONSE_AND_AUDIT_CROSS_OBJECT_SEMANTICS"
+  - "VERIFY_SIDECAR_DISPOSITION_CONDITIONS"
 
 binding_chain:
   request_to_query_ir:
@@ -38,6 +62,8 @@ binding_chain:
       - "query_ir.request_sha256 == canonical_sha256(request)"
       - "query_ir.knowledge_version == request.knowledge_version"
       - "all QueryIR spans validate against request.query_text"
+      - "query_ir.producer.configuration_sha256 == components.interpreter.configuration_sha256"
+      - "query_ir.producer identity and version are present in the resolved interpreter build manifest"
   request_to_retrieval_result:
     assertions:
       - "retrieval_result.request_id == request.request_id"
@@ -45,9 +71,12 @@ binding_chain:
       - "retrieval_result.knowledge_version == request.knowledge_version"
   query_ir_to_retrieval_result:
     assertions:
-      - "retrieval was executed from the exact QueryIR object named by query_ir_sha256"
+      - "retrieval was executed from the exact QueryIR object named by objects.query_ir.content_sha256"
       - "candidate semantic license was evaluated against that same QueryIR object"
       - "recomputation with the same request, QueryIR, authority, and executor configuration is deterministic"
+      - "recomputed retrieval bytes equal the content-addressed retrieval result bytes"
+      - "the content-addressed semantic-validation object was produced by the bound deterministic semantic-validator component"
+      - "the content-addressed retrieval result was produced by the bound deterministic graph-executor component"
     note: >-
       Retrieval-result schema v1.1 has no query_ir_sha256 field. The private
       binding evidence record below carries this link without changing P9-A or
@@ -64,37 +93,59 @@ binding_chain:
       - "audit.decision.material_claim_ids is licensed by QueryIR and admitted by P9-A"
       - "P9-A excluded_candidates remains limited to its frozen authority-exclusion reasons"
       - "query-semantic exclusions are recorded only in the private binding sidecar and are not mislabeled as P9-A authority failures"
+      - "every retrieval candidate is in exactly one query-semantic partition: licensed by a matching R/N intent or recorded once as a private query-semantic exclusion"
+      - "no admitted or material claim is present in query_semantic_exclusions"
 
 private_binding_evidence_record:
+  schema: "phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml"
   storage_role: "PRIVATE_NON_STUDENT_AUDIT_SIDECAR"
   public_export_allowed: false
   one_record_per_request: true
-  required_fields:
-    binding_schema_version: "0.1-candidate"
-    binding_id: "NONEMPTY_UNIQUE_STRING"
-    audit_id: "EXACT_EXISTING_P9A_AUDIT_ID"
-    request_id: "EXACT_REQUEST_ID"
-    request_sha256: "CANONICAL_ACTUAL_REQUEST_SHA256"
-    query_ir_sha256: "CANONICAL_ACTUAL_QUERY_IR_SHA256"
-    query_ir_schema_sha256: "FROZEN_QUERY_IR_SCHEMA_FILE_SHA256"
-    query_ir_semantic_contract_sha256: "FROZEN_SEMANTIC_CONTRACT_FILE_SHA256"
-    interpreter_configuration_sha256: "FROZEN_INTERPRETER_CONFIGURATION_SHA256"
-    executor_configuration_sha256: "FROZEN_GRAPH_EXECUTOR_CONFIGURATION_SHA256"
-    retrieval_result_sha256: "CANONICAL_ACTUAL_RESULT_SHA256_OR_NULL_IF_NOT_RUN"
-    audit_record_sha256: "CANONICAL_ACTUAL_AUDIT_SHA256"
-    runtime_bundle_sha256: "FROZEN_P9A_RUNTIME_BUNDLE_SHA256"
-    disposition: "QUERY_IR_VALID_RETRIEVED_OR_QUERY_IR_FAIL_CLOSED"
-    query_semantic_exclusions: "ARRAY_OF_PRIVATE_QUERY_LICENSE_EXCLUSION_RECORDS"
+  actual_object_references:
+    - "request"
+    - "query_ir"
+    - "semantic_validation"
+    - "retrieval_result_or_null"
+    - "audit_record"
+    - "response_or_null"
+  schema_and_contract_artifact_references:
+    - "p9a_request_schema"
+    - "p9a_response_schema"
+    - "p9a_audit_schema"
+    - "retrieval_result_schema"
+    - "query_ir_schema"
+    - "query_ir_semantic_contract"
+    - "query_ir_semantic_validator_contract"
+    - "event_predicate_type_role_mapping"
+    - "sidecar_schema"
+  authority_artifact_references:
+    - "runtime_bundle"
+    - "runtime_authority_projection"
+    - "runtime_contract"
+    - "reviewed_nodes"
+    - "reviewed_edges"
+    - "entity_type_schema"
+    - "relation_type_schema"
+  component_references:
+    - "interpreter executable/build/configuration"
+    - "deterministic semantic validator executable/build/configuration"
+    - "deterministic graph executor executable/build/configuration"
   semantic_conditions:
-    - "If disposition is QUERY_IR_VALID_RETRIEVED, retrieval_result_sha256 is non-null."
-    - "If disposition is QUERY_IR_FAIL_CLOSED, retrieval_result_sha256 is null."
+    - "QUERY_IR_VALID_RETRIEVED requires a non-null retrieval-result object reference."
+    - "QUERY_IR_FAIL_CLOSED requires a null retrieval-result reference."
     - "The sidecar audit_id and request binding must match the actual P9-A audit object."
-    - "The sidecar must be validated and hashed only after all actual objects exist."
+    - "Every non-null content address resolves to actual immutable bytes before validation."
+    - "Address suffix, declared digest, actual byte digest, and declared byte length match."
+    - "runtime_bundle_sha256 equals authority_artifacts.runtime_bundle.artifact_sha256."
+    - "Component executable/build/configuration artifacts are resolved and their digest and byte length are verified."
+    - "Semantic-validator and graph-executor implementation_kind are DETERMINISTIC."
+    - "The sidecar is validated and hashed only after all actual objects exist."
     - >-
       Each query_semantic_exclusions item contains claim_id, the matching
       prohibition_id or missing-license reason, and one of
-      FORBIDDEN_RELATION_MATCH, NO_AFFIRMED_LICENSE, DIRECTION_MISMATCH, or
-      TEMPORAL_SCOPE_MISMATCH.
+      FORBIDDEN_RELATION_MATCH, NO_AFFIRMED_INTENT_LICENSE,
+      DIRECTION_MISMATCH, TEMPORAL_SCOPE_MISMATCH, or
+      NARRATIVE_ROLE_OR_ENTITY_MISMATCH.
   limitation: >-
     This sidecar preserves internal traceability while P9-A remains frozen. It
     does not make QueryIR visible to students and does not add a new P9-A field.
@@ -119,6 +170,14 @@ tamper_and_mismatch_policy:
   query_ir_recomputed_from_different_request: "FAIL_CLOSED"
   result_recomputed_from_different_query_ir: "FAIL_CLOSED"
   orphan_hash_or_orphan_object: "FAIL_CLOSED"
+  unresolvable_content_address: "FAIL_CLOSED"
+  address_digest_or_length_mismatch: "FAIL_CLOSED"
+  interpreter_executable_or_build_drift: "FAIL_CLOSED"
+  validator_executable_or_build_drift: "FAIL_CLOSED"
+  executor_executable_or_build_drift: "FAIL_CLOSED"
+  component_configuration_drift: "FAIL_CLOSED"
+  semantic_validation_recompute_mismatch: "FAIL_CLOSED"
+  candidate_license_recompute_mismatch: "FAIL_CLOSED"
 
 acceptance_probes:
   positive:
@@ -131,3 +190,8 @@ acceptance_probes:
     - "retrieval result copied from another QueryIR for the same request"
     - "audit copied from another request"
     - "non-null result hash without actual result object"
+    - "content address resolves to bytes with a different digest or length"
+    - "interpreter code changes while version/configuration labels stay constant"
+    - "semantic validator code or mapping changes after QueryIR creation"
+    - "executor artifact changes while result object is reused"
+    - "query semantic exclusion is mislabeled as a P9-A authority exclusion"

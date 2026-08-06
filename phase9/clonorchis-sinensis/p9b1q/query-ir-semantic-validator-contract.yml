@@ -1,0 +1,230 @@
+contract_version: "0.1-candidate"
+contract_id: "clonorchis_p9b1q_query_ir_semantic_validator_v0_1"
+status: "DESIGN_CANDIDATE_NO_IMPLEMENTATION_AUTHORIZED"
+
+inputs:
+  actual_request: "REQUIRED_SCHEMA_VALID_P9A_REQUEST_1.0"
+  actual_query_ir: "REQUIRED_SCHEMA_VALID_QUERY_IR_0.2_CANDIDATE"
+  reviewed_nodes: "REQUIRED_HASH_VERIFIED_RUNTIME_INPUT"
+  relation_schema: "REQUIRED_HASH_VERIFIED_RELATION_TYPES_1.2"
+  mapping_contract: "REQUIRED_HASH_VERIFIED_EVENT_PREDICATE_TYPE_ROLE_MAPPING"
+  semantic_contract: "REQUIRED_HASH_VERIFIED_QUERY_IR_SEMANTIC_CONTRACT"
+
+output:
+  type: "PRIVATE_MACHINE_VALIDATION_RESULT"
+  fields:
+    validator_contract_version: "0.1-candidate"
+    request_id: "EXACT_REQUEST_ID"
+    request_sha256: "CANONICAL_ACTUAL_REQUEST_SHA256"
+    query_ir_sha256: "CANONICAL_ACTUAL_QUERY_IR_SHA256"
+    result: "PASS_OR_FAIL_CLOSED"
+    fail_codes: "ORDERED_UNIQUE_ENUM_ARRAY"
+    executable_relation_intent_ids: "ORDERED_UNIQUE_R_IDS"
+    executable_narrative_intent_ids: "ORDERED_UNIQUE_N_IDS"
+    prohibited_relation_intent_ids: "ORDERED_UNIQUE_F_IDS"
+    superseded_event_ids: "ORDERED_UNIQUE_E_IDS"
+  student_visible: false
+
+validation_order:
+  - "01_REQUEST_SCHEMA_AND_CANONICAL_HASH"
+  - "02_QUERY_IR_SCHEMA"
+  - "03_GENERATED_PAYLOAD_BOUNDARY"
+  - "04_SPAN_INTEGRITY"
+  - "05_IDENTIFIER_AND_REFERENCE_INTEGRITY"
+  - "06_CLAUSE_TREE_AND_DISCOURSE"
+  - "07_RESOLVED_REFERENCE_AND_OVERRIDE_GRAPH"
+  - "08_ONTOLOGY_ENTITY_AND_ROLE_AUTHORITY"
+  - "09_EVENT_FIELD_AND_TYPE_MATRIX"
+  - "10_SEMANTIC_DEPENDENCY_DAG_AND_AFFIRMED_ROOTS"
+  - "11_DIRECTED_RELATION_AND_NARRATIVE_INTENTS"
+  - "12_REQUIRED_ROLE_AND_CLOSED_CONTRAST"
+  - "13_FORBIDDEN_INTENTS_AND_CONFLICTS"
+  - "14_EXECUTABILITY_AND_AMBIGUITY_GATE"
+
+algorithms:
+  request_binding:
+    - "validate actual_request against frozen P9-A request Schema"
+    - "compute canonical_sha256(actual_request)"
+    - "require QueryIR request_id and request_sha256 exact match"
+    - "require knowledge_version exact match"
+
+  generated_payload_boundary:
+    allowed_non_enum_strings:
+      - "producer.producer_id from frozen producer registry"
+      - "producer.producer_version from frozen producer registry"
+      - "source_span.text equal to actual request substring"
+    forbidden_generated_fields_or_values:
+      - "claim ID"
+      - "source ID or source label"
+      - "locator"
+      - "citation"
+      - "answer or explanation text"
+    rule: >-
+      Every string not defined by a closed enum, ID pattern, content hash, or
+      producer registry must be a source_span.text value. That value must equal
+      request.query_text[start_char:end_char] exactly. No generated free-text
+      ambiguity explanation is permitted.
+
+  span_integrity:
+    - "0 <= start_char < end_char <= unicode_codepoint_length(request.query_text)"
+    - "span.text equals the exact half-open substring"
+    - "mention/event/intent span is contained in every bound clause span"
+    - "anaphor span is contained in its clause"
+
+  identifiers_and_references:
+    - "C/M/E/R/N/Q/F/REF/OVR/A/OPT IDs are unique within their declared prefixes"
+    - "all clause, mention, event, relation, narrative, role, prohibition, reference, and override references exist"
+    - "referent_kind equals referent ID prefix"
+    - "each referenced REF object is used by at least one mention or event"
+    - "each OVR object is used by one OVERRIDE clause"
+    - "dangling, duplicate, or type-inconsistent references fail closed"
+
+  clause_graph:
+    - "orders are exactly 1..N"
+    - "exactly one ROOT with null parent and null alternative group"
+    - "every non-root has one existing parent"
+    - "parent edges are acyclic and all clauses are reachable from ROOT"
+    - "every OR clause has a non-null ALT group"
+    - "each ALT group contains at least two OR siblings with one common parent"
+    - "non-OR clauses have null alternative group"
+    - "QueryIR v0.2 has no branch-selection object; any OR branch that could root an R/N intent makes the QueryIR AMBIGUOUS"
+    - "CONTRAST does not change assertion status or create a prohibition"
+    - "CONDITION cannot be an ancestor of an executable intent"
+
+  resolved_references:
+    - "anaphor and antecedent spans are exact and auditable"
+    - "referent precedes or is explicitly linked by the clause graph"
+    - "referent entity/event type is compatible with every downstream use"
+    - "multiple compatible referents produce REFERENCE_RESOLUTION ambiguity"
+
+  resolved_overrides:
+    - "earlier_event_id and later_event_id are distinct and exist"
+    - "later event span starts after earlier event span"
+    - "override clause contains or governs the later event"
+    - "event identity excluding polarity/assertion is identical"
+    - "earlier and later propositions conflict on a material field"
+    - "earlier event is added to superseded_event_ids"
+    - "no executable intent or role may use a superseded event as its only root"
+
+  ontology_authority:
+    - "every entity ID exists in reviewed nodes and is reviewed"
+    - "declared entity_type equals reviewed node entity_type"
+    - "every predicate is present in predicate_type_matrix"
+    - "every role namespace/value is present in role_catalog"
+    - "every narrative role is present in narrative_intent_mapping"
+
+  event_matrix:
+    - "event_type exists in event_mapping"
+    - "DIAGNOSTIC_FINDING obeys method/specimen constraints"
+    - "a VALID diagnostic event has POSITIVE or NEGATIVE polarity, never UNSPECIFIED"
+    - "a non-diagnostic event has null method, NOT_APPLICABLE specimen, and NOT_APPLICABLE polarity"
+    - "at least one mention is bound to every event"
+    - "actor and target reviewed entity types are allowed by event_mapping"
+    - "UNKNOWN assertion or material temporal scope fails closed"
+    - "NEGATED, EXCLUDED, or HYPOTHETICAL events cannot root executable intents"
+
+  semantic_dependency_dag:
+    nodes:
+      L0: "clauses"
+      L1: "mentions"
+      L2: "events"
+      L3: "relation_intents and narrative_intents"
+      L4: "required_roles and forbidden_relation_intents"
+    edges: "must point strictly from higher layer to a lower-numbered layer"
+    root_rule: >-
+      Every executable R or N intent must reach at least one AFFIRMED M or E
+      root whose clause is not CONDITION or unresolved OR, and must reach no
+      NEGATED, EXCLUDED, HYPOTHETICAL, UNKNOWN, or superseded root.
+    role_as_root: "PROHIBITED"
+    cycle: "FAIL_CLOSED"
+
+  relation_intents:
+    - "assertion_status is AFFIRMED"
+    - "subject and object selectors are each nonempty"
+    - "selector entity IDs and types satisfy predicate_type_matrix direction"
+    - "basis IDs contain only M/E and satisfy affirmed-root rule"
+    - "source spans cover all basis spans and stay within bound clauses"
+    - "CONDITION, unresolved OR, HYPOTHETICAL, EXCLUDED, and NEGATED bases are non-executable"
+
+  narrative_intents:
+    - "assertion_status is AFFIRMED"
+    - "entity selector is nonempty and matches narrative_intent_mapping"
+    - "topic and semantic role combination is allowlisted"
+    - "basis IDs contain only M/E and satisfy affirmed-root rule"
+    - "all mapping-required anchor predicates have matching executable relation intents"
+    - "no narrative intent names or selects a claim"
+
+  roles_and_contrast:
+    - "a required role depends only on M/E/R/N and cannot be an execution root"
+    - "every required role reaches only AFFIRMED, non-superseded M/E roots; a NEGATED, EXCLUDED, HYPOTHETICAL, or UNKNOWN root cannot derive a role"
+    - "the role authority pointer and allowed predicates match role_catalog"
+    - "REQUIRED_CONTRAST is emitted only by closed_contrast_derivations"
+    - "contrast relation intent and role share the same AFFIRMED M/E root"
+    - "no other implicit contrast derivation is allowed"
+
+  prohibitions:
+    - "each F intent depends only on a NEGATED, EXCLUDED, or HYPOTHETICAL M/E root"
+    - "directed selectors satisfy predicate_type_matrix"
+    - "an executable R intent matching an F intent is a conflict and fails closed"
+    - "CONTRAST alone never creates F"
+
+  executable_gate:
+    valid:
+      - "interpretation_status == VALID"
+      - "ambiguities is empty"
+      - "at least one executable R or N intent exists"
+      - "all previous validation stages passed"
+    ambiguous_or_unsupported:
+      - "ambiguities has at least one structured option"
+      - "no retrieval is permitted"
+      - "no semantic object is treated as executable"
+      - "every candidate option is closed-structure and its option_kind matches ambiguity_type"
+
+fail_codes:
+  - "REQUEST_SCHEMA_INVALID"
+  - "REQUEST_HASH_OR_ID_MISMATCH"
+  - "QUERY_IR_SCHEMA_INVALID"
+  - "GENERATED_PAYLOAD_BOUNDARY_VIOLATION"
+  - "SPAN_MISMATCH"
+  - "DUPLICATE_OR_DANGLING_ID"
+  - "CLAUSE_GRAPH_INVALID"
+  - "OR_GROUP_INVALID_OR_UNRESOLVED"
+  - "REFERENCE_INVALID_OR_AMBIGUOUS"
+  - "OVERRIDE_INVALID_OR_AMBIGUOUS"
+  - "UNKNOWN_OR_UNREVIEWED_ENTITY"
+  - "ENTITY_TYPE_MISMATCH"
+  - "UNKNOWN_PREDICATE_OR_ROLE"
+  - "EVENT_FIELD_OR_TYPE_MISMATCH"
+  - "DEPENDENCY_GRAPH_INVALID"
+  - "NO_AFFIRMED_SEMANTIC_ROOT"
+  - "RELATION_DIRECTION_OR_SELECTOR_INVALID"
+  - "NARRATIVE_INTENT_INVALID"
+  - "ROLE_AUTHORITY_OR_CONTRAST_INVALID"
+  - "REQUIRED_FORBIDDEN_INTENT_CONFLICT"
+  - "NON_MATERIAL_CONTEXT_ACTIVATED"
+  - "NO_EXECUTABLE_INTENT"
+  - "UNRESOLVED_AMBIGUITY"
+
+failure_mapping:
+  retrieval_started: false
+  p9a_contract_change: false
+  p9a_disposition: "ABSTAIN"
+  p9a_hard_fail_code: "NO_SAFE_ADMITTED_ANSWER"
+  private_fail_codes_location: "P9B1Q_BINDING_SIDECAR_ONLY"
+
+determinism:
+  same_inputs_and_component_hashes_preserve:
+    - "validation result"
+    - "ordered fail codes"
+    - "executable intent IDs"
+    - "prohibited intent IDs"
+    - "superseded event IDs"
+  repeated_runs: 3
+
+scope_boundary:
+  validator_implemented: false
+  implementation_code_modified: false
+  model_called: false
+  p9a_modified: false
+  r10_frozen: false
+  p9b2_started: false

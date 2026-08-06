@@ -1,5 +1,5 @@
-contract_version: "0.1-candidate"
-contract_id: "clonorchis_p9b1q_scoped_query_ir_semantics_v0_1"
+contract_version: "0.2-candidate"
+contract_id: "clonorchis_p9b1q_scoped_query_ir_semantics_v0_2"
 status: "DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW"
 target_implementation_commit: "accf29d144412b5634de17b77c53f153b8ac7f7d"
 
@@ -10,10 +10,15 @@ authority:
   reviewed_entities: "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
   reviewed_relations: "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
   runtime_projection: "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+  event_predicate_type_role_mapping: "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml"
+  semantic_validator_contract: "phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-validator-contract.yml"
   knowledge_version: "clonorchis_pcms_v1"
-  claim_id_in_query_ir: "PROHIBITED"
-  source_or_locator_in_query_ir: "PROHIBITED"
-  answer_text_in_query_ir: "PROHIBITED"
+  generated_claim_id_in_query_ir: "PROHIBITED"
+  generated_source_or_locator_in_query_ir: "PROHIBITED"
+  generated_answer_text_in_query_ir: "PROHIBITED"
+  only_free_text_exception: >-
+    source_span.text is permitted solely because it must be byte-for-character
+    identical to the corresponding substring of request.query_text.
 
 interpretation_unit:
   input: "ACTUAL_P9A_REQUEST_OBJECT"
@@ -24,16 +29,35 @@ interpretation_unit:
   empty_or_synthetic_span: "FAIL_CLOSED"
 
 structural_invariants:
-  identifiers_unique_within_namespace: true
+  identifiers_unique_within_namespace_including_ambiguity_options: true
   clause_order_contiguous_from_one: true
   exactly_one_root_clause: true
   root_parent_clause_id: null
   non_root_parent_must_exist: true
   clause_parent_graph_acyclic: true
-  referenced_clause_mention_event_role_ids_must_exist: true
+  referenced_clause_mention_event_intent_role_reference_ids_must_exist: true
   source_span_text_must_equal_request_substring: true
   child_span_must_be_contained_by_bound_clause_span: true
   duplicate_semantic_objects_after_canonicalization: "FAIL_CLOSED"
+  ambiguity_option_kind_must_match_ambiguity_type: true
+  valid_requires_executable_intent: "AT_LEAST_ONE_RELATION_OR_NARRATIVE_INTENT"
+  selector_both_entity_ids_and_entity_types_empty: "FAIL_CLOSED"
+  semantic_dependency_layers:
+    L0: [CLAUSE]
+    L1: [MENTION]
+    L2: [EVENT]
+    L3: [RELATION_INTENT, NARRATIVE_INTENT]
+    L4: [REQUIRED_ROLE, FORBIDDEN_RELATION_INTENT]
+  allowed_dependency_edges:
+    MENTION: [CLAUSE]
+    EVENT: [CLAUSE, MENTION, RESOLVED_REFERENCE]
+    RELATION_INTENT: [MENTION, EVENT]
+    NARRATIVE_INTENT: [MENTION, EVENT]
+    REQUIRED_ROLE: [MENTION, EVENT, RELATION_INTENT, NARRATIVE_INTENT]
+    FORBIDDEN_RELATION_INTENT: [MENTION, EVENT]
+  backward_or_same_layer_dependency: "PROHIBITED"
+  dependency_graph_must_be_rooted_and_acyclic: true
+  every_executable_intent_requires_at_least_one_affirmed_root: true
 
 ontology_invariants:
   entity_id_must_exist_in_reviewed_runtime_nodes: true
@@ -49,21 +73,31 @@ ontology_invariants:
 clause_and_discourse_semantics:
   ROOT: "Top-level request proposition."
   AND: "Both child propositions are requested or asserted."
-  OR: "Alternatives remain distinct; the interpreter must not collapse them into AND."
-  CONTRAST: "Contrasted propositions remain independently scoped."
+  OR: >-
+    Alternatives remain distinct in one non-null alternative_group_id. A group
+    has at least two sibling OR clauses with the same parent; it must not be
+    materialized as AND. QueryIR v0.2 defines no branch-selection object, so
+    every OR group that could root a material relation or narrative intent is
+    AMBIGUOUS and cannot be retrieved.
+  CONTRAST: >-
+    Both sides retain their own assertion and temporal scope. CONTRAST by itself
+    neither affirms nor forbids either side and cannot be used as an exclusion reason.
   OVERRIDE: >-
     A later explicit proposition may replace an earlier proposition only when
-    both refer to the same normalized event signature and the later span is
+    both refer to the same normalized event identity and the later span is
     strictly later in request.query_text.
-  CONDITION: "The proposition is conditional and cannot activate an unconditional fact."
+  CONDITION: "The proposition is non-material and cannot license a material claim under the frozen P9-A contract."
   implied_override_without_same_event_signature: "PROHIBITED"
+  or_group_collapsed_to_and: "FAIL_CLOSED"
+  material_or_branch_activation: "AMBIGUOUS_AND_NO_RETRIEVAL"
+  conditional_or_hypothetical_materialization: "PROHIBITED"
 
 assertion_and_temporal_semantics:
   assertion_statuses:
     AFFIRMED: "May license graph execution if all other gates pass."
     NEGATED: "Describes a negated proposition; must not license its affirmative relation."
     EXCLUDED: "Explicitly outside the requested scope; must create a prohibition when a formal relation is identifiable."
-    HYPOTHETICAL: "Possible or conditional only; must not license an affirmative material claim."
+    HYPOTHETICAL: "Possible or conditional only; cannot license any material claim under current P9-A."
     UNKNOWN: "Scope unresolved; makes the QueryIR non-executable."
   temporal_scopes:
     HISTORICAL: "Past exposure or event; does not automatically express current diagnosis or future prevention."
@@ -72,6 +106,7 @@ assertion_and_temporal_semantics:
     GENERAL: "Timeless/general knowledge request."
     UNKNOWN: "Temporal role unresolved; fail closed when it changes relation activation."
   cross_temporal_activation_without_explicit_bridge: "PROHIBITED"
+  unknown_scope_on_executable_intent: "FAIL_CLOSED"
 
 diagnostic_event_semantics:
   normalized_signature:
@@ -80,6 +115,12 @@ diagnostic_event_semantics:
     - "target_entity_id"
     - "finding_polarity"
     - "assertion_status"
+    - "temporal_scope"
+  normalized_event_identity_for_override:
+    - "event_type"
+    - "method_entity_id"
+    - "specimen_code"
+    - "target_entity_id"
     - "temporal_scope"
   method_specimen_constraints:
     diagnostic.stool_egg_microscopy: "STOOL"
@@ -102,13 +143,22 @@ diagnostic_event_semantics:
     same_signature_without_valid_override: "AMBIGUOUS_AND_NO_RETRIEVAL"
     valid_later_override: "KEEP_BOTH_IN_TRACE_MARK_EARLIER_NONACTIVATING"
   unspecified_method_specimen_or_polarity_when_material: "AMBIGUOUS_AND_NO_RETRIEVAL"
+  event_type_field_matrix: "MUST_EQUAL_EVENT_PREDICATE_TYPE_ROLE_MAPPING"
+
+reference_semantics:
+  resolved_reference_requires_exact_anaphor_span: true
+  referent_must_preexist_and_match_referent_kind: true
+  referent_must_be_semantically_compatible_with_anaphor_use: true
+  every_reference_id_on_mention_or_event_must_resolve_once: true
+  unresolved_or_multiple_referents: "AMBIGUOUS_AND_NO_RETRIEVAL"
+  inferred_referent_without_auditable_reference_object: "PROHIBITED"
 
 relation_intent_semantics:
   derivation_basis:
     - "AFFIRMED_MENTION"
     - "AFFIRMED_EVENT"
-    - "EXPLICIT_REQUIRED_ROLE"
-    - "CONTRACT_AUTHORIZED_CONTRAST_RULE"
+  required_role_as_root: "PROHIBITED"
+  relation_or_role_cycle: "PROHIBITED_BY_SCHEMA_DEPENDENCY_LAYERS"
   lexical_similarity_as_intent_authority: "PROHIBITED"
   relation_intent_requires_formal_predicate: true
   subject_object_direction_preserved: true
@@ -119,31 +169,33 @@ relation_intent_semantics:
   non_affirmed_activation:
     NEGATED: "FORBIDDEN"
     EXCLUDED: "FORBIDDEN_AND_RECORD_PROHIBITION"
-    HYPOTHETICAL: "FORBIDDEN_UNLESS_OUTPUT_REMAINS_NONFACTUAL_AND_SEPARATELY_AUTHORIZED"
+    HYPOTHETICAL: "FORBIDDEN"
     UNKNOWN: "FAIL_CLOSED"
   formal_event_graph:
-    source: "REVIEWED_RELATIONS_ONLY"
-    event_types:
-      DEVELOPMENT: [develops_into]
-      HOST_ROLE:
-        - has_definitive_host
-        - has_first_intermediate_host
-        - has_second_intermediate_host
-        - has_paratenic_host
-        - has_reservoir_host
-        - has_vector
-      INGESTION: [transmitted_via, infective_stage_for]
-      SHEDDING: [sheds_stage]
-      ENVIRONMENT_PRESENCE: [present_in_environment, transmission_supported_by]
-      INFECTION: [infects, infective_stage_for]
-      PARASITISM: [parasitizes_site]
-      PATHOLOGICAL_PROCESS: [pathogenic_stage_for, has_pathological_process, occurs_in]
-      TREATMENT: [treated_by]
-      CONTROL: [controlled_by, targets]
-      HAZARD_CLASSIFICATION: [classified_as]
+    source: "event-predicate-type-role-mapping.yml"
+    every_event_type_has_explicit_disposition: true
+    actor_target_and_selector_types_are_machine_validated: true
     graph_completion_policy: >-
       The executor may traverse reviewed edges needed to satisfy an AFFIRMED
       event or required relation group, but QueryIR itself must not name claims.
+
+narrative_intent_semantics:
+  purpose: >-
+    License reviewed narrative or supporting-narrative records that have no
+    formal predicate without inventing a graph edge.
+  derivation_basis: [AFFIRMED_MENTION, AFFIRMED_EVENT]
+  role_or_event_alone_as_material_license: "PROHIBITED"
+  allowed_semantic_roles:
+    - narrative_fact
+    - diagnostic_evidence_integration
+    - diagnostic_confirmation_limit
+  entity_selector_nonempty: true
+  required_anchor_predicates:
+    narrative_fact: []
+    diagnostic_evidence_integration: [has_diagnostic_clue]
+    diagnostic_confirmation_limit: [has_diagnostic_clue]
+  anchor_relation_intent_must_exist_when_required: true
+  claim_selection_in_query_ir: "PROHIBITED"
 
 role_semantics:
   allowlist_sources:
@@ -152,13 +204,21 @@ role_semantics:
     SEMANTIC_BOUNDARY: "reviewed claim qualifiers and P9-A semantic boundaries"
     CONTROL_ROLE: "reviewed controlled_by/targets qualifiers"
   role_value_must_resolve_to_allowlist: true
+  role_root_polarity:
+    direct_mention_or_event_basis: "AFFIRMED_ONLY"
+    relation_or_narrative_basis: "MUST_INHERIT_ONLY_AFFIRMED_M_OR_E_ROOTS"
+    negated_excluded_hypothetical_unknown_or_superseded_root: "PROHIBITED"
   not_confirmatory_contrast:
     trigger: >-
       An AFFIRMED request about a reviewed non-confirmatory diagnostic role or
       its explicit boundary.
     required_contrast_roles: [pathogen_confirmation]
     required_predicates: [diagnosed_by, diagnostic_stage_for]
-    trace_requirement: "REQUIRED_CONTRAST basis must point to the triggering event or role."
+    derivation: >-
+      A closed deterministic rule emits an AFFIRMED REQUIRED_CONTRAST relation
+      intent. Its basis must point to the triggering AFFIRMED mention or event;
+      a required role cannot be its root.
+    trace_requirement: "The derived relation intent and required role both trace to the same affirmed root."
     claim_selection_in_query_ir: "PROHIBITED"
   treatment_hazard_boundary:
     explicit_intent_must_be_planned_even_if_broad_retrieval_would_find_claims: true
@@ -166,22 +226,33 @@ role_semantics:
 candidate_semantic_license:
   applies_after_graph_execution: true
   is_relevance_reranking: false
-  every_material_candidate_requires_one_of:
-    - "AFFIRMED_RELATION_INTENT"
-    - "AFFIRMED_EVENT"
-    - "REQUIRED_ROLE"
-    - "REQUIRED_CONTRAST"
+  relation_candidate_requires: "ONE_MATCHING_AFFIRMED_RELATION_INTENT"
+  narrative_candidate_requires: "ONE_MATCHING_AFFIRMED_NARRATIVE_INTENT"
+  event_or_role_direct_material_license: "PROHIBITED"
+  required_contrast_license: >-
+    Only the closed contrast rule's derived AFFIRMED relation or narrative
+    intent licenses a candidate; the REQUIRED_ROLE itself never does.
   candidate_direction_must_match_intent_selector: true
+  candidate_entity_and_role_must_match_narrative_intent: true
   candidate_triggered_only_by_negated_excluded_or_hypothetical_basis: "EXCLUDE"
   broad_coverage_candidate_without_license: "INTERNAL_ONLY_NOT_MATERIAL"
   forbidden_relation_match: "EXCLUDE_AND_AUDIT"
   conflict_or_scope_mismatch: "COVERAGE_GAP_OR_ABSTAIN"
+  exactness:
+    unrequested_affirmed_intent: "FAIL_CLOSED"
+    unrequested_affirmed_event: "FAIL_CLOSED"
+    unrequested_required_role: "FAIL_CLOSED"
 
 executable_query_ir_gate:
   schema_valid: true
   semantic_contract_valid: true
   interpretation_status: "VALID"
   ambiguities_empty: true
+  executable_intent_count_minimum: 1
+  semantic_dependency_graph_rooted_and_acyclic: true
+  all_executable_intents_have_affirmed_roots: true
+  all_required_roles_have_affirmed_roots: true
+  no_conditional_hypothetical_or_excluded_material_intent: true
   forbidden_and_required_intents_noncontradictory: true
   on_failure: "DO_NOT_RETRIEVE"
 

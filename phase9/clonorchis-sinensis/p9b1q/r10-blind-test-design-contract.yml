@@ -1,5 +1,5 @@
-contract_version: "1.0"
-contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1"
+contract_version: "1.1"
+contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_1"
 status: "DESIGN_CANDIDATE_NOT_YET_FROZEN"
 
 purpose: >-
@@ -24,6 +24,17 @@ freeze_order:
     - "read implementation tests or public regression query text"
     - "run retrieval or interpreter"
     - "consult implementation author about case wording"
+  ordering_proof:
+    commit_timestamp_as_gate: false
+    sequence:
+      - "independent reviewer persists and re-verifies secret suite"
+      - "reviewer releases only suite ID, counts, and canonical hash"
+      - "a commitment-only Git commit records that public metadata on top of the approved P9-B1Q design"
+      - "the commitment-only commit is independently checked to contain no parser/executor/model/configuration changes"
+      - "all implementation commits must descend from that exact commitment commit"
+    implementation_target_must_be_git_descendant_of_commitment: true
+    implementation_diff_base: "EXACT_R10_COMMITMENT_ONLY_COMMIT"
+    commit_time: "INFORMATIONAL_ONLY_NOT_PROOF"
 
 persistence:
   repository_location: "PROHIBITED_WHILE_SECRET"
@@ -33,7 +44,10 @@ persistence:
   required_files:
     - "canonical suite body"
     - "two byte-identical backups"
-    - "manifest with suite_id, case_count, frozen_at_utc, canonical_content_sha256"
+    - >-
+      manifest with suite_id, semantic_case_count,
+      binding_positive_probe_count, binding_negative_probe_count,
+      total_execution_count, frozen_at_utc, canonical_content_sha256
     - "SHA256SUMS"
   directory_mode: "0700"
   file_mode: "0400"
@@ -43,10 +57,14 @@ persistence:
   body_loss_is_implementation_failure: false
 
 suite_shape:
-  planned_case_count: 24
+  planned_semantic_case_count: 24
+  planned_binding_positive_probe_count: 2
+  planned_binding_negative_probe_count: 12
+  planned_total_execution_count: 38
   language: "zh-CN"
   request_schema_version: "1.0"
-  query_ir_schema_candidate_version: "0.1-candidate"
+  query_ir_schema_candidate_version: "0.2-candidate"
+  sidecar_schema_candidate_version: "0.1-candidate"
   top_k: 12
   categories:
     diagnostic_method_specimen_polarity:
@@ -89,26 +107,55 @@ suite_shape:
     ambiguity_fail_closed:
       cases: 2
       must_include:
-        - "unresolved referent, attachment, or relation direction"
-        - "unsupported formal intent"
+        - "unresolved referent, OR selection, attachment, or relation direction"
+        - "unsupported formal intent or unresolved conditional materialization"
+
+binding_integrity_probes:
+  positive:
+    - "valid request -> valid rooted QueryIR -> semantic PASS -> exact retrieval -> matching response/audit/sidecar"
+    - "ambiguous request -> semantic FAIL_CLOSED -> no retrieval -> matching P9-A abstain/audit/sidecar"
+  negative:
+    - "request bytes changed after QueryIR creation"
+    - "QueryIR bytes changed after semantic validation"
+    - "result from a different QueryIR reused for the same request"
+    - "retrieval-result bytes changed after execution"
+    - "audit object copied from another request"
+    - "response object copied from another audit chain"
+    - "non-null hash or address without a resolvable actual object"
+    - "content-address digest or declared byte length does not match resolved bytes"
+    - "interpreter executable changes while version and configuration labels remain constant"
+    - "semantic-validator executable or mapping artifact changes after QueryIR creation"
+    - "graph-executor executable/build artifact changes while result is reused"
+    - "query-semantic exclusion is mislabeled as a P9-A authority exclusion"
+  mutation_basis: >-
+    Each negative probe mutates exactly one field or object of a frozen positive
+    chain; all unchanged objects retain their original bytes and hashes.
 
 case_record_requirements:
   case_id: "OPAQUE_NONSEMANTIC_ID"
   actual_request_object: "REQUIRED"
   expected_interpretation_status: "VALID_OR_AMBIGUOUS_OR_UNSUPPORTED"
   expected_query_ir_assertions:
-    - "clause spans and discourse graph"
-    - "mention entity IDs, assertion statuses, and temporal scopes"
-    - "event method/specimen/target/polarity tuples"
-    - "required relation predicates and directed selectors"
-    - "required roles"
-    - "forbidden relation predicates and selectors"
+    - "exact clause spans, parent graph, OR groups, references, and overrides"
+    - "exact mention entity IDs, assertion statuses, and temporal scopes"
+    - "exact event method/specimen/target/polarity tuples"
+    - "exact relation and narrative intent sets with directed selectors"
+    - "exact required role set"
+    - "exact forbidden relation intent set"
     - "expected ambiguity type where applicable"
+    - "explicit allowed-optional semantic objects; default optional set is empty"
   expected_retrieval_assertions:
     - "required claim IDs for executable cases"
     - "forbidden candidate/material claim IDs where applicable"
     - "required source IDs and exact locators"
     - "no retrieval result for non-executable QueryIR"
+    - "exact material candidate license intent IDs"
+  expected_no_extra_assertions:
+    - "no unexpected AFFIRMED mention or event"
+    - "no unexpected relation or narrative intent"
+    - "no unexpected required role"
+    - "no unexpected forbidden intent"
+    - "no unexpected relation activation or material candidate"
   forbidden_shortcuts:
     - "case ID branch"
     - "full or partial query literal branch"
@@ -120,16 +167,24 @@ acceptance_gates:
   query_ir_schema_validation: "ALL_CASES"
   exact_span_binding: "ALL_EXPECTED_SPANS"
   clause_and_reference_integrity: "ALL_CASES"
+  semantic_dependency_dag: "ROOTED_ACYCLIC_ALL_EXECUTABLE_CASES"
   method_specimen_target_polarity: "ZERO_ERROR"
   assertion_negation_exclusion_scope: "ZERO_FORBIDDEN_ACTIVATION"
   temporal_scope: "ZERO_CROSS_TEMPORAL_ACTIVATION"
   required_relation_intents: "ALL_PRESENT"
+  required_narrative_intents: "ALL_PRESENT_WHERE_EXPECTED"
   forbidden_relation_intents: "ALL_ABSENT_FROM_AFFIRMATIVE_ACTIVATION"
+  exact_no_extra_semantic_objects: "ZERO_UNEXPECTED_AFFIRMED_EVENTS_INTENTS_ROLES_OR_PROHIBITIONS"
+  plan_precision: "1.0_EXCLUDING_EXPLICITLY_ALLOWLISTED_OPTIONAL_OBJECTS"
   ambiguity_fail_closed: "ALL_NONEXECUTABLE_CASES_HAVE_NO_RETRIEVAL"
   top12_required_claim_recall: "ALL_REQUIRED_IDS_PRESENT_FOR_EXECUTABLE_CASES"
-  material_candidate_query_ir_license: "100_PERCENT"
+  material_candidate_query_ir_license: "100_PERCENT_VIA_MATCHING_R_OR_N_INTENT_ONLY"
+  unrequested_material_candidate_count: 0
   source_locator_direction_semantics: "ALL_REQUIRED_CLAIMS"
   deterministic_repeated_runs: 3
+  sidecar_schema_and_content_address_resolution: "ALL_POSITIVE_CHAINS"
+  end_to_end_binding_positive_probes: "2/2"
+  end_to_end_binding_negative_probes: "12/12_FAIL_CLOSED_AT_EXPECTED_STAGE"
   combined_gate: >-
     A case passes only when its QueryIR, prohibitions, retrieval behavior,
     candidate license, provenance, and determinism all pass. Recall alone can
@@ -140,13 +195,17 @@ review_execution:
   mode: "INDEPENDENT_READ_ONLY"
   before_reveal_checks:
     - "recompute suite hashes from all three copies"
-    - "verify target commit time is after frozen_at_utc"
+    - "verify exact commitment-only commit contains only public R10 metadata"
+    - "verify target commit is a Git descendant of the commitment-only commit"
+    - "verify implementation diff is computed from that commitment commit"
     - "verify worktree clean"
     - "search implementation and tests for suite ID, case IDs, query fragments, and hashes"
   output:
     - "per-gate aggregate counts"
     - "per-case pass/fail without disclosing text until review completion"
     - "source/locator and deterministic hashes"
+    - "exact/no-extra semantic-object and plan-precision results"
+    - "all 14 end-to-end binding probe results and failure stages"
     - "repository mutation check"
   verdicts: [PASS, CHANGES_REQUIRED, INVALID_AUDIT_COMMITMENT]
 
@@ -171,3 +230,4 @@ scope_boundary:
   pushed: false
   pull_request_created: false
   p9b2_started: false
+  commitment_only_commit_created_in_this_atom: false

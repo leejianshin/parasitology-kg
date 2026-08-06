@@ -1,5 +1,5 @@
-matrix_version: "1.0"
-matrix_id: "clonorchis_p9b1q_r9_failure_coverage_v1"
+matrix_version: "1.1"
+matrix_id: "clonorchis_p9b1q_r9_failure_coverage_v1_1"
 status: "AGGREGATE_FAILURE_TYPES_ONLY_NO_SECRET_QUERY_TEXT"
 
 r9_evidence:
@@ -27,6 +27,8 @@ coverage:
       - "events.finding_polarity"
       - "events.assertion_status"
       - "events.mention_ids"
+      - "resolved_references"
+      - "resolved_overrides"
       - "ambiguities"
     semantic_rules:
       - "one event per coordinated method–specimen pair"
@@ -50,6 +52,7 @@ coverage:
       - "relation_intents.object_selector"
       - "relation_intents.activation_policy"
       - "relation_intents.basis_ids"
+      - "event-predicate-type-role-mapping.yml"
     semantic_rules:
       - "event-to-predicate mapping uses reviewed graph relations"
       - "formal subject/object direction preserved"
@@ -71,6 +74,7 @@ coverage:
       - "events.temporal_scope"
       - "forbidden_relation_intents"
       - "required_roles"
+      - "resolved_references"
       - "clauses.discourse_operator"
     semantic_rules:
       - "excluded control concepts create prohibitions, not affirmative activations"
@@ -92,6 +96,7 @@ coverage:
       - "required_roles.role_namespace"
       - "required_roles.role_value"
       - "required_roles.activation_policy"
+      - "narrative_intents"
     semantic_rules:
       - "explicit treatment intent creates treated_by relation intent"
       - "hazard request creates classified_as intent without individual-risk promotion"
@@ -107,17 +112,24 @@ coverage:
     query_ir_fields:
       - "interpretation_status"
       - "relation_intents"
+      - "narrative_intents"
       - "required_roles"
       - "forbidden_relation_intents"
       - "ambiguities"
+      - "query-ir-semantic-validator-contract.yml"
+      - "execution-binding-sidecar-schema-candidate.yml"
     semantic_rules:
       - "QueryIR validity is an independent gate before retrieval"
       - "candidate semantic license is required after retrieval"
+      - "only matching R/N intent can license a material candidate"
+      - "unexpected affirmed semantic objects and activations fail closed"
       - "Top12 recall is reported separately from interpretation correctness"
     required_r10_assertions:
       - "QueryIR full-pass rate is measured independently"
       - "Top12 required-claim recall is measured independently"
       - "material-claim license rate is 100%"
+      - "plan precision is 1.0 and extra activation count is zero"
+      - "request–QueryIR–result–audit binding tamper probes fail closed"
       - "a recall-only pass cannot pass the suite"
 
 audit_caveat:

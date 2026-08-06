@@ -1,0 +1,289 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/execution-binding-sidecar-v0.1"
+title: "P9-B1Q private execution binding sidecar candidate"
+description: >-
+  Private content-addressed evidence that binds actual request, QueryIR,
+  semantic validation, retrieval result, P9-A audit/response, and the exact
+  interpreter, validator, and executor artifacts and configurations.
+type: object
+additionalProperties: false
+required:
+  - binding_schema_version
+  - binding_id
+  - audit_id
+  - request_id
+  - knowledge_version
+  - disposition
+  - canonicalization
+  - created_at
+  - runtime_bundle_sha256
+  - schema_artifacts
+  - authority_artifacts
+  - objects
+  - components
+  - query_semantic_exclusions
+properties:
+  binding_schema_version: {const: "0.1-candidate"}
+  binding_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  audit_id: {type: string, minLength: 1, maxLength: 128}
+  request_id:
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+  knowledge_version: {const: "clonorchis_pcms_v1"}
+  disposition:
+    enum: [QUERY_IR_VALID_RETRIEVED, QUERY_IR_FAIL_CLOSED]
+  canonicalization:
+    const: "SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE_SHA256"
+  created_at:
+    type: string
+    pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+  runtime_bundle_sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+  schema_artifacts:
+    type: object
+    additionalProperties: false
+    required:
+      - p9a_request_schema
+      - p9a_response_schema
+      - p9a_audit_schema
+      - retrieval_result_schema
+      - query_ir_schema
+      - query_ir_semantic_contract
+      - query_ir_semantic_validator_contract
+      - event_predicate_type_role_mapping
+      - sidecar_schema
+    properties:
+      p9a_request_schema: {$ref: "#/$defs/artifact_ref"}
+      p9a_response_schema: {$ref: "#/$defs/artifact_ref"}
+      p9a_audit_schema: {$ref: "#/$defs/artifact_ref"}
+      retrieval_result_schema: {$ref: "#/$defs/artifact_ref"}
+      query_ir_schema: {$ref: "#/$defs/artifact_ref"}
+      query_ir_semantic_contract: {$ref: "#/$defs/artifact_ref"}
+      query_ir_semantic_validator_contract: {$ref: "#/$defs/artifact_ref"}
+      event_predicate_type_role_mapping: {$ref: "#/$defs/artifact_ref"}
+      sidecar_schema: {$ref: "#/$defs/artifact_ref"}
+  authority_artifacts:
+    type: object
+    additionalProperties: false
+    required:
+      - runtime_bundle
+      - runtime_authority_projection
+      - runtime_contract
+      - reviewed_nodes
+      - reviewed_edges
+      - entity_type_schema
+      - relation_type_schema
+    properties:
+      runtime_bundle: {$ref: "#/$defs/artifact_ref"}
+      runtime_authority_projection: {$ref: "#/$defs/artifact_ref"}
+      runtime_contract: {$ref: "#/$defs/artifact_ref"}
+      reviewed_nodes: {$ref: "#/$defs/artifact_ref"}
+      reviewed_edges: {$ref: "#/$defs/artifact_ref"}
+      entity_type_schema: {$ref: "#/$defs/artifact_ref"}
+      relation_type_schema: {$ref: "#/$defs/artifact_ref"}
+  objects:
+    type: object
+    additionalProperties: false
+    required:
+      - request
+      - query_ir
+      - semantic_validation
+      - retrieval_result
+      - audit_record
+      - response
+    properties:
+      request:
+        allOf:
+          - {$ref: "#/$defs/object_ref"}
+          - type: object
+            properties: {object_kind: {const: REQUEST}}
+      query_ir:
+        allOf:
+          - {$ref: "#/$defs/object_ref"}
+          - type: object
+            properties: {object_kind: {const: QUERY_IR}}
+      semantic_validation:
+        allOf:
+          - {$ref: "#/$defs/object_ref"}
+          - type: object
+            properties: {object_kind: {const: SEMANTIC_VALIDATION}}
+      retrieval_result:
+        oneOf:
+          - allOf:
+              - {$ref: "#/$defs/object_ref"}
+              - type: object
+                properties: {object_kind: {const: RETRIEVAL_RESULT}}
+          - {type: "null"}
+      audit_record:
+        allOf:
+          - {$ref: "#/$defs/object_ref"}
+          - type: object
+            properties: {object_kind: {const: AUDIT_RECORD}}
+      response:
+        oneOf:
+          - allOf:
+              - {$ref: "#/$defs/object_ref"}
+              - type: object
+                properties: {object_kind: {const: RESPONSE}}
+          - {type: "null"}
+  components:
+    type: object
+    additionalProperties: false
+    required: [interpreter, semantic_validator, graph_executor]
+    properties:
+      interpreter:
+        allOf:
+          - {$ref: "#/$defs/component_ref"}
+          - type: object
+            properties:
+              component_kind: {const: QUERY_INTERPRETER}
+              implementation_kind:
+                enum: [DETERMINISTIC, CONSTRAINED_MODEL, HYBRID]
+      semantic_validator:
+        allOf:
+          - {$ref: "#/$defs/component_ref"}
+          - type: object
+            properties:
+              component_kind: {const: QUERY_IR_SEMANTIC_VALIDATOR}
+              implementation_kind: {const: DETERMINISTIC}
+      graph_executor:
+        allOf:
+          - {$ref: "#/$defs/component_ref"}
+          - type: object
+            properties:
+              component_kind: {const: GRAPH_EXECUTOR}
+              implementation_kind: {const: DETERMINISTIC}
+  query_semantic_exclusions:
+    type: array
+    maxItems: 50
+    uniqueItems: true
+    items: {$ref: "#/$defs/query_semantic_exclusion"}
+allOf:
+  - if:
+      properties:
+        disposition: {const: QUERY_IR_VALID_RETRIEVED}
+    then:
+      properties:
+        objects:
+          type: object
+          properties:
+            retrieval_result: {$ref: "#/$defs/object_ref"}
+  - if:
+      properties:
+        disposition: {const: QUERY_IR_FAIL_CLOSED}
+    then:
+      properties:
+        objects:
+          type: object
+          properties:
+            retrieval_result: {type: "null"}
+$defs:
+  artifact_ref:
+    type: object
+    additionalProperties: false
+    required: [artifact_sha256, content_address, byte_length]
+    properties:
+      artifact_sha256:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+      content_address:
+        type: string
+        pattern: "^private-audit://artifacts/sha256/[0-9a-f]{64}$"
+      byte_length: {type: integer, minimum: 1}
+  object_ref:
+    type: object
+    additionalProperties: false
+    required:
+      - object_kind
+      - content_sha256
+      - content_address
+      - media_type
+      - byte_length
+    properties:
+      object_kind:
+        enum:
+          - REQUEST
+          - QUERY_IR
+          - SEMANTIC_VALIDATION
+          - RETRIEVAL_RESULT
+          - AUDIT_RECORD
+          - RESPONSE
+      content_sha256:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+      content_address:
+        type: string
+        pattern: "^private-audit://objects/sha256/[0-9a-f]{64}$"
+      media_type: {const: "application/json"}
+      byte_length: {type: integer, minimum: 2}
+  component_ref:
+    type: object
+    additionalProperties: false
+    required:
+      - component_kind
+      - implementation_kind
+      - executable_artifact_sha256
+      - executable_artifact_address
+      - executable_artifact_byte_length
+      - build_manifest_sha256
+      - build_manifest_address
+      - build_manifest_byte_length
+      - configuration_sha256
+      - configuration_address
+      - configuration_byte_length
+    properties:
+      component_kind:
+        enum: [QUERY_INTERPRETER, QUERY_IR_SEMANTIC_VALIDATOR, GRAPH_EXECUTOR]
+      implementation_kind:
+        enum: [DETERMINISTIC, CONSTRAINED_MODEL, HYBRID]
+      executable_artifact_sha256:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+      executable_artifact_address:
+        type: string
+        pattern: "^private-audit://artifacts/sha256/[0-9a-f]{64}$"
+      executable_artifact_byte_length: {type: integer, minimum: 1}
+      build_manifest_sha256:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+      build_manifest_address:
+        type: string
+        pattern: "^private-audit://artifacts/sha256/[0-9a-f]{64}$"
+      build_manifest_byte_length: {type: integer, minimum: 1}
+      configuration_sha256:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+      configuration_address:
+        type: string
+        pattern: "^private-audit://artifacts/sha256/[0-9a-f]{64}$"
+      configuration_byte_length: {type: integer, minimum: 1}
+  query_semantic_exclusion:
+    type: object
+    additionalProperties: false
+    required:
+      - claim_id
+      - reason
+      - prohibition_id
+      - evaluated_intent_ids
+    properties:
+      claim_id:
+        type: string
+        pattern: "^(PCMS-[0-9]{3}|W2-ATOM-[0-9]{3})$"
+      reason:
+        enum:
+          - FORBIDDEN_RELATION_MATCH
+          - NO_AFFIRMED_INTENT_LICENSE
+          - DIRECTION_MISMATCH
+          - TEMPORAL_SCOPE_MISMATCH
+          - NARRATIVE_ROLE_OR_ENTITY_MISMATCH
+      prohibition_id:
+        oneOf:
+          - {type: string, pattern: "^F[0-9]{2,3}$"}
+          - {type: "null"}
+      evaluated_intent_ids:
+        type: array
+        uniqueItems: true
+        items: {type: string, pattern: "^(R|N)[0-9]{2,3}$"}
