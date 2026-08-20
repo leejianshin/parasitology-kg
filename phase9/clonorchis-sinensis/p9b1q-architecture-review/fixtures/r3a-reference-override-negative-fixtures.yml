@@ -1,0 +1,26 @@
+manifest_id: P9B1Q-R3A-REFERENCE-OVERRIDE-NEGATIVE
+base_object: fixtures/r3a-reference-override-positive.json
+mutation_policy: EXACTLY_ONE_RFC6902_OPERATION_FROM_PASSING_BASE
+cases:
+  - {fixture_id: R3A-NEG-01-DANGLING-REFERENCE-HYPOTHESIS, target: typed_solution_core, patch: [{op: replace, path: /resolved_references/0/hypothesis_id, value: RH999}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-02-DANGLING-OVERRIDE-HYPOTHESIS, target: typed_solution_core, patch: [{op: replace, path: /resolved_overrides/0/hypothesis_id, value: OH999}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-03-DANGLING-REFERENT, target: typed_solution_core, patch: [{op: replace, path: /resolved_references/0/referent_key, value: RE999}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-04-DANGLING-EARLIER-EVENT, target: typed_solution_core, patch: [{op: replace, path: /resolved_overrides/0/earlier_event_key, value: RE999}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-05-DANGLING-LATER-EVENT, target: typed_solution_core, patch: [{op: replace, path: /resolved_overrides/0/later_event_key, value: RE999}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-06-WRONG-SAME-EVENT, target: typed_solution_core, patch: [{op: replace, path: /resolved_references/0/identity_relation, value: DISTINCT_EVENT}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-07-WRONG-DISTINCT-EVENT, target: typed_solution_core, patch: [{op: replace, path: /resolved_references/1/identity_relation, value: SAME_EVENT}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-08-EVENT-IDENTITY-MISMATCH, target: typed_solution_core, patch: [{op: replace, path: /resolved_events/1/actor_entity_ids/0, value: parasite.clonorchis_sinensis}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-09-ILLEGAL-OVERRIDDEN-DIMENSION, target: typed_solution_core, patch: [{op: replace, path: /resolved_overrides/0/overridden_dimension, value: SPECIMEN_CODE}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-10-DECLARED-DIMENSION-UNCHANGED, target: typed_solution_core, patch: [{op: replace, path: /resolved_events/1/finding_polarity, value: POSITIVE}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - {fixture_id: R3A-NEG-11-UNDECLARED-DIMENSION-DRIFT, target: typed_solution_core, patch: [{op: replace, path: /resolved_events/1/temporal_scope, value: CURRENT}], expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY}
+  - fixture_id: R3A-NEG-12-PROJECTION-INCOMPATIBLE
+    target: query_ir
+    patch:
+      - op: replace
+        path: /resolved_references/0
+        value: {reference_key: RREF001, hypothesis_id: RH001, anaphor_key: RE002, referent_key: RE001, identity_relation: SAME_EVENT}
+    expected_constraint_id: CNS-EMIT-QUERYIR_SCHEMA
+  - {fixture_id: R3A-NEG-13-REFERENCE-PROJECTION-FIELD-MISMATCH, target: query_ir, patch: [{op: replace, path: /resolved_references/0/referent_id, value: E03}], expected_constraint_id: CNS-EMIT-PROJECTION_ONLY}
+  - {fixture_id: R3A-NEG-14-OVERRIDE-PROJECTION-FIELD-MISMATCH, target: query_ir, patch: [{op: replace, path: /resolved_overrides/0/earlier_event_id, value: E02}], expected_constraint_id: CNS-EMIT-PROJECTION_ONLY}
+  - {fixture_id: R3A-NEG-15-RESOLVED-OBJECT-MISSING-PERMISSION, target: permission_dag, patch: [{op: remove, path: /nodes/12}], expected_constraint_id: CNS-SOLVER-LICENSE_DAG}
+  - {fixture_id: R3A-NEG-16-RESOLVED-OBJECT-MISSING-MINIMALITY, target: minimality_probes, patch: [{op: remove, path: /0}], expected_constraint_id: CNS-SOLVER-MINIMALITY}

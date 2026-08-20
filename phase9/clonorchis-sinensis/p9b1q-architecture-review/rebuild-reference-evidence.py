@@ -65,7 +65,7 @@ def pointer_get(value: Any, pointer: str) -> Any:
 
 
 def semantic_set(core: dict[str, Any]) -> dict[str, Any]:
-    return {k: core[k] for k in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents")}
+    return {k: core[k] for k in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents", "resolved_references", "resolved_overrides")}
 
 
 def refresh_core(core: dict[str, Any]) -> None:

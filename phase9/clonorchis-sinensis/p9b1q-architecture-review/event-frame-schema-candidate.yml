@@ -331,12 +331,17 @@ $defs:
     required:
       - reference_hypothesis_id
       - anaphor_source_id
+      - anaphor_frame_id
       - candidate_referent_ids
       - identity_relation_domain
       - status
     properties:
       reference_hypothesis_id: {type: string, pattern: "^RH[0-9]{3}$"}
       anaphor_source_id: {type: string, pattern: "^(S|U)[0-9]{3}$"}
+      anaphor_frame_id:
+        oneOf:
+          - {type: string, pattern: "^EF[0-9]{3}$"}
+          - {type: "null"}
       candidate_referent_ids:
         type: array
         minItems: 1

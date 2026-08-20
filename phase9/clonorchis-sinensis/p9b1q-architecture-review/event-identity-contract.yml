@@ -1,0 +1,53 @@
+contract_id: P9B1Q-EVENT-IDENTITY-V0.1
+contract_version: 0.1-candidate
+comparison_order:
+  - EVENT_TYPE
+  - ACTOR_ENTITY_IDS
+  - METHOD_ENTITY_ID
+  - SPECIMEN_CODE
+  - TARGET_ENTITY_IDS
+  - ANATOMICAL_SITE_ENTITY_IDS
+identity_dimensions:
+  EVENT_TYPE: event_type
+  ACTOR_ENTITY_IDS: actor_entity_ids
+  METHOD_ENTITY_ID: method_entity_id
+  SPECIMEN_CODE: specimen_code
+  TARGET_ENTITY_IDS: target_entity_ids
+  ANATOMICAL_SITE_ENTITY_IDS: anatomical_site_entity_ids
+override_dimensions:
+  ASSERTION_STATUS: assertion_status
+  FINDING_POLARITY: finding_polarity
+  TEMPORAL_SCOPE: temporal_scope
+non_identity_fields:
+  - event_key
+  - frame_id
+  - source_ast_node_ids
+  - source_spans
+  - clause_id
+  - mention_ids
+  - reference_ids
+normalization:
+  unordered_arrays: SORT_UNIQUE_UNICODE_CODEPOINT
+  scalar_strings: PRESERVE_FROZEN_ENUM_OR_ENTITY_ID
+  missing_array: EMPTY_ARRAY
+  missing_nullable_scalar: null
+  missing_specimen_code: NOT_APPLICABLE
+same_event: ALL_NORMALIZED_IDENTITY_DIMENSIONS_EQUAL
+distinct_event: AT_LEAST_ONE_NORMALIZED_IDENTITY_DIMENSION_DIFFERS
+override:
+  identity_except_dimension: IDENTITY_DIMENSIONS_PLUS_NON_OVERRIDDEN_OVERRIDE_DIMENSIONS_EQUAL
+  selected_dimension: MUST_BE_DECLARED_AND_MUST_DIFFER
+  undeclared_dimension_drift: REJECT
+stable_ids:
+  semantic_judgment_must_not_use:
+    - event_key
+    - frame_id
+  typed_to_queryir:
+    RM: M
+    RE: E
+    RREF: REF
+    ROV: OVR
+missing_values:
+  absent_identity_dimension: NORMALIZE_BY_DECLARED_FIELD_RULE
+  absent_override_dimension: REJECT
+  unresolved_reference_or_override: NO_VALID_QUERYIR

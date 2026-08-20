@@ -1,6 +1,12 @@
 contract_id: P9B1Q-TYPED-CONSTRAINT-SOLVER-CONTRACT-v0.2
 status: DESIGN_CANDIDATE_PENDING_INDEPENDENT_REVIEW
 scope: P9-B1Q architecture review only
+event_identity_contract: event-identity-contract.yml
+event_identity_execution:
+  same_event: normalized_event_identity(left) == normalized_event_identity(right)
+  distinct_event: normalized_event_identity(left) != normalized_event_identity(right)
+  forbidden_shortcut: frame_id_or_event_key_comparison
+  override: identity_except(overridden_dimension, earlier) == identity_except(overridden_dimension, later) AND value_changed
 
 purpose:
   summary: >-

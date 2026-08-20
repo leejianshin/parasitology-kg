@@ -372,11 +372,13 @@ $defs:
   resolved_reference:
     type: object
     additionalProperties: false
-    required: [reference_key, hypothesis_id, referent_key]
+    required: [reference_key, hypothesis_id, anaphor_key, referent_key, identity_relation]
     properties:
       reference_key: {type: string, pattern: "^RREF[0-9]{3}$"}
       hypothesis_id: {type: string, pattern: "^RH[0-9]{3}$"}
+      anaphor_key: {type: string, pattern: "^(RM|RE)[0-9]{3}$"}
       referent_key: {type: string, pattern: "^(RM|RE)[0-9]{3}$"}
+      identity_relation: {enum: [SAME_EVENT, DISTINCT_EVENT, NOT_APPLICABLE]}
   resolved_override:
     type: object
     additionalProperties: false

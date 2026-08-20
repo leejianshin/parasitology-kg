@@ -93,6 +93,27 @@ forbidden_operations:
   - repair_trace_license_or_minimality_witness
   - consult_retrieval_result
 
+reference_projection:
+  source: selected_unique_solution.resolved_references + event_frame.reference_hypotheses + clause_ast
+  mapping:
+    reference_key: reference_id
+    hypothesis.anaphor_source_id: [clause_id, anaphor_span]
+    referent_key.kind: referent_kind
+    referent_key: referent_id
+    constant.RESOLVED: resolution_status
+  forbidden: [copy_typed_reference_object, resolve_reference_in_s4]
+
+override_projection:
+  source: selected_unique_solution.resolved_overrides + event_frame.override_hypotheses + clause_ast
+  mapping:
+    override_key: override_id
+    hypothesis.override_ast_node_id: override_clause_id
+    earlier_event_key: earlier_event_id
+    later_event_key: later_event_id
+    executable_event_identity: same_normalized_event_identity
+    constant.RESOLVED: resolution_status
+  forbidden: [copy_typed_override_object, infer_override_in_s4]
+
 determinism:
   output_bytes: "exact canonical bytes of embedded query_ir"
   any_rule_failure: "FAIL_CLOSED_NO_QUERYIR_NO_RETRIEVAL"

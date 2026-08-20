@@ -6,33 +6,33 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 714d6cf5c4c29dd557545556288d83f200bf8a4cc8f064b11ed8008dc1a6aa32
+  canonical_sha256: d42ca17ba68e440ddd397feae3a4f8bf5f73ef576ba1b5d9607b86f4d4b5e7ca
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: eeaf6c418d7e5c3e6b192ff2b50aec09b159ff1bc5dda2c12af14483e5138725
+  canonical_sha256: 555ff3001c659ce77e50281019ca1278cd840cd6c6d50a9ab3920b8a4ee58e3a
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 0d6134cf2af57afe3c6d6d531fa75da6dd728e0b43e6742946e3ebc00011d4d6
+  canonical_sha256: d4cbfa3a7b16690c0c37c7030cc1b0a042e62daa20bbe20c427a4a2bcbc517e6
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: 40d535ef59b3f2e5a1e4b83cc46e4b632600ada414afdcf0c9d88ef7cc1a9689
+  canonical_sha256: f60d83543834ef8fee2b663b14af3ea10bc13e86a881a424e118d4f6f5a8abff
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: facfa5e8d19d573015d76de6e875136083a089983451a7ceeeabe9cce3ed64c3
+  canonical_sha256: a726675b040e97c743824ff6aa2bf4f433f4467f57a699d1411659a7414d31c3
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 78646e11e1af4a6ae995288330bef571cdc5560e6e543778042fc955bdf08e54
+  canonical_sha256: c5c58e98b87102f50660a6b64c48f8724de772066c83f0be850b91111cc73ade
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: b14707a5be19875b7eb88801f8ccf4ecc27dce5155cb1a4eec9c5f12437f05cd
+  canonical_sha256: 162c6d7c382d36dbfaac85f6f657e779b9d58a07e3d1976af4204b0b159788a0
 - path: fixtures/queryir-exposure-positive.json
-  canonical_sha256: 108d9f814581973e4db0e4c24c1f580a77603de60e540732af8b302122063bbe
+  canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: e6c1238403b55465ab2e17d5dea2f56ba5412987b4adfd4e52bfe02fe140be04
+  canonical_sha256: afc536d5181a4cd009bc8878430a2ffbc655c8c59f6f2c1b815ab9cce012fb5f
 - path: fixtures/typed-solution-exposure-positive.json
-  canonical_sha256: d856c9613292790e8146b35a5fcd37a4718314f8852ad2323b5c60ee92da69f8
+  canonical_sha256: 5ec2d23f883f04030fd99d0a483c2962e89e366445010f066ce481504ab38de0
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: c4d4e5375cedad6afc82db4717438f01baaae8fe8cce555c6a709dde715ce780
+  canonical_sha256: 8694a2ab75e8b36ee9a1c1950dbbfaa53617708628cf42f3767e374106d2b8c6
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 38887a57a077b843db0c35e2836377d81cac8ef3d263d9ca520790f6e0452964
+  canonical_sha256: 98783bd3d953387be90c99f92d4c97a55d32c41ad820144676020bbc29b2a7a2
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -352,7 +352,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 38887a57a077b843db0c35e2836377d81cac8ef3d263d9ca520790f6e0452964
+  base_object_canonical_sha256: 98783bd3d953387be90c99f92d4c97a55d32c41ad820144676020bbc29b2a7a2
 - fixture_id: NEG-S3-EVENT-MAPPING-HASH
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json

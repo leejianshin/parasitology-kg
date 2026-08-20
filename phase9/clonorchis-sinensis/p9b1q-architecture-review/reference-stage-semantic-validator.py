@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+import importlib.util
 import itertools
 import json
 import subprocess
@@ -27,9 +28,12 @@ FIXTURES = HERE / "fixtures"
 CONTRACT = HERE / "stage-semantic-validator-contract.yml"
 REGISTRY = HERE / "constraint-id-registry.yml"
 NEGATIVE = FIXTURES / "stage-validator-negative-fixtures.yml"
+R3A_NEGATIVE = FIXTURES / "r3a-reference-override-negative-fixtures.yml"
+R3A_POSITIVE = FIXTURES / "r3a-reference-override-positive.json"
 SCHEMA_GATE = HERE / "strict-schema-gate.mjs"
 CONSTRAINT_SET = HERE / "constraint-set-v0.1.yml"
 PROJECTION_RULE_SET = HERE / "queryir-projection-rule-set.yml"
+EVENT_IDENTITY_CONTRACT = HERE / "event-identity-contract.yml"
 CONSTRAINT_REGISTRY_SCHEMA = HERE / "constraint-id-registry-schema-candidate.yml"
 CONSTRAINT_SET_SCHEMA = HERE / "constraint-set-schema-candidate.yml"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
@@ -285,6 +289,10 @@ def validate_s2(
     }
     for reference in frame["reference_hypotheses"]:
         dangling |= reference["anaphor_source_id"] not in ast_ids_all
+        dangling |= (
+            reference["anaphor_frame_id"] is not None
+            and reference["anaphor_frame_id"] not in frame_ids
+        )
         dangling |= any(candidate not in ast_ids_all | frame_ids | slot_ids for candidate in reference["candidate_referent_ids"])
     for override in frame["override_hypotheses"]:
         dangling |= override["override_ast_node_id"] not in ast_ids_all
@@ -372,14 +380,32 @@ def validate_s2(
             ast_ids = {node["node_id"] for node in ast["nodes"]}
             if any(source not in ast_ids for source in item["source_ast_node_ids"] + item["assertion"]["governing_ast_node_ids"]):
                 errors.append(error("CNS-EF-REF_INTEGRITY", "DANGLING_REFERENCE", f"/frames/{fi}"))
+    fixed_events = _expected_fixed_events({"EVENT_FRAME": frame})
     for index, reference in enumerate(frame["reference_hypotheses"]):
         expected = 1 if reference["status"] == "UNIQUE" else 2
         if len(reference["candidate_referent_ids"]) < expected or len(reference["identity_relation_domain"]) < expected:
             errors.append(error("CNS-EF-REFERENCE_DOMAIN", "REFERENCE_DOMAIN_INVALID", f"/reference_hypotheses/{index}"))
+            continue
+        if reference["status"] == "UNIQUE" and reference["anaphor_frame_id"] is not None:
+            anchor = fixed_events.get(reference["anaphor_frame_id"])
+            referent = fixed_events.get(reference["candidate_referent_ids"][0])
+            relation = reference["identity_relation_domain"][0]
+            observed = None if anchor is None or referent is None else (
+                "SAME_EVENT" if same_event(anchor, referent) else "DISTINCT_EVENT"
+            )
+            if observed != relation:
+                errors.append(error("CNS-EF-REFERENCE_DOMAIN", "REFERENCE_DOMAIN_INVALID", f"/reference_hypotheses/{index}"))
     for index, override in enumerate(frame["override_hypotheses"]):
         expected = 1 if override["status"] == "UNIQUE" else 2 if override["status"] == "UNRESOLVED" else 1
         if len(override["overridden_dimension_domain"]) < expected or set(override["earlier_frame_ids"]) & set(override["later_frame_ids"]):
             errors.append(error("CNS-EF-OVERRIDE_DOMAIN", "OVERRIDE_DOMAIN_INVALID", f"/override_hypotheses/{index}"))
+            continue
+        if override["status"] == "UNIQUE":
+            earlier = fixed_events.get(override["earlier_frame_ids"][0])
+            later = fixed_events.get(override["later_frame_ids"][0])
+            dimension = override["overridden_dimension_domain"][0]
+            if earlier is None or later is None or not override_pair_valid(earlier, later, dimension):
+                errors.append(error("CNS-EF-OVERRIDE_DOMAIN", "OVERRIDE_DOMAIN_INVALID", f"/override_hypotheses/{index}"))
     text = normalized["normalized_query_text"]
     specimen_surface = {"STOOL": {"粪便", "粪样", "大便"}}
     for si, specimen in enumerate(frame["specimen_slots"]):
@@ -408,6 +434,8 @@ def material_ids(core: dict[str, Any]) -> set[str]:
         ("resolved_relations", "relation_key", "RR", "R"),
         ("narrative_intents", "narrative_key", "RN", "N"),
         ("semantic_roles", "role_key", "RQ", "Q"),
+        ("resolved_references", "reference_key", "RREF", "REF"),
+        ("resolved_overrides", "override_key", "ROV", "OVR"),
     ]
     for collection, key, prefix, output_prefix in transforms:
         for item in core[collection]:
@@ -480,6 +508,16 @@ def validate_core_minimality(core: dict[str, Any], emission: dict[str, Any]) -> 
         for root in relation["root_keys"]
     ):
         return ["CNS-SOLVER-ENTITY_RESOLUTION"]
+    if any(
+        item["anaphor_key"] not in mention_keys | event_keys
+        or item["referent_key"] not in mention_keys | event_keys
+        for item in core["resolved_references"]
+    ) or any(
+        item["earlier_event_key"] not in event_keys
+        or item["later_event_key"] not in event_keys
+        for item in core["resolved_overrides"]
+    ):
+        return ["CNS-SOLVER-EVENT_IDENTITY"]
     if (relation_keys and not event_keys) or (event_keys and not relation_keys):
         return ["CNS-SOLVER-EVENT_RELATION_DERIVATION"]
     for item in core["semantic_roles"] + core["narrative_intents"]:
@@ -502,6 +540,8 @@ def finite_solution_count(
         "resolved_relations",
         "narrative_intents",
         "semantic_roles",
+        "resolved_references",
+        "resolved_overrides",
     ):
         slots.extend((collection, index) for index in range(len(base_core[collection])))
     satisfying = 0
@@ -514,6 +554,8 @@ def finite_solution_count(
                 "resolved_relations",
                 "narrative_intents",
                 "semantic_roles",
+                "resolved_references",
+                "resolved_overrides",
             )
         }
         for bit, (collection, index) in enumerate(slots):
@@ -592,6 +634,7 @@ def validate_s3(
     if core["solution_id"] != f"SOL-{core['semantic_object_set_sha256'][:24]}":
         errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/selected_solution/solution_id"))
     mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    core_event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
     event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
     relation_by_key = {item["relation_key"]: item for item in core["resolved_relations"]}
     for relation in core["resolved_relations"]:
@@ -644,7 +687,9 @@ def validate_s3(
     core_failure = validate_core_minimality(core, emission)
     for constraint in core_failure:
         failure = {
+            "CNS-SOLVER-HASH_BINDING": "INPUT_HASH_MISMATCH",
             "CNS-SOLVER-ENTITY_RESOLUTION": "INPUT_HASH_MISMATCH",
+            "CNS-SOLVER-EVENT_IDENTITY": "EVENT_IDENTITY_MISMATCH",
             "CNS-SOLVER-EVENT_RELATION_DERIVATION": "EVENT_RELATION_DERIVATION_MISMATCH",
             "CNS-SOLVER-LICENSE_DAG": "LICENSE_DAG_INVALID",
         }[constraint]
@@ -694,6 +739,8 @@ def validate_s4(
         ("resolved_relations", "relation_key"),
         ("narrative_intents", "narrative_key"),
         ("semantic_roles", "role_key"),
+        ("resolved_references", "reference_key"),
+        ("resolved_overrides", "override_key"),
     ):
         core_ids.update(item[key] for item in core[collection])
     ast = inputs.get("CLAUSE_AST", {})
@@ -790,6 +837,8 @@ def semantic_object_set(core: dict[str, Any]) -> dict[str, Any]:
             "resolved_relations",
             "semantic_roles",
             "narrative_intents",
+            "resolved_references",
+            "resolved_overrides",
         )
     }
 
@@ -890,6 +939,149 @@ def _expected_fixed_events(inputs: dict[str, Any]) -> dict[str, dict[str, Any]]:
             "temporal_scope": frame["assertion"]["temporal_scope"],
         }
     return expected
+
+
+def normalized_event_identity(event: dict[str, Any]) -> tuple[Any, ...]:
+    """Execute EVENT_IDENTITY_SIGNATURE without consulting frame/event IDs."""
+    contract = load_yaml(EVENT_IDENTITY_CONTRACT)
+    values = {
+        "EVENT_TYPE": event.get("event_type"),
+        "ACTOR_ENTITY_IDS": tuple(sorted(set(event.get("actor_entity_ids", [])))),
+        "METHOD_ENTITY_ID": event.get("method_entity_id"),
+        "SPECIMEN_CODE": event.get("specimen_code", "NOT_APPLICABLE"),
+        "TARGET_ENTITY_IDS": tuple(sorted(set(event.get("target_entity_ids", [])))),
+        "ANATOMICAL_SITE_ENTITY_IDS": tuple(
+            sorted(set(event.get("anatomical_site_entity_ids", [])))
+        ),
+    }
+    return tuple(values[name] for name in contract["comparison_order"])
+
+
+def event_identity_contract_valid() -> bool:
+    contract = load_yaml(EVENT_IDENTITY_CONTRACT)
+    return (
+        contract.get("comparison_order")
+        == ["EVENT_TYPE", "ACTOR_ENTITY_IDS", "METHOD_ENTITY_ID", "SPECIMEN_CODE", "TARGET_ENTITY_IDS", "ANATOMICAL_SITE_ENTITY_IDS"]
+        and set(contract.get("identity_dimensions", {})) == set(contract["comparison_order"])
+        and set(contract.get("override_dimensions", {})) == {"ASSERTION_STATUS", "FINDING_POLARITY", "TEMPORAL_SCOPE"}
+        and contract.get("same_event") == "ALL_NORMALIZED_IDENTITY_DIMENSIONS_EQUAL"
+        and contract.get("distinct_event") == "AT_LEAST_ONE_NORMALIZED_IDENTITY_DIMENSION_DIFFERS"
+        and contract.get("override", {}).get("undeclared_dimension_drift") == "REJECT"
+        and {"event_key", "frame_id"} <= set(contract.get("stable_ids", {}).get("semantic_judgment_must_not_use", []))
+    )
+
+
+def event_state(event: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "ASSERTION_STATUS": event.get("assertion_status"),
+        "FINDING_POLARITY": event.get("finding_polarity"),
+        "TEMPORAL_SCOPE": event.get("temporal_scope"),
+    }
+
+
+def same_event(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    return normalized_event_identity(left) == normalized_event_identity(right)
+
+
+def override_pair_valid(
+    earlier: dict[str, Any], later: dict[str, Any], dimension: str
+) -> bool:
+    allowed = set(load_yaml(EVENT_IDENTITY_CONTRACT)["override_dimensions"])
+    if dimension not in allowed or not same_event(earlier, later):
+        return False
+    earlier_state, later_state = event_state(earlier), event_state(later)
+    return (
+        earlier_state[dimension] != later_state[dimension]
+        and all(
+            earlier_state[name] == later_state[name]
+            for name in allowed - {dimension}
+        )
+    )
+
+
+def validate_reference_override_semantics(
+    core: dict[str, Any], inputs: dict[str, Any], require_complete: bool = True
+) -> list[dict[str, str]]:
+    """Bind Event Frame hypotheses to typed objects and execute identity rules."""
+    errors: list[dict[str, str]] = []
+    frame_object = inputs.get("EVENT_FRAME", {})
+    hypotheses = {
+        item["reference_hypothesis_id"]: item
+        for item in frame_object.get("reference_hypotheses", [])
+    }
+    overrides = {
+        item["override_hypothesis_id"]: item
+        for item in frame_object.get("override_hypotheses", [])
+    }
+    event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
+    event_by_frame = {item["frame_id"]: item for item in core["resolved_events"]}
+    mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    ast_ids = {
+        item[key]
+        for collection, key in (("nodes", "node_id"), ("surface_mentions", "surface_mention_id"))
+        for item in inputs.get("CLAUSE_AST", {}).get(collection, [])
+    }
+
+    actual_reference_hypotheses: set[str] = set()
+    for index, resolved in enumerate(core["resolved_references"]):
+        hypothesis = hypotheses.get(resolved["hypothesis_id"])
+        actual_reference_hypotheses.add(resolved["hypothesis_id"])
+        anaphor = event_by_key.get(resolved["anaphor_key"]) or mention_by_key.get(
+            resolved["anaphor_key"]
+        )
+        referent = event_by_key.get(resolved["referent_key"]) or mention_by_key.get(
+            resolved["referent_key"]
+        )
+        valid = hypothesis is not None and anaphor is not None and referent is not None
+        if valid:
+            valid = hypothesis["anaphor_source_id"] in ast_ids
+            valid = valid and (
+                hypothesis["anaphor_frame_id"] is None
+                or (
+                    resolved["anaphor_key"].startswith("RE")
+                    and anaphor["frame_id"] == hypothesis["anaphor_frame_id"]
+                )
+            )
+            candidate_frame = referent.get("frame_id") if resolved["referent_key"].startswith("RE") else None
+            valid = valid and candidate_frame in hypothesis["candidate_referent_ids"]
+            valid = valid and resolved["identity_relation"] in hypothesis["identity_relation_domain"]
+            if resolved["identity_relation"] != "NOT_APPLICABLE":
+                valid = valid and resolved["anaphor_key"].startswith("RE") and resolved["referent_key"].startswith("RE")
+                if valid:
+                    observed = "SAME_EVENT" if same_event(anaphor, referent) else "DISTINCT_EVENT"
+                    valid = observed == resolved["identity_relation"]
+        if not valid:
+            errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", f"/selected_solution/resolved_references/{index}"))
+            break
+    expected_refs = {
+        key for key, value in hypotheses.items() if value["status"] == "UNIQUE"
+    }
+    if require_complete and actual_reference_hypotheses != expected_refs:
+        errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", "/selected_solution/resolved_references"))
+
+    actual_override_hypotheses: set[str] = set()
+    for index, resolved in enumerate(core["resolved_overrides"]):
+        hypothesis = overrides.get(resolved["hypothesis_id"])
+        actual_override_hypotheses.add(resolved["hypothesis_id"])
+        earlier = event_by_key.get(resolved["earlier_event_key"])
+        later = event_by_key.get(resolved["later_event_key"])
+        valid = hypothesis is not None and earlier is not None and later is not None
+        if valid:
+            valid = (
+                earlier["frame_id"] in hypothesis["earlier_frame_ids"]
+                and later["frame_id"] in hypothesis["later_frame_ids"]
+                and resolved["overridden_dimension"] in hypothesis["overridden_dimension_domain"]
+                and override_pair_valid(earlier, later, resolved["overridden_dimension"])
+            )
+        if not valid:
+            errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", f"/selected_solution/resolved_overrides/{index}"))
+            break
+    expected_overrides = {
+        key for key, value in overrides.items() if value["status"] == "UNIQUE"
+    }
+    if require_complete and actual_override_hypotheses != expected_overrides:
+        errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", "/selected_solution/resolved_overrides"))
+    return ordered(errors)
 
 
 def _selector_types(selector: dict[str, Any], entity_types: dict[str, str]) -> set[str]:
@@ -1151,11 +1343,22 @@ def validate_semantic_authority(
         relation_key = relation["relation_key"]
         if any(item["root_keys"] != [relation_key] for item in core["semantic_roles"] + core["narrative_intents"]):
             errors.append(error("CNS-SOLVER-LICENSE_DAG", "LICENSE_DAG_INVALID", "/selected_solution"))
+    errors.extend(
+        validate_reference_override_semantics(core, inputs, require_complete=require_complete)
+    )
     return ordered(errors)
 
 
 def _queryir_id(identifier: str) -> str:
-    prefixes = {"RM": "M", "RE": "E", "RR": "R", "RN": "N", "RQ": "Q"}
+    prefixes = {
+        "RREF": "REF",
+        "ROV": "OVR",
+        "RM": "M",
+        "RE": "E",
+        "RR": "R",
+        "RN": "N",
+        "RQ": "Q",
+    }
     for source, target in prefixes.items():
         if identifier.startswith(source):
             return f"{target}{int(identifier[len(source):]):02d}"
@@ -1239,6 +1442,7 @@ def derive_queryir_projection(
             }
         )
     mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    core_event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
     relation_metadata: dict[str, dict[str, Any]] = {}
     relation_intents = []
     for item in core["resolved_relations"]:
@@ -1257,8 +1461,16 @@ def derive_queryir_projection(
                 key=clause_order.get,
             )
         spans = [copy.deepcopy(clauses[clause_order[cid] - 1]["source_span"]) for cid in clause_ids]
-        assertions = {mention_by_key[root]["assertion_status"] for root in item["root_keys"] if root in mention_by_key}
-        temporals = {mention_by_key[root]["temporal_scope"] for root in item["root_keys"] if root in mention_by_key}
+        assertions = {
+            source["assertion_status"]
+            for root in item["root_keys"]
+            for source in ([mention_by_key[root]] if root in mention_by_key else [core_event_by_key[root]] if root in core_event_by_key else [])
+        }
+        temporals = {
+            source["temporal_scope"]
+            for root in item["root_keys"]
+            for source in ([mention_by_key[root]] if root in mention_by_key else [core_event_by_key[root]] if root in core_event_by_key else [])
+        }
         assertion = next(iter(assertions)) if len(assertions) == 1 else "UNKNOWN"
         temporal = next(iter(temporals)) if len(temporals) == 1 else "UNKNOWN"
         relation_metadata[item["relation_key"]] = {
@@ -1322,6 +1534,68 @@ def derive_queryir_projection(
                 "topic_scope": item["topic_scope"],
             }
         )
+    node_by_id = {item["node_id"]: item for item in ast["nodes"]}
+    hypothesis_by_id = {
+        item["reference_hypothesis_id"]: item
+        for item in frame_object["reference_hypotheses"]
+    }
+    override_by_id = {
+        item["override_hypothesis_id"]: item
+        for item in frame_object["override_hypotheses"]
+    }
+
+    def clause_and_span(source_id: str) -> tuple[str, dict[str, Any]]:
+        if source_id in ast_mentions:
+            mention = ast_mentions[source_id]
+            return clause_by_node[mention["containing_node_id"]], copy.deepcopy(mention["source_span"])
+        node = node_by_id[source_id]
+        current = node
+        while current["node_id"] not in clause_by_node:
+            children = [node_by_id[value] for value in current["child_node_ids"]]
+            if not children:
+                raise ValueError(source_id)
+            current = sorted(children, key=lambda value: value["source_span"]["start_char"])[0]
+        return clause_by_node[current["node_id"]], copy.deepcopy(node["source_span"])
+
+    resolved_references = []
+    for item in core["resolved_references"]:
+        hypothesis = hypothesis_by_id[item["hypothesis_id"]]
+        clause_id, anaphor_span = clause_and_span(hypothesis["anaphor_source_id"])
+        referent_kind = "EVENT" if item["referent_key"].startswith("RE") else "MENTION"
+        reference_id = _queryir_id(item["reference_key"])
+        resolved_references.append(
+            {
+                "reference_id": reference_id,
+                "clause_id": clause_id,
+                "anaphor_span": anaphor_span,
+                "referent_kind": referent_kind,
+                "referent_id": _queryir_id(item["referent_key"]),
+                "resolution_status": "RESOLVED",
+            }
+        )
+        target_id = _queryir_id(item["anaphor_key"])
+        collection = events if target_id.startswith("E") else mentions
+        target = next(value for value in collection if value.get("event_id", value.get("mention_id")) == target_id)
+        target["reference_ids"].append(reference_id)
+
+    resolved_overrides = []
+    for item in core["resolved_overrides"]:
+        hypothesis = override_by_id[item["hypothesis_id"]]
+        clause_id, _ = clause_and_span(hypothesis["override_ast_node_id"])
+        earlier = next(value for value in core["resolved_events"] if value["event_key"] == item["earlier_event_key"])
+        later = next(value for value in core["resolved_events"] if value["event_key"] == item["later_event_key"])
+        if not override_pair_valid(earlier, later, item["overridden_dimension"]):
+            raise ValueError(item["override_key"])
+        resolved_overrides.append(
+            {
+                "override_id": _queryir_id(item["override_key"]),
+                "override_clause_id": clause_id,
+                "earlier_event_id": _queryir_id(item["earlier_event_key"]),
+                "later_event_id": _queryir_id(item["later_event_key"]),
+                "same_normalized_event_identity": True,
+                "resolution_status": "RESOLVED",
+            }
+        )
     return {
         "ambiguities": [],
         "clauses": clauses,
@@ -1342,8 +1616,8 @@ def derive_queryir_projection(
         "request_id": normalized["request_id"],
         "request_sha256": normalized["request_sha256"],
         "required_roles": required_roles,
-        "resolved_overrides": copy.deepcopy(core["resolved_overrides"]),
-        "resolved_references": copy.deepcopy(core["resolved_references"]),
+        "resolved_overrides": resolved_overrides,
+        "resolved_references": resolved_references,
         "span_basis": ast["span_basis"],
     }
 
@@ -1361,7 +1635,7 @@ def validate_queryir_projection(
         errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/"))
 
     def translated(identifier: str) -> str:
-        prefixes = {"RM": "M", "RE": "E", "RR": "R", "RN": "N", "RQ": "Q"}
+        prefixes = {"RREF": "REF", "ROV": "OVR", "RM": "M", "RE": "E", "RR": "R", "RN": "N", "RQ": "Q"}
         for source, target in prefixes.items():
             if identifier.startswith(source):
                 return f"{target}{int(identifier[len(source):]):02d}"
@@ -1614,8 +1888,7 @@ def recompute_declared_derived(value: dict[str, Any], paths: list[str]) -> None:
             selected["queryir_emission_record"]["semantic_solution_core_sha256"] = canonical_sha(solution_core(value))
         elif name.endswith("semantic_object_set_sha256") and selected is not None:
             core = solution_core(value)
-            semantic = {key: core[key] for key in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents")}
-            selected["semantic_object_set_sha256"] = canonical_sha(semantic)
+            selected["semantic_object_set_sha256"] = canonical_sha(semantic_object_set(core))
             selected["solution_id"] = f"SOL-{selected['semantic_object_set_sha256'][:24]}"
         elif name.endswith("dag_sha256") and selected is not None:
             dag = selected["queryir_emission_record"]["license_dag"]
@@ -1818,6 +2091,152 @@ def run_negative() -> list[dict[str, Any]]:
     return results
 
 
+def r3a_inputs(objects: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "NORMALIZED_REQUEST": objects["normalized_request"],
+        "CLAUSE_AST": objects["clause_ast"],
+        "EVENT_FRAME": objects["event_frame"],
+        "ENTITY_ONTOLOGY": load_yaml(REPO / "schema/entity-types.yml"),
+        "PREDICATE_TYPE_MAPPING": load_json(FIXTURES / "authority-predicate-type-mapping.json"),
+        "EVENT_RELATION_MAPPING": load_json(FIXTURES / "authority-event-relation-mapping.json"),
+        "PROJECTION_RULE_SET": load_yaml(PROJECTION_RULE_SET),
+    }
+
+
+def r3a_positive_checks(bundle: dict[str, Any]) -> list[dict[str, Any]]:
+    objects = bundle["objects"]
+    core = objects["typed_solution_core"]
+    query_ir = objects["query_ir"]
+    inputs = r3a_inputs(objects)
+    checks: list[dict[str, Any]] = []
+    contract_pass = event_identity_contract_valid()
+    checks.append({"check": "EVENT_IDENTITY_CONTRACT", "actual_count": 1, "pass_count": int(contract_pass), "passed": contract_pass})
+
+    schema_pairs = (
+        ("normalized-request-schema-candidate.yml", "normalized_request"),
+        ("clause-ast-schema-candidate.yml", "clause_ast"),
+        ("event-frame-schema-candidate.yml", "event_frame"),
+        ("typed-solution-core-schema-candidate.yml", "typed_solution_core"),
+        ("query-ir-schema-candidate.yml", "query_ir"),
+    )
+    schema_pass = sum(schema_valid(schema, objects[key]) for schema, key in schema_pairs)
+    checks.append({"check": "DRAFT_2020_12_SCHEMA", "actual_count": len(schema_pairs), "pass_count": schema_pass, "passed": schema_pass == len(schema_pairs)})
+
+    s2_errors = validate_s2(objects["event_frame"], objects["normalized_request"], objects["clause_ast"])
+    semantic_errors = validate_semantic_authority(core, inputs, require_complete=True)
+    projection_errors = validate_queryir_projection(core, query_ir, inputs)
+    checks.extend([
+        {"check": "S2_EVENT_FRAME", "actual_count": 1, "pass_count": int(not s2_errors), "passed": not s2_errors, "errors": s2_errors},
+        {"check": "S3_REFERENCE_OVERRIDE_BINDING", "actual_count": len(core["resolved_references"]) + len(core["resolved_overrides"]), "pass_count": (len(core["resolved_references"]) + len(core["resolved_overrides"])) if not semantic_errors else 0, "passed": not semantic_errors, "errors": semantic_errors},
+        {"check": "S4_QUERYIR_PROJECTION", "actual_count": len(query_ir["resolved_references"]) + len(query_ir["resolved_overrides"]), "pass_count": (len(query_ir["resolved_references"]) + len(query_ir["resolved_overrides"])) if not projection_errors else 0, "passed": not projection_errors, "errors": projection_errors},
+    ])
+
+    reference_by_key = {item["reference_key"]: item for item in core["resolved_references"]}
+    event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
+    same_count = sum(item["identity_relation"] == "SAME_EVENT" and same_event(event_by_key[item["anaphor_key"]], event_by_key[item["referent_key"]]) for item in reference_by_key.values())
+    distinct_count = sum(item["identity_relation"] == "DISTINCT_EVENT" and not same_event(event_by_key[item["anaphor_key"]], event_by_key[item["referent_key"]]) for item in reference_by_key.values())
+    override_count = sum(override_pair_valid(event_by_key[item["earlier_event_key"]], event_by_key[item["later_event_key"]], item["overridden_dimension"]) for item in core["resolved_overrides"])
+    checks.append({"check": "EVENT_IDENTITY_SAME_DISTINCT_OVERRIDE", "actual_count": 3, "pass_count": same_count + distinct_count + override_count, "same_event_count": same_count, "distinct_event_count": distinct_count, "override_count": override_count, "passed": same_count == distinct_count == override_count == 1})
+
+    pointers = all_json_pointers(query_ir)
+    traces = objects["field_traces"]
+    core_ids = {
+        item[key]
+        for collection, key in (("resolved_mentions", "mention_key"), ("resolved_events", "event_key"), ("resolved_relations", "relation_key"), ("resolved_references", "reference_key"), ("resolved_overrides", "override_key"))
+        for item in core[collection]
+    }
+    trace_pass = (
+        len(traces) == len(pointers)
+        and {item["query_ir_json_pointer"] for item in traces} == set(pointers)
+        and all(item["emitted_value_sha256"] == canonical_sha(pointer_get(query_ir, item["query_ir_json_pointer"])) for item in traces)
+        and all(
+            any(binding["object_kind"] == "TYPED_SOLUTION" and binding["object_sha256"] == canonical_sha(core) and set(binding["source_ids"]) <= core_ids for binding in item["source_bindings"])
+            for item in traces
+        )
+        and all(
+            objects["normalized_request"]["normalized_query_text"][span["start_char"]:span["end_char"]] == span["text"]
+            for item in traces for binding in item["source_bindings"] for span in binding["source_spans"]
+        )
+    )
+    checks.append({"check": "TRACE_RESOLUTION", "actual_count": len(traces), "pass_count": len(traces) if trace_pass else 0, "passed": trace_pass})
+
+    dag = objects["permission_dag"]
+    dag_body = copy.deepcopy(dag)
+    declared_dag_sha = dag_body.pop("dag_sha256")
+    licensed = {item["semantic_object_id"] for item in objects["material_object_licenses"]}
+    dag_ids = {item["semantic_object_id"] for item in dag["nodes"]}
+    dag_pass = dag_valid(dag) and declared_dag_sha == canonical_sha(dag_body) and dag_ids == licensed == material_ids(core)
+    checks.append({"check": "PERMISSION_DAG_AND_LICENSE", "actual_count": len(dag_ids), "pass_count": len(dag_ids) if dag_pass else 0, "passed": dag_pass})
+
+    probe_results = []
+    for probe in objects["minimality_probes"]:
+        candidate = apply_patch(core, probe["operation"])
+        refresh_core_hashes(candidate)
+        errors = validate_reference_override_semantics(candidate, inputs, require_complete=True)
+        observed = errors[0]["constraint_id"] if errors else None
+        probe_results.append(observed == probe["expected_constraint_id"] and candidate["semantic_object_set_sha256"] == probe["candidate_semantic_object_set_sha256"])
+    covered = {item["removed_semantic_object_id"] for item in objects["minimality_probes"]}
+    required_coverage = {value for value in material_ids(core) if value.startswith("REF") or value.startswith("OVR")}
+    minimality_pass = all(probe_results) and covered == required_coverage
+    checks.append({"check": "REFERENCE_OVERRIDE_MINIMALITY", "actual_count": len(probe_results), "pass_count": sum(probe_results), "passed": minimality_pass})
+
+    hashes = {item["object_name"]: item for item in bundle["object_hashes"]}
+    canonical_pass = set(hashes) == set(objects) and all(hashes[name]["canonical_sha256"] == canonical_sha(value) and hashes[name]["byte_length"] == len(canonical_bytes(value)) for name, value in objects.items())
+    previous = "0" * 64
+    chain_pass = len(bundle["independent_hash_chain"]) == len(objects)
+    for link in bundle["independent_hash_chain"]:
+        body = copy.deepcopy(link)
+        declared = body.pop("link_sha256")
+        chain_pass &= body["previous_link_sha256"] == previous and body["object_sha256"] == hashes[body["object_name"]]["canonical_sha256"] and declared == canonical_sha(body)
+        previous = declared
+    checks.append({"check": "PER_OBJECT_CANONICALIZATION", "actual_count": len(objects), "pass_count": len(objects) if canonical_pass else 0, "passed": canonical_pass})
+    checks.append({"check": "INDEPENDENT_HASH_CHAIN", "actual_count": len(bundle["independent_hash_chain"]), "pass_count": len(bundle["independent_hash_chain"]) if chain_pass else 0, "passed": chain_pass})
+
+    builder_path = HERE / "build-r3a-reference-override-evidence.py"
+    spec = importlib.util.spec_from_file_location("p9b1q_r3a_builder", builder_path)
+    builder = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(builder)
+    rebuilt = [builder.build() for _ in range(3)]
+    determinism_pass = all(canonical_bytes(item) == canonical_bytes(bundle) for item in rebuilt)
+    checks.append({"check": "DETERMINISTIC_REBUILD", "actual_count": 3, "pass_count": 3 if determinism_pass else 0, "passed": determinism_pass})
+    return checks
+
+
+def run_r3a() -> dict[str, Any]:
+    bundle = load_json(R3A_POSITIVE)
+    positive = r3a_positive_checks(bundle)
+    if not all(item["passed"] for item in positive):
+        return {"result": "FAIL_CLOSED", "positive": positive, "negative": []}
+    manifest = load_yaml(R3A_NEGATIVE)
+    negative = []
+    for case in manifest["cases"]:
+        objects = copy.deepcopy(bundle["objects"])
+        if len(case["patch"]) != 1:
+            raise RuntimeError(case["fixture_id"])
+        objects[case["target"]] = apply_patch(objects[case["target"]], case["patch"])
+        inputs = r3a_inputs(objects)
+        if case["target"] == "typed_solution_core":
+            errors = validate_semantic_authority(objects["typed_solution_core"], inputs, require_complete=True)
+        elif case["target"] == "query_ir":
+            if not schema_valid("query-ir-schema-candidate.yml", objects["query_ir"]):
+                errors = [error("CNS-EMIT-QUERYIR_SCHEMA", "SCHEMA_INVALID", "/")]
+            else:
+                errors = validate_queryir_projection(objects["typed_solution_core"], objects["query_ir"], inputs)
+        elif case["target"] == "permission_dag":
+            ids = {item["semantic_object_id"] for item in objects["permission_dag"]["nodes"]}
+            errors = [] if dag_valid(objects["permission_dag"]) and ids == material_ids(objects["typed_solution_core"]) else [error("CNS-SOLVER-LICENSE_DAG", "LICENSE_DAG_INVALID", "/permission_dag")]
+        elif case["target"] == "minimality_probes":
+            coverage = {item["removed_semantic_object_id"] for item in objects["minimality_probes"]}
+            required = {value for value in material_ids(objects["typed_solution_core"]) if value.startswith("REF") or value.startswith("OVR")}
+            errors = [] if coverage == required else [error("CNS-SOLVER-MINIMALITY", "MINIMALITY_WITNESS_INVALID", "/minimality_probes")]
+        else:
+            raise RuntimeError(case["target"])
+        observed = errors[0]["constraint_id"] if errors else None
+        negative.append({"fixture_id": case["fixture_id"], "mutation_count": 1, "expected_constraint_id": case["expected_constraint_id"], "observed_first_constraint_id": observed, "passed": observed == case["expected_constraint_id"]})
+    return {"result": "PASS" if all(item["passed"] for item in negative) else "FAIL_CLOSED", "positive": positive, "negative": negative, "positive_pass_count": sum(item["passed"] for item in positive), "negative_pass_count": sum(item["passed"] for item in negative)}
+
+
 def one_run() -> dict[str, Any]:
     positive = run_positive()
     minimality = run_minimality()
@@ -1875,7 +2294,7 @@ def build_summary() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=("all", "positive", "minimality", "negative"), default="all")
+    parser.add_argument("--mode", choices=("all", "positive", "minimality", "negative", "r3a"), default="all")
     args = parser.parse_args()
     if args.mode == "all":
         result: Any = build_summary()
@@ -1883,10 +2302,12 @@ def main() -> int:
         result = run_positive()
     elif args.mode == "minimality":
         result = run_minimality()
+    elif args.mode == "r3a":
+        result = run_r3a()
     else:
         result = run_negative()
     print(canonical_bytes(result).decode("utf-8"), end="")
-    if args.mode == "all":
+    if args.mode in ("all", "r3a"):
         return 0 if result["result"] == "PASS" else 1
     return 0
 
