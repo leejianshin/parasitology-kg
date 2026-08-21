@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the raw-byte inventory for the sixth independent architecture review."""
+"""Build the raw-byte inventory for the R3-BI integration closure candidate."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import yaml
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
-OUTPUT = HERE / "design-manifest-v0.7.yml"
+OUTPUT = HERE / "design-manifest.yml"
 
 
 def sha(path: Path) -> str:
@@ -37,9 +37,9 @@ fixtures = {
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
 manifest = {
-    "manifest_id": "P9B1Q-ARCHITECTURE-EXECUTABLE-EVIDENCE-DESIGN-MANIFEST-v0.7",
-    "status": "FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW",
-    "parent_correction_commit": "23053e440a0c0ae7f3d3547f74c2b90c8720972d",
+    "manifest_id": "P9B1Q-R3BI-INTEGRATION-CLOSURE-DESIGN-MANIFEST-v0.8",
+    "status": "R3BI_CANDIDATE_PENDING_FINAL_INDEPENDENT_REVIEW",
+    "integration_parent_commit": "39ffea9f8b0ea4ea8bf3f3176dfbd7a8be959707",
     "frozen_implementation_commit": "6ac0e4b2978e5fb41e7b90e27ced17826d35a394",
     "hash_algorithm": "SHA256_RAW_FILE_BYTES",
     "manifest_self_hash_excluded": True,
@@ -60,9 +60,22 @@ manifest = {
         "summary_sha256": sha(HERE / "fixtures/reference-validator-execution-summary.json"),
         "required_result": "PASS",
         "positive_cases": 9,
+        "integrated_r3b_positive_cases": 4,
         "minimality_cases": 8,
-        "negative_cases": 33,
+        "negative_cases": 47,
         "repeat_runs": 3,
+    },
+    "shared_negation_semantic_authority": {
+        "data_path": "negation-surface-scope-authority.yml",
+        "data_sha256": sha(HERE / "negation-surface-scope-authority.yml"),
+        "implementation_path": "negation_semantic_authority.py",
+        "implementation_sha256": sha(HERE / "negation_semantic_authority.py"),
+        "standalone_cli_path": "negation-scope-authority-validator.py",
+        "standalone_cli_is_authority": False,
+        "authoritative_consumers": [
+            "reference-stage-semantic-validator.py::validate_s1",
+            "reference-stage-semantic-validator.py::validate_s3",
+        ],
     },
     "schema_gate": {
         "runner": "strict-schema-gate.mjs",

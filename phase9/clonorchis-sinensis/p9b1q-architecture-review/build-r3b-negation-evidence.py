@@ -184,10 +184,18 @@ def build() -> dict[str, Any]:
 
     for case in cases:
         case["assertion_derivation"] = v.independently_derive_assertion(case)
+        case["typed_solution_assertions"] = [
+            {
+                "frame_id": item["frame_id"],
+                "assertion_status": item["assertion"]["assertion_status"],
+                "finding_polarity": item["assertion"]["finding_polarity"],
+            }
+            for item in case["event_frame"]["frames"]
+        ]
 
     objects: list[tuple[str, Any]] = [("authority", yaml.safe_load(AUTHORITY_PATH.read_text(encoding="utf-8")))]
     for case in cases:
-        for key in ("request", "normalized_request", "clause_ast", "event_frame", "scope_authority_records", "assertion_derivation"):
+        for key in ("request", "normalized_request", "clause_ast", "event_frame", "scope_authority_records", "assertion_derivation", "typed_solution_assertions"):
             objects.append((f"{case['case_id']}.{key}", case[key]))
     object_hashes = [{"object_name": name, "canonical_sha256": csha(value), "byte_length": len(cbytes(value))} for name, value in objects]
     chain = []

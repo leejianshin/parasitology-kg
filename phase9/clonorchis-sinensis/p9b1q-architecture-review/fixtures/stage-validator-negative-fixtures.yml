@@ -6,33 +6,33 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: d42ca17ba68e440ddd397feae3a4f8bf5f73ef576ba1b5d9607b86f4d4b5e7ca
+  canonical_sha256: b43993180a8971d2f0989e6d0401fed33764835509e661016b8ce175175beadd
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 555ff3001c659ce77e50281019ca1278cd840cd6c6d50a9ab3920b8a4ee58e3a
+  canonical_sha256: fe01dbaf2e3cd3f26ef090c507a8ef9943641f6105c68cdbbb617e1b7d0f90dd
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: d4cbfa3a7b16690c0c37c7030cc1b0a042e62daa20bbe20c427a4a2bcbc517e6
+  canonical_sha256: e85d03fe149829123152fd1d1c2865591016d165189d6da5d4acfa7689590fd5
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: f60d83543834ef8fee2b663b14af3ea10bc13e86a881a424e118d4f6f5a8abff
+  canonical_sha256: 40419236778e56f24c8e6921d7bdcb9463d565b7b1ed76996bc0f5ad9ee190ba
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: a726675b040e97c743824ff6aa2bf4f433f4467f57a699d1411659a7414d31c3
+  canonical_sha256: d44c796e961b0b246ea7331aa2c2e59583e25505fe41b8b45f711ff15f680e98
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: c5c58e98b87102f50660a6b64c48f8724de772066c83f0be850b91111cc73ade
+  canonical_sha256: 2124cb1cd28b8e1f439124de4d65783263fb26b488632b7b0df2b2e3f7dc25ce
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 162c6d7c382d36dbfaac85f6f657e779b9d58a07e3d1976af4204b0b159788a0
+  canonical_sha256: 1cd9b465f5d5260777d1e425b0696986792059321e581b8fec9eb733486bdbeb
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: afc536d5181a4cd009bc8878430a2ffbc655c8c59f6f2c1b815ab9cce012fb5f
+  canonical_sha256: b0175bc4ad42735627661c66a20b8bb9a2dabf43966fca776fbf63e21bab0259
 - path: fixtures/typed-solution-exposure-positive.json
-  canonical_sha256: 5ec2d23f883f04030fd99d0a483c2962e89e366445010f066ce481504ab38de0
+  canonical_sha256: 62d15dfda735ed11c8464662a1a500eba8097e75c20549902def44e0e343083d
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 8694a2ab75e8b36ee9a1c1950dbbfaa53617708628cf42f3767e374106d2b8c6
+  canonical_sha256: f7141992053b0aa62becf15b20f1820e8b8b1ba275fed7b5022877182087d1cf
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 98783bd3d953387be90c99f92d4c97a55d32c41ad820144676020bbc29b2a7a2
+  canonical_sha256: 7fe4e82e2aa63e6143dfe7b72fbf3c073aa162905b8e46f51f7072af681caa49
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -343,6 +343,8 @@ cases:
   - typed-solution-core-schema-candidate.yml
   - phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml
   - constraint-set-schema-candidate.yml
+  - negation-surface-scope-authority.yml
+  - negation_semantic_authority.py
   fault_class: ACTUAL_OBJECT_BINDING_MISMATCH
   patch:
   - op: replace
@@ -352,7 +354,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 98783bd3d953387be90c99f92d4c97a55d32c41ad820144676020bbc29b2a7a2
+  base_object_canonical_sha256: 7fe4e82e2aa63e6143dfe7b72fbf3c073aa162905b8e46f51f7072af681caa49
 - fixture_id: NEG-S3-EVENT-MAPPING-HASH
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -559,7 +561,7 @@ cases:
   patch:
   - op: replace
     path: /constraint_registry_sha256
-    value: 59b2c7e06e24873981c23a6a6efeb645f6b9a8d471392d26031e54dbee1f000e
+    value: c80bbfc519bb8ece7da0be5e704fab6bfa6fffa5c71ef14a1e72737eed070198
   actual_input_mutation:
     object_kind: CONSTRAINT_REGISTRY
     patch:

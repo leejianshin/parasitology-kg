@@ -105,6 +105,9 @@ def main() -> None:
     new_contract = raw_sha(HERE / "stage-semantic-validator-contract.yml")
     profile_sha = raw_sha(HERE / "object-canonicalization-and-hash-chain.yml")
     constraint_sha = raw_sha(HERE / "constraint-set-v0.1.yml")
+    registry_sha = raw_sha(HERE / "constraint-id-registry.yml")
+    negation_authority_sha = raw_sha(HERE / "negation-surface-scope-authority.yml")
+    negation_semantic_sha = raw_sha(HERE / "negation_semantic_authority.py")
     projection_sha = raw_sha(HERE / "queryir-projection-rule-set.yml")
 
     requests: dict[str, dict[str, Any]] = {}
@@ -144,6 +147,17 @@ def main() -> None:
         frames[suffix] = frame
 
     core = load("typed-solution-exposure-positive.json")
+    registry = yaml.safe_load((HERE / "constraint-id-registry.yml").read_text(encoding="utf-8"))
+    core["satisfied_constraint_ids"] = [
+        entry["id"]
+        for entry in registry["entries"]
+        if entry["stage"] in {
+            "S0_NORMALIZED_REQUEST",
+            "S1_CLAUSE_AST",
+            "S2_EVENT_FRAME",
+            "S3_TYPED_SOLVER",
+        }
+    ]
     refresh_core(core)
     write("typed-solution-exposure-positive.json", core)
     core_sha = csha(core)
@@ -201,6 +215,7 @@ def main() -> None:
     typed["clause_ast_sha256"] = csha(asts["exposure"])
     typed["event_frame_sha256"] = csha(frames["exposure"])
     typed["constraint_set_sha256"] = constraint_sha
+    typed["constraint_registry_sha256"] = registry_sha
     typed["selected_solution"] = copy.deepcopy(core)
     typed["selected_solution"]["queryir_emission_record"] = emission
     typed["solver"]["executable_sha256"] = new_exec
@@ -217,6 +232,10 @@ def main() -> None:
         result["validator"]["executable_sha256"] = new_exec
         result["validator"]["configuration_sha256"] = new_contract
         result["validator"]["validator_version"] = "0.3-reference"
+        stage_id = result["stage"]
+        result["verified_constraint_ids"] = yaml.safe_load(
+            (HERE / "stage-semantic-validator-contract.yml").read_text(encoding="utf-8")
+        )["validators"][stage_id]["registered_constraints"]
         if name == "stage-validation-s1-positive.json" and not any(
             item["object_kind"] == "ENTITY_ALIAS_AUTHORITY"
             for item in result["actual_input_objects"]
@@ -230,6 +249,27 @@ def main() -> None:
                 "canonical_sha256": raw_sha(alias_path),
                 "byte_length": len(alias_path.read_bytes()),
             })
+        if name in ("stage-validation-s1-positive.json", "stage-validation-s3-positive.json"):
+            required = {
+                "NEGATION_SURFACE_SCOPE_AUTHORITY": {
+                    "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/negation-surface-scope-authority.yml",
+                    "schema_id": "negation-surface-scope-authority-schema-candidate.yml",
+                    "canonical_sha256": negation_authority_sha,
+                    "byte_length": len((HERE / "negation-surface-scope-authority.yml").read_bytes()),
+                },
+                "NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE": {
+                    "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/negation_semantic_authority.py",
+                    "schema_id": "python3-pure-semantic-authority",
+                    "canonical_sha256": negation_semantic_sha,
+                    "byte_length": len((HERE / "negation_semantic_authority.py").read_bytes()),
+                },
+            }
+            present = {item["object_kind"] for item in result["actual_input_objects"]}
+            for object_kind, fields in required.items():
+                if object_kind not in present:
+                    result["actual_input_objects"].append(
+                        {"object_kind": object_kind, "content_json_pointer": None} | fields
+                    )
         if name == "stage-validation-s3-positive.json" and not any(
             item["object_kind"] == "PROJECTION_RULE_SET"
             for item in result["actual_input_objects"]
@@ -347,6 +387,16 @@ def main() -> None:
         capture_output=True,
     )
     summary["negative"] = json.loads(negative_run.stdout)
+    r3b_run = subprocess.run(
+        ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "r3b"],
+        cwd=REPO,
+        check=True,
+        capture_output=True,
+    )
+    r3b = json.loads(r3b_run.stdout)
+    summary["positive"] = summary["positive"][:9] + r3b["positive"]
+    summary["negative"].extend(r3b["negative"])
+    summary["positive_pass_count"] = sum(not item["errors"] for item in summary["positive"])
     summary["negative_pass_count"] = sum(item["passed"] for item in summary["negative"])
     write("reference-validator-execution-summary.json", summary)
     completed = subprocess.run(

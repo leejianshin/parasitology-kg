@@ -59,12 +59,14 @@ object_chain:
     actual_output: NORMALIZED_REQUEST
     independent_hash_fields: [request_sha256, normalized_request_sha256]
   S1_CLAUSE_AST:
-    actual_inputs: [NORMALIZED_REQUEST, ENTITY_ONTOLOGY, CLAUSE_GRAMMAR_CONFIG]
+    actual_inputs: [NORMALIZED_REQUEST, ENTITY_ONTOLOGY, CLAUSE_GRAMMAR_CONFIG, NEGATION_SURFACE_SCOPE_AUTHORITY, NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE]
     actual_output: CLAUSE_AST
     independent_hash_fields:
       - normalized_request_sha256
       - entity_ontology_sha256
       - clause_grammar_config_sha256
+      - negation_surface_scope_authority_sha256
+      - negation_semantic_implementation_sha256
       - clause_ast_sha256
   S2_EVENT_FRAME:
     actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
@@ -91,6 +93,8 @@ object_chain:
       - CONSTRAINT_SET_SCHEMA
       - STAGE_VALIDATOR_CONTRACT
       - MINIMALITY_PROOF_SCHEMA
+      - NEGATION_SURFACE_SCOPE_AUTHORITY
+      - NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE
     actual_output: TYPED_CONSTRAINT_RESULT
     independent_hash_fields:
       - request_sha256
@@ -106,6 +110,8 @@ object_chain:
       - constraint_set_sha256
       - stage_validator_contract_sha256
       - canonicalization_profile_sha256
+      - negation_surface_scope_authority_sha256
+      - negation_semantic_implementation_sha256
   S4_QUERYIR_EMISSION:
     actual_inputs:
       - NORMALIZED_REQUEST
@@ -150,6 +156,8 @@ object_chain:
       - EXECUTION_BINDING_SIDECAR_SCHEMA
       - STAGE_VALIDATOR_EXECUTABLE
       - STAGE_VALIDATOR_CONTRACT
+      - NEGATION_SURFACE_SCOPE_AUTHORITY
+      - NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE
     actual_output: EXECUTION_BINDING_SIDECAR
     independent_hash_fields: "EVERY_RESOLVED_ACTUAL_OBJECT_CANONICAL_SHA256"
 
@@ -164,4 +172,5 @@ binding_invariants:
   - "typed solution cores, semantic universes and removal probes are persisted as independently resolvable canonical JSON objects"
   - "every JSON path is persisted in the exact canonical bytes that its canonical_sha256 names"
   - "stage PASS and removal-probe outcomes bind the exact review reference validator executable and contract configuration bytes"
+  - "S1 and S3 bind the exact shared negation authority data and semantic implementation bytes; either byte change invalidates their stage results and S5 sidecar"
   - "a source ID is interpreted only in the namespace of its declared actual object kind and must resolve there"

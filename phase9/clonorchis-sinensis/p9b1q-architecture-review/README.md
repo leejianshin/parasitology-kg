@@ -38,7 +38,11 @@ semantic errors stable instead of making them correct.
 - `stage-semantic-validator-contract.yml` and its result Schema: executable,
   fail-closed S0–S5 validation over actual content-addressed objects.
 - `constraint-id-registry.yml`, its Schema, and `constraint-set-v0.1.yml`:
-  the complete 42-check validation order with no dynamically invented rules.
+  the complete 46-check validation order with no dynamically invented rules.
+- `negation_semantic_authority.py` and `negation-surface-scope-authority.yml`:
+  the single source of marker surface, AST scope, target type, composition, and
+  assertion derivation truth consumed by both the standalone R3-B harness and
+  authoritative S1/S3 validators.
 - `queryir-emission-record-schema-candidate.yml`: the UNIQUE solution's complete
   QueryIR, pointer-complete field trace, rooted license DAG, and removal-based
   minimality witness.
@@ -55,7 +59,7 @@ semantic errors stable instead of making them correct.
 - `reference-stage-semantic-validator.py`: a deterministic, review-only
   executable that validates the positive chain, replays all eight minimality
   removals through the same semantic predicate, and executes all thirty-three
-  isolated negative mutations.
+  prior plus fourteen formally integrated R3-B isolated negative mutations.
 - `fixtures/reference-validator-execution-summary.json` and its Schema: the
   byte-identical three-run result binding the actual executable and contract.
 

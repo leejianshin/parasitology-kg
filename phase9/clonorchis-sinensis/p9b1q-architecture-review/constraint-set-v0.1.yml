@@ -1,17 +1,22 @@
 constraint_set_version: "0.1-candidate"
 constraint_set_id: "clonorchis_p9b1q_typed_constraints_v0_1"
 knowledge_version: "clonorchis_pcms_v1"
-canonicalization_profile_sha256: "a336641805c06c5eae2b7e69ff7048a7eee97ddf2654df9ad8719c2056703027"
-constraint_registry_sha256: "184ebf60bc881584d8e8c62908e411624d8883e4255b7ef49e574c88714ac544"
+canonicalization_profile_sha256: "998840f8bd3fe7f5c47a2703208db1fbf05485300b7fdc3b12c7aeeaa927627c"
+constraint_registry_sha256: "6854a25a6008e46c8863d2fb885d2cf9b8187deed63820b45eac3cc8e7bba462"
 authority_object_hashes:
   entity_ontology_sha256: "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e"
   relation_ontology_sha256: "4d5c56c9a9df8c65a49705b91c8c8081b43f17d8096a471398ae234fdb0584c5"
   predicate_type_mapping_sha256: "ec463903f5eb37921ef4393e903814a71ef7a3ee50a28c5bd673db8fe8186961"
   event_relation_mapping_sha256: "5024b466e94fc0267cd34cabb86067523f267868a22480f150bbcdb0c7c68807"
   semantic_role_mapping_sha256: "f70292f4c772ecf75c3d35643da3d1e764907cb35b05255b603293a0fd986166"
+  negation_surface_scope_authority_sha256: "8020dedc32f61501a5dd53f6087b0462e9d42f810d120dbb0bab9aa94d22c3fb"
+  negation_semantic_implementation_sha256: "3399d0ca306b64e9d5c7dce520f046f2f231d61e7deb1770d9b0407aacefd126"
 selected_constraints:
   - CNS-NORM-LOSSLESS_ROUNDTRIP
   - CNS-NORM-REQUEST_BINDING
+  - CNS-AST-MARKER-SURFACE-AUTHORITY
+  - CNS-AST-SCOPE-PATH-AUTHORITY
+  - CNS-AST-TARGET-TYPE-AUTHORITY
   - CNS-AST-SINGLE_ROOT
   - CNS-AST-ID_UNIQUE
   - CNS-AST-REF_INTEGRITY
@@ -35,6 +40,7 @@ selected_constraints:
   - CNS-SOLVER-NONEMPTY_UNIQUE
   - CNS-SOLVER-ENTITY_RESOLUTION
   - CNS-SOLVER-ASSERTION_SCOPE
+  - CNS-SOLVER-ASSERTION-DERIVATION
   - CNS-SOLVER-EVENT_IDENTITY
   - CNS-SOLVER-EVENT_RELATION_DERIVATION
   - CNS-SOLVER-LICENSE_DAG

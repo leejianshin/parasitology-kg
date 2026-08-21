@@ -32,8 +32,8 @@ properties:
   result: {const: PASS}
   positive:
     type: array
-    minItems: 9
-    maxItems: 9
+    minItems: 13
+    maxItems: 13
     uniqueItems: true
     items: {$ref: "#/$defs/positive_result"}
   minimality:
@@ -44,13 +44,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 33
-    maxItems: 33
+    minItems: 47
+    maxItems: 47
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
-  positive_pass_count: {const: 9}
+  positive_pass_count: {const: 13}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 33}
+  negative_pass_count: {const: 47}
   schema_gate:
     type: object
     additionalProperties: false
@@ -81,7 +81,7 @@ $defs:
     additionalProperties: false
     required: [case, errors]
     properties:
-      case: {type: string, pattern: "^POS-S[0-5]-(exposure|diagnostic)$"}
+      case: {type: string, pattern: "^(POS-S[0-5]-(exposure|diagnostic)|POS-R3B-[A-Z0-9-]+)$"}
       errors: {type: array, maxItems: 0}
   minimality_result:
     type: object
@@ -102,6 +102,6 @@ $defs:
     additionalProperties: false
     required: [fixture_id, observed_first_error, passed]
     properties:
-      fixture_id: {type: string, pattern: "^NEG-S[0-5]-[A-Z0-9-]+$"}
+      fixture_id: {type: string, pattern: "^(NEG-S[0-5]-[A-Z0-9-]+|R3B-NEG-[A-Z0-9-]+)$"}
       observed_first_error: {$ref: "#/$defs/validation_error"}
       passed: {const: true}

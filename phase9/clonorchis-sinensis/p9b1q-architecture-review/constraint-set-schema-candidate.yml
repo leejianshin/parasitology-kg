@@ -27,20 +27,27 @@ properties:
       - predicate_type_mapping_sha256
       - event_relation_mapping_sha256
       - semantic_role_mapping_sha256
+      - negation_surface_scope_authority_sha256
+      - negation_semantic_implementation_sha256
     properties:
       entity_ontology_sha256: {$ref: "#/$defs/sha256"}
       relation_ontology_sha256: {$ref: "#/$defs/sha256"}
       predicate_type_mapping_sha256: {$ref: "#/$defs/sha256"}
       event_relation_mapping_sha256: {$ref: "#/$defs/sha256"}
       semantic_role_mapping_sha256: {$ref: "#/$defs/sha256"}
+      negation_surface_scope_authority_sha256: {$ref: "#/$defs/sha256"}
+      negation_semantic_implementation_sha256: {$ref: "#/$defs/sha256"}
   selected_constraints:
     type: array
-    minItems: 42
-    maxItems: 42
+    minItems: 46
+    maxItems: 46
     uniqueItems: true
     prefixItems:
       - {const: CNS-NORM-LOSSLESS_ROUNDTRIP}
       - {const: CNS-NORM-REQUEST_BINDING}
+      - {const: CNS-AST-MARKER-SURFACE-AUTHORITY}
+      - {const: CNS-AST-SCOPE-PATH-AUTHORITY}
+      - {const: CNS-AST-TARGET-TYPE-AUTHORITY}
       - {const: CNS-AST-SINGLE_ROOT}
       - {const: CNS-AST-ID_UNIQUE}
       - {const: CNS-AST-REF_INTEGRITY}
@@ -64,6 +71,7 @@ properties:
       - {const: CNS-SOLVER-NONEMPTY_UNIQUE}
       - {const: CNS-SOLVER-ENTITY_RESOLUTION}
       - {const: CNS-SOLVER-ASSERTION_SCOPE}
+      - {const: CNS-SOLVER-ASSERTION-DERIVATION}
       - {const: CNS-SOLVER-EVENT_IDENTITY}
       - {const: CNS-SOLVER-EVENT_RELATION_DERIVATION}
       - {const: CNS-SOLVER-LICENSE_DAG}
@@ -97,6 +105,9 @@ $defs:
     enum:
       - CNS-NORM-LOSSLESS_ROUNDTRIP
       - CNS-NORM-REQUEST_BINDING
+      - CNS-AST-MARKER-SURFACE-AUTHORITY
+      - CNS-AST-SCOPE-PATH-AUTHORITY
+      - CNS-AST-TARGET-TYPE-AUTHORITY
       - CNS-AST-SINGLE_ROOT
       - CNS-AST-ID_UNIQUE
       - CNS-AST-REF_INTEGRITY
@@ -120,6 +131,7 @@ $defs:
       - CNS-SOLVER-NONEMPTY_UNIQUE
       - CNS-SOLVER-ENTITY_RESOLUTION
       - CNS-SOLVER-ASSERTION_SCOPE
+      - CNS-SOLVER-ASSERTION-DERIVATION
       - CNS-SOLVER-EVENT_IDENTITY
       - CNS-SOLVER-EVENT_RELATION_DERIVATION
       - CNS-SOLVER-LICENSE_DAG

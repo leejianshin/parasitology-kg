@@ -21,6 +21,8 @@ from typing import Any
 
 import yaml
 
+import negation_semantic_authority as negation_semantic
+
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
@@ -36,6 +38,10 @@ PROJECTION_RULE_SET = HERE / "queryir-projection-rule-set.yml"
 EVENT_IDENTITY_CONTRACT = HERE / "event-identity-contract.yml"
 CONSTRAINT_REGISTRY_SCHEMA = HERE / "constraint-id-registry-schema-candidate.yml"
 CONSTRAINT_SET_SCHEMA = HERE / "constraint-set-schema-candidate.yml"
+NEGATION_AUTHORITY = HERE / "negation-surface-scope-authority.yml"
+NEGATION_SEMANTIC_IMPLEMENTATION = HERE / "negation_semantic_authority.py"
+R3B_NEGATIVE = FIXTURES / "r3b-negation-scope-negative-fixtures.yml"
+R3B_POSITIVE = FIXTURES / "r3b-negation-scope-positive.json"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
 _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
@@ -183,6 +189,8 @@ def validate_s1(
     ast: dict[str, Any],
     normalized: dict[str, Any],
     alias_authority: dict[str, Any] | None = None,
+    negation_authority: dict[str, Any] | None = None,
+    scope_authority_records: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("clause-ast-schema-candidate.yml", ast):
@@ -246,6 +254,15 @@ def validate_s1(
                 errors.append(error("CNS-AST-SCOPE_TARGET_INTEGRITY", "SCOPE_TARGET_INVALID", f"/assertion_markers/{index}"))
             if item["scope_status"] == "UNRESOLVED" and len(item["scope_target_candidate_ids"]) < 2:
                 errors.append(error("CNS-AST-SCOPE_TARGET_INTEGRITY", "SCOPE_TARGET_INVALID", f"/assertion_markers/{index}"))
+    if not errors or scope_authority_records is not None:
+        errors.extend(
+            negation_semantic.validate_surface_scope_target(
+                ast,
+                normalized,
+                negation_authority or load_yaml(NEGATION_AUTHORITY),
+                scope_authority_records,
+            )
+        )
     return ordered(errors)
 
 
@@ -568,15 +585,54 @@ def finite_solution_count(
     return satisfying
 
 
+def validate_s3_assertion_authority(
+    inputs: dict[str, Any], typed_assertions: list[dict[str, Any]]
+) -> list[dict[str, str]]:
+    required = ("NORMALIZED_REQUEST", "CLAUSE_AST", "EVENT_FRAME")
+    if any(key not in inputs for key in required):
+        return [
+            error(
+                "CNS-SOLVER-ASSERTION-DERIVATION",
+                "ASSERTION_DERIVATION_MISMATCH",
+                "/actual_input_objects",
+            )
+        ]
+    _, errors = negation_semantic.validate_assertion_derivation(
+        inputs["CLAUSE_AST"],
+        inputs["NORMALIZED_REQUEST"],
+        inputs["EVENT_FRAME"],
+        typed_assertions,
+        inputs.get("NEGATION_SURFACE_SCOPE_AUTHORITY", load_yaml(NEGATION_AUTHORITY)),
+        inputs.get("SCOPE_AUTHORITY_RECORDS"),
+        inputs.get("DECLARED_ASSERTION_DERIVATION"),
+    )
+    return errors
+
+
 def validate_s3(
-    typed: dict[str, Any],
+    typed: dict[str, Any] | None,
     inputs: dict[str, Any] | None = None,
     input_hashes: dict[str, str] | None = None,
+    assertion_only: bool = False,
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
+    inputs = inputs or {}
+    if assertion_only:
+        return ordered(
+            validate_s3_assertion_authority(
+                inputs, inputs.get("TYPED_SOLUTION_ASSERTIONS", [])
+            )
+        )
+    if typed is None:
+        return ordered(
+            [
+                error(
+                    "CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/"
+                )
+            ]
+        )
     if not schema_valid("typed-constraint-result-schema-candidate.yml", typed):
         errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/"))
-    inputs = inputs or {}
     input_hashes = input_hashes or {}
     registry_object = inputs.get("CONSTRAINT_REGISTRY", load_yaml(REGISTRY))
     registry_schema = inputs.get(
@@ -597,6 +653,7 @@ def validate_s3(
     if not schema_valid("constraint-set-schema-candidate.yml", constraint_set):
         errors.append(error("CNS-SOLVER-REGISTRY_MEMBERSHIP", "UNKNOWN_CONSTRAINT_ID", "/constraint_set"))
     core = solution_core(typed)
+    errors.extend(validate_s3_assertion_authority(inputs, core["resolved_events"]))
     unknown = set(core["satisfied_constraint_ids"]) - registry
     if unknown:
         errors.append(error("CNS-SOLVER-REGISTRY_MEMBERSHIP", "UNKNOWN_CONSTRAINT_ID", "/selected_solution/satisfied_constraint_ids"))
@@ -605,9 +662,20 @@ def validate_s3(
     empty_unique = typed["status"] == "UNIQUE" and not any(core[key] for key in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents"))
     if empty_unique:
         errors.append(error("CNS-SOLVER-NONEMPTY_UNIQUE", "EMPTY_UNIQUE_SOLUTION", "/selected_solution"))
-    expected_sequence = [entry["id"] for entry in registry_entries if entry["order"] <= 30]
+    expected_sequence = [
+        entry["id"]
+        for entry in registry_entries
+        if entry["stage"]
+        in {
+            "S0_NORMALIZED_REQUEST",
+            "S1_CLAUSE_AST",
+            "S2_EVENT_FRAME",
+            "S3_TYPED_SOLVER",
+        }
+    ]
     if (
-        [entry["order"] for entry in registry_entries] != list(range(1, 43))
+        [entry["order"] for entry in registry_entries]
+        != list(range(1, len(registry_entries) + 1))
         or constraint_set["selected_constraints"] != [entry["id"] for entry in registry_entries]
         or core["satisfied_constraint_ids"] != expected_sequence
     ):
@@ -1929,11 +1997,21 @@ def run_positive() -> list[dict[str, Any]]:
         ast = load_json(FIXTURES / f"clause-ast-{suffix}-positive.json")
         frame = load_json(FIXTURES / f"event-frame-{suffix}-positive.json")
         s0_errors = validate_s0(norm, request)
-        s1_errors = validate_s1(ast, norm)
+        if suffix == "exposure":
+            s1_record, s1_inputs, _ = load_stage_result("S1")
+            s1_errors = validate_s1(
+                ast,
+                norm,
+                alias_authority=s1_inputs.get("ENTITY_ALIAS_AUTHORITY"),
+                negation_authority=s1_inputs.get(
+                    "NEGATION_SURFACE_SCOPE_AUTHORITY"
+                ),
+            )
+        else:
+            s1_errors = validate_s1(ast, norm)
         s2_errors = validate_s2(frame, norm, ast)
         if suffix == "exposure":
             s0_record, _, _ = load_stage_result("S0")
-            s1_record, _, _ = load_stage_result("S1")
             s2_record, _, _ = load_stage_result("S2")
             s0_errors = stage_record_errors(s0_record, s0_errors)
             s1_errors = stage_record_errors(s1_record, s1_errors)
@@ -2091,6 +2169,74 @@ def run_negative() -> list[dict[str, Any]]:
     return results
 
 
+def r3b_authoritative_case_errors(case: dict[str, Any]) -> list[dict[str, str]]:
+    """Run an R3-B case through the authoritative stage validator functions."""
+    authority = load_yaml(NEGATION_AUTHORITY)
+    s0_errors = validate_s0(case["normalized_request"], case["request"])
+    if s0_errors:
+        return s0_errors
+    s1_errors = validate_s1(
+        case["clause_ast"],
+        case["normalized_request"],
+        negation_authority=authority,
+        scope_authority_records=case["scope_authority_records"],
+    )
+    if s1_errors:
+        return s1_errors
+    s2_errors = validate_s2(
+        case["event_frame"], case["normalized_request"], case["clause_ast"]
+    )
+    if s2_errors:
+        return s2_errors
+    inputs = {
+        "NORMALIZED_REQUEST": case["normalized_request"],
+        "CLAUSE_AST": case["clause_ast"],
+        "EVENT_FRAME": case["event_frame"],
+        "NEGATION_SURFACE_SCOPE_AUTHORITY": authority,
+        "SCOPE_AUTHORITY_RECORDS": case["scope_authority_records"],
+        "DECLARED_ASSERTION_DERIVATION": case["assertion_derivation"],
+        "TYPED_SOLUTION_ASSERTIONS": case["typed_solution_assertions"],
+    }
+    return validate_s3(None, inputs, assertion_only=True)
+
+
+def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
+    """Bind all four positives and fourteen mutations to the main entrypoint."""
+    bundle = load_json(R3B_POSITIVE)
+    by_id = {case["case_id"]: case for case in bundle["cases"]}
+    positive = [
+        {
+            "case": f"POS-R3B-{case['case_id'].removeprefix('R3B-POS-')}",
+            "errors": r3b_authoritative_case_errors(case),
+        }
+        for case in bundle["cases"]
+    ]
+    if any(item["errors"] for item in positive):
+        return {"positive": positive, "negative": []}
+    negative: list[dict[str, Any]] = []
+    for fixture in load_yaml(R3B_NEGATIVE)["cases"]:
+        if len(fixture["patch"]) != 1:
+            raise RuntimeError(fixture["fixture_id"])
+        candidate = copy.deepcopy(by_id[fixture["base_case_id"]])
+        candidate[fixture["target"]] = apply_patch(
+            candidate[fixture["target"]], fixture["patch"]
+        )
+        errors = r3b_authoritative_case_errors(candidate)
+        first = errors[0] if errors else None
+        negative.append(
+            {
+                "fixture_id": fixture["fixture_id"],
+                "observed_first_error": first,
+                "passed": first is not None
+                and first["constraint_id"] == fixture["expected_constraint_id"]
+                and first["failure_code"] == registry_failure(
+                    fixture["expected_constraint_id"]
+                ),
+            }
+        )
+    return {"positive": positive, "negative": negative}
+
+
 def r3a_inputs(objects: dict[str, Any]) -> dict[str, Any]:
     return {
         "NORMALIZED_REQUEST": objects["normalized_request"],
@@ -2241,6 +2387,9 @@ def one_run() -> dict[str, Any]:
     positive = run_positive()
     minimality = run_minimality()
     negative = run_negative()
+    r3b = run_r3b_authoritative()
+    positive.extend(r3b["positive"])
+    negative.extend(r3b["negative"])
     return {
         "positive": positive,
         "minimality": minimality,
@@ -2294,7 +2443,7 @@ def build_summary() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=("all", "positive", "minimality", "negative", "r3a"), default="all")
+    parser.add_argument("--mode", choices=("all", "positive", "minimality", "negative", "r3a", "r3b"), default="all")
     args = parser.parse_args()
     if args.mode == "all":
         result: Any = build_summary()
@@ -2304,9 +2453,16 @@ def main() -> int:
         result = run_minimality()
     elif args.mode == "r3a":
         result = run_r3a()
+    elif args.mode == "r3b":
+        result = run_r3b_authoritative()
     else:
         result = run_negative()
     print(canonical_bytes(result).decode("utf-8"), end="")
+    if args.mode == "r3b":
+        complete = all(not item["errors"] for item in result["positive"]) and all(
+            item["passed"] for item in result["negative"]
+        )
+        return 0 if complete else 1
     if args.mode in ("all", "r3a"):
         return 0 if result["result"] == "PASS" else 1
     return 0
