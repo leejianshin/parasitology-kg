@@ -1,0 +1,76 @@
+manifest_id: P9B1Q-R3B-NEGATION-SCOPE-NEGATIVE
+base_object: fixtures/r3b-negation-scope-positive.json
+mutation_policy: EXACTLY_ONE_RFC6902_OPERATION_FROM_PASSING_BASE
+cases:
+  - fixture_id: R3B-NEG-01-WH-FOCUS-SPOOFED-AS-NEGATOR
+    base_case_id: R3B-POS-WH-CONTROL
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/marker_kind, value: NEGATOR}]
+    expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  - fixture_id: R3B-NEG-02-NEGATOR-SPOOFED-AS-WH-FOCUS
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/marker_kind, value: WH_FOCUS}]
+    expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  - fixture_id: R3B-NEG-03-SOURCE-SPAN-MARKER-CLASS-MISMATCH
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: clause_ast
+    patch:
+      - {op: replace, path: /assertion_markers/0/source_span, value: {start_char: 1, end_char: 6, text: 生食淡水鱼}}
+    expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  - fixture_id: R3B-NEG-04-DANGLING-SCOPE-TARGET
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/scope_target_candidate_ids/0, value: S999}]
+    expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  - fixture_id: R3B-NEG-05-EXISTING-TARGET-ILLEGAL-AST-PATH
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/containing_node_id, value: S000}]
+    expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  - fixture_id: R3B-NEG-06-DECLARED-TARGET-TYPE-WRONG
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: scope_authority_records
+    patch: [{op: replace, path: /0/target_semantic_type, value: PARTICIPANT_MENTION}]
+    expected_constraint_id: CNS-AST-TARGET-TYPE-AUTHORITY
+  - fixture_id: R3B-NEG-07-ILLEGAL-CROSS-CLAUSE-SCOPE
+    base_case_id: R3B-POS-WH-CONTROL
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/scope_target_candidate_ids/0, value: S003}]
+    expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  - fixture_id: R3B-NEG-08-EVENT-NEGATOR-TARGETS-OBJECT
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/scope_target_candidate_ids/0, value: U001}]
+    expected_constraint_id: CNS-AST-TARGET-TYPE-AUTHORITY
+  - fixture_id: R3B-NEG-09-OBJECT-NEGATOR-TARGETS-EVENT
+    base_case_id: R3B-POS-OBJECT-NEGATION
+    target: clause_ast
+    patch: [{op: replace, path: /assertion_markers/0/scope_target_candidate_ids/0, value: S001}]
+    expected_constraint_id: CNS-AST-TARGET-TYPE-AUTHORITY
+  - fixture_id: R3B-NEG-10-DOUBLE-NEGATION-PARITY-WRONG
+    base_case_id: R3B-POS-DOUBLE-NEGATION
+    target: assertion_derivation
+    patch: [{op: replace, path: /event_negator_count, value: 1}]
+    expected_constraint_id: CNS-SOLVER-ASSERTION-DERIVATION
+  - fixture_id: R3B-NEG-11-NESTED-SCOPE-ORDER-WRONG
+    base_case_id: R3B-POS-DOUBLE-NEGATION
+    target: assertion_derivation
+    patch: [{op: replace, path: /ordered_marker_ids, value: [K002, K001]}]
+    expected_constraint_id: CNS-SOLVER-ASSERTION-DERIVATION
+  - fixture_id: R3B-NEG-12-AST-DERIVED-VS-EVENT-FRAME-MISMATCH
+    base_case_id: R3B-POS-DOUBLE-NEGATION
+    target: event_frame
+    patch: [{op: replace, path: /frames/0/assertion/assertion_status, value: NEGATED}]
+    expected_constraint_id: CNS-SOLVER-ASSERTION-DERIVATION
+  - fixture_id: R3B-NEG-13-CORRECT-KIND-UNSUPPORTED-SOURCE-GRAMMAR
+    base_case_id: R3B-POS-OBJECT-NEGATION
+    target: clause_ast
+    patch:
+      - {op: replace, path: /assertion_markers/0/source_span, value: {start_char: 5, end_char: 7, text: 检出}}
+    expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  - fixture_id: R3B-NEG-14-LEGAL-SOURCE-FORGED-SCOPE-PATH
+    base_case_id: R3B-POS-EVENT-NEGATION
+    target: scope_authority_records
+    patch: [{op: replace, path: /0/path_node_ids, value: [S000, S001]}]
+    expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY

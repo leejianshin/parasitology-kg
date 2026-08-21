@@ -1,0 +1,70 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/negation-surface-scope-authority-v0.1"
+type: object
+additionalProperties: false
+required: [authority_id, authority_version, status, source_classification, grammar_classes, scope_path_rules, target_binding, composition, assertion_derivation, constraint_order, forbidden_shortcuts]
+properties:
+  authority_id: {const: P9B1Q-NEGATION-SURFACE-SCOPE-V0.1}
+  authority_version: {const: 0.1-candidate}
+  status: {const: R3B_LOCAL_CANDIDATE_PENDING_INDEPENDENT_REVIEW}
+  source_classification:
+    type: object
+    additionalProperties: false
+    required: [未, 并非, 未检出, 什么证据]
+    properties:
+      未: {$ref: "#/$defs/classification"}
+      并非: {$ref: "#/$defs/classification"}
+      未检出: {$ref: "#/$defs/classification"}
+      什么证据: {$ref: "#/$defs/classification"}
+  grammar_classes:
+    type: object
+    additionalProperties: false
+    required: [EVENT_PREDICATE_NEGATOR, SENTENTIAL_NEGATOR, PARTICIPANT_ABSENCE_NEGATOR, WH_INTERROGATIVE_FOCUS]
+    properties:
+      EVENT_PREDICATE_NEGATOR: {$ref: "#/$defs/grammar_class"}
+      SENTENTIAL_NEGATOR: {$ref: "#/$defs/grammar_class"}
+      PARTICIPANT_ABSENCE_NEGATOR: {$ref: "#/$defs/grammar_class"}
+      WH_INTERROGATIVE_FOCUS: {$ref: "#/$defs/grammar_class"}
+  scope_path_rules: {$ref: "#/$defs/string_map"}
+  target_binding: {$ref: "#/$defs/string_map"}
+  composition: {$ref: "#/$defs/string_map"}
+  assertion_derivation: {$ref: "#/$defs/string_map"}
+  constraint_order:
+    type: array
+    minItems: 4
+    maxItems: 4
+    uniqueItems: true
+    items: {type: string, pattern: "^CNS-[A-Z0-9_-]+$"}
+  forbidden_shortcuts:
+    type: array
+    minItems: 5
+    uniqueItems: true
+    items: {type: string, minLength: 1}
+$defs:
+  classification:
+    type: object
+    additionalProperties: false
+    required: [grammar_class, marker_kind, semantic_effect]
+    properties:
+      grammar_class: {enum: [EVENT_PREDICATE_NEGATOR, SENTENTIAL_NEGATOR, PARTICIPANT_ABSENCE_NEGATOR, WH_INTERROGATIVE_FOCUS]}
+      marker_kind: {enum: [NEGATOR, WH_FOCUS]}
+      semantic_effect: {enum: [EVENT_NEGATION, PARTICIPANT_NEGATION, NON_NEGATING_CONTROL]}
+  grammar_class:
+    type: object
+    additionalProperties: false
+    required: [allowable_path_relations, allowable_target_types]
+    properties:
+      allowable_path_relations:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: {enum: [SELF_PROPOSITION, DESCENDANT_MENTION, QUESTION_FOCUS_TO_SOURCE_PROPOSITION]}
+      allowable_target_types:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: {enum: [EVENT_PROPOSITION, PARTICIPANT_MENTION]}
+  string_map:
+    type: object
+    minProperties: 1
+    additionalProperties: {type: string, minLength: 1}

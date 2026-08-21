@@ -1,0 +1,67 @@
+authority_id: P9B1Q-NEGATION-SURFACE-SCOPE-V0.1
+authority_version: 0.1-candidate
+status: R3B_LOCAL_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+source_classification:
+  未:
+    grammar_class: EVENT_PREDICATE_NEGATOR
+    marker_kind: NEGATOR
+    semantic_effect: EVENT_NEGATION
+  并非:
+    grammar_class: SENTENTIAL_NEGATOR
+    marker_kind: NEGATOR
+    semantic_effect: EVENT_NEGATION
+  未检出:
+    grammar_class: PARTICIPANT_ABSENCE_NEGATOR
+    marker_kind: NEGATOR
+    semantic_effect: PARTICIPANT_NEGATION
+  什么证据:
+    grammar_class: WH_INTERROGATIVE_FOCUS
+    marker_kind: WH_FOCUS
+    semantic_effect: NON_NEGATING_CONTROL
+grammar_classes:
+  EVENT_PREDICATE_NEGATOR:
+    allowable_path_relations: [SELF_PROPOSITION]
+    allowable_target_types: [EVENT_PROPOSITION]
+  SENTENTIAL_NEGATOR:
+    allowable_path_relations: [SELF_PROPOSITION]
+    allowable_target_types: [EVENT_PROPOSITION]
+  PARTICIPANT_ABSENCE_NEGATOR:
+    allowable_path_relations: [DESCENDANT_MENTION]
+    allowable_target_types: [PARTICIPANT_MENTION]
+  WH_INTERROGATIVE_FOCUS:
+    allowable_path_relations: [QUESTION_FOCUS_TO_SOURCE_PROPOSITION]
+    allowable_target_types: [EVENT_PROPOSITION]
+scope_path_rules:
+  marker_membership: MARKER_ID_MUST_BE_LISTED_BY_CONTAINING_NODE
+  span_containment: MARKER_SPAN_MUST_BE_INSIDE_CONTAINING_NODE_AND_SOURCE_PROPOSITION
+  path_derivation: ACTUAL_AST_CHILD_AND_MENTION_CONTAINMENT_EDGES_ONLY
+  sibling_crossing: REJECT
+  ancestor_escape: REJECT
+  arbitrary_existing_id: REJECT
+  declared_path: MUST_EQUAL_DERIVED_PATH
+target_binding:
+  EVENT_PROPOSITION: TARGET_S_NODE_MUST_BIND_EXACTLY_ONE_EVENT_FRAME_SOURCE
+  PARTICIPANT_MENTION: TARGET_U_NODE_MUST_BIND_A_PARTICIPANT_SLOT_SOURCE
+composition:
+  ordering: SOURCE_SPAN_START_THEN_END_THEN_MARKER_ID
+  event_negation: ODD_NEGATOR_COUNT_IS_NEGATED_EVEN_IS_AFFIRMED
+  participant_negation: TARGET_LOCAL_DOES_NOT_NEGATE_EVENT
+  double_negation: TWO_EVENT_NEGATORS_COMPOSE_TO_AFFIRMED
+  wh_focus: NO_ASSERTION_CHANGE
+assertion_derivation:
+  base_event_assertion: AFFIRMED
+  event_assertion_input: SOURCE_AUTHORITY_PLUS_AST_SCOPE_PATH_PLUS_SEMANTIC_TARGET
+  event_frame_assertion_role: DECLARED_RESULT_TO_VALIDATE_ONLY
+  participant_assertion: ODD_LOCAL_NEGATOR_COUNT_IS_NEGATED_EVEN_IS_AFFIRMED
+  diagnostic_object_absence: EVENT_AFFIRMED_AND_FINDING_POLARITY_NEGATIVE
+constraint_order:
+  - CNS-AST-MARKER-SURFACE-AUTHORITY
+  - CNS-AST-SCOPE-PATH-AUTHORITY
+  - CNS-AST-TARGET-TYPE-AUTHORITY
+  - CNS-SOLVER-ASSERTION-DERIVATION
+forbidden_shortcuts:
+  - trust_declared_marker_kind_without_source_classification
+  - trust_scope_target_id_because_it_exists
+  - trust_declared_scope_path
+  - trust_event_frame_assertion_as_derivation_input
+  - infer_scope_by_nearest_span
