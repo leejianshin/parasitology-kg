@@ -1877,7 +1877,9 @@ def registry_failure(constraint_id: str) -> str:
     raise KeyError(constraint_id)
 
 
-def validate_s5(sidecar: dict[str, Any]) -> list[dict[str, str]]:
+def validate_s5(
+    sidecar: dict[str, Any], object_store_index: dict[str, Any] | None = None
+) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("execution-binding-sidecar-architecture-schema-candidate.yml", sidecar):
         errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/"))
@@ -1896,10 +1898,145 @@ def validate_s5(sidecar: dict[str, Any]) -> list[dict[str, str]]:
     declared = body.pop("sidecar_sha256")
     if canonical_sha(body) != declared:
         errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/sidecar_sha256"))
-    index = load_json(FIXTURES / "object-store-index-positive.json")
-    sidecar_index = [item for item in index["objects"] if item["object_kind"] == "EXECUTION_BINDING_SIDECAR"]
-    if len(sidecar_index) != 1 or sidecar_index[0]["canonical_sha256"] != canonical_sha(sidecar):
-        errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/sidecar_sha256"))
+    index = (
+        object_store_index
+        if object_store_index is not None
+        else load_json(FIXTURES / "object-store-index-positive.json")
+    )
+    index_objects = index.get("objects") if isinstance(index, dict) else None
+    if not isinstance(index_objects, list):
+        errors.append(
+            error(
+                "CNS-BIND-ACTUAL_OBJECT_HASH",
+                "ACTUAL_OBJECT_BINDING_MISMATCH",
+                "/object_store_index/objects",
+            )
+        )
+        index_objects = []
+
+    sidecar_index: list[tuple[int, dict[str, Any]]] = []
+    non_sidecar_index: list[tuple[int, dict[str, Any]]] = []
+    for item_index, item in enumerate(index_objects):
+        if not isinstance(item, dict):
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    f"/object_store_index/objects/{item_index}",
+                )
+            )
+            continue
+        destination = (
+            sidecar_index
+            if item.get("object_kind") == "EXECUTION_BINDING_SIDECAR"
+            else non_sidecar_index
+        )
+        destination.append((item_index, item))
+
+    expected_by_path: dict[str, dict[str, Any]] = {}
+    for reference in sidecar["actual_objects"]:
+        path = reference["path"]
+        if path in expected_by_path:
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    "/actual_objects",
+                )
+            )
+        expected_by_path[path] = reference
+
+    indexed_by_path: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+    for item_index, item in non_sidecar_index:
+        indexed_by_path.setdefault(item.get("path"), []).append((item_index, item))
+
+    expected_entries = {
+        (reference["path"], reference["object_kind"], reference["canonical_sha256"])
+        for reference in sidecar["actual_objects"]
+    }
+    indexed_entries = {
+        (item.get("path"), item.get("object_kind"), item.get("canonical_sha256"))
+        for _, item in non_sidecar_index
+    }
+    if (
+        len(non_sidecar_index) != len(sidecar["actual_objects"])
+        or len(indexed_entries) != len(non_sidecar_index)
+        or indexed_entries != expected_entries
+    ):
+        errors.append(
+            error(
+                "CNS-BIND-ACTUAL_OBJECT_HASH",
+                "ACTUAL_OBJECT_BINDING_MISMATCH",
+                "/object_store_index/objects",
+            )
+        )
+
+    for path, reference in expected_by_path.items():
+        matches = indexed_by_path.get(path, [])
+        if len(matches) != 1:
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    "/object_store_index/objects",
+                )
+            )
+            continue
+        item_index, item = matches[0]
+        if item.get("object_kind") != reference["object_kind"]:
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    f"/object_store_index/objects/{item_index}/object_kind",
+                )
+            )
+        if item.get("canonical_sha256") != reference["canonical_sha256"]:
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    f"/object_store_index/objects/{item_index}/canonical_sha256",
+                )
+            )
+
+    for path, matches in indexed_by_path.items():
+        if path not in expected_by_path or len(matches) != 1:
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    "/object_store_index/objects",
+                )
+            )
+
+    expected_sidecar_path = "fixtures/execution-binding-sidecar-positive.json"
+    if len(sidecar_index) != 1:
+        errors.append(
+            error(
+                "CNS-BIND-ACTUAL_OBJECT_HASH",
+                "ACTUAL_OBJECT_BINDING_MISMATCH",
+                "/object_store_index/objects",
+            )
+        )
+    else:
+        item_index, item = sidecar_index[0]
+        if item.get("path") != expected_sidecar_path:
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    f"/object_store_index/objects/{item_index}/path",
+                )
+            )
+        if item.get("canonical_sha256") != canonical_sha(sidecar):
+            errors.append(
+                error(
+                    "CNS-BIND-ACTUAL_OBJECT_HASH",
+                    "ACTUAL_OBJECT_BINDING_MISMATCH",
+                    f"/object_store_index/objects/{item_index}/canonical_sha256",
+                )
+            )
     if sidecar["canonicalization_profile_sha256"] != sha_bytes((HERE / "object-canonicalization-and-hash-chain.yml").read_bytes()):
         errors.append(error("CNS-BIND-CANONICAL_PROFILE", "ACTUAL_OBJECT_BINDING_MISMATCH", "/canonicalization_profile_sha256"))
     request = parsed.get("P9A_REQUEST", [{}])[0]
@@ -2105,7 +2242,12 @@ def run_negative() -> list[dict[str, Any]]:
                 base_typed = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
                 base_errors = validate_s4(base_typed, base, s4_inputs)
         elif stage == "S5_RUNTIME_BINDING":
-            base_errors = validate_s5(base)
+            base_index = (
+                load_json(resolve_review_path(case["object_store_index_path"]))
+                if case.get("object_store_index_path")
+                else None
+            )
+            base_errors = validate_s5(base, base_index)
         else:
             raise ValueError(stage)
         if base_errors:
@@ -2153,7 +2295,12 @@ def run_negative() -> list[dict[str, Any]]:
                 typed = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
                 errors = validate_s4(typed, mutated, s4_inputs)
         elif stage == "S5_RUNTIME_BINDING":
-            errors = validate_s5(mutated)
+            mutated_index = (
+                apply_patch(base_index, case.get("object_store_index_patch", []))
+                if base_index is not None
+                else None
+            )
+            errors = validate_s5(mutated, mutated_index)
         else:
             raise ValueError(stage)
         first = errors[0] if errors else None

@@ -58,8 +58,10 @@ semantic errors stable instead of making them correct.
   design, fixtures, and protected implementation/P9-A boundary.
 - `reference-stage-semantic-validator.py`: a deterministic, review-only
   executable that validates the positive chain, replays all eight minimality
-  removals through the same semantic predicate, and executes all thirty-three
-  prior plus fourteen formally integrated R3-B isolated negative mutations.
+  removals through the same semantic predicate, executes all thirty-three
+  prior plus fourteen formally integrated R3-B isolated negative mutations,
+  and rejects a non-sidecar object-store index entry that drifts from S5 material
+  authority.
 - `fixtures/reference-validator-execution-summary.json` and its Schema: the
   byte-identical three-run result binding the actual executable and contract.
 

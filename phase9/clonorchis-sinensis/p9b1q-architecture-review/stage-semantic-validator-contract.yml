@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 13
     minimality: 8
-    negative: 47
+    negative: 48
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -233,6 +233,9 @@ validators:
     additional_checks:
       - "all prior stage validation results are PASS and bind the same actual objects"
       - "the sidecar actual output object is independently resolved and hashed; its own summaries are never authority"
+      - "the non-sidecar object-store index entry set is exactly one-to-one with sidecar.actual_objects"
+      - "every non-sidecar index path, object_kind and canonical_sha256 equals its corresponding material authority reference"
+      - "exactly one EXECUTION_BINDING_SIDECAR index entry binds the canonical sidecar bytes at fixtures/execution-binding-sidecar-positive.json"
       - "retrieval is absent for every non-VALID interpretation or failed stage"
       - "retrieval, response and audit bind actual request and QueryIR objects under existing P9-A contracts"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the raw-byte inventory for the R3-BI integration closure candidate."""
+"""Build the raw-byte inventory for the R3-D1 S5 correction candidate."""
 
 from __future__ import annotations
 
@@ -37,9 +37,9 @@ fixtures = {
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
 manifest = {
-    "manifest_id": "P9B1Q-R3BI-INTEGRATION-CLOSURE-DESIGN-MANIFEST-v0.8",
-    "status": "R3BI_CANDIDATE_PENDING_FINAL_INDEPENDENT_REVIEW",
-    "integration_parent_commit": "39ffea9f8b0ea4ea8bf3f3176dfbd7a8be959707",
+    "manifest_id": "P9B1Q-R3D1-S5-INDEX-AUTHORITY-DESIGN-MANIFEST-v0.9",
+    "status": "R3D1_LOCAL_CANDIDATE_PENDING_R3D2",
+    "integration_parent_commit": "3169ea555c529a5cc8767e72ca62a1ef294d6e36",
     "frozen_implementation_commit": "6ac0e4b2978e5fb41e7b90e27ced17826d35a394",
     "hash_algorithm": "SHA256_RAW_FILE_BYTES",
     "manifest_self_hash_excluded": True,
@@ -62,7 +62,7 @@ manifest = {
         "positive_cases": 9,
         "integrated_r3b_positive_cases": 4,
         "minimality_cases": 8,
-        "negative_cases": 47,
+        "negative_cases": 48,
         "repeat_runs": 3,
     },
     "shared_negation_semantic_authority": {
@@ -85,6 +85,14 @@ manifest = {
         "engine": "AJV_8_17_1_DRAFT_2020_12_STRICT",
         "compiled_schema_count": 12,
         "positive_fixture_pair_count": 27,
+    },
+    "object_store_index_binding": {
+        "index_path": "fixtures/object-store-index-positive.json",
+        "sidecar_path": "fixtures/execution-binding-sidecar-positive.json",
+        "non_sidecar_entry_contract": "EXACT_ONE_TO_ONE_WITH_SIDECAR_ACTUAL_OBJECTS",
+        "bound_fields": ["path", "object_kind", "canonical_sha256"],
+        "sidecar_entry_cardinality": 1,
+        "constraint_id": "CNS-BIND-ACTUAL_OBJECT_HASH",
     },
     "boundaries": {
         "implementation_mutation": False,

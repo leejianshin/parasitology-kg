@@ -173,4 +173,6 @@ binding_invariants:
   - "every JSON path is persisted in the exact canonical bytes that its canonical_sha256 names"
   - "stage PASS and removal-probe outcomes bind the exact review reference validator executable and contract configuration bytes"
   - "S1 and S3 bind the exact shared negation authority data and semantic implementation bytes; either byte change invalidates their stage results and S5 sidecar"
+  - "the object-store index contains exactly one non-sidecar entry for every sidecar actual object, with identical path, object_kind and canonical_sha256"
+  - "the object-store index contains exactly one EXECUTION_BINDING_SIDECAR entry whose path and canonical_sha256 bind the actual canonical sidecar bytes"
   - "a source ID is interpreted only in the namespace of its declared actual object kind and must resolve there"
