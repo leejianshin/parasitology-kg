@@ -100,8 +100,17 @@ $defs:
   negative_result:
     type: object
     additionalProperties: false
-    required: [fixture_id, observed_first_error, passed]
+    required: [fixture_id, observed_first_error, semantic_mutation_target_count, semantic_mutation_target, derived_update_count, passed]
     properties:
       fixture_id: {type: string, pattern: "^(NEG-S[0-5]-[A-Z0-9-]+|R3B-NEG-[A-Z0-9-]+)$"}
       observed_first_error: {$ref: "#/$defs/validation_error"}
+      semantic_mutation_target_count: {const: 1}
+      semantic_mutation_target:
+        type: object
+        additionalProperties: false
+        required: [target_object, target_path]
+        properties:
+          target_object: {type: string, minLength: 1}
+          target_path: {type: string, pattern: "^/"}
+      derived_update_count: {type: integer, minimum: 0}
       passed: {const: true}

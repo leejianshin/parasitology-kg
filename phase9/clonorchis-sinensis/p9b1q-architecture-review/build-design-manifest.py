@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the raw-byte inventory for the R3-D1 S5 correction candidate."""
+"""Build the raw-byte inventory for the R3-D2 correction candidate."""
 
 from __future__ import annotations
 
@@ -37,9 +37,9 @@ fixtures = {
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
 manifest = {
-    "manifest_id": "P9B1Q-R3D1-S5-INDEX-AUTHORITY-DESIGN-MANIFEST-v0.9",
-    "status": "R3D1_LOCAL_CANDIDATE_PENDING_R3D2",
-    "integration_parent_commit": "3169ea555c529a5cc8767e72ca62a1ef294d6e36",
+    "manifest_id": "P9B1Q-R3D2-SEMANTIC-MUTATION-ISOLATION-DESIGN-MANIFEST-v1.0",
+    "status": "R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION",
+    "integration_parent_commit": "c6ae74553a661c3cdd0a7da0264c6c1098a025d5",
     "frozen_implementation_commit": "6ac0e4b2978e5fb41e7b90e27ced17826d35a394",
     "hash_algorithm": "SHA256_RAW_FILE_BYTES",
     "manifest_self_hash_excluded": True,
@@ -93,6 +93,20 @@ manifest = {
         "bound_fields": ["path", "object_kind", "canonical_sha256"],
         "sidecar_entry_cardinality": 1,
         "constraint_id": "CNS-BIND-ACTUAL_OBJECT_HASH",
+    },
+    "negative_fixture_mutation_isolation": {
+        "model_path": "negative-fixture-semantic-mutation-model.yml",
+        "semantic_mutation_target_cardinality": 1,
+        "stage_fixture_count": 34,
+        "r3a_fixture_count": 16,
+        "r3b_fixture_count": 14,
+        "total_fixture_count": 64,
+        "derived_updates_runner_owned": True,
+        "legacy_cases": [
+            "NEG-S3-EMPTY-UNIQUE",
+            "NEG-S4-INVALID-STATUS-WITH-TRACE",
+            "NEG-S1-NONEXACT-ALIAS-SURFACE",
+        ],
     },
     "boundaries": {
         "implementation_mutation": False,

@@ -241,23 +241,32 @@ validators:
 
 negative_fixture_contract:
   manifest: "fixtures/stage-validator-negative-fixtures.yml"
-  mutation_format: "RFC6902_JSON_PATCH"
+  mutation_model: "negative-fixture-semantic-mutation-model.yml"
+  mutation_format: "ONE_SEMANTIC_TARGET_WITH_RUNNER_OWNED_DERIVED_UPDATES"
   each_case_requires:
     - fixture_id
     - stage
     - valid_base_object_path
-    - one_declared_semantic_fault_class
-    - one_or_more_RFC6902_operations_needed_to_realize_only_that_fault
+    - semantic_mutation_target_count_exactly_one
+    - explicit_target_object_and_JSON_pointer
+    - one_declared_semantic_fault_intent
+    - exact_expected_constraint_id_bound_into_the_semantic_declaration
+    - exactly_one_allowed_semantic_mutation_mechanism
     - paired_actual_object_paths_when_cross_object_validation_is_required
-    - explicit_recompute_policy_for_non_authoritative_derived_hashes
+    - explicit_runner_owned_derived_update_rules
     - expected_result_FAIL_CLOSED
     - exact_expected_constraint_id
     - exact_expected_failure_code
   execution_gate:
     - "base object passes its Schema and stage semantic validator before mutation"
     - "mutation is applied to a deep copy of canonical base object"
-    - "only hashes explicitly marked RECOMPUTE_DERIVED may be recomputed after mutation"
-    - "authority, source, request, contract, registry and expected-result hashes are never recomputed"
+    - "zero or more than one semantic mutation target fails closed before fixture execution"
+    - "ordinary RFC6902, cross-object RFC6902 and object-store-index RFC6902 channels each permit exactly one declared semantic operation"
+    - "the only high-level transform is the deterministic clearing of the five material semantic collections for NEG-S3-EMPTY-UNIQUE"
+    - "only allowlisted runner-owned derived fields may be recomputed after mutation"
+    - "fixture patches may not supply a value for a declared derived target"
+    - "normalized_surface is derived only from source_span.text and registry hash is derived only from the mutated registry object"
+    - "authority, source, request, contract and expected-result hashes are never recomputed; only an explicitly declared content-address binding may follow its mutated source object"
     - "mutated object remains isolated from all other cases"
     - "actual validator result equals expected constraint and failure code"
     - "cross-object synchronized mutation cases may derive the actual QueryIR from the mutated embedded emission, but may not mutate the typed semantic core"

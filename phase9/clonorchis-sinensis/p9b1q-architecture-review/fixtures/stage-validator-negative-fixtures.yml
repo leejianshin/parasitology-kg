@@ -1,38 +1,38 @@
 fixture_manifest_version: 0.1-candidate
 fixture_manifest_id: clonorchis_p9b1q_stage_validator_negative_fixtures_v0_1
-status: FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW
-mutation_format: RFC6902_JSON_PATCH
+status: R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION
+mutation_format: SEMANTIC_MUTATION_MODEL_WITH_RFC6902_TRANSPORT
 base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 17feb78205ec8ca53a857923da92f41b96a300074b0cc00f0960449ffa802388
+  canonical_sha256: 520f5683f83f0a10dd7affdab40d3b54ee8c5ae93601936a3ff49a6ce29fe8ca
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: fcc32ecc736f8a703424b961ad3d0eef55830f527545b30c2c9e3534ee63ce1c
+  canonical_sha256: 93c5a086c333352138a6ca8560d4859d95cc30d2f6a0e421e182a3cea2ad0a68
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 36040364764f2aca713f7566fd5017878436be908dd4d995f11ada0cfa739733
+  canonical_sha256: b30ba56524346ce71d0483406ec49aa5eee06ccccad34da326b9b68cff9a1eda
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: 4b05b23d9b4d7f7b669db0e743b9e6bcf960a7f12a9577a573ad56722612abd6
+  canonical_sha256: eeceed117a16b52af39ada6beea73aa8bb3d2556e2490c2c0560ad0261cc00cd
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: 596a22349efabadd3f1d4aea3522cb2e7716b084f87dd42983b318d019a29d1f
+  canonical_sha256: 8d0745929b985ef46696ff9e99ed71eca953d46268f8dc7f36da052568456376
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: b57d8d77808004bb2d71ba4452a8071537807059f07665959b475affa7de3d28
+  canonical_sha256: b0e0a692cd37264864bd007388efa18dbee29a5837c9d0053fe9aeb25ca90eab
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 8ff07b223cc35b32e65f6d40ca09666f22aca2fbe8a97f04e1d61514cc8023d9
+  canonical_sha256: 75606d6b40599a53982662d8a8a319608f9a01f6fc5481d5c71ffe2060527cbc
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 010799b081ddc4b1250d580e0e313b5a0f14ab526d5325230a56d519c265c821
+  canonical_sha256: 4a3f021cff88f775c74dd6b1c12e1f8623e0ae94852577dbe3e3591ba2223737
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: 62d15dfda735ed11c8464662a1a500eba8097e75c20549902def44e0e343083d
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 3839b52cd266ce2b3dc42d65f6714f9a41924764fddd13b4a653f03a0961ac9f
+  canonical_sha256: 452a26374f35780b009cc91f964abc72d1682d60e235af038cd95fd125664e1e
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: afe6418e35c5fe3e49d770914751d3880b8dab5fd7d9b6306fb54eac4556e37a
+  canonical_sha256: 3c4df3bcf9fbb40850c15d0356382650dde5a59bc3a013a3497369e29dc7c2ac
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -44,10 +44,17 @@ cases:
   - op: replace
     path: /raw_to_normalized_spans/0/raw_end
     value: 30
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-NORM-LOSSLESS_ROUNDTRIP
   expected_failure_code: NORMALIZATION_NOT_LOSSLESS
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /raw_to_normalized_spans/0/raw_end
+    mutation_intent: NORMALIZATION_NOT_LOSSLESS
+    expected_constraint_id: CNS-NORM-LOSSLESS_ROUNDTRIP
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S1-DOUBLE-ROOT
   stage: S1_CLAUSE_AST
   valid_base_object_path: fixtures/clause-ast-exposure-positive.json
@@ -71,10 +78,17 @@ cases:
       scope_role: WHOLE_REQUEST
       assertion_marker_ids:
       - K001
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-AST-SINGLE_ROOT
   expected_failure_code: MULTIPLE_ROOTS
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/1
+    mutation_intent: MULTIPLE_ROOTS
+    expected_constraint_id: CNS-AST-SINGLE_ROOT
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S1-REVERSED-SPAN
   stage: S1_CLAUSE_AST
   valid_base_object_path: fixtures/clause-ast-exposure-positive.json
@@ -85,10 +99,17 @@ cases:
   - op: replace
     path: /nodes/3/source_span/start_char
     value: 14
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-AST-SPAN_ORDER
   expected_failure_code: SPAN_ORDER_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/source_span/start_char
+    mutation_intent: SPAN_ORDER_INVALID
+    expected_constraint_id: CNS-AST-SPAN_ORDER
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S1-UNIQUE-TWO-GOVERNORS
   stage: S1_CLAUSE_AST
   valid_base_object_path: fixtures/clause-ast-exposure-positive.json
@@ -101,10 +122,17 @@ cases:
     value:
     - S003
     - S004
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY
   expected_failure_code: ATTACHMENT_CARDINALITY_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /attachment_sets/0/candidate_governor_ids
+    mutation_intent: ATTACHMENT_CARDINALITY_INVALID
+    expected_constraint_id: CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S1-DANGLING-SCOPE-TARGET
   stage: S1_CLAUSE_AST
   valid_base_object_path: fixtures/clause-ast-exposure-positive.json
@@ -116,10 +144,17 @@ cases:
     path: /assertion_markers/0/scope_target_candidate_ids
     value:
     - U999
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-AST-REF_INTEGRITY
   expected_failure_code: DANGLING_REFERENCE
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /assertion_markers/0/scope_target_candidate_ids
+    mutation_intent: SCOPE_TARGET_INVALID
+    expected_constraint_id: CNS-AST-REF_INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S2-DANGLING-METHOD-SLOT
   stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-diagnostic-positive.json
@@ -130,10 +165,17 @@ cases:
   - op: replace
     path: /frames/0/diagnostic_binding/method_slot_id
     value: V999
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-REF_INTEGRITY
   expected_failure_code: DANGLING_REFERENCE
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/diagnostic_binding/method_slot_id
+    mutation_intent: DIAGNOSTIC_BINDING_INVALID
+    expected_constraint_id: CNS-EF-REF_INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S2-EMPTY-FIXED-DOMAIN
   stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-diagnostic-positive.json
@@ -144,10 +186,17 @@ cases:
   - op: replace
     path: /frames/0/participant_slots/0/domain/entity_ids
     value: []
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-NONEMPTY_FIXED_DOMAIN
   expected_failure_code: EMPTY_FIXED_DOMAIN
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/0/domain/entity_ids
+    mutation_intent: EMPTY_FIXED_DOMAIN
+    expected_constraint_id: CNS-EF-NONEMPTY_FIXED_DOMAIN
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S2-IDENTITY-TYPE-MISMATCH
   stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-diagnostic-positive.json
@@ -159,10 +208,17 @@ cases:
     path: /frames/0/normalized_identity/event_type_domain
     value:
     - TREATMENT
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-IDENTITY_CONSISTENCY
   expected_failure_code: EVENT_IDENTITY_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/normalized_identity/event_type_domain
+    mutation_intent: EVENT_IDENTITY_MISMATCH
+    expected_constraint_id: CNS-EF-IDENTITY_CONSISTENCY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S2-SPECIMEN-WRONG-SOURCE
   stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-diagnostic-positive.json
@@ -176,10 +232,17 @@ cases:
       start_char: 4
       end_char: 6
       text: 阳性
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-SPECIMEN_SOURCE
   expected_failure_code: SPECIMEN_SOURCE_MISSING
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /specimen_slots/0/source_spans/0
+    mutation_intent: SPECIMEN_SOURCE_MISSING
+    expected_constraint_id: CNS-EF-SPECIMEN_SOURCE
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S3-FAKE-CONSTRAINT-ID
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -191,11 +254,20 @@ cases:
   - op: replace
     path: /selected_solution/satisfied_constraint_ids/0
     value: CNS-FAKE-REGISTERED_LOOKING
-  recompute_derived_hashes:
-  - selected_solution.queryir_emission_record.semantic_solution_core_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-REGISTRY_MEMBERSHIP
   expected_failure_code: UNKNOWN_CONSTRAINT_ID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/satisfied_constraint_ids/0
+    mutation_intent: UNKNOWN_CONSTRAINT_ID
+    expected_constraint_id: CNS-SOLVER-REGISTRY_MEMBERSHIP
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S3-EMPTY-UNIQUE
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -203,28 +275,25 @@ cases:
   - fixtures/clause-ast-exposure-positive.json
   - fixtures/event-frame-exposure-positive.json
   fault_class: ENUMERATED_CARDINALITY_ZERO_BUT_DECLARED_ONE
-  patch:
-  - op: replace
-    path: /selected_solution/resolved_mentions
-    value: []
-  - op: replace
-    path: /selected_solution/resolved_events
-    value: []
-  - op: replace
-    path: /selected_solution/resolved_relations
-    value: []
-  - op: replace
-    path: /selected_solution/semantic_roles
-    value: []
-  - op: replace
-    path: /selected_solution/narrative_intents
-    value: []
-  recompute_derived_hashes:
-  - selected_solution.semantic_object_set_sha256
-  - selected_solution.queryir_emission_record.semantic_solution_core_sha256
+  patch: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-SOLUTION_CARDINALITY
   expected_failure_code: SOLUTION_CARDINALITY_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution
+    mutation_intent: ENUMERATED_CARDINALITY_ZERO_BUT_DECLARED_ONE
+    expected_constraint_id: CNS-SOLVER-SOLUTION_CARDINALITY
+    mechanism: DETERMINISTIC_TRANSFORM
+    transform: CLEAR_MATERIAL_SEMANTIC_COLLECTIONS
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_object_set_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_OBJECT_IDENTITY
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S3-LICENSE-CYCLE
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -234,11 +303,20 @@ cases:
   - op: replace
     path: /selected_solution/queryir_emission_record/license_dag/edges/0/to_node_id
     value: LN0001
-  recompute_derived_hashes:
-  - license_dag.dag_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-LICENSE_DAG
   expected_failure_code: LICENSE_DAG_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/license_dag/edges/0/to_node_id
+    mutation_intent: LICENSE_DAG_INVALID
+    expected_constraint_id: CNS-SOLVER-LICENSE_DAG
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/license_dag/dag_sha256
+    derivation_rule: RECOMPUTE_LICENSE_DAG_SHA256
 - fixture_id: NEG-S3-MISSING-MINIMALITY-WITNESS
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -247,11 +325,20 @@ cases:
   patch:
   - op: remove
     path: /selected_solution/queryir_emission_record/minimality_witness/retained_object_witnesses/7
-  recompute_derived_hashes:
-  - minimality_witness.witness_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-MINIMALITY
   expected_failure_code: MINIMALITY_WITNESS_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/retained_object_witnesses/7
+    mutation_intent: MINIMALITY_WITNESS_INVALID
+    expected_constraint_id: CNS-SOLVER-MINIMALITY
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/witness_sha256
+    derivation_rule: RECOMPUTE_MINIMALITY_WITNESS_SHA256
 - fixture_id: NEG-S4-MISSING-TRACE
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -261,10 +348,17 @@ cases:
   patch:
   - op: remove
     path: /selected_solution/queryir_emission_record/field_traces/188
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-LEAF_TRACE_COVERAGE
   expected_failure_code: TRACE_COVERAGE_INCOMPLETE
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/field_traces/188
+    mutation_intent: TRACE_COVERAGE_INCOMPLETE
+    expected_constraint_id: CNS-EMIT-LEAF_TRACE_COVERAGE
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S4-TRACE-VALUE-HASH
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -275,10 +369,17 @@ cases:
   - op: replace
     path: /selected_solution/queryir_emission_record/field_traces/0/emitted_value_sha256
     value: '0000000000000000000000000000000000000000000000000000000000000000'
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-TRACE_VALUE_HASH
   expected_failure_code: TRACE_VALUE_HASH_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/field_traces/0/emitted_value_sha256
+    mutation_intent: TRACE_VALUE_HASH_MISMATCH
+    expected_constraint_id: CNS-EMIT-TRACE_VALUE_HASH
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S4-OUTPUT-NOT-PURE-PROJECTION
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/queryir-exposure-positive.json
@@ -289,10 +390,17 @@ cases:
   - op: replace
     path: /producer/producer_version
     value: tampered
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
   expected_failure_code: NON_PURE_PROJECTION
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /producer/producer_version
+    mutation_intent: NON_PURE_PROJECTION
+    expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S5-ACTUAL-OBJECT-HASH
   stage: S5_RUNTIME_BINDING
   valid_base_object_path: fixtures/execution-binding-sidecar-positive.json
@@ -350,11 +458,18 @@ cases:
   - op: replace
     path: /actual_objects/4/canonical_sha256
     value: '0000000000000000000000000000000000000000000000000000000000000000'
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: afe6418e35c5fe3e49d770914751d3880b8dab5fd7d9b6306fb54eac4556e37a
+  base_object_canonical_sha256: 3c4df3bcf9fbb40850c15d0356382650dde5a59bc3a013a3497369e29dc7c2ac
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /actual_objects/4/canonical_sha256
+    mutation_intent: ACTUAL_OBJECT_BINDING_MISMATCH
+    expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S5-NON-SIDECAR-INDEX-HASH-DRIFT
   stage: S5_RUNTIME_BINDING
   valid_base_object_path: fixtures/execution-binding-sidecar-positive.json
@@ -414,10 +529,17 @@ cases:
   - op: replace
     path: /objects/0/canonical_sha256
     value: '0000000000000000000000000000000000000000000000000000000000000000'
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: OBJECT_STORE_INDEX
+    target_path: /objects/0/canonical_sha256
+    mutation_intent: NON_SIDECAR_INDEX_ENTRY_HASH_DRIFT
+    expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
+    mechanism: OBJECT_STORE_INDEX_RFC6902
+  derived_updates: []
 - fixture_id: NEG-S3-EVENT-MAPPING-HASH
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -427,10 +549,17 @@ cases:
   - op: replace
     path: /event_relation_mapping_sha256
     value: '0000000000000000000000000000000000000000000000000000000000000000'
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-HASH_BINDING
   expected_failure_code: INPUT_HASH_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /event_relation_mapping_sha256
+    mutation_intent: EVENT_MAPPING_ACTUAL_HASH_MISMATCH
+    expected_constraint_id: CNS-SOLVER-HASH_BINDING
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S3-NONROOTED-WITNESS
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -441,11 +570,20 @@ cases:
     path: /selected_solution/queryir_emission_record/minimality_witness/retained_object_witnesses/3/license_path_node_ids
     value:
     - LN0004
-  recompute_derived_hashes:
-  - minimality_witness.witness_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-LICENSE_DAG
   expected_failure_code: LICENSE_DAG_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/retained_object_witnesses/3/license_path_node_ids
+    mutation_intent: LICENSE_WITNESS_PATH_NOT_ROOTED
+    expected_constraint_id: CNS-SOLVER-LICENSE_DAG
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/witness_sha256
+    derivation_rule: RECOMPUTE_MINIMALITY_WITNESS_SHA256
 - fixture_id: NEG-S4-INVALID-STATUS-WITH-TRACE
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -456,13 +594,20 @@ cases:
   - op: replace
     path: /selected_solution/queryir_emission_record/query_ir/interpretation_status
     value: UNSUPPORTED
-  - op: replace
-    path: /selected_solution/queryir_emission_record/field_traces/5/emitted_value_sha256
-    value: f79753d104163eed0d0bf6f171608c12134e1b94262e80bb54a1ecf259816fc4
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-VALID_STATUS
   expected_failure_code: QUERYIR_NOT_VALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/query_ir/interpretation_status
+    mutation_intent: INVALID_QUERYIR_STATUS_WITH_INTERNALLY_CONSISTENT_TRACE
+    expected_constraint_id: CNS-EMIT-VALID_STATUS
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/field_traces/*/emitted_value_sha256
+    derivation_rule: RECOMPUTE_ALL_FIELD_TRACE_VALUE_SHA256
 - fixture_id: NEG-S3-UNAUTHORIZED-ENTITY-CANDIDATE
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -472,12 +617,23 @@ cases:
   - op: replace
     path: /selected_solution/resolved_mentions/0/entity_id
     value: behavior.unregistered_candidate
-  recompute_derived_hashes:
-  - semantic_object_set_sha256
-  - semantic_solution_core_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-ENTITY_RESOLUTION
   expected_failure_code: INPUT_HASH_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/resolved_mentions/0/entity_id
+    mutation_intent: ENTITY_NOT_IN_BOUND_AST_CANDIDATE_SET
+    expected_constraint_id: CNS-SOLVER-ENTITY_RESOLUTION
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_object_set_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_OBJECT_IDENTITY
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S3-ASSERTION-SCOPE-ESCALATION
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -487,12 +643,23 @@ cases:
   - op: replace
     path: /selected_solution/resolved_mentions/0/assertion_status
     value: EXCLUDED
-  recompute_derived_hashes:
-  - semantic_object_set_sha256
-  - semantic_solution_core_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
   expected_failure_code: ASSERTION_SCOPE_UNRESOLVED
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/resolved_mentions/0/assertion_status
+    mutation_intent: ASSERTION_NOT_DERIVED_FROM_BOUND_AST_SCOPE
+    expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_object_set_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_OBJECT_IDENTITY
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S3-EVENT-PARTICIPANT-INJECTION
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -502,12 +669,23 @@ cases:
   - op: replace
     path: /selected_solution/resolved_events/0/target_entity_ids/0
     value: behavior.unregistered_candidate
-  recompute_derived_hashes:
-  - semantic_object_set_sha256
-  - semantic_solution_core_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
   expected_failure_code: EVENT_IDENTITY_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/resolved_events/0/target_entity_ids/0
+    mutation_intent: EVENT_PARTICIPANT_NOT_IN_BOUND_FRAME_SLOT
+    expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_object_set_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_OBJECT_IDENTITY
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S3-SEMANTIC-ROLE-ESCALATION
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -517,12 +695,23 @@ cases:
   - op: replace
     path: /selected_solution/semantic_roles/1/role_value
     value: pathogen_confirmation
-  recompute_derived_hashes:
-  - semantic_object_set_sha256
-  - semantic_solution_core_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
   expected_failure_code: ASSERTION_SCOPE_UNRESOLVED
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_roles/1/role_value
+    mutation_intent: ROLE_NOT_EXACTLY_DERIVED_FROM_BOUND_PROFILE
+    expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_object_set_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_OBJECT_IDENTITY
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S4-SYNCHRONIZED-ROLE-AND-TRACE-TAMPER
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -534,12 +723,23 @@ cases:
   - op: replace
     path: /selected_solution/queryir_emission_record/query_ir/required_roles/1/role_value
     value: pathogen_confirmation
-  recompute_derived_hashes:
-  - query_ir_sha256
-  - field_traces.emitted_value_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
   expected_failure_code: NON_PURE_PROJECTION
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/query_ir/required_roles/1/role_value
+    mutation_intent: OUTPUT_AND_TRACE_AGREE_BUT_DISAGREE_WITH_TYPED_CORE
+    expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/query_ir_sha256
+    derivation_rule: RECOMPUTE_QUERY_IR_SHA256
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/field_traces/*/emitted_value_sha256
+    derivation_rule: RECOMPUTE_ALL_FIELD_TRACE_VALUE_SHA256
 - fixture_id: NEG-S1-UNREGISTERED-ALIAS-CANDIDATE
   stage: S1_CLAUSE_AST
   valid_base_object_path: fixtures/clause-ast-exposure-positive.json
@@ -550,10 +750,17 @@ cases:
   - op: replace
     path: /surface_mentions/0/candidate_entity_ids/0
     value: behavior.unregistered_candidate
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-AST-REF_INTEGRITY
   expected_failure_code: DANGLING_REFERENCE
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /surface_mentions/0/candidate_entity_ids/0
+    mutation_intent: CANDIDATE_NOT_IN_FORMAL_ALIAS_AUTHORITY
+    expected_constraint_id: CNS-AST-REF_INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S2-PARTICIPANT-NOT-LICENSED-BY-MENTION
   stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-exposure-positive.json
@@ -564,10 +771,17 @@ cases:
   - op: replace
     path: /frames/0/participant_slots/0/domain/entity_ids/0
     value: behavior.unregistered_candidate
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-SLOT_TYPE
   expected_failure_code: SLOT_TYPE_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/0/domain/entity_ids/0
+    mutation_intent: FRAME_SLOT_VALUE_NOT_IN_SOURCE_MENTION_CANDIDATES
+    expected_constraint_id: CNS-EF-SLOT_TYPE
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S1-NONEXACT-ALIAS-SURFACE
   stage: S1_CLAUSE_AST
   valid_base_object_path: fixtures/clause-ast-exposure-positive.json
@@ -576,18 +790,25 @@ cases:
   fault_class: FORMAL_ALIAS_MUST_MATCH_EXACT_SOURCE_SURFACE
   patch:
   - op: replace
-    path: /surface_mentions/0/normalized_surface
-    value: 生食淡水
-  - op: replace
-    path: /surface_mentions/0/source_span/end_char
-    value: 12
-  - op: replace
-    path: /surface_mentions/0/source_span/text
-    value: 生食淡水
-  recompute_derived_hashes: []
+    path: /surface_mentions/0/source_span
+    value:
+      start_char: 8
+      end_char: 12
+      text: 生食淡水
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-AST-REF_INTEGRITY
   expected_failure_code: DANGLING_REFERENCE
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /surface_mentions/0/source_span
+    mutation_intent: FORMAL_ALIAS_MUST_MATCH_EXACT_SOURCE_SURFACE
+    expected_constraint_id: CNS-AST-REF_INTEGRITY
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /surface_mentions/0/normalized_surface
+    derivation_rule: RECOMPUTE_NORMALIZED_SURFACE_FROM_SOURCE_SPAN
 - fixture_id: NEG-S2-IDENTITY-SLOT-ROLE-CONFLICT
   stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-exposure-positive.json
@@ -598,10 +819,17 @@ cases:
   - op: replace
     path: /frames/0/participant_slots/0/semantic_role
     value: ACTOR
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EF-IDENTITY_CONSISTENCY
   expected_failure_code: EVENT_IDENTITY_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/0/semantic_role
+    mutation_intent: NORMALIZED_IDENTITY_TARGET_REFERENCES_NON_TARGET_SLOT
+    expected_constraint_id: CNS-EF-IDENTITY_CONSISTENCY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S3-RELATION-DISCONNECTED-FROM-EVENT-TARGET
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -610,31 +838,50 @@ cases:
   patch:
   - op: remove
     path: /selected_solution/resolved_relations/0/root_keys/1
-  recompute_derived_hashes:
-  - semantic_object_set_sha256
-  - semantic_solution_core_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-EVENT_RELATION_DERIVATION
   expected_failure_code: EVENT_RELATION_DERIVATION_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/resolved_relations/0/root_keys/1
+    mutation_intent: DIRECT_RELATION_ROOT_OMITS_BOUND_EVENT_TARGET_MENTION
+    expected_constraint_id: CNS-SOLVER-EVENT_RELATION_DERIVATION
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/semantic_object_set_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_OBJECT_IDENTITY
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+    derivation_rule: RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256
 - fixture_id: NEG-S3-REGISTRY-ACTUAL-OBJECT-SCHEMA-INVALID
   stage: S3_TYPED_SOLVER
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
   paired_actual_object_paths: []
   fault_class: CONTENT_ADDRESSED_REGISTRY_OBJECT_FAILS_FROZEN_SCHEMA
-  patch:
-  - op: replace
-    path: /constraint_registry_sha256
-    value: c80bbfc519bb8ece7da0be5e704fab6bfa6fffa5c71ef14a1e72737eed070198
+  patch: []
   actual_input_mutation:
     object_kind: CONSTRAINT_REGISTRY
     patch:
     - op: add
       path: /unexpected_field
       value: true
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-REGISTRY_MEMBERSHIP
   expected_failure_code: UNKNOWN_CONSTRAINT_ID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: CONSTRAINT_REGISTRY
+    target_path: /unexpected_field
+    mutation_intent: CONTENT_ADDRESSED_REGISTRY_OBJECT_FAILS_FROZEN_SCHEMA
+    expected_constraint_id: CNS-SOLVER-REGISTRY_MEMBERSHIP
+    mechanism: CROSS_OBJECT_RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /constraint_registry_sha256
+    derivation_rule: RECOMPUTE_CONSTRAINT_REGISTRY_SHA256
+    source_object: CONSTRAINT_REGISTRY
 - fixture_id: NEG-S4-STALE-QUERYIR-HASH
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -645,10 +892,17 @@ cases:
   - op: replace
     path: /selected_solution/queryir_emission_record/query_ir_sha256
     value: '0000000000000000000000000000000000000000000000000000000000000000'
-  recompute_derived_hashes: []
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
   expected_failure_code: NON_PURE_PROJECTION
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/query_ir_sha256
+    mutation_intent: EMBEDDED_QUERYIR_HASH_NOT_RECOMPUTED
+    expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+    mechanism: RFC6902
+  derived_updates: []
 - fixture_id: NEG-S4-SYNCHRONIZED-CLAUSE-TOPOLOGY-TAMPER
   stage: S4_QUERYIR_EMISSION
   valid_base_object_path: fixtures/typed-result-exposure-positive.json
@@ -660,16 +914,30 @@ cases:
   - op: replace
     path: /selected_solution/queryir_emission_record/query_ir/clauses/1/parent_clause_id
     value: C02
-  recompute_derived_hashes:
-  - query_ir_sha256
-  - field_traces.emitted_value_sha256
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
   expected_failure_code: NON_PURE_PROJECTION
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/query_ir/clauses/1/parent_clause_id
+    mutation_intent: OUTPUT_TRACE_AND_HASH_AGREE_BUT_CLAUSE_TOPOLOGY_DIFFERS_FROM_AST
+    expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/query_ir_sha256
+    derivation_rule: RECOMPUTE_QUERY_IR_SHA256
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/field_traces/*/emitted_value_sha256
+    derivation_rule: RECOMPUTE_ALL_FIELD_TRACE_VALUE_SHA256
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true
-  recompute_only_listed_non_authoritative_derived_hashes: true
+  semantic_mutation_target_count: 1
+  derived_updates_are_runner_owned_and_allowlisted: true
   repeat_runs: 3
   required_repeat_result: BYTE_IDENTICAL
   network_or_model_allowed: false
+mutation_model_path: ../negative-fixture-semantic-mutation-model.yml
+mutation_policy: EXACTLY_ONE_SEMANTIC_MUTATION_WITH_RUNNER_DERIVED_UPDATES

@@ -42,9 +42,11 @@ NEGATION_AUTHORITY = HERE / "negation-surface-scope-authority.yml"
 NEGATION_SEMANTIC_IMPLEMENTATION = HERE / "negation_semantic_authority.py"
 R3B_NEGATIVE = FIXTURES / "r3b-negation-scope-negative-fixtures.yml"
 R3B_POSITIVE = FIXTURES / "r3b-negation-scope-positive.json"
+NEGATIVE_MUTATION_MODEL = HERE / "negative-fixture-semantic-mutation-model.yml"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
 _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
+_NEGATIVE_MUTATION_MODEL_CACHE: dict[str, Any] | None = None
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -2086,34 +2088,154 @@ def validate_s5(
     return ordered(errors)
 
 
-def recompute_declared_derived(value: dict[str, Any], paths: list[str]) -> None:
+def negative_mutation_model() -> dict[str, Any]:
+    global _NEGATIVE_MUTATION_MODEL_CACHE
+    if _NEGATIVE_MUTATION_MODEL_CACHE is None:
+        _NEGATIVE_MUTATION_MODEL_CACHE = load_yaml(NEGATIVE_MUTATION_MODEL)
+    return _NEGATIVE_MUTATION_MODEL_CACHE
+
+
+def validate_mutation_isolation(
+    case: dict[str, Any], *, expected_target_object: str | None = None
+) -> dict[str, Any]:
+    """Fail closed unless a fixture declares exactly one semantic target.
+
+    RFC6902 is only a transport.  This function binds the sole semantic target
+    to exactly one allowed patch channel, while derived fields remain runner
+    owned and are checked against the frozen recomputation allowlist.
+    """
+    model = negative_mutation_model()
+    fixture_id = case.get("fixture_id", "<unknown>")
+    if case.get("semantic_mutation_target_count") != model["semantic_mutation_target_cardinality"]:
+        raise RuntimeError(f"{fixture_id}: semantic mutation target count must be one")
+    mutation = case.get("semantic_mutation")
+    required = set(model["required_semantic_declaration_fields"])
+    if not isinstance(mutation, dict) or not required <= set(mutation):
+        raise RuntimeError(f"{fixture_id}: incomplete semantic mutation declaration")
+    if mutation["expected_constraint_id"] != case.get("expected_constraint_id"):
+        raise RuntimeError(f"{fixture_id}: semantic expected constraint mismatch")
+    if mutation["expected_constraint_id"] not in registry_order():
+        raise RuntimeError(f"{fixture_id}: semantic expected constraint is unregistered")
+    if expected_target_object is not None and mutation["target_object"] != expected_target_object:
+        raise RuntimeError(f"{fixture_id}: semantic target object mismatch")
+    if not isinstance(mutation["target_path"], str) or not mutation["target_path"].startswith("/"):
+        raise RuntimeError(f"{fixture_id}: semantic target path is not a JSON pointer")
+
+    mechanism = mutation["mechanism"]
+    allowed = model["allowed_mechanisms"]
+    if mechanism not in allowed:
+        raise RuntimeError(f"{fixture_id}: undeclared semantic mutation mechanism")
+    main_patch = case.get("patch", [])
+    actual_patch = case.get("actual_input_mutation", {}).get("patch", [])
+    index_patch = case.get("object_store_index_patch", [])
+    channels = {
+        "RFC6902": main_patch,
+        "CROSS_OBJECT_RFC6902": actual_patch,
+        "OBJECT_STORE_INDEX_RFC6902": index_patch,
+    }
+    if mechanism in channels:
+        active = channels[mechanism]
+        if len(active) != 1 or active[0].get("path") != mutation["target_path"]:
+            raise RuntimeError(f"{fixture_id}: semantic patch count or target mismatch")
+        if sum(len(value) for value in (main_patch, actual_patch, index_patch)) != 1:
+            raise RuntimeError(f"{fixture_id}: undeclared extra semantic patch")
+        if mechanism == "CROSS_OBJECT_RFC6902" and (
+            case.get("actual_input_mutation", {}).get("object_kind") != mutation["target_object"]
+        ):
+            raise RuntimeError(f"{fixture_id}: cross-object target mismatch")
+        if mechanism == "OBJECT_STORE_INDEX_RFC6902" and mutation["target_object"] != "OBJECT_STORE_INDEX":
+            raise RuntimeError(f"{fixture_id}: object-store index target mismatch")
+    else:
+        transform = mutation.get("transform")
+        if transform not in allowed[mechanism]["allowed_transforms"]:
+            raise RuntimeError(f"{fixture_id}: undeclared deterministic transform")
+        if any((main_patch, actual_patch, index_patch)):
+            raise RuntimeError(f"{fixture_id}: deterministic transform has an extra patch")
+
+    allowed_rules = model["allowed_derived_rules"]
+    seen_updates: set[tuple[str, str, str]] = set()
+    for update in case.get("derived_updates", []):
+        required_update = {"target_object", "target_path", "derivation_rule"}
+        if not isinstance(update, dict) or not required_update <= set(update):
+            raise RuntimeError(f"{fixture_id}: incomplete derived update declaration")
+        rule_name = update["derivation_rule"]
+        rule = allowed_rules.get(rule_name)
+        if rule is None or update["target_path"] != rule["target_path"]:
+            raise RuntimeError(f"{fixture_id}: derived rule or target is not allowlisted")
+        if update["target_object"] != "STAGE_BASE_OBJECT":
+            raise RuntimeError(f"{fixture_id}: derived update is not runner-owned")
+        if rule.get("source_object") != update.get("source_object"):
+            raise RuntimeError(f"{fixture_id}: derived source object mismatch")
+        identity = (update["target_object"], update["target_path"], rule_name)
+        if identity in seen_updates or update["target_path"] == mutation["target_path"]:
+            raise RuntimeError(f"{fixture_id}: duplicate or overlapping derived update")
+        seen_updates.add(identity)
+        for operation in main_patch + actual_patch + index_patch:
+            if operation["path"] == update["target_path"]:
+                raise RuntimeError(f"{fixture_id}: fixture supplies a derived value")
+    return mutation
+
+
+def apply_declared_semantic_mutation(value: dict[str, Any], case: dict[str, Any]) -> dict[str, Any]:
+    mutation = case["semantic_mutation"]
+    if mutation["mechanism"] == "RFC6902":
+        return apply_patch(value, case["patch"])
+    output = copy.deepcopy(value)
+    if mutation["mechanism"] == "DETERMINISTIC_TRANSFORM":
+        if mutation["transform"] != "CLEAR_MATERIAL_SEMANTIC_COLLECTIONS":
+            raise RuntimeError(f"{case['fixture_id']}: unsupported deterministic transform")
+        selected = output["selected_solution"]
+        for field in (
+            "resolved_mentions",
+            "resolved_events",
+            "resolved_relations",
+            "semantic_roles",
+            "narrative_intents",
+        ):
+            selected[field] = []
+    return output
+
+
+def recompute_declared_derived(
+    value: dict[str, Any],
+    updates: list[dict[str, Any]],
+    source_objects: dict[str, Any] | None = None,
+) -> None:
     selected = value.get("selected_solution")
-    for name in paths:
-        if name.endswith("semantic_solution_core_sha256") and selected is not None:
+    source_objects = source_objects or {}
+    for update in updates:
+        rule = update["derivation_rule"]
+        if rule == "RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256" and selected is not None:
             selected["queryir_emission_record"]["semantic_solution_core_sha256"] = canonical_sha(solution_core(value))
-        elif name.endswith("semantic_object_set_sha256") and selected is not None:
+        elif rule == "RECOMPUTE_SEMANTIC_OBJECT_IDENTITY" and selected is not None:
             core = solution_core(value)
             selected["semantic_object_set_sha256"] = canonical_sha(semantic_object_set(core))
             selected["solution_id"] = f"SOL-{selected['semantic_object_set_sha256'][:24]}"
-        elif name.endswith("dag_sha256") and selected is not None:
+        elif rule == "RECOMPUTE_LICENSE_DAG_SHA256" and selected is not None:
             dag = selected["queryir_emission_record"]["license_dag"]
             body = dict(dag)
             body.pop("dag_sha256", None)
             dag["dag_sha256"] = canonical_sha(body)
-        elif name.endswith("witness_sha256") and selected is not None:
+        elif rule == "RECOMPUTE_MINIMALITY_WITNESS_SHA256" and selected is not None:
             witness = selected["queryir_emission_record"]["minimality_witness"]
             body = dict(witness)
             body.pop("witness_sha256", None)
             witness["witness_sha256"] = canonical_sha(body)
-        elif name.endswith("query_ir_sha256") and selected is not None:
+        elif rule == "RECOMPUTE_QUERY_IR_SHA256" and selected is not None:
             emission = selected["queryir_emission_record"]
             emission["query_ir_sha256"] = canonical_sha(emission["query_ir"])
-        elif name.endswith("field_traces.emitted_value_sha256") and selected is not None:
+        elif rule == "RECOMPUTE_ALL_FIELD_TRACE_VALUE_SHA256" and selected is not None:
             emission = selected["queryir_emission_record"]
             for trace in emission["field_traces"]:
                 trace["emitted_value_sha256"] = canonical_sha(
                     pointer_get(emission["query_ir"], trace["query_ir_json_pointer"])
                 )
+        elif rule == "RECOMPUTE_NORMALIZED_SURFACE_FROM_SOURCE_SPAN":
+            value["surface_mentions"][0]["normalized_surface"] = value["surface_mentions"][0]["source_span"]["text"]
+        elif rule == "RECOMPUTE_CONSTRAINT_REGISTRY_SHA256":
+            value["constraint_registry_sha256"] = canonical_sha(source_objects["CONSTRAINT_REGISTRY"])
+        else:
+            raise RuntimeError(f"unsupported or inapplicable derived rule: {rule}")
 
 
 def normalized_by_request_id() -> dict[str, dict[str, Any]]:
@@ -2210,9 +2332,12 @@ def run_minimality() -> list[dict[str, Any]]:
 
 def run_negative() -> list[dict[str, Any]]:
     manifest = load_yaml(NEGATIVE)
+    if manifest.get("mutation_model_path") != "../negative-fixture-semantic-mutation-model.yml":
+        raise RuntimeError("stage negative fixture manifest is not bound to the R3-D2 mutation model")
     normalized = normalized_by_request_id()
     results = []
     for case in manifest["cases"]:
+        mutation = validate_mutation_isolation(case)
         base = load_json(resolve_review_path(case["valid_base_object_path"]))
         stage = case["stage"]
         base_errors: list[dict[str, str]]
@@ -2253,8 +2378,26 @@ def run_negative() -> list[dict[str, Any]]:
         if base_errors:
             raise RuntimeError(f"negative fixture base failed before mutation: {case['fixture_id']}")
 
-        mutated = apply_patch(base, case["patch"])
-        recompute_declared_derived(mutated, case["recompute_derived_hashes"])
+        mutated = apply_declared_semantic_mutation(base, case)
+        mutated_s3_inputs: dict[str, Any] | None = None
+        mutated_s3_hashes: dict[str, str] | None = None
+        if stage == "S3_TYPED_SOLVER":
+            s3_record, mutated_s3_inputs, _ = load_stage_result("S3")
+            mutated_s3_hashes = {
+                item["object_kind"]: item["canonical_sha256"]
+                for item in s3_record["actual_input_objects"]
+            }
+            if case.get("actual_input_mutation"):
+                input_mutation = case["actual_input_mutation"]
+                object_kind = input_mutation["object_kind"]
+                mutated_s3_inputs = copy.deepcopy(mutated_s3_inputs)
+                mutated_s3_inputs[object_kind] = apply_patch(
+                    mutated_s3_inputs[object_kind], input_mutation["patch"]
+                )
+                mutated_s3_hashes[object_kind] = canonical_sha(mutated_s3_inputs[object_kind])
+        recompute_declared_derived(
+            mutated, case.get("derived_updates", []), mutated_s3_inputs
+        )
         if stage == "S0_NORMALIZED_REQUEST":
             request = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
             errors = validate_s0(mutated, request)
@@ -2271,17 +2414,8 @@ def run_negative() -> list[dict[str, Any]]:
                 mutated, normalized[mutated["request_id"]], paired_ast
             )
         elif stage == "S3_TYPED_SOLVER":
-            s3_record, s3_inputs, _ = load_stage_result("S3")
-            s3_hashes = {item["object_kind"]: item["canonical_sha256"] for item in s3_record["actual_input_objects"]}
-            if case.get("actual_input_mutation"):
-                mutation = case["actual_input_mutation"]
-                object_kind = mutation["object_kind"]
-                s3_inputs = copy.deepcopy(s3_inputs)
-                s3_inputs[object_kind] = apply_patch(
-                    s3_inputs[object_kind], mutation["patch"]
-                )
-                s3_hashes[object_kind] = canonical_sha(s3_inputs[object_kind])
-            errors = validate_s3(mutated, s3_inputs, s3_hashes)
+            assert mutated_s3_inputs is not None and mutated_s3_hashes is not None
+            errors = validate_s3(mutated, mutated_s3_inputs, mutated_s3_hashes)
         elif stage == "S4_QUERYIR_EMISSION":
             _, s4_inputs, _ = load_stage_result("S4")
             if "solver_result_version" in mutated:
@@ -2308,6 +2442,12 @@ def run_negative() -> list[dict[str, Any]]:
             {
                 "fixture_id": case["fixture_id"],
                 "observed_first_error": first,
+                "semantic_mutation_target_count": case["semantic_mutation_target_count"],
+                "semantic_mutation_target": {
+                    "target_object": mutation["target_object"],
+                    "target_path": mutation["target_path"],
+                },
+                "derived_update_count": len(case.get("derived_updates", [])),
                 "passed": first is not None
                 and first["constraint_id"] == case["expected_constraint_id"]
                 and first["failure_code"] == case["expected_failure_code"],
@@ -2361,9 +2501,13 @@ def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
     if any(item["errors"] for item in positive):
         return {"positive": positive, "negative": []}
     negative: list[dict[str, Any]] = []
-    for fixture in load_yaml(R3B_NEGATIVE)["cases"]:
-        if len(fixture["patch"]) != 1:
-            raise RuntimeError(fixture["fixture_id"])
+    negative_manifest = load_yaml(R3B_NEGATIVE)
+    if negative_manifest.get("mutation_model_path") != "../negative-fixture-semantic-mutation-model.yml":
+        raise RuntimeError("R3-B negative fixture manifest is not bound to the R3-D2 mutation model")
+    for fixture in negative_manifest["cases"]:
+        mutation = validate_mutation_isolation(
+            fixture, expected_target_object=fixture["target"]
+        )
         candidate = copy.deepcopy(by_id[fixture["base_case_id"]])
         candidate[fixture["target"]] = apply_patch(
             candidate[fixture["target"]], fixture["patch"]
@@ -2374,6 +2518,12 @@ def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
             {
                 "fixture_id": fixture["fixture_id"],
                 "observed_first_error": first,
+                "semantic_mutation_target_count": fixture["semantic_mutation_target_count"],
+                "semantic_mutation_target": {
+                    "target_object": mutation["target_object"],
+                    "target_path": mutation["target_path"],
+                },
+                "derived_update_count": len(fixture.get("derived_updates", [])),
                 "passed": first is not None
                 and first["constraint_id"] == fixture["expected_constraint_id"]
                 and first["failure_code"] == registry_failure(
@@ -2502,11 +2652,14 @@ def run_r3a() -> dict[str, Any]:
     if not all(item["passed"] for item in positive):
         return {"result": "FAIL_CLOSED", "positive": positive, "negative": []}
     manifest = load_yaml(R3A_NEGATIVE)
+    if manifest.get("mutation_model_path") != "../negative-fixture-semantic-mutation-model.yml":
+        raise RuntimeError("R3-A negative fixture manifest is not bound to the R3-D2 mutation model")
     negative = []
     for case in manifest["cases"]:
         objects = copy.deepcopy(bundle["objects"])
-        if len(case["patch"]) != 1:
-            raise RuntimeError(case["fixture_id"])
+        mutation = validate_mutation_isolation(
+            case, expected_target_object=case["target"]
+        )
         objects[case["target"]] = apply_patch(objects[case["target"]], case["patch"])
         inputs = r3a_inputs(objects)
         if case["target"] == "typed_solution_core":
@@ -2526,7 +2679,18 @@ def run_r3a() -> dict[str, Any]:
         else:
             raise RuntimeError(case["target"])
         observed = errors[0]["constraint_id"] if errors else None
-        negative.append({"fixture_id": case["fixture_id"], "mutation_count": 1, "expected_constraint_id": case["expected_constraint_id"], "observed_first_constraint_id": observed, "passed": observed == case["expected_constraint_id"]})
+        negative.append({
+            "fixture_id": case["fixture_id"],
+            "semantic_mutation_target_count": case["semantic_mutation_target_count"],
+            "semantic_mutation_target": {
+                "target_object": mutation["target_object"],
+                "target_path": mutation["target_path"],
+            },
+            "derived_update_count": len(case.get("derived_updates", [])),
+            "expected_constraint_id": case["expected_constraint_id"],
+            "observed_first_constraint_id": observed,
+            "passed": observed == case["expected_constraint_id"],
+        })
     return {"result": "PASS" if all(item["passed"] for item in negative) else "FAIL_CLOSED", "positive": positive, "negative": negative, "positive_pass_count": sum(item["passed"] for item in positive), "negative_pass_count": sum(item["passed"] for item in negative)}
 
 

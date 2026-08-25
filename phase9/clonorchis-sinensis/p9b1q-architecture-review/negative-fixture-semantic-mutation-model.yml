@@ -1,0 +1,59 @@
+model_id: P9B1Q-R3D2-NEGATIVE-FIXTURE-SEMANTIC-MUTATION-v0.1
+status: R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION
+semantic_mutation_target_cardinality: 1
+required_semantic_declaration_fields:
+  - target_object
+  - target_path
+  - mutation_intent
+  - expected_constraint_id
+  - mechanism
+allowed_mechanisms:
+  RFC6902:
+    semantic_operation_count: 1
+    fixture_patch_channel: patch
+  DETERMINISTIC_TRANSFORM:
+    semantic_operation_count: 1
+    allowed_transforms:
+      - CLEAR_MATERIAL_SEMANTIC_COLLECTIONS
+  CROSS_OBJECT_RFC6902:
+    semantic_operation_count: 1
+    fixture_patch_channel: actual_input_mutation.patch
+  OBJECT_STORE_INDEX_RFC6902:
+    semantic_operation_count: 1
+    fixture_patch_channel: object_store_index_patch
+allowed_derived_rules:
+  RECOMPUTE_SEMANTIC_SOLUTION_CORE_SHA256:
+    target_path: /selected_solution/queryir_emission_record/semantic_solution_core_sha256
+  RECOMPUTE_SEMANTIC_OBJECT_IDENTITY:
+    target_path: /selected_solution/semantic_object_set_sha256
+    coupled_paths:
+      - /selected_solution/solution_id
+  RECOMPUTE_LICENSE_DAG_SHA256:
+    target_path: /selected_solution/queryir_emission_record/license_dag/dag_sha256
+  RECOMPUTE_MINIMALITY_WITNESS_SHA256:
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/witness_sha256
+  RECOMPUTE_QUERY_IR_SHA256:
+    target_path: /selected_solution/queryir_emission_record/query_ir_sha256
+  RECOMPUTE_ALL_FIELD_TRACE_VALUE_SHA256:
+    target_path: /selected_solution/queryir_emission_record/field_traces/*/emitted_value_sha256
+  RECOMPUTE_NORMALIZED_SURFACE_FROM_SOURCE_SPAN:
+    target_path: /surface_mentions/0/normalized_surface
+    source_path: /surface_mentions/0/source_span/text
+  RECOMPUTE_CONSTRAINT_REGISTRY_SHA256:
+    target_path: /constraint_registry_sha256
+    source_object: CONSTRAINT_REGISTRY
+fail_closed_conditions:
+  - semantic_mutation_target_count_is_not_one
+  - semantic_declaration_is_incomplete
+  - expected_constraint_is_unregistered_or_mismatched
+  - semantic_patch_channel_or_path_is_undeclared
+  - more_than_one_semantic_patch_operation_is_present
+  - derived_rule_is_not_allowlisted
+  - derived_target_or_source_does_not_match_the_rule
+  - derived_value_is_supplied_by_a_fixture_patch
+  - derived_update_overlaps_the_semantic_target
+  - undeclared_patch_channel_is_present
+first_failure_contract:
+  positive_base_must_pass: true
+  observed_first_constraint_must_equal_expected: true
+  observed_failure_code_must_equal_registry_failure_code: true

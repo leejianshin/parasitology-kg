@@ -99,6 +99,19 @@ def reference(path: str, kind: str, schema_id: str) -> dict[str, Any]:
 
 
 def main() -> None:
+    # Refresh the independently generated R3 evidence bundles before any
+    # validator compares their persisted bytes with a current rebuild.
+    for builder in (
+        "build-r3a-reference-override-evidence.py",
+        "build-r3b-negation-evidence.py",
+    ):
+        subprocess.run(
+            ["python", str(HERE / builder)],
+            cwd=REPO,
+            check=True,
+            capture_output=True,
+        )
+
     old_exec = load("normalized-request-exposure-positive.json")["producer"]["executable_sha256"]
     old_contract = load("normalized-request-exposure-positive.json")["producer"]["configuration_sha256"]
     new_exec = raw_sha(HERE / "reference-stage-semantic-validator.py")
@@ -349,7 +362,7 @@ def main() -> None:
 
     negative_path = FIX / "stage-validator-negative-fixtures.yml"
     negative = yaml.safe_load(negative_path.read_text(encoding="utf-8"))
-    negative["status"] = "FROZEN_FOR_SIXTH_INDEPENDENT_READ_ONLY_REVIEW"
+    negative["status"] = "R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION"
     for item in negative["base_objects"]:
         item["canonical_sha256"] = raw_sha(resolve(item["path"]))
     for case in negative["cases"]:
@@ -357,12 +370,6 @@ def main() -> None:
             case["base_object_canonical_sha256"] = raw_sha(resolve(case["valid_base_object_path"]))
         if case["stage"] == "S5_RUNTIME_BINDING":
             case["paired_actual_object_paths"] = [item["path"] for item in sidecar["actual_objects"]]
-        if case.get("actual_input_mutation", {}).get("object_kind") == "CONSTRAINT_REGISTRY":
-            registry = yaml.safe_load((HERE / "constraint-id-registry.yml").read_text(encoding="utf-8"))
-            for operation in case["actual_input_mutation"]["patch"]:
-                if operation["op"] == "add" and operation["path"] == "/unexpected_field":
-                    registry["unexpected_field"] = operation["value"]
-            case["patch"][0]["value"] = csha(registry)
     negative_path.write_text(yaml.safe_dump(negative, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
     # Bootstrap the old summary into the new Schema, then replace it with actual execution.
@@ -406,6 +413,12 @@ def main() -> None:
         capture_output=True,
     )
     (FIX / "reference-validator-execution-summary.json").write_bytes(completed.stdout)
+    subprocess.run(
+        ["python", str(HERE / "build-design-manifest.py")],
+        cwd=REPO,
+        check=True,
+        capture_output=True,
+    )
     print(json.dumps({"validator_sha256": new_exec, "contract_sha256": new_contract, "sidecar_object_count": len(sidecar["actual_objects"]), "summary_sha256": raw_sha(FIX / "reference-validator-execution-summary.json")}, sort_keys=True))
 
 
