@@ -1,38 +1,38 @@
 fixture_manifest_version: 0.1-candidate
 fixture_manifest_id: clonorchis_p9b1q_stage_validator_negative_fixtures_v0_1
-status: R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION
+status: R3F_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW
 mutation_format: SEMANTIC_MUTATION_MODEL_WITH_RFC6902_TRANSPORT
 base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: c4e137afa23edcc739c74b2deed8c181f69756a07882042e3a85dadf21ad9353
+  canonical_sha256: 3276efcdd58bb0d8ba694dcd9189daa5137c139b326228cb0b5ff54353bfe648
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: fd161cf6063e7f5f9fc2908ef6a8ae509decdc6522010ed1363dbe449ebbc78f
+  canonical_sha256: 17981b95ef6348a09069b2a4c2842c6979fc9586eae368afd50ecdde326416d7
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: ff2549af4d8ee36726967b613bb9b36778ad18220ee9d8943742e37a837f9359
+  canonical_sha256: 90a214cd0581dedac5be60da43ea59adc49440634ea3382a480642f5ac5c0280
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: e593bc65d6af7819917a78a494c61c80b9dc0fada2efeaa2f06109994c973528
+  canonical_sha256: d2f74b2adef2560a764379351c7934eabb6fc21a053e863b20709a14d732995f
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: b8f9704eb56a867e3f01bf9e17ea415d756981b859c5926118cfab430b6df4c2
+  canonical_sha256: bf005781b0e5362266a2b8c82d7b474ee4879be5970a9e799040777aafba3859
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 5e6eb793135483c53b74205a4da1614135de85c815f857b9f4c694b2ebd06c95
+  canonical_sha256: 0b95038b58d57aea5244282b649b069c9b1e34acbb4ea7c183bab92451c522a5
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 4bbb91a9ec687f04c75be56131ad34787052b94bc62650026f6ce6a5f7ffc216
+  canonical_sha256: cf88f7f34a71b5810347a08a959460dd6e19602cdc2822b202ac1737d6217a8d
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: b9dbc5151a66e9da56fe854526028c853e7a2b5324f91a8b3d900a6307585a97
+  canonical_sha256: bca9c0fe5a47cb043d76a41c9c39a6bacc44e0dbe32d7c47aa28032653091430
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: 62d15dfda735ed11c8464662a1a500eba8097e75c20549902def44e0e343083d
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: e89aa94d33c934fef4eb9bb8d8275fd6583c955ca0f3988b1e3647fe14bcb8dd
+  canonical_sha256: 40963245e88d24d7edd88a38be5f2db02c0d1fcf8b78e857b78cfd7b491932ee
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 26b6265c7128ede977cdbb5f6eb712aef087c505bc4d6823070c7d1ef415f12d
+  canonical_sha256: 12949a3122adcd9d4d2a94649136ca9adebf32e38947de656a8e8cd6ed667460
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -461,7 +461,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 26b6265c7128ede977cdbb5f6eb712aef087c505bc4d6823070c7d1ef415f12d
+  base_object_canonical_sha256: 12949a3122adcd9d4d2a94649136ca9adebf32e38947de656a8e8cd6ed667460
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -1008,6 +1008,29 @@ cases:
     target_path: /actual_objects/*/canonical_sha256
     derivation_rule: RECOMPUTE_S5_ACTUAL_OBJECT_BINDING_CHAIN
     source_object: P9A_AUDIT_RECORD
+- fixture_id: NEG-S4-MISSING-RETAINED-OBJECT-WITNESS
+  stage: S4_QUERYIR_EMISSION
+  valid_base_object_path: fixtures/typed-result-exposure-positive.json
+  paired_actual_object_paths:
+  - fixtures/queryir-exposure-positive.json
+  fault_class: MINIMALITY_WITNESS_INVALID
+  patch:
+  - op: remove
+    path: /selected_solution/queryir_emission_record/minimality_witness/retained_object_witnesses/7
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EMIT-MINIMALITY_WITNESS
+  expected_failure_code: MINIMALITY_WITNESS_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/retained_object_witnesses/7
+    mutation_intent: RETAINED_Q02_HAS_NO_CORRESPONDING_REMOVAL_WITNESS
+    expected_constraint_id: CNS-EMIT-MINIMALITY_WITNESS
+    mechanism: RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /selected_solution/queryir_emission_record/minimality_witness/witness_sha256
+    derivation_rule: RECOMPUTE_MINIMALITY_WITNESS_SHA256
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true

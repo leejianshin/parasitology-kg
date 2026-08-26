@@ -106,51 +106,24 @@ def bootstrap_failure_code_governance() -> tuple[dict[str, Any], dict[str, int]]
         run_name="p9b1q_reference_validator_bootstrap",
     )
     governance = validator["validate_failure_code_governance"]()
-    registry = validator["registry_failure_map"]()
-    fixture_expectation_count = 0
-    unknown_constraint_ids: list[str] = []
-    failure_code_mismatches: list[str] = []
-    for relative in (
-        "fixtures/stage-validator-negative-fixtures.yml",
-        "fixtures/r3a-reference-override-negative-fixtures.yml",
-        "fixtures/r3b-negation-scope-negative-fixtures.yml",
-    ):
-        manifest = yaml.safe_load((HERE / relative).read_text(encoding="utf-8"))
-        for case in manifest["cases"]:
-            fixture_expectation_count += 1
-            constraint_id = case["expected_constraint_id"]
-            fixture_failure_code = case.get("expected_failure_code")
-            if constraint_id not in registry:
-                unknown_constraint_ids.append(
-                    f"{case['fixture_id']}:{constraint_id}"
-                )
-            elif (
-                fixture_failure_code is not None
-                and fixture_failure_code != registry[constraint_id]
-            ):
-                failure_code_mismatches.append(
-                    f"{case['fixture_id']}:{constraint_id}:"
-                    f"{fixture_failure_code}!={registry[constraint_id]}"
-                )
-    if (
-        governance["result"] != "PASS"
-        or unknown_constraint_ids
-        or failure_code_mismatches
-    ):
+    if governance["result"] != "PASS":
         raise RuntimeError(
             "registry failure-code governance bootstrap failed: "
-            f"governance={governance}, "
-            f"unknown_constraint_ids={unknown_constraint_ids}, "
-            f"failure_code_mismatches={failure_code_mismatches}"
+            f"governance={governance}"
         )
     diagnostics = {
-        "registry_count": len(registry),
+        "registry_count": governance["registry_mapping_count"],
         "validator_mapping_count": governance[
             "validator_constraint_mapping_count"
         ],
-        "fixture_expectation_count": fixture_expectation_count,
-        "unknown_constraint_ids": len(unknown_constraint_ids),
-        "failure_code_mismatches": len(failure_code_mismatches),
+        "fixture_expectation_count": governance["formal_fixture_count"],
+        "explicit_fixture_failure_code_count": governance[
+            "explicit_fixture_failure_code_count"
+        ],
+        "unknown_constraint_ids": governance["unknown_constraint_ids"],
+        "failure_code_mismatches": governance[
+            "fixture_failure_code_mismatches"
+        ],
         "unregistered_failure_code_mappings": governance[
             "unregistered_failure_code_mappings"
         ],
@@ -425,7 +398,7 @@ def main() -> None:
 
     negative_path = FIX / "stage-validator-negative-fixtures.yml"
     negative = yaml.safe_load(negative_path.read_text(encoding="utf-8"))
-    negative["status"] = "R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION"
+    negative["status"] = "R3F_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW"
     for item in negative["base_objects"]:
         item["canonical_sha256"] = raw_sha(resolve(item["path"]))
     for case in negative["cases"]:
@@ -443,6 +416,24 @@ def main() -> None:
     summary["configuration_sha256"] = new_contract
     governance, governance_diagnostics = bootstrap_failure_code_governance()
     summary["registry_failure_governance"] = governance
+    stage_negative_run = subprocess.run(
+        ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "negative"],
+        cwd=REPO,
+        check=True,
+        capture_output=True,
+    )
+    stage_negative = json.loads(stage_negative_run.stdout)
+    r3b_negative_run = subprocess.run(
+        ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "r3b"],
+        cwd=REPO,
+        check=True,
+        capture_output=True,
+    )
+    r3b_negative = json.loads(r3b_negative_run.stdout)["negative"]
+    if not all(item["passed"] for item in stage_negative + r3b_negative):
+        raise RuntimeError("bootstrap negative execution did not pass")
+    summary["negative"] = stage_negative + r3b_negative
+    summary["negative_pass_count"] = len(summary["negative"])
     summary["schema_gate"] = {
         "gate_id": "p9b1q-ajv-draft2020-strict",
         "ajv_version": "8.17.1",

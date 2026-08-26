@@ -10,6 +10,7 @@ cases:
     path: /assertion_markers/0/marker_kind
     value: NEGATOR
   expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  expected_failure_code: MARKER_SURFACE_UNLICENSED
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -26,6 +27,7 @@ cases:
     path: /assertion_markers/0/marker_kind
     value: WH_FOCUS
   expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  expected_failure_code: MARKER_SURFACE_UNLICENSED
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -45,6 +47,7 @@ cases:
       end_char: 6
       text: 生食淡水鱼
   expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  expected_failure_code: MARKER_SURFACE_UNLICENSED
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -61,6 +64,7 @@ cases:
     path: /assertion_markers/0/scope_target_candidate_ids/0
     value: S999
   expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  expected_failure_code: SCOPE_PATH_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -77,6 +81,7 @@ cases:
     path: /assertion_markers/0/containing_node_id
     value: S000
   expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  expected_failure_code: SCOPE_PATH_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -93,6 +98,7 @@ cases:
     path: /0/target_semantic_type
     value: PARTICIPANT_MENTION
   expected_constraint_id: CNS-AST-TARGET-TYPE-AUTHORITY
+  expected_failure_code: TARGET_TYPE_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: scope_authority_records
@@ -109,6 +115,7 @@ cases:
     path: /assertion_markers/0/scope_target_candidate_ids/0
     value: S003
   expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  expected_failure_code: SCOPE_PATH_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -125,6 +132,7 @@ cases:
     path: /assertion_markers/0/scope_target_candidate_ids/0
     value: U001
   expected_constraint_id: CNS-AST-TARGET-TYPE-AUTHORITY
+  expected_failure_code: TARGET_TYPE_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -141,6 +149,7 @@ cases:
     path: /assertion_markers/0/scope_target_candidate_ids/0
     value: S001
   expected_constraint_id: CNS-AST-TARGET-TYPE-AUTHORITY
+  expected_failure_code: TARGET_TYPE_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -157,6 +166,7 @@ cases:
     path: /event_negator_count
     value: 1
   expected_constraint_id: CNS-SOLVER-ASSERTION-DERIVATION
+  expected_failure_code: ASSERTION_DERIVATION_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: assertion_derivation
@@ -175,6 +185,7 @@ cases:
     - K002
     - K001
   expected_constraint_id: CNS-SOLVER-ASSERTION-DERIVATION
+  expected_failure_code: ASSERTION_DERIVATION_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: assertion_derivation
@@ -191,6 +202,7 @@ cases:
     path: /frames/0/assertion/assertion_status
     value: NEGATED
   expected_constraint_id: CNS-SOLVER-ASSERTION-DERIVATION
+  expected_failure_code: ASSERTION_DERIVATION_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: event_frame
@@ -210,6 +222,7 @@ cases:
       end_char: 7
       text: 检出
   expected_constraint_id: CNS-AST-MARKER-SURFACE-AUTHORITY
+  expected_failure_code: MARKER_SURFACE_UNLICENSED
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: clause_ast
@@ -228,6 +241,7 @@ cases:
     - S000
     - S001
   expected_constraint_id: CNS-AST-SCOPE-PATH-AUTHORITY
+  expected_failure_code: SCOPE_PATH_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: scope_authority_records

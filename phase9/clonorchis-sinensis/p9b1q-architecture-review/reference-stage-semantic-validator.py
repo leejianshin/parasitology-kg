@@ -164,14 +164,30 @@ def error(constraint_id: str, failure_code: str, pointer: str) -> dict[str, str]
     }
 
 
-def validate_failure_code_governance() -> dict[str, Any]:
-    """Mechanically bind every formal error-emission path to the registry."""
+def validate_failure_code_governance(
+    *,
+    source_text_overrides: dict[str, str] | None = None,
+    fixture_manifest_overrides: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Mechanically bind emitters and every formal fixture to the registry.
+
+    Optional in-memory overrides exist only so the formal governance gate can
+    replay fail-closed counterexamples without changing persisted authority.
+    """
+    counterexample_invocation = (
+        source_text_overrides is not None
+        or fixture_manifest_overrides is not None
+    )
     registry = registry_failure_map()
     emitted: dict[str, set[str]] = {}
     unauthorized_dynamic_calls: list[str] = []
     registry_bound_dynamic_calls = 0
+    source_text_overrides = source_text_overrides or {}
     for path in (Path(__file__).resolve(), NEGATION_SEMANTIC_IMPLEMENTATION):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        source_text = source_text_overrides.get(
+            path.name, path.read_text(encoding="utf-8")
+        )
+        tree = ast.parse(source_text, filename=str(path))
         for node in ast.walk(tree):
             if not (
                 isinstance(node, ast.Call)
@@ -216,32 +232,133 @@ def validate_failure_code_governance() -> dict[str, Any]:
         for constraint_id, failure_codes in emitted.items()
         if len(failure_codes) != 1
     )
+    missing_executable_constraints = sorted(set(registry) - set(emitted))
     match_count = sum(
         1
         for constraint_id, failure_codes in emitted.items()
         for failure_code in failure_codes
         if registry.get(constraint_id) == failure_code
     )
+    fixture_manifest_overrides = fixture_manifest_overrides or {}
+    formal_fixture_count = 0
+    explicit_fixture_failure_code_count = 0
+    unknown_fixture_constraint_ids: list[str] = []
+    fixture_failure_code_mismatches: list[str] = []
+    missing_fixture_failure_codes: list[str] = []
+    for manifest_path in (NEGATIVE, R3A_NEGATIVE, R3B_NEGATIVE):
+        manifest = fixture_manifest_overrides.get(
+            manifest_path.name, load_yaml(manifest_path)
+        )
+        for case in manifest["cases"]:
+            formal_fixture_count += 1
+            fixture_id = case.get("fixture_id", "<unknown>")
+            constraint_id = case.get("expected_constraint_id")
+            failure_code = case.get("expected_failure_code")
+            if constraint_id not in registry:
+                unknown_fixture_constraint_ids.append(
+                    f"{fixture_id}:{constraint_id}"
+                )
+            if not isinstance(failure_code, str) or not failure_code:
+                missing_fixture_failure_codes.append(fixture_id)
+            else:
+                explicit_fixture_failure_code_count += 1
+                if (
+                    constraint_id in registry
+                    and failure_code != registry[constraint_id]
+                ):
+                    fixture_failure_code_mismatches.append(
+                        f"{fixture_id}:{constraint_id}:{failure_code}"
+                    )
+
     passed = not (
         unknown_constraints
         or mismatches
         or multiple_mappings
+        or missing_executable_constraints
         or unauthorized_dynamic_calls
+        or unknown_fixture_constraint_ids
+        or fixture_failure_code_mismatches
+        or missing_fixture_failure_codes
     )
-    return {
+    result = {
         "registry_mapping_count": len(registry),
         "validator_constraint_mapping_count": sum(
             len(value) for value in emitted.values()
         ),
+        "executable_constraint_count": len(emitted),
+        "formal_fixture_count": formal_fixture_count,
+        "explicit_fixture_failure_code_count": explicit_fixture_failure_code_count,
         "match_count": match_count,
         "mismatch_count": len(mismatches),
+        "unknown_constraint_ids": len(unknown_fixture_constraint_ids),
+        "validator_failure_code_mismatches": len(mismatches),
+        "fixture_failure_code_mismatches": len(fixture_failure_code_mismatches),
+        "missing_fixture_failure_codes": len(missing_fixture_failure_codes),
+        "missing_executable_constraints": len(missing_executable_constraints),
         "unregistered_constraint_outputs": len(unknown_constraints),
         "unregistered_failure_code_mappings": len(mismatches),
         "multi_authority_failure_code_mappings": len(multiple_mappings),
+        "multi_failure_code_mappings": len(multiple_mappings),
         "unauthorized_dynamic_output_calls": len(unauthorized_dynamic_calls),
         "registry_bound_dynamic_calls": registry_bound_dynamic_calls,
         "result": "PASS" if passed else "FAIL_CLOSED",
     }
+    if counterexample_invocation:
+        return result
+
+    stage_manifest = load_yaml(NEGATIVE)
+    wrong_code_manifest = copy.deepcopy(stage_manifest)
+    wrong_code_manifest["cases"][0]["expected_failure_code"] = "WRONG_TEMP_CODE"
+    missing_code_manifest = copy.deepcopy(stage_manifest)
+    missing_code_manifest["cases"][0].pop("expected_failure_code")
+    unknown_constraint_manifest = copy.deepcopy(stage_manifest)
+    unknown_constraint_manifest["cases"][0]["expected_constraint_id"] = (
+        "CNS-UNKNOWN-TEMP-CONSTRAINT"
+    )
+    validator_source = Path(__file__).read_text(encoding="utf-8")
+    mapping_literal = (
+        'error("CNS-EMIT-MINIMALITY_WITNESS", "MINIMALITY_WITNESS_INVALID",'
+    )
+    source_prefix, mapping_separator, source_suffix = validator_source.rpartition(
+        mapping_literal
+    )
+    if not mapping_separator:
+        raise RuntimeError("S4 minimality emitter mapping is not enumerable")
+    changed_validator_source = (
+        source_prefix
+        + 'error("CNS-EMIT-MINIMALITY_WITNESS", "WRONG_TEMP_CODE",'
+        + source_suffix
+    )
+    counterexamples = {
+        "wrong_fixture_code_gate": validate_failure_code_governance(
+            fixture_manifest_overrides={NEGATIVE.name: wrong_code_manifest}
+        )["result"],
+        "missing_fixture_code_gate": validate_failure_code_governance(
+            fixture_manifest_overrides={NEGATIVE.name: missing_code_manifest}
+        )["result"],
+        "unknown_constraint_gate": validate_failure_code_governance(
+            fixture_manifest_overrides={NEGATIVE.name: unknown_constraint_manifest}
+        )["result"],
+        "validator_registry_mapping_gate": validate_failure_code_governance(
+            source_text_overrides={Path(__file__).name: changed_validator_source}
+        )["result"],
+    }
+    result.update(
+        {
+            key: "REJECT" if value == "FAIL_CLOSED" else "ACCEPT"
+            for key, value in counterexamples.items()
+        }
+    )
+    result["s4_minimality_fixture_governed"] = any(
+        case["fixture_id"] == "NEG-S4-MISSING-RETAINED-OBJECT-WITNESS"
+        for case in stage_manifest["cases"]
+    )
+    if (
+        any(value != "FAIL_CLOSED" for value in counterexamples.values())
+        or not result["s4_minimality_fixture_governed"]
+    ):
+        result["result"] = "FAIL_CLOSED"
+    return result
 
 
 def require_failure_code_governance() -> dict[str, Any]:
@@ -949,6 +1066,40 @@ def validate_s4(
     if query_ir != emitted:
         errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/"))
     errors.extend(validate_queryir_projection(core, emitted, inputs))
+    minimality = emission["minimality_witness"]
+    retained_ids = minimality["retained_semantic_object_ids"]
+    witness_ids = [
+        witness["semantic_object_id"]
+        for witness in minimality["retained_object_witnesses"]
+    ]
+    witness_payload = {
+        key: value for key, value in minimality.items() if key != "witness_sha256"
+    }
+    minimality_witness_valid = (
+        len(witness_ids) == len(set(witness_ids))
+        and len(retained_ids) == len(witness_ids)
+        and set(retained_ids) == set(witness_ids)
+        and minimality["witness_sha256"] == canonical_sha(witness_payload)
+    )
+    registered_constraints = set(registry_failure_map())
+    for witness in minimality["retained_object_witnesses"]:
+        probe_path = resolve_review_path(witness["removal_probe_path"])
+        if not probe_path.exists():
+            minimality_witness_valid = False
+            continue
+        probe = load_json(probe_path)
+        minimality_witness_valid &= (
+            resolved_object_hash(probe_path)[0] == witness["removal_probe_sha256"]
+            and probe["removed_semantic_object_id"] == witness["semantic_object_id"]
+            and probe["removed_query_ir_json_pointer"]
+            == witness["query_ir_json_pointer"]
+            and set(witness["supporting_constraint_ids"])
+            <= registered_constraints
+            and set(witness["removal_unsatisfied_constraint_ids"])
+            <= registered_constraints
+        )
+    if not minimality_witness_valid:
+        errors.append(error("CNS-EMIT-MINIMALITY_WITNESS", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     if not rooted_witness_paths_valid(emission) or material_ids(core) != set(emission["minimality_witness"]["retained_semantic_object_ids"]):
         errors.append(error("CNS-EMIT-LICENSE_COVERAGE", "LICENSE_DAG_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     return ordered(errors)
@@ -2229,10 +2380,9 @@ def validate_mutation_isolation(
         raise RuntimeError(f"{fixture_id}: semantic expected constraint is unregistered")
     canonical_failure_code = registry_failure(mutation["expected_constraint_id"])
     fixture_failure_code = case.get("expected_failure_code")
-    if (
-        fixture_failure_code is not None
-        and fixture_failure_code != canonical_failure_code
-    ):
+    if not isinstance(fixture_failure_code, str) or not fixture_failure_code:
+        raise RuntimeError(f"{fixture_id}: fixture failure code is required")
+    if fixture_failure_code != canonical_failure_code:
         raise RuntimeError(
             f"{fixture_id}: fixture failure code is not registry canonical"
         )
@@ -2640,10 +2790,7 @@ def run_negative() -> list[dict[str, Any]]:
                 "passed": first is not None
                 and first["constraint_id"] == case["expected_constraint_id"]
                 and first["failure_code"] == registry_failure_code
-                and (
-                    fixture_failure_code is None
-                    or fixture_failure_code == registry_failure_code
-                ),
+                and fixture_failure_code == registry_failure_code,
             }
         )
     return results
@@ -2724,7 +2871,8 @@ def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
                 "derived_update_count": len(fixture.get("derived_updates", [])),
                 "passed": first is not None
                 and first["constraint_id"] == fixture["expected_constraint_id"]
-                and first["failure_code"] == registry_failure_code,
+                and first["failure_code"] == registry_failure_code
+                and fixture.get("expected_failure_code") == registry_failure_code,
             }
         )
     return {"positive": positive, "negative": negative}
@@ -2891,7 +3039,8 @@ def run_r3a() -> dict[str, Any]:
             "fixture_failure_code": case.get("expected_failure_code"),
             "passed": first is not None
             and first["constraint_id"] == case["expected_constraint_id"]
-            and first["failure_code"] == registry_failure_code,
+            and first["failure_code"] == registry_failure_code
+            and case.get("expected_failure_code") == registry_failure_code,
         })
     return {"result": "PASS" if all(item["passed"] for item in negative) else "FAIL_CLOSED", "positive": positive, "negative": negative, "positive_pass_count": sum(item["passed"] for item in positive), "negative_pass_count": sum(item["passed"] for item in negative)}
 

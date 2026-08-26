@@ -9,6 +9,7 @@ cases:
     path: /resolved_references/0/hypothesis_id
     value: RH999
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -24,6 +25,7 @@ cases:
     path: /resolved_overrides/0/hypothesis_id
     value: OH999
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -39,6 +41,7 @@ cases:
     path: /resolved_references/0/referent_key
     value: RE999
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -54,6 +57,7 @@ cases:
     path: /resolved_overrides/0/earlier_event_key
     value: RE999
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -69,6 +73,7 @@ cases:
     path: /resolved_overrides/0/later_event_key
     value: RE999
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -84,6 +89,7 @@ cases:
     path: /resolved_references/0/identity_relation
     value: DISTINCT_EVENT
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -99,6 +105,7 @@ cases:
     path: /resolved_references/1/identity_relation
     value: SAME_EVENT
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -114,6 +121,7 @@ cases:
     path: /resolved_events/1/actor_entity_ids/0
     value: parasite.clonorchis_sinensis
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -129,6 +137,7 @@ cases:
     path: /resolved_overrides/0/overridden_dimension
     value: SPECIMEN_CODE
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -144,6 +153,7 @@ cases:
     path: /resolved_events/1/finding_polarity
     value: POSITIVE
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -159,6 +169,7 @@ cases:
     path: /resolved_events/1/temporal_scope
     value: CURRENT
   expected_constraint_id: CNS-SOLVER-EVENT_IDENTITY
+  expected_failure_code: EVENT_IDENTITY_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: typed_solution_core
@@ -179,6 +190,7 @@ cases:
       referent_key: RE001
       identity_relation: SAME_EVENT
   expected_constraint_id: CNS-EMIT-QUERYIR_SCHEMA
+  expected_failure_code: SCHEMA_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: query_ir
@@ -194,6 +206,7 @@ cases:
     path: /resolved_references/0/referent_id
     value: E03
   expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+  expected_failure_code: NON_PURE_PROJECTION
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: query_ir
@@ -209,6 +222,7 @@ cases:
     path: /resolved_overrides/0/earlier_event_id
     value: E02
   expected_constraint_id: CNS-EMIT-PROJECTION_ONLY
+  expected_failure_code: NON_PURE_PROJECTION
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: query_ir
@@ -223,6 +237,7 @@ cases:
   - op: remove
     path: /nodes/12
   expected_constraint_id: CNS-SOLVER-LICENSE_DAG
+  expected_failure_code: LICENSE_DAG_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: permission_dag
@@ -237,6 +252,7 @@ cases:
   - op: remove
     path: /0
   expected_constraint_id: CNS-SOLVER-MINIMALITY
+  expected_failure_code: MINIMALITY_WITNESS_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: minimality_probes

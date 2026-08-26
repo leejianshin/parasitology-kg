@@ -37,24 +37,52 @@ properties:
     required:
       - registry_mapping_count
       - validator_constraint_mapping_count
+      - executable_constraint_count
+      - formal_fixture_count
+      - explicit_fixture_failure_code_count
       - match_count
       - mismatch_count
+      - unknown_constraint_ids
+      - validator_failure_code_mismatches
+      - fixture_failure_code_mismatches
+      - missing_fixture_failure_codes
+      - missing_executable_constraints
       - unregistered_constraint_outputs
       - unregistered_failure_code_mappings
       - multi_authority_failure_code_mappings
+      - multi_failure_code_mappings
       - unauthorized_dynamic_output_calls
       - registry_bound_dynamic_calls
+      - wrong_fixture_code_gate
+      - missing_fixture_code_gate
+      - unknown_constraint_gate
+      - validator_registry_mapping_gate
+      - s4_minimality_fixture_governed
       - result
     properties:
       registry_mapping_count: {const: 46}
-      validator_constraint_mapping_count: {const: 45}
-      match_count: {const: 45}
+      validator_constraint_mapping_count: {const: 46}
+      executable_constraint_count: {const: 46}
+      formal_fixture_count: {const: 66}
+      explicit_fixture_failure_code_count: {const: 66}
+      match_count: {const: 46}
       mismatch_count: {const: 0}
+      unknown_constraint_ids: {const: 0}
+      validator_failure_code_mismatches: {const: 0}
+      fixture_failure_code_mismatches: {const: 0}
+      missing_fixture_failure_codes: {const: 0}
+      missing_executable_constraints: {const: 0}
       unregistered_constraint_outputs: {const: 0}
       unregistered_failure_code_mappings: {const: 0}
       multi_authority_failure_code_mappings: {const: 0}
+      multi_failure_code_mappings: {const: 0}
       unauthorized_dynamic_output_calls: {const: 0}
       registry_bound_dynamic_calls: {type: integer, minimum: 1}
+      wrong_fixture_code_gate: {const: REJECT}
+      missing_fixture_code_gate: {const: REJECT}
+      unknown_constraint_gate: {const: REJECT}
+      validator_registry_mapping_gate: {const: REJECT}
+      s4_minimality_fixture_governed: {const: true}
       result: {const: PASS}
   positive:
     type: array
@@ -70,13 +98,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 49
-    maxItems: 49
+    minItems: 50
+    maxItems: 50
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
   positive_pass_count: {const: 13}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 49}
+  negative_pass_count: {const: 50}
   schema_gate:
     type: object
     additionalProperties: false
@@ -133,7 +161,7 @@ $defs:
       expected_constraint_id: {$ref: "#/$defs/constraint_id"}
       registry_failure_code: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,95}$"}
       fixture_failure_code:
-        type: [string, "null"]
+        type: string
         pattern: "^[A-Z][A-Z0-9_]{2,95}$"
       semantic_mutation_target_count: {const: 1}
       semantic_mutation_target:
