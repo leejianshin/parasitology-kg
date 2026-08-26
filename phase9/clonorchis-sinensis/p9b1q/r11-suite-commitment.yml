@@ -1,0 +1,80 @@
+commitment_version: "1.0"
+commitment_id: "clonorchis_p9b1q_r11_suite_commitment_v1"
+status: "SECRET_SUITE_FROZEN_NOT_EXECUTED"
+
+design_authority:
+  r3_frozen_candidate: "f565c9e2428dc4409813aa259f2e527059ef39df"
+  r3_frozen_tree: "d7a8fbc60d7a53334269d88f50cc1a035d6c4ad6"
+  governance_contract:
+    path: "phase9/clonorchis-sinensis/p9b1q/r10-blind-test-design-contract.yml"
+    contract_id: "clonorchis_p9b1q_r10_blind_test_design_v1_3"
+    contract_version: "1.3"
+  r11_coverage_authority:
+    path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+    frozen_candidate: "f565c9e2428dc4409813aa259f2e527059ef39df"
+
+secret_suite_public_metadata:
+  suite_id: "p9b1q-r11-zhcn-53c7f3aa"
+  language: "zh-CN"
+  semantic_case_count: 24
+  binding_positive_probe_count: 2
+  binding_negative_probe_count: 17
+  total_execution_count: 43
+  frozen_at_utc: "2026-08-26T10:03:19Z"
+  canonical_content_sha256: "9cb876eed5193f54306bf48c3648fbc8839e3686ec660810629179fa030c0c8d"
+  manifest_sha256: "fa7b6ec94c734b6f3b9fe5cf8767767fee923bf1340b2fd3e02df5ed0e10b10d"
+  sha256sums_sha256: "bb71b77357062492b30c21b0323a179300096997185808a74f531669bd8c52cb"
+
+audit_boundary:
+  secret_storage: "repository_external_private_holder"
+  holder_boundary: "ORIGINAL_INDEPENDENT_HOLDER_ONLY"
+  secret_body_in_git: false
+  secret_body_read_by_implementation_context: false
+  implementation_access: "PROHIBITED"
+  suite_executed_before_commitment: false
+  execution_before_p9b2: "PROHIBITED"
+  commitment_contains_query_text: false
+  commitment_contains_case_ids: false
+  commitment_contains_request_ids: false
+  commitment_contains_probe_ids: false
+  commitment_contains_expected_claim_ids: false
+  commitment_contains_expected_query_ir: false
+  commitment_contains_body_fragments: false
+  commitment_contains_private_absolute_paths: false
+  implementation_must_descend_from_this_commit: true
+  implementation_diff_base: "THIS_COMMIT"
+
+immutability:
+  private_body_copy_count: 3
+  copies_must_be_byte_identical: true
+  private_directory_mode: "0700"
+  private_file_mode: "0400"
+  verify_immediately_before_execution: true
+  byte_change_invalidates_freeze: true
+  failed_pre_freeze_artifacts_are_not_authority: true
+
+execution_policy:
+  holder: "ORIGINAL_INDEPENDENT_HOLDER_ONLY"
+  mode: "INDEPENDENT_READ_ONLY"
+  preconditions:
+    - "recompute all private artifact hashes"
+    - "verify target descends from this commitment-only commit"
+    - "verify implementation diff base is this commit"
+    - "verify worktree clean"
+    - "verify no reconstructable secret query-to-expectation binding"
+  r11_executed: false
+  p9b2_started: false
+
+prohibited_in_this_commit:
+  - "secret suite body or fragment"
+  - "secret case, request, or probe identifiers"
+  - "query text"
+  - "expected claim identifiers"
+  - "expected QueryIR"
+  - "private manifest body"
+  - "private absolute storage path"
+  - "parser, compiler, validator, executor, model, prompt, or configuration change"
+  - "public regression query addition"
+  - "P9-A contract change"
+  - "P9-B2 work"
+
