@@ -382,6 +382,7 @@ def main() -> None:
     sidecar_body.pop("sidecar_sha256", None)
     sidecar["sidecar_sha256"] = csha(sidecar_body)
     write("execution-binding-sidecar-positive.json", sidecar)
+    actual_sidecar_canonical_sha256 = csha(sidecar)
 
     index = load("object-store-index-positive.json")
     index["objects"] = [
@@ -389,16 +390,17 @@ def main() -> None:
         for item in sidecar["actual_objects"]
     ]
     index["objects"].append({
-        "canonical_sha256": csha(sidecar),
+        "canonical_sha256": actual_sidecar_canonical_sha256,
         "object_kind": "EXECUTION_BINDING_SIDECAR",
         "path": "fixtures/execution-binding-sidecar-positive.json",
         "schema_id": "execution-binding-sidecar-architecture-schema-candidate.yml",
     })
+    index["sidecar_sha256"] = actual_sidecar_canonical_sha256
     write("object-store-index-positive.json", index)
 
     negative_path = FIX / "stage-validator-negative-fixtures.yml"
     negative = yaml.safe_load(negative_path.read_text(encoding="utf-8"))
-    negative["status"] = "R3F_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW"
+    negative["status"] = "R3H_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW"
     for item in negative["base_objects"]:
         item["canonical_sha256"] = raw_sha(resolve(item["path"]))
     for case in negative["cases"]:

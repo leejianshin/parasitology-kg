@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 13
     minimality: 8
-    negative: 50
+    negative: 51
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false

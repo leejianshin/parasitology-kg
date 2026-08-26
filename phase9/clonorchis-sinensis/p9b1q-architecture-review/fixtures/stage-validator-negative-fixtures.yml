@@ -1,38 +1,38 @@
 fixture_manifest_version: 0.1-candidate
 fixture_manifest_id: clonorchis_p9b1q_stage_validator_negative_fixtures_v0_1
-status: R3F_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW
+status: R3H_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW
 mutation_format: SEMANTIC_MUTATION_MODEL_WITH_RFC6902_TRANSPORT
 base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 3276efcdd58bb0d8ba694dcd9189daa5137c139b326228cb0b5ff54353bfe648
+  canonical_sha256: 82a21d85ea1a8b73e194931bd029d9b717bbd770b81e7510613302dc1eb23375
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 17981b95ef6348a09069b2a4c2842c6979fc9586eae368afd50ecdde326416d7
+  canonical_sha256: 1cc96f5f96f0d5433042d2f5ef1f07f81c24fb335f781cb60874afe0545d12b2
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 90a214cd0581dedac5be60da43ea59adc49440634ea3382a480642f5ac5c0280
+  canonical_sha256: 07a1ff3f50be77e8aff010565ce7e7b79dd2a131573cbc2aad47ae39dfd00ae1
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: d2f74b2adef2560a764379351c7934eabb6fc21a053e863b20709a14d732995f
+  canonical_sha256: a33f84811e5c93fcf13099477bc68b83ece96772a928564acf74f0abb58e2217
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: bf005781b0e5362266a2b8c82d7b474ee4879be5970a9e799040777aafba3859
+  canonical_sha256: f11f556fb01e758b126e34b9a34845d8b4c1d9aaf9209cd11ce50fd0f31b8efe
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 0b95038b58d57aea5244282b649b069c9b1e34acbb4ea7c183bab92451c522a5
+  canonical_sha256: 5d8ae75f8f10abc106bcb746da8b050992809a4eb337b2f7ea6e095e7b21639b
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: cf88f7f34a71b5810347a08a959460dd6e19602cdc2822b202ac1737d6217a8d
+  canonical_sha256: 4342b9a5b35c322f5d93e753a3769cfc178eea9f71360a81eb955538e968f59e
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: bca9c0fe5a47cb043d76a41c9c39a6bacc44e0dbe32d7c47aa28032653091430
+  canonical_sha256: 2656f2ca6ea2a4312258292a8db88d25803ae0a91847c2fa2bde96c6b076b41c
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: 62d15dfda735ed11c8464662a1a500eba8097e75c20549902def44e0e343083d
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 40963245e88d24d7edd88a38be5f2db02c0d1fcf8b78e857b78cfd7b491932ee
+  canonical_sha256: c305e50fe5909c5596174d2d7c88f43a7489690824deb8cd9b8910f626f780ca
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 12949a3122adcd9d4d2a94649136ca9adebf32e38947de656a8e8cd6ed667460
+  canonical_sha256: 58728310630e2794d69a4f9f7ef4e095028ca77b51670a0f37cf38f7b36cac38
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -461,7 +461,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 12949a3122adcd9d4d2a94649136ca9adebf32e38947de656a8e8cd6ed667460
+  base_object_canonical_sha256: 58728310630e2794d69a4f9f7ef4e095028ca77b51670a0f37cf38f7b36cac38
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -537,6 +537,76 @@ cases:
     target_object: OBJECT_STORE_INDEX
     target_path: /objects/0/canonical_sha256
     mutation_intent: NON_SIDECAR_INDEX_ENTRY_HASH_DRIFT
+    expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
+    mechanism: OBJECT_STORE_INDEX_RFC6902
+  derived_updates: []
+- fixture_id: NEG-S5-TOP-LEVEL-SIDECAR-HASH-DRIFT
+  stage: S5_RUNTIME_BINDING
+  valid_base_object_path: fixtures/execution-binding-sidecar-positive.json
+  paired_actual_object_paths:
+  - fixtures/request-exposure-positive.json
+  - fixtures/normalized-request-exposure-positive.json
+  - fixtures/clause-ast-exposure-positive.json
+  - fixtures/event-frame-exposure-positive.json
+  - fixtures/typed-solution-exposure-positive.json
+  - fixtures/typed-result-exposure-positive.json
+  - fixtures/queryir-emission-record-exposure-positive.json
+  - fixtures/queryir-exposure-positive.json
+  - fixtures/semantic-validation-exposure-positive.json
+  - fixtures/retrieval-result-exposure-positive.json
+  - fixtures/response-exposure-positive.json
+  - fixtures/audit-record-exposure-positive.json
+  - fixtures/semantic-universe-exposure-positive.json
+  - fixtures/authority-predicate-type-mapping.json
+  - fixtures/authority-event-relation-mapping.json
+  - fixtures/authority-semantic-role-mapping.json
+  - fixtures/minimality-removal-probe-M01.json
+  - fixtures/minimality-removal-probe-M02.json
+  - fixtures/minimality-removal-probe-E01.json
+  - fixtures/minimality-removal-probe-R01.json
+  - fixtures/minimality-removal-probe-N01.json
+  - fixtures/minimality-removal-probe-N02.json
+  - fixtures/minimality-removal-probe-Q01.json
+  - fixtures/minimality-removal-probe-Q02.json
+  - fixtures/stage-validation-s0-positive.json
+  - fixtures/stage-validation-s1-positive.json
+  - fixtures/stage-validation-s2-positive.json
+  - fixtures/stage-validation-s3-positive.json
+  - fixtures/stage-validation-s4-positive.json
+  - reference-stage-semantic-validator.py
+  - stage-semantic-validator-contract.yml
+  - clause-grammar-config.yml
+  - constraint-id-registry-schema-candidate.yml
+  - constraint-id-registry.yml
+  - constraint-set-v0.1.yml
+  - minimality-proof-schema-candidate.yml
+  - package-lock.json
+  - package.json
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml
+  - queryir-projection-rule-set.yml
+  - schema/entity-types.yml
+  - schema/relation-types.yml
+  - strict-schema-gate.mjs
+  - typed-solution-core-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml
+  - constraint-set-schema-candidate.yml
+  - negation-surface-scope-authority.yml
+  - negation_semantic_authority.py
+  object_store_index_path: fixtures/object-store-index-positive.json
+  fault_class: TOP_LEVEL_SIDECAR_HASH_DRIFT
+  patch: []
+  object_store_index_patch:
+  - op: replace
+    path: /sidecar_sha256
+    value: '0000000000000000000000000000000000000000000000000000000000000000'
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
+  expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: OBJECT_STORE_INDEX
+    target_path: /sidecar_sha256
+    mutation_intent: TOP_LEVEL_SIDECAR_HASH_DRIFT
     expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
     mechanism: OBJECT_STORE_INDEX_RFC6902
   derived_updates: []

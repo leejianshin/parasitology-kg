@@ -1,7 +1,7 @@
 # P9-B1Q architecture review
 
 Status: current frozen R3 evidence-package candidate, pending final independent
-read-only re-review. Correction base: `56ba74aa705c22409e9b071561e7eb7c255a9d78`.
+read-only re-review. Correction base: `e8d8c55e66c7b3a6b39967c2f6d0572082d2686f`.
 The candidate SHA is the Git commit containing this README and its
 manifest-bound bytes.
 
@@ -61,18 +61,18 @@ semantic errors stable instead of making them correct.
 - `reference-stage-semantic-validator.py`: a deterministic, review-only
   executable that validates nine main positives plus four integrated R3-B
   positives, replays all eight minimality removals through the same semantic
-  predicate, executes 36 stage negatives plus fourteen integrated R3-B
+  predicate, executes 37 stage negatives plus fourteen integrated R3-B
   negatives, and rejects a non-sidecar object-store index entry that drifts
   from S5 material authority. The separately executed R3-A set contains sixteen
-  negatives, so the complete formal negative inventory is 66 cases
-  (36 stage + 16 R3-A + 14 R3-B); the integrated reference summary contains 50.
+  negatives, so the complete formal negative inventory is 67 cases
+  (37 stage + 16 R3-A + 14 R3-B); the integrated reference summary contains 51.
 - `fixtures/reference-validator-execution-summary.json` and its Schema: the
   byte-identical three-run result binding the actual executable and contract.
 
 The corrected evidence set passes strict Draft 2020-12 compilation for all twelve
 local candidate Schemas, validates 27 positive fixtures, resolves all 189 QueryIR
 field traces to persisted source objects, and executes 13 integrated positive,
-8 minimality, and 50 integrated negative gates in three byte-identical runs.
+8 minimality, and 51 integrated negative gates in three byte-identical runs.
 All review JSON actual objects are stored in their exact canonical bytes.
 
 ## Boundaries

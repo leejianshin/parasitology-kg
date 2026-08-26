@@ -63,8 +63,8 @@ properties:
       registry_mapping_count: {const: 46}
       validator_constraint_mapping_count: {const: 46}
       executable_constraint_count: {const: 46}
-      formal_fixture_count: {const: 66}
-      explicit_fixture_failure_code_count: {const: 66}
+      formal_fixture_count: {const: 67}
+      explicit_fixture_failure_code_count: {const: 67}
       match_count: {const: 46}
       mismatch_count: {const: 0}
       unknown_constraint_ids: {const: 0}
@@ -98,13 +98,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 50
-    maxItems: 50
+    minItems: 51
+    maxItems: 51
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
   positive_pass_count: {const: 13}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 50}
+  negative_pass_count: {const: 51}
   schema_gate:
     type: object
     additionalProperties: false

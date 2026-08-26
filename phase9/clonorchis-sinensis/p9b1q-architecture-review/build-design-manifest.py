@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the raw-byte inventory for the R3-F governance candidate."""
+"""Build the raw-byte inventory for the R3-H evidence-binding candidate."""
 
 from __future__ import annotations
 
@@ -37,9 +37,9 @@ fixtures = {
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
 manifest = {
-    "manifest_id": "P9B1Q-R3F-EXECUTABLE-CONSTRAINT-GOVERNANCE-DESIGN-MANIFEST-v1.0",
-    "status": "R3F_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW",
-    "integration_parent_commit": "fad07feb68054912c1b3143189e2be551db9093a",
+    "manifest_id": "P9B1Q-R3H-SIDECAR-INDEX-EVIDENCE-BINDING-DESIGN-MANIFEST-v1.0",
+    "status": "R3H_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW",
+    "integration_parent_commit": "e8d8c55e66c7b3a6b39967c2f6d0572082d2686f",
     "frozen_implementation_commit": "6ac0e4b2978e5fb41e7b90e27ced17826d35a394",
     "hash_algorithm": "SHA256_RAW_FILE_BYTES",
     "manifest_self_hash_excluded": True,
@@ -62,7 +62,7 @@ manifest = {
         "positive_cases": 9,
         "integrated_r3b_positive_cases": 4,
         "minimality_cases": 8,
-        "negative_cases": 50,
+        "negative_cases": 51,
         "repeat_runs": 3,
     },
     "shared_negation_semantic_authority": {
@@ -92,6 +92,7 @@ manifest = {
         "non_sidecar_entry_contract": "EXACT_ONE_TO_ONE_WITH_SIDECAR_ACTUAL_OBJECTS",
         "bound_fields": ["path", "object_kind", "canonical_sha256"],
         "sidecar_entry_cardinality": 1,
+        "top_level_sidecar_sha256_source": "ACTUAL_SIDECAR_CANONICAL_BYTES",
         "constraint_id": "CNS-BIND-ACTUAL_OBJECT_HASH",
     },
     "failure_code_governance": {
@@ -104,8 +105,8 @@ manifest = {
         "registry_mapping_count": 46,
         "validator_constraint_mapping_count": 46,
         "executable_constraint_count": 46,
-        "formal_fixture_count": 66,
-        "explicit_fixture_failure_code_count": 66,
+        "formal_fixture_count": 67,
+        "explicit_fixture_failure_code_count": 67,
         "required_missing_executable_constraint_count": 0,
         "required_mismatch_count": 0,
         "wrong_fixture_code_gate": "REJECT",
@@ -114,14 +115,15 @@ manifest = {
         "validator_registry_mapping_gate": "REJECT_ON_MISMATCH",
         "response_audit_regression_fixture": "NEG-S5-RESPONSE-AUDIT-HASH-MISMATCH",
         "s4_minimality_regression_fixture": "NEG-S4-MISSING-RETAINED-OBJECT-WITNESS",
+        "top_level_sidecar_hash_regression_fixture": "NEG-S5-TOP-LEVEL-SIDECAR-HASH-DRIFT",
     },
     "negative_fixture_mutation_isolation": {
         "model_path": "negative-fixture-semantic-mutation-model.yml",
         "semantic_mutation_target_cardinality": 1,
-        "stage_fixture_count": 36,
+        "stage_fixture_count": 37,
         "r3a_fixture_count": 16,
         "r3b_fixture_count": 14,
-        "total_fixture_count": 66,
+        "total_fixture_count": 67,
         "derived_updates_runner_owned": True,
         "legacy_cases": [
             "NEG-S3-EMPTY-UNIQUE",

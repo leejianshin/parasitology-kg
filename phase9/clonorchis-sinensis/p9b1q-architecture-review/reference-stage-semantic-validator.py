@@ -2162,6 +2162,7 @@ def validate_s5(
     declared = body.pop("sidecar_sha256")
     if canonical_sha(body) != declared:
         errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/sidecar_sha256"))
+    actual_sidecar_canonical_sha256 = canonical_sha(sidecar)
     index = (
         object_store_index
         if object_store_index is not None
@@ -2275,6 +2276,23 @@ def validate_s5(
             )
 
     expected_sidecar_path = "fixtures/execution-binding-sidecar-positive.json"
+    top_level_sidecar_binding_valid = (
+        index.get("sidecar_sha256") == actual_sidecar_canonical_sha256
+    )
+    if len(sidecar_index) == 1:
+        top_level_sidecar_binding_valid = (
+            top_level_sidecar_binding_valid
+            and index.get("sidecar_sha256")
+            == sidecar_index[0][1].get("canonical_sha256")
+        )
+    if not top_level_sidecar_binding_valid:
+        errors.append(
+            error(
+                "CNS-BIND-ACTUAL_OBJECT_HASH",
+                "ACTUAL_OBJECT_BINDING_MISMATCH",
+                "/object_store_index/sidecar_sha256",
+            )
+        )
     if len(sidecar_index) != 1:
         errors.append(
             error(
@@ -2293,7 +2311,7 @@ def validate_s5(
                     f"/object_store_index/objects/{item_index}/path",
                 )
             )
-        if item.get("canonical_sha256") != canonical_sha(sidecar):
+        if item.get("canonical_sha256") != actual_sidecar_canonical_sha256:
             errors.append(
                 error(
                     "CNS-BIND-ACTUAL_OBJECT_HASH",
@@ -2537,7 +2555,13 @@ def recompute_declared_derived(
             ]
             if len(sidecar_index_matches) != 1:
                 raise RuntimeError("S5 sidecar index binding is not unique")
-            sidecar_index_matches[0]["canonical_sha256"] = canonical_sha(value)
+            recomputed_sidecar_canonical_sha256 = canonical_sha(value)
+            sidecar_index_matches[0]["canonical_sha256"] = (
+                recomputed_sidecar_canonical_sha256
+            )
+            object_store_index["sidecar_sha256"] = (
+                recomputed_sidecar_canonical_sha256
+            )
         else:
             raise RuntimeError(f"unsupported or inapplicable derived rule: {rule}")
 
