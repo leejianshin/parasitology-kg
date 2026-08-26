@@ -6,33 +6,33 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 520f5683f83f0a10dd7affdab40d3b54ee8c5ae93601936a3ff49a6ce29fe8ca
+  canonical_sha256: c4e137afa23edcc739c74b2deed8c181f69756a07882042e3a85dadf21ad9353
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 93c5a086c333352138a6ca8560d4859d95cc30d2f6a0e421e182a3cea2ad0a68
+  canonical_sha256: fd161cf6063e7f5f9fc2908ef6a8ae509decdc6522010ed1363dbe449ebbc78f
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: b30ba56524346ce71d0483406ec49aa5eee06ccccad34da326b9b68cff9a1eda
+  canonical_sha256: ff2549af4d8ee36726967b613bb9b36778ad18220ee9d8943742e37a837f9359
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: eeceed117a16b52af39ada6beea73aa8bb3d2556e2490c2c0560ad0261cc00cd
+  canonical_sha256: e593bc65d6af7819917a78a494c61c80b9dc0fada2efeaa2f06109994c973528
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: 8d0745929b985ef46696ff9e99ed71eca953d46268f8dc7f36da052568456376
+  canonical_sha256: b8f9704eb56a867e3f01bf9e17ea415d756981b859c5926118cfab430b6df4c2
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: b0e0a692cd37264864bd007388efa18dbee29a5837c9d0053fe9aeb25ca90eab
+  canonical_sha256: 5e6eb793135483c53b74205a4da1614135de85c815f857b9f4c694b2ebd06c95
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 75606d6b40599a53982662d8a8a319608f9a01f6fc5481d5c71ffe2060527cbc
+  canonical_sha256: 4bbb91a9ec687f04c75be56131ad34787052b94bc62650026f6ce6a5f7ffc216
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 4a3f021cff88f775c74dd6b1c12e1f8623e0ae94852577dbe3e3591ba2223737
+  canonical_sha256: b9dbc5151a66e9da56fe854526028c853e7a2b5324f91a8b3d900a6307585a97
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: 62d15dfda735ed11c8464662a1a500eba8097e75c20549902def44e0e343083d
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 452a26374f35780b009cc91f964abc72d1682d60e235af038cd95fd125664e1e
+  canonical_sha256: e89aa94d33c934fef4eb9bb8d8275fd6583c955ca0f3988b1e3647fe14bcb8dd
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 3c4df3bcf9fbb40850c15d0356382650dde5a59bc3a013a3497369e29dc7c2ac
+  canonical_sha256: 26b6265c7128ede977cdbb5f6eb712aef087c505bc4d6823070c7d1ef415f12d
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -461,7 +461,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 3c4df3bcf9fbb40850c15d0356382650dde5a59bc3a013a3497369e29dc7c2ac
+  base_object_canonical_sha256: 26b6265c7128ede977cdbb5f6eb712aef087c505bc4d6823070c7d1ef415f12d
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -619,7 +619,7 @@ cases:
     value: behavior.unregistered_candidate
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-ENTITY_RESOLUTION
-  expected_failure_code: INPUT_HASH_MISMATCH
+  expected_failure_code: SLOT_TYPE_MISMATCH
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -645,7 +645,7 @@ cases:
     value: EXCLUDED
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
-  expected_failure_code: ASSERTION_SCOPE_UNRESOLVED
+  expected_failure_code: SCOPE_TARGET_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -697,7 +697,7 @@ cases:
     value: pathogen_confirmation
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-SOLVER-ASSERTION_SCOPE
-  expected_failure_code: ASSERTION_SCOPE_UNRESOLVED
+  expected_failure_code: SCOPE_TARGET_INVALID
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -931,6 +931,83 @@ cases:
   - target_object: STAGE_BASE_OBJECT
     target_path: /selected_solution/queryir_emission_record/field_traces/*/emitted_value_sha256
     derivation_rule: RECOMPUTE_ALL_FIELD_TRACE_VALUE_SHA256
+- fixture_id: NEG-S5-RESPONSE-AUDIT-HASH-MISMATCH
+  stage: S5_RUNTIME_BINDING
+  valid_base_object_path: fixtures/execution-binding-sidecar-positive.json
+  object_store_index_path: fixtures/object-store-index-positive.json
+  paired_actual_object_paths:
+  - fixtures/request-exposure-positive.json
+  - fixtures/normalized-request-exposure-positive.json
+  - fixtures/clause-ast-exposure-positive.json
+  - fixtures/event-frame-exposure-positive.json
+  - fixtures/typed-solution-exposure-positive.json
+  - fixtures/typed-result-exposure-positive.json
+  - fixtures/queryir-emission-record-exposure-positive.json
+  - fixtures/queryir-exposure-positive.json
+  - fixtures/semantic-validation-exposure-positive.json
+  - fixtures/retrieval-result-exposure-positive.json
+  - fixtures/response-exposure-positive.json
+  - fixtures/audit-record-exposure-positive.json
+  - fixtures/semantic-universe-exposure-positive.json
+  - fixtures/authority-predicate-type-mapping.json
+  - fixtures/authority-event-relation-mapping.json
+  - fixtures/authority-semantic-role-mapping.json
+  - fixtures/minimality-removal-probe-M01.json
+  - fixtures/minimality-removal-probe-M02.json
+  - fixtures/minimality-removal-probe-E01.json
+  - fixtures/minimality-removal-probe-R01.json
+  - fixtures/minimality-removal-probe-N01.json
+  - fixtures/minimality-removal-probe-N02.json
+  - fixtures/minimality-removal-probe-Q01.json
+  - fixtures/minimality-removal-probe-Q02.json
+  - fixtures/stage-validation-s0-positive.json
+  - fixtures/stage-validation-s1-positive.json
+  - fixtures/stage-validation-s2-positive.json
+  - fixtures/stage-validation-s3-positive.json
+  - fixtures/stage-validation-s4-positive.json
+  - reference-stage-semantic-validator.py
+  - stage-semantic-validator-contract.yml
+  - clause-grammar-config.yml
+  - constraint-id-registry-schema-candidate.yml
+  - constraint-id-registry.yml
+  - constraint-set-v0.1.yml
+  - minimality-proof-schema-candidate.yml
+  - package-lock.json
+  - package.json
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml
+  - queryir-projection-rule-set.yml
+  - schema/entity-types.yml
+  - schema/relation-types.yml
+  - strict-schema-gate.mjs
+  - typed-solution-core-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml
+  - constraint-set-schema-candidate.yml
+  - negation-surface-scope-authority.yml
+  - negation_semantic_authority.py
+  fault_class: REQUEST_RESPONSE_AUDIT_MISMATCH
+  patch: []
+  actual_input_mutation:
+    object_kind: P9A_AUDIT_RECORD
+    path: fixtures/audit-record-exposure-positive.json
+    patch:
+    - op: replace
+      path: /response_sha256
+      value: '0000000000000000000000000000000000000000000000000000000000000000'
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-BIND-RESPONSE_AUDIT_CHAIN
+  expected_failure_code: REQUEST_RESPONSE_AUDIT_MISMATCH
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: P9A_AUDIT_RECORD
+    target_path: /response_sha256
+    mutation_intent: AUDIT_RESPONSE_HASH_NO_LONGER_BINDS_ACTUAL_RESPONSE
+    expected_constraint_id: CNS-BIND-RESPONSE_AUDIT_CHAIN
+    mechanism: CROSS_OBJECT_RFC6902
+  derived_updates:
+  - target_object: STAGE_BASE_OBJECT
+    target_path: /actual_objects/*/canonical_sha256
+    derivation_rule: RECOMPUTE_S5_ACTUAL_OBJECT_BINDING_CHAIN
+    source_object: P9A_AUDIT_RECORD
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true

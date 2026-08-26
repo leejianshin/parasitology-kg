@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 13
     minimality: 8
-    negative: 48
+    negative: 49
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -33,6 +33,19 @@ reference_execution:
     required_compiled_schema_count: 12
     required_fixture_pair_count: 27
     required_valid_fixture_count: 27
+
+failure_code_authority:
+  canonical_source: constraint-id-registry.yml
+  canonical_mapping: constraint_id_to_registry_failure_code
+  validator_emission_rule: "every emitted failure code is resolved or mechanically checked against the registry mapping"
+  fixture_expectation_rule: "expected constraint is registered and any declared expected failure code equals the registry mapping"
+  observed_result_rule: "first constraint and failure code both equal the registry-bound expectation"
+  formal_emitter_paths:
+    - reference-stage-semantic-validator.py
+    - negation_semantic_authority.py
+  unregistered_constraint_output: FAIL_CLOSED
+  unregistered_failure_code_mapping: FAIL_CLOSED
+  multiple_failure_codes_for_one_constraint: FAIL_CLOSED
 
 common_executable_interface:
   invocation: "validate(stage_id, actual_object_store, normative_artifact_store) -> validation_result"
@@ -268,7 +281,10 @@ negative_fixture_contract:
     - "normalized_surface is derived only from source_span.text and registry hash is derived only from the mutated registry object"
     - "authority, source, request, contract and expected-result hashes are never recomputed; only an explicitly declared content-address binding may follow its mutated source object"
     - "mutated object remains isolated from all other cases"
-    - "actual validator result equals expected constraint and failure code"
+    - "fixture expected constraint resolves through the registry to the sole canonical failure code before execution"
+    - "a fixture-declared expected failure code must equal the registry canonical failure code"
+    - "actual first constraint equals the expected constraint and actual failure code equals the registry canonical failure code"
+    - "S5 cross-object response/audit regression recomputes sidecar and index content bindings from the single mutated audit object"
     - "cross-object synchronized mutation cases may derive the actual QueryIR from the mutated embedded emission, but may not mutate the typed semantic core"
     - "all cases run three times with byte-identical result"
     - "the reference executable must derive observed failures from mutated objects; fixture expected fields are comparison targets only"

@@ -42,6 +42,14 @@ allowed_derived_rules:
   RECOMPUTE_CONSTRAINT_REGISTRY_SHA256:
     target_path: /constraint_registry_sha256
     source_object: CONSTRAINT_REGISTRY
+  RECOMPUTE_S5_ACTUAL_OBJECT_BINDING_CHAIN:
+    target_path: /actual_objects/*/canonical_sha256
+    source_object: P9A_AUDIT_RECORD
+    coupled_paths:
+      - /actual_objects/*/byte_length
+      - /sidecar_sha256
+      - OBJECT_STORE_INDEX:/objects/*/canonical_sha256
+      - OBJECT_STORE_INDEX:EXECUTION_BINDING_SIDECAR/canonical_sha256
 fail_closed_conditions:
   - semantic_mutation_target_count_is_not_one
   - semantic_declaration_is_incomplete

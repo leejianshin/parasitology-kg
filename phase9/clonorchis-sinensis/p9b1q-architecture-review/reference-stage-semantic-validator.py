@@ -10,6 +10,7 @@ fixture using the frozen constraint order.
 from __future__ import annotations
 
 import argparse
+import ast
 import copy
 import hashlib
 import importlib.util
@@ -46,6 +47,7 @@ NEGATIVE_MUTATION_MODEL = HERE / "negative-fixture-semantic-mutation-model.yml"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
 _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
+_REGISTRY_FAILURE_CACHE: dict[str, str] | None = None
 _NEGATIVE_MUTATION_MODEL_CACHE: dict[str, Any] | None = None
 
 
@@ -130,12 +132,123 @@ def all_json_pointers(value: Any, prefix: str = "") -> list[str]:
     return result
 
 
+def registry_failure_map() -> dict[str, str]:
+    global _REGISTRY_FAILURE_CACHE
+    if _REGISTRY_FAILURE_CACHE is None:
+        entries = load_yaml(REGISTRY)["entries"]
+        mapping = {entry["id"]: entry["failure_code"] for entry in entries}
+        if len(mapping) != len(entries):
+            raise RuntimeError("constraint registry contains duplicate IDs")
+        _REGISTRY_FAILURE_CACHE = mapping
+    return _REGISTRY_FAILURE_CACHE
+
+
+def registry_failure(constraint_id: str) -> str:
+    try:
+        return registry_failure_map()[constraint_id]
+    except KeyError as exc:
+        raise RuntimeError(f"unregistered constraint output: {constraint_id}") from exc
+
+
 def error(constraint_id: str, failure_code: str, pointer: str) -> dict[str, str]:
+    canonical_failure_code = registry_failure(constraint_id)
+    if failure_code != canonical_failure_code:
+        raise RuntimeError(
+            f"unauthorized failure-code mapping: {constraint_id} -> {failure_code}; "
+            f"registry requires {canonical_failure_code}"
+        )
     return {
         "constraint_id": constraint_id,
-        "failure_code": failure_code,
+        "failure_code": canonical_failure_code,
         "json_pointer": pointer,
     }
+
+
+def validate_failure_code_governance() -> dict[str, Any]:
+    """Mechanically bind every formal error-emission path to the registry."""
+    registry = registry_failure_map()
+    emitted: dict[str, set[str]] = {}
+    unauthorized_dynamic_calls: list[str] = []
+    registry_bound_dynamic_calls = 0
+    for path in (Path(__file__).resolve(), NEGATION_SEMANTIC_IMPLEMENTATION):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "error"
+            ):
+                continue
+            if len(node.args) != 3:
+                unauthorized_dynamic_calls.append(f"{path.name}:{node.lineno}")
+                continue
+            constraint_arg, failure_arg = node.args[:2]
+            if (
+                isinstance(constraint_arg, ast.Constant)
+                and isinstance(constraint_arg.value, str)
+                and isinstance(failure_arg, ast.Constant)
+                and isinstance(failure_arg.value, str)
+            ):
+                emitted.setdefault(constraint_arg.value, set()).add(
+                    failure_arg.value
+                )
+                continue
+            if (
+                isinstance(failure_arg, ast.Call)
+                and isinstance(failure_arg.func, ast.Name)
+                and failure_arg.func.id == "registry_failure"
+                and len(failure_arg.args) == 1
+                and ast.dump(failure_arg.args[0]) == ast.dump(constraint_arg)
+            ):
+                registry_bound_dynamic_calls += 1
+                continue
+            unauthorized_dynamic_calls.append(f"{path.name}:{node.lineno}")
+
+    unknown_constraints = sorted(set(emitted) - set(registry))
+    mismatches = sorted(
+        (constraint_id, failure_code, registry.get(constraint_id))
+        for constraint_id, failure_codes in emitted.items()
+        for failure_code in failure_codes
+        if registry.get(constraint_id) != failure_code
+    )
+    multiple_mappings = sorted(
+        constraint_id
+        for constraint_id, failure_codes in emitted.items()
+        if len(failure_codes) != 1
+    )
+    match_count = sum(
+        1
+        for constraint_id, failure_codes in emitted.items()
+        for failure_code in failure_codes
+        if registry.get(constraint_id) == failure_code
+    )
+    passed = not (
+        unknown_constraints
+        or mismatches
+        or multiple_mappings
+        or unauthorized_dynamic_calls
+    )
+    return {
+        "registry_mapping_count": len(registry),
+        "validator_constraint_mapping_count": sum(
+            len(value) for value in emitted.values()
+        ),
+        "match_count": match_count,
+        "mismatch_count": len(mismatches),
+        "unregistered_constraint_outputs": len(unknown_constraints),
+        "unregistered_failure_code_mappings": len(mismatches),
+        "multi_authority_failure_code_mappings": len(multiple_mappings),
+        "unauthorized_dynamic_output_calls": len(unauthorized_dynamic_calls),
+        "registry_bound_dynamic_calls": registry_bound_dynamic_calls,
+        "result": "PASS" if passed else "FAIL_CLOSED",
+    }
+
+
+def require_failure_code_governance() -> dict[str, Any]:
+    result = validate_failure_code_governance()
+    if result["result"] != "PASS":
+        raise RuntimeError(f"failure-code governance gate failed: {result}")
+    return result
 
 
 def registry_order() -> dict[str, int]:
@@ -709,7 +822,7 @@ def validate_s3(
     relation_by_key = {item["relation_key"]: item for item in core["resolved_relations"]}
     for relation in core["resolved_relations"]:
         if any(root.startswith("RM") and root not in mention_by_key for root in relation["root_keys"]):
-            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "INPUT_HASH_MISMATCH", "/selected_solution/resolved_relations"))
+            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "SLOT_TYPE_MISMATCH", "/selected_solution/resolved_relations"))
         if any(root.startswith("RE") and root not in event_by_key for root in relation["root_keys"]):
             errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", "/selected_solution/resolved_relations"))
         if relation["derivation_mode"] == "DIRECT_MENTION_DERIVED":
@@ -737,7 +850,7 @@ def validate_s3(
                 errors.append(error("CNS-SOLVER-EVENT_RELATION_DERIVATION", "EVENT_RELATION_DERIVATION_MISMATCH", "/selected_solution/resolved_relations"))
     for item in core["semantic_roles"] + core["narrative_intents"]:
         if any(root not in relation_by_key for root in item["root_keys"]):
-            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "INPUT_HASH_MISMATCH", "/selected_solution"))
+            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "SLOT_TYPE_MISMATCH", "/selected_solution"))
     frames = {item["frame_id"]: item for item in inputs.get("EVENT_FRAME", {}).get("frames", [])}
     for event in core["resolved_events"]:
         frame = frames.get(event["frame_id"])
@@ -756,14 +869,9 @@ def validate_s3(
         errors.append(error("CNS-SOLVER-HASH_BINDING", "INPUT_HASH_MISMATCH", "/selected_solution/queryir_emission_record/semantic_solution_core_sha256"))
     core_failure = validate_core_minimality(core, emission)
     for constraint in core_failure:
-        failure = {
-            "CNS-SOLVER-HASH_BINDING": "INPUT_HASH_MISMATCH",
-            "CNS-SOLVER-ENTITY_RESOLUTION": "INPUT_HASH_MISMATCH",
-            "CNS-SOLVER-EVENT_IDENTITY": "EVENT_IDENTITY_MISMATCH",
-            "CNS-SOLVER-EVENT_RELATION_DERIVATION": "EVENT_RELATION_DERIVATION_MISMATCH",
-            "CNS-SOLVER-LICENSE_DAG": "LICENSE_DAG_INVALID",
-        }[constraint]
-        errors.append(error(constraint, failure, "/selected_solution"))
+        errors.append(
+            error(constraint, registry_failure(constraint), "/selected_solution")
+        )
     if not dag_valid(emission["license_dag"]) or not rooted_witness_paths_valid(emission):
         errors.append(error("CNS-SOLVER-LICENSE_DAG", "LICENSE_DAG_INVALID", "/selected_solution/queryir_emission_record/license_dag"))
     retained = set(emission["minimality_witness"]["retained_semantic_object_ids"])
@@ -1300,16 +1408,16 @@ def validate_semantic_authority(
         if expected is None or any(
             mention[key] != expected[key] for key in ("entity_id", "entity_type")
         ):
-            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "INPUT_HASH_MISMATCH", "/selected_solution/resolved_mentions"))
+            errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "SLOT_TYPE_MISMATCH", "/selected_solution/resolved_mentions"))
             break
         if any(
             mention[key] != expected[key]
             for key in ("assertion_status", "temporal_scope")
         ):
-            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "ASSERTION_SCOPE_UNRESOLVED", "/selected_solution/resolved_mentions"))
+            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "SCOPE_TARGET_INVALID", "/selected_solution/resolved_mentions"))
             break
     if require_complete and set(actual_mentions) != set(expected_mentions):
-        errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "INPUT_HASH_MISMATCH", "/selected_solution/resolved_mentions"))
+        errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "SLOT_TYPE_MISMATCH", "/selected_solution/resolved_mentions"))
 
     expected_events = _expected_fixed_events(inputs)
     actual_events = {item["frame_id"]: item for item in core["resolved_events"]}
@@ -1386,7 +1494,7 @@ def validate_semantic_authority(
             for item in core["semantic_roles"]
         }
         if require_complete and actual_roles != expected_roles:
-            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "ASSERTION_SCOPE_UNRESOLVED", "/selected_solution/semantic_roles"))
+            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "SCOPE_TARGET_INVALID", "/selected_solution/semantic_roles"))
         relation_subject = relation["subject_selector"]
         expected_narratives = {
             (
@@ -1409,7 +1517,7 @@ def validate_semantic_authority(
             for item in core["narrative_intents"]
         }
         if require_complete and actual_narratives != expected_narratives:
-            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "ASSERTION_SCOPE_UNRESOLVED", "/selected_solution/narrative_intents"))
+            errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "SCOPE_TARGET_INVALID", "/selected_solution/narrative_intents"))
         relation_key = relation["relation_key"]
         if any(item["root_keys"] != [relation_key] for item in core["semantic_roles"] + core["narrative_intents"]):
             errors.append(error("CNS-SOLVER-LICENSE_DAG", "LICENSE_DAG_INVALID", "/selected_solution"))
@@ -1872,30 +1980,33 @@ def stage_record_errors(result: dict[str, Any], observed: list[dict[str, str]]) 
     return observed
 
 
-def registry_failure(constraint_id: str) -> str:
-    for entry in load_yaml(REGISTRY)["entries"]:
-        if entry["id"] == constraint_id:
-            return entry["failure_code"]
-    raise KeyError(constraint_id)
-
-
 def validate_s5(
-    sidecar: dict[str, Any], object_store_index: dict[str, Any] | None = None
+    sidecar: dict[str, Any],
+    object_store_index: dict[str, Any] | None = None,
+    actual_object_overrides: dict[str, dict[str, Any]] | None = None,
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("execution-binding-sidecar-architecture-schema-candidate.yml", sidecar):
         errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/"))
     parsed: dict[str, list[Any]] = {}
+    actual_object_overrides = actual_object_overrides or {}
     for index, reference in enumerate(sidecar["actual_objects"]):
         path = resolve_review_path(reference["path"])
         if not path.is_file():
             errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", f"/actual_objects/{index}/path"))
             continue
-        actual_hash, actual_length = resolved_object_hash(path)
+        override = actual_object_overrides.get(reference["path"])
+        if override is None:
+            actual_hash, actual_length = resolved_object_hash(path)
+        else:
+            actual_hash = canonical_sha(override)
+            actual_length = len(canonical_bytes(override))
         if actual_hash != reference["canonical_sha256"] or reference.get("byte_length") != actual_length:
             errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", f"/actual_objects/{index}/canonical_sha256"))
         if path.suffix == ".json":
-            parsed.setdefault(reference["object_kind"], []).append(load_json(path))
+            parsed.setdefault(reference["object_kind"], []).append(
+                override if override is not None else load_json(path)
+            )
     body = dict(sidecar)
     declared = body.pop("sidecar_sha256")
     if canonical_sha(body) != declared:
@@ -2084,7 +2195,7 @@ def validate_s5(
     ):
         errors.append(error("CNS-BIND-RETRIEVAL_CHAIN", "ACTUAL_OBJECT_BINDING_MISMATCH", "/retrieval_executed"))
     if not response or not audit or audit[0].get("response_sha256") != canonical_sha(response[0]):
-        errors.append(error("CNS-BIND-RESPONSE_AUDIT_CHAIN", "RESPONSE_AUDIT_CHAIN_MISMATCH", "/response_present"))
+        errors.append(error("CNS-BIND-RESPONSE_AUDIT_CHAIN", "REQUEST_RESPONSE_AUDIT_MISMATCH", "/response_present"))
     return ordered(errors)
 
 
@@ -2116,6 +2227,15 @@ def validate_mutation_isolation(
         raise RuntimeError(f"{fixture_id}: semantic expected constraint mismatch")
     if mutation["expected_constraint_id"] not in registry_order():
         raise RuntimeError(f"{fixture_id}: semantic expected constraint is unregistered")
+    canonical_failure_code = registry_failure(mutation["expected_constraint_id"])
+    fixture_failure_code = case.get("expected_failure_code")
+    if (
+        fixture_failure_code is not None
+        and fixture_failure_code != canonical_failure_code
+    ):
+        raise RuntimeError(
+            f"{fixture_id}: fixture failure code is not registry canonical"
+        )
     if expected_target_object is not None and mutation["target_object"] != expected_target_object:
         raise RuntimeError(f"{fixture_id}: semantic target object mismatch")
     if not isinstance(mutation["target_path"], str) or not mutation["target_path"].startswith("/"):
@@ -2234,6 +2354,40 @@ def recompute_declared_derived(
             value["surface_mentions"][0]["normalized_surface"] = value["surface_mentions"][0]["source_span"]["text"]
         elif rule == "RECOMPUTE_CONSTRAINT_REGISTRY_SHA256":
             value["constraint_registry_sha256"] = canonical_sha(source_objects["CONSTRAINT_REGISTRY"])
+        elif rule == "RECOMPUTE_S5_ACTUAL_OBJECT_BINDING_CHAIN":
+            object_kind = update["source_object"]
+            actual_object = source_objects[object_kind]
+            actual_path = source_objects["S5_MUTATED_ACTUAL_OBJECT_PATH"]
+            object_store_index = source_objects["OBJECT_STORE_INDEX"]
+            actual_hash = canonical_sha(actual_object)
+            actual_length = len(canonical_bytes(actual_object))
+            sidecar_matches = [
+                item
+                for item in value["actual_objects"]
+                if item["path"] == actual_path and item["object_kind"] == object_kind
+            ]
+            index_matches = [
+                item
+                for item in object_store_index["objects"]
+                if item.get("path") == actual_path
+                and item.get("object_kind") == object_kind
+            ]
+            if len(sidecar_matches) != 1 or len(index_matches) != 1:
+                raise RuntimeError("S5 mutated actual object is not uniquely bound")
+            sidecar_matches[0]["canonical_sha256"] = actual_hash
+            sidecar_matches[0]["byte_length"] = actual_length
+            index_matches[0]["canonical_sha256"] = actual_hash
+            sidecar_body = dict(value)
+            sidecar_body.pop("sidecar_sha256", None)
+            value["sidecar_sha256"] = canonical_sha(sidecar_body)
+            sidecar_index_matches = [
+                item
+                for item in object_store_index["objects"]
+                if item.get("object_kind") == "EXECUTION_BINDING_SIDECAR"
+            ]
+            if len(sidecar_index_matches) != 1:
+                raise RuntimeError("S5 sidecar index binding is not unique")
+            sidecar_index_matches[0]["canonical_sha256"] = canonical_sha(value)
         else:
             raise RuntimeError(f"unsupported or inapplicable derived rule: {rule}")
 
@@ -2247,6 +2401,7 @@ def normalized_by_request_id() -> dict[str, dict[str, Any]]:
 
 
 def run_positive() -> list[dict[str, Any]]:
+    require_failure_code_governance()
     schema_gate = run_schema_gate()
     results: list[dict[str, Any]] = []
     normalized = normalized_by_request_id()
@@ -2300,6 +2455,7 @@ def run_positive() -> list[dict[str, Any]]:
 
 
 def run_minimality() -> list[dict[str, Any]]:
+    require_failure_code_governance()
     core = load_json(FIXTURES / "typed-solution-exposure-positive.json")
     emission = load_json(FIXTURES / "queryir-emission-record-exposure-positive.json")
     _, inputs, _ = load_stage_result("S3")
@@ -2331,6 +2487,7 @@ def run_minimality() -> list[dict[str, Any]]:
 
 
 def run_negative() -> list[dict[str, Any]]:
+    require_failure_code_governance()
     manifest = load_yaml(NEGATIVE)
     if manifest.get("mutation_model_path") != "../negative-fixture-semantic-mutation-model.yml":
         raise RuntimeError("stage negative fixture manifest is not bound to the R3-D2 mutation model")
@@ -2340,6 +2497,7 @@ def run_negative() -> list[dict[str, Any]]:
         mutation = validate_mutation_isolation(case)
         base = load_json(resolve_review_path(case["valid_base_object_path"]))
         stage = case["stage"]
+        base_index: dict[str, Any] | None = None
         base_errors: list[dict[str, str]]
         if stage == "S0_NORMALIZED_REQUEST":
             base_request = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
@@ -2381,6 +2539,9 @@ def run_negative() -> list[dict[str, Any]]:
         mutated = apply_declared_semantic_mutation(base, case)
         mutated_s3_inputs: dict[str, Any] | None = None
         mutated_s3_hashes: dict[str, str] | None = None
+        mutated_s5_index: dict[str, Any] | None = None
+        s5_actual_overrides: dict[str, dict[str, Any]] = {}
+        derived_source_objects: dict[str, Any] | None = None
         if stage == "S3_TYPED_SOLVER":
             s3_record, mutated_s3_inputs, _ = load_stage_result("S3")
             mutated_s3_hashes = {
@@ -2395,8 +2556,34 @@ def run_negative() -> list[dict[str, Any]]:
                     mutated_s3_inputs[object_kind], input_mutation["patch"]
                 )
                 mutated_s3_hashes[object_kind] = canonical_sha(mutated_s3_inputs[object_kind])
+            derived_source_objects = mutated_s3_inputs
+        elif stage == "S5_RUNTIME_BINDING":
+            mutated_s5_index = (
+                apply_patch(
+                    copy.deepcopy(base_index),
+                    case.get("object_store_index_patch", []),
+                )
+                if base_index is not None
+                else None
+            )
+            if case.get("actual_input_mutation"):
+                input_mutation = case["actual_input_mutation"]
+                actual_path = input_mutation["path"]
+                object_kind = input_mutation["object_kind"]
+                actual_object = apply_patch(
+                    load_json(resolve_review_path(actual_path)),
+                    input_mutation["patch"],
+                )
+                if mutated_s5_index is None:
+                    raise RuntimeError("S5 cross-object mutation requires object-store index")
+                s5_actual_overrides[actual_path] = actual_object
+                derived_source_objects = {
+                    object_kind: actual_object,
+                    "S5_MUTATED_ACTUAL_OBJECT_PATH": actual_path,
+                    "OBJECT_STORE_INDEX": mutated_s5_index,
+                }
         recompute_declared_derived(
-            mutated, case.get("derived_updates", []), mutated_s3_inputs
+            mutated, case.get("derived_updates", []), derived_source_objects
         )
         if stage == "S0_NORMALIZED_REQUEST":
             request = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
@@ -2429,19 +2616,21 @@ def run_negative() -> list[dict[str, Any]]:
                 typed = load_json(resolve_review_path(case["paired_actual_object_paths"][0]))
                 errors = validate_s4(typed, mutated, s4_inputs)
         elif stage == "S5_RUNTIME_BINDING":
-            mutated_index = (
-                apply_patch(base_index, case.get("object_store_index_patch", []))
-                if base_index is not None
-                else None
+            errors = validate_s5(
+                mutated, mutated_s5_index, s5_actual_overrides
             )
-            errors = validate_s5(mutated, mutated_index)
         else:
             raise ValueError(stage)
         first = errors[0] if errors else None
+        registry_failure_code = registry_failure(case["expected_constraint_id"])
+        fixture_failure_code = case.get("expected_failure_code")
         results.append(
             {
                 "fixture_id": case["fixture_id"],
                 "observed_first_error": first,
+                "expected_constraint_id": case["expected_constraint_id"],
+                "registry_failure_code": registry_failure_code,
+                "fixture_failure_code": fixture_failure_code,
                 "semantic_mutation_target_count": case["semantic_mutation_target_count"],
                 "semantic_mutation_target": {
                     "target_object": mutation["target_object"],
@@ -2450,7 +2639,11 @@ def run_negative() -> list[dict[str, Any]]:
                 "derived_update_count": len(case.get("derived_updates", [])),
                 "passed": first is not None
                 and first["constraint_id"] == case["expected_constraint_id"]
-                and first["failure_code"] == case["expected_failure_code"],
+                and first["failure_code"] == registry_failure_code
+                and (
+                    fixture_failure_code is None
+                    or fixture_failure_code == registry_failure_code
+                ),
             }
         )
     return results
@@ -2489,6 +2682,7 @@ def r3b_authoritative_case_errors(case: dict[str, Any]) -> list[dict[str, str]]:
 
 def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
     """Bind all four positives and fourteen mutations to the main entrypoint."""
+    require_failure_code_governance()
     bundle = load_json(R3B_POSITIVE)
     by_id = {case["case_id"]: case for case in bundle["cases"]}
     positive = [
@@ -2514,10 +2708,14 @@ def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
         )
         errors = r3b_authoritative_case_errors(candidate)
         first = errors[0] if errors else None
+        registry_failure_code = registry_failure(fixture["expected_constraint_id"])
         negative.append(
             {
                 "fixture_id": fixture["fixture_id"],
                 "observed_first_error": first,
+                "expected_constraint_id": fixture["expected_constraint_id"],
+                "registry_failure_code": registry_failure_code,
+                "fixture_failure_code": fixture.get("expected_failure_code"),
                 "semantic_mutation_target_count": fixture["semantic_mutation_target_count"],
                 "semantic_mutation_target": {
                     "target_object": mutation["target_object"],
@@ -2526,9 +2724,7 @@ def run_r3b_authoritative() -> dict[str, list[dict[str, Any]]]:
                 "derived_update_count": len(fixture.get("derived_updates", [])),
                 "passed": first is not None
                 and first["constraint_id"] == fixture["expected_constraint_id"]
-                and first["failure_code"] == registry_failure(
-                    fixture["expected_constraint_id"]
-                ),
+                and first["failure_code"] == registry_failure_code,
             }
         )
     return {"positive": positive, "negative": negative}
@@ -2647,6 +2843,7 @@ def r3a_positive_checks(bundle: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def run_r3a() -> dict[str, Any]:
+    require_failure_code_governance()
     bundle = load_json(R3A_POSITIVE)
     positive = r3a_positive_checks(bundle)
     if not all(item["passed"] for item in positive):
@@ -2678,9 +2875,11 @@ def run_r3a() -> dict[str, Any]:
             errors = [] if coverage == required else [error("CNS-SOLVER-MINIMALITY", "MINIMALITY_WITNESS_INVALID", "/minimality_probes")]
         else:
             raise RuntimeError(case["target"])
-        observed = errors[0]["constraint_id"] if errors else None
+        first = errors[0] if errors else None
+        registry_failure_code = registry_failure(case["expected_constraint_id"])
         negative.append({
             "fixture_id": case["fixture_id"],
+            "observed_first_error": first,
             "semantic_mutation_target_count": case["semantic_mutation_target_count"],
             "semantic_mutation_target": {
                 "target_object": mutation["target_object"],
@@ -2688,13 +2887,17 @@ def run_r3a() -> dict[str, Any]:
             },
             "derived_update_count": len(case.get("derived_updates", [])),
             "expected_constraint_id": case["expected_constraint_id"],
-            "observed_first_constraint_id": observed,
-            "passed": observed == case["expected_constraint_id"],
+            "registry_failure_code": registry_failure_code,
+            "fixture_failure_code": case.get("expected_failure_code"),
+            "passed": first is not None
+            and first["constraint_id"] == case["expected_constraint_id"]
+            and first["failure_code"] == registry_failure_code,
         })
     return {"result": "PASS" if all(item["passed"] for item in negative) else "FAIL_CLOSED", "positive": positive, "negative": negative, "positive_pass_count": sum(item["passed"] for item in positive), "negative_pass_count": sum(item["passed"] for item in negative)}
 
 
 def one_run() -> dict[str, Any]:
+    failure_code_governance = require_failure_code_governance()
     positive = run_positive()
     minimality = run_minimality()
     negative = run_negative()
@@ -2702,6 +2905,7 @@ def one_run() -> dict[str, Any]:
     positive.extend(r3b["positive"])
     negative.extend(r3b["negative"])
     return {
+        "registry_failure_governance": failure_code_governance,
         "positive": positive,
         "minimality": minimality,
         "negative": negative,
@@ -2718,7 +2922,8 @@ def build_summary() -> dict[str, Any]:
         raise RuntimeError("repeat runs are not byte-identical")
     payload = runs[0]
     complete = (
-        payload["positive_pass_count"] == len(payload["positive"])
+        payload["registry_failure_governance"]["result"] == "PASS"
+        and payload["positive_pass_count"] == len(payload["positive"])
         and payload["minimality_pass_count"] == len(payload["minimality"])
         and payload["negative_pass_count"] == len(payload["negative"])
     )

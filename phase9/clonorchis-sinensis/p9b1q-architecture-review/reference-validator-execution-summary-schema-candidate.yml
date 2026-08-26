@@ -13,6 +13,7 @@ required:
   - repeat_runs
   - run_payload_sha256
   - result
+  - registry_failure_governance
   - positive
   - minimality
   - negative
@@ -30,6 +31,31 @@ properties:
   repeat_runs: {const: 3}
   run_payload_sha256: {$ref: "#/$defs/sha256"}
   result: {const: PASS}
+  registry_failure_governance:
+    type: object
+    additionalProperties: false
+    required:
+      - registry_mapping_count
+      - validator_constraint_mapping_count
+      - match_count
+      - mismatch_count
+      - unregistered_constraint_outputs
+      - unregistered_failure_code_mappings
+      - multi_authority_failure_code_mappings
+      - unauthorized_dynamic_output_calls
+      - registry_bound_dynamic_calls
+      - result
+    properties:
+      registry_mapping_count: {const: 46}
+      validator_constraint_mapping_count: {const: 45}
+      match_count: {const: 45}
+      mismatch_count: {const: 0}
+      unregistered_constraint_outputs: {const: 0}
+      unregistered_failure_code_mappings: {const: 0}
+      multi_authority_failure_code_mappings: {const: 0}
+      unauthorized_dynamic_output_calls: {const: 0}
+      registry_bound_dynamic_calls: {type: integer, minimum: 1}
+      result: {const: PASS}
   positive:
     type: array
     minItems: 13
@@ -44,13 +70,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 48
-    maxItems: 48
+    minItems: 49
+    maxItems: 49
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
   positive_pass_count: {const: 13}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 48}
+  negative_pass_count: {const: 49}
   schema_gate:
     type: object
     additionalProperties: false
@@ -100,10 +126,15 @@ $defs:
   negative_result:
     type: object
     additionalProperties: false
-    required: [fixture_id, observed_first_error, semantic_mutation_target_count, semantic_mutation_target, derived_update_count, passed]
+    required: [fixture_id, observed_first_error, expected_constraint_id, registry_failure_code, fixture_failure_code, semantic_mutation_target_count, semantic_mutation_target, derived_update_count, passed]
     properties:
       fixture_id: {type: string, pattern: "^(NEG-S[0-5]-[A-Z0-9-]+|R3B-NEG-[A-Z0-9-]+)$"}
       observed_first_error: {$ref: "#/$defs/validation_error"}
+      expected_constraint_id: {$ref: "#/$defs/constraint_id"}
+      registry_failure_code: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,95}$"}
+      fixture_failure_code:
+        type: [string, "null"]
+        pattern: "^[A-Z][A-Z0-9_]{2,95}$"
       semantic_mutation_target_count: {const: 1}
       semantic_mutation_target:
         type: object

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the raw-byte inventory for the R3-D2 correction candidate."""
+"""Build the raw-byte inventory for the R3-E governance candidate."""
 
 from __future__ import annotations
 
@@ -37,9 +37,9 @@ fixtures = {
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
 manifest = {
-    "manifest_id": "P9B1Q-R3D2-SEMANTIC-MUTATION-ISOLATION-DESIGN-MANIFEST-v1.0",
-    "status": "R3D2_LOCAL_CANDIDATE_PENDING_INTEGRATION",
-    "integration_parent_commit": "c6ae74553a661c3cdd0a7da0264c6c1098a025d5",
+    "manifest_id": "P9B1Q-R3E-FAILURE-CODE-GOVERNANCE-DESIGN-MANIFEST-v1.0",
+    "status": "R3E_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW",
+    "integration_parent_commit": "9f79ebd48eadd48e53747eb3318f30f0ee97e1f9",
     "frozen_implementation_commit": "6ac0e4b2978e5fb41e7b90e27ced17826d35a394",
     "hash_algorithm": "SHA256_RAW_FILE_BYTES",
     "manifest_self_hash_excluded": True,
@@ -62,7 +62,7 @@ manifest = {
         "positive_cases": 9,
         "integrated_r3b_positive_cases": 4,
         "minimality_cases": 8,
-        "negative_cases": 48,
+        "negative_cases": 49,
         "repeat_runs": 3,
     },
     "shared_negation_semantic_authority": {
@@ -94,13 +94,25 @@ manifest = {
         "sidecar_entry_cardinality": 1,
         "constraint_id": "CNS-BIND-ACTUAL_OBJECT_HASH",
     },
+    "failure_code_governance": {
+        "canonical_authority": "constraint-id-registry.yml",
+        "formal_gate": "reference-stage-semantic-validator.py::validate_failure_code_governance",
+        "formal_emitter_paths": [
+            "reference-stage-semantic-validator.py",
+            "negation_semantic_authority.py",
+        ],
+        "registry_mapping_count": 46,
+        "validator_constraint_mapping_count": 45,
+        "required_mismatch_count": 0,
+        "response_audit_regression_fixture": "NEG-S5-RESPONSE-AUDIT-HASH-MISMATCH",
+    },
     "negative_fixture_mutation_isolation": {
         "model_path": "negative-fixture-semantic-mutation-model.yml",
         "semantic_mutation_target_cardinality": 1,
-        "stage_fixture_count": 34,
+        "stage_fixture_count": 35,
         "r3a_fixture_count": 16,
         "r3b_fixture_count": 14,
-        "total_fixture_count": 64,
+        "total_fixture_count": 65,
         "derived_updates_runner_owned": True,
         "legacy_cases": [
             "NEG-S3-EMPTY-UNIQUE",

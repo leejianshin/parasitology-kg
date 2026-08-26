@@ -6,6 +6,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import runpy
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -96,6 +97,68 @@ def reference(path: str, kind: str, schema_id: str) -> dict[str, Any]:
         "canonical_sha256": raw_sha(absolute),
         "byte_length": len(absolute.read_bytes()),
     }
+
+
+def bootstrap_failure_code_governance() -> tuple[dict[str, Any], dict[str, int]]:
+    """Compute the bootstrap gate from the registry, emitters, and fixtures."""
+    validator = runpy.run_path(
+        str(HERE / "reference-stage-semantic-validator.py"),
+        run_name="p9b1q_reference_validator_bootstrap",
+    )
+    governance = validator["validate_failure_code_governance"]()
+    registry = validator["registry_failure_map"]()
+    fixture_expectation_count = 0
+    unknown_constraint_ids: list[str] = []
+    failure_code_mismatches: list[str] = []
+    for relative in (
+        "fixtures/stage-validator-negative-fixtures.yml",
+        "fixtures/r3a-reference-override-negative-fixtures.yml",
+        "fixtures/r3b-negation-scope-negative-fixtures.yml",
+    ):
+        manifest = yaml.safe_load((HERE / relative).read_text(encoding="utf-8"))
+        for case in manifest["cases"]:
+            fixture_expectation_count += 1
+            constraint_id = case["expected_constraint_id"]
+            fixture_failure_code = case.get("expected_failure_code")
+            if constraint_id not in registry:
+                unknown_constraint_ids.append(
+                    f"{case['fixture_id']}:{constraint_id}"
+                )
+            elif (
+                fixture_failure_code is not None
+                and fixture_failure_code != registry[constraint_id]
+            ):
+                failure_code_mismatches.append(
+                    f"{case['fixture_id']}:{constraint_id}:"
+                    f"{fixture_failure_code}!={registry[constraint_id]}"
+                )
+    if (
+        governance["result"] != "PASS"
+        or unknown_constraint_ids
+        or failure_code_mismatches
+    ):
+        raise RuntimeError(
+            "registry failure-code governance bootstrap failed: "
+            f"governance={governance}, "
+            f"unknown_constraint_ids={unknown_constraint_ids}, "
+            f"failure_code_mismatches={failure_code_mismatches}"
+        )
+    diagnostics = {
+        "registry_count": len(registry),
+        "validator_mapping_count": governance[
+            "validator_constraint_mapping_count"
+        ],
+        "fixture_expectation_count": fixture_expectation_count,
+        "unknown_constraint_ids": len(unknown_constraint_ids),
+        "failure_code_mismatches": len(failure_code_mismatches),
+        "unregistered_failure_code_mappings": governance[
+            "unregistered_failure_code_mappings"
+        ],
+        "multi_failure_code_mappings": governance[
+            "multi_authority_failure_code_mappings"
+        ],
+    }
+    return governance, diagnostics
 
 
 def main() -> None:
@@ -372,10 +435,14 @@ def main() -> None:
             case["paired_actual_object_paths"] = [item["path"] for item in sidecar["actual_objects"]]
     negative_path.write_text(yaml.safe_dump(negative, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
-    # Bootstrap the old summary into the new Schema, then replace it with actual execution.
+    # Bootstrap the persisted summary into the new Schema using current formal
+    # authorities, validate that bootstrap strictly, then replace it with actual
+    # full execution. No case result is synthesized here.
     summary = load("reference-validator-execution-summary.json")
     summary["executable_sha256"] = new_exec
     summary["configuration_sha256"] = new_contract
+    governance, governance_diagnostics = bootstrap_failure_code_governance()
+    summary["registry_failure_governance"] = governance
     summary["schema_gate"] = {
         "gate_id": "p9b1q-ajv-draft2020-strict",
         "ajv_version": "8.17.1",
@@ -387,31 +454,37 @@ def main() -> None:
         "runner_sha256": raw_sha(HERE / "strict-schema-gate.mjs"),
         "lockfile_sha256": raw_sha(HERE / "package-lock.json"),
     }
-    negative_run = subprocess.run(
-        ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "negative"],
-        cwd=REPO,
-        check=True,
-        capture_output=True,
-    )
-    summary["negative"] = json.loads(negative_run.stdout)
-    r3b_run = subprocess.run(
-        ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "r3b"],
-        cwd=REPO,
-        check=True,
-        capture_output=True,
-    )
-    r3b = json.loads(r3b_run.stdout)
-    summary["positive"] = summary["positive"][:9] + r3b["positive"]
-    summary["negative"].extend(r3b["negative"])
-    summary["positive_pass_count"] = sum(not item["errors"] for item in summary["positive"])
-    summary["negative_pass_count"] = sum(item["passed"] for item in summary["negative"])
     write("reference-validator-execution-summary.json", summary)
+    schema_run = subprocess.run(
+        ["node", str(HERE / "strict-schema-gate.mjs")],
+        cwd=HERE,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if schema_run.returncode != 0:
+        raise RuntimeError(
+            f"bootstrap strict schema gate failed: {schema_run.stderr.strip()}"
+        )
+    schema_result = json.loads(schema_run.stdout)
+    if (
+        schema_result.get("result") != "PASS"
+        or schema_result.get("compiled_schema_count") != 12
+        or schema_result.get("fixture_pair_count") != 27
+        or schema_result.get("valid_fixture_count") != 27
+    ):
+        raise RuntimeError(
+            f"bootstrap strict schema gate count/result mismatch: {schema_result}"
+        )
     completed = subprocess.run(
         ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "all"],
         cwd=REPO,
         check=True,
         capture_output=True,
     )
+    final_summary = json.loads(completed.stdout)
+    if final_summary.get("registry_failure_governance") != governance:
+        raise RuntimeError("final summary governance differs from bootstrap authority")
     (FIX / "reference-validator-execution-summary.json").write_bytes(completed.stdout)
     subprocess.run(
         ["python", str(HERE / "build-design-manifest.py")],
@@ -419,7 +492,7 @@ def main() -> None:
         check=True,
         capture_output=True,
     )
-    print(json.dumps({"validator_sha256": new_exec, "contract_sha256": new_contract, "sidecar_object_count": len(sidecar["actual_objects"]), "summary_sha256": raw_sha(FIX / "reference-validator-execution-summary.json")}, sort_keys=True))
+    print(json.dumps({"validator_sha256": new_exec, "contract_sha256": new_contract, "sidecar_object_count": len(sidecar["actual_objects"]), "summary_sha256": raw_sha(FIX / "reference-validator-execution-summary.json"), "registry_failure_governance": governance_diagnostics}, sort_keys=True))
 
 
 if __name__ == "__main__":
