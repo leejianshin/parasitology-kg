@@ -17,7 +17,7 @@ protected_files:
   phase9/clonorchis-sinensis/audit-log-schema.yml: 9f9231a02249e5a73c288edb0d66bd43cc3c3eb7f6b07f934376d3d793b3a544
 design_files:
   .gitignore: 4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97
-  README.md: b3267d93d09aca78bf4e4eb24f598e33780e81ad972412b832227ec60c8b8186
+  README.md: 8766f568f42bb3bbf81ba1278117ac5a8e10faae132dd40bf99bfb0bb1c16643
   architecture-review-revision1.yml: f383c13221e42cf60543f9702757f0be8475951328dec846ebba48b93677acc6
   architecture-review-revision2.yml: c58913efabac73fa67403d0be07edc9261c53c55f0bbc48340c39b2ca085ecc6
   architecture-review-revision3.yml: 32b4cae48d6665caf71c958b384e7ee0be84ce6565a45cc42f7388ac84387ab9
