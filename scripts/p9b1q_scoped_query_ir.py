@@ -424,9 +424,23 @@ def _entity_type_from_id(entity_id: str, ontology: dict[str, Any]) -> str:
 
 
 def _operator_plan(
-    text: str, start: int, end: int, config: dict[str, Any]
-) -> tuple[str, tuple[int, int], list[tuple[int, int, str]]] | None:
-    """Return one frozen top-level structural operator without semantic inference."""
+    text: str,
+    start: int,
+    end: int,
+    config: dict[str, Any],
+    leading_left_context: tuple[int, int] | None = None,
+) -> tuple[
+    str,
+    tuple[int, int],
+    tuple[int, int],
+    list[tuple[int, int, str]],
+] | None:
+    """Return one source-bound structural operator without semantic inference.
+
+    Each plan carries exactly one operator span. Repeated operators are
+    represented by recursive plans, so no recognized surface operator remains
+    hidden in a proposition leaf.
+    """
     discourse = config["discourse"]
     separators = [match for match in re.finditer(r"[，,；;]", text[start:end])]
 
@@ -437,7 +451,7 @@ def _operator_plan(
             left = _trim_span(text, start + len(token), sep_start)
             right = _trim_span(text, sep_start + 1, end)
             if left[0] < left[1] and right[0] < right[1]:
-                return "CONDITION", (start, start + len(token)), [
+                return "CONDITION", (start, end), (start, start + len(token)), [
                     (*left, "CONDITION_ANTECEDENT"),
                     (*right, "CONDITION_CONSEQUENT"),
                 ]
@@ -447,44 +461,127 @@ def _operator_plan(
         ("OVERRIDE", "override", "OVERRIDE_EARLIER", "OVERRIDE_LATER"),
         ("ALTERNATIVE_GROUP", "or", "ALTERNATIVE_BRANCH", "ALTERNATIVE_BRANCH"),
     )
+    lexical_candidates: list[tuple[int, int, str, str, str, str]] = []
     for node_kind, config_key, left_role, right_role in lexical_kinds:
-        candidates: list[tuple[int, int, str]] = []
         for token in discourse[config_key]:
             for match in re.finditer(re.escape(token), text[start:end]):
                 absolute_start = start + match.start()
                 absolute_end = start + match.end()
-                if absolute_start > start and absolute_end < end:
-                    candidates.append((absolute_start, absolute_end, token))
-        if candidates:
-            operator_start, operator_end, _ = sorted(
-                candidates, key=lambda item: (item[0], -(item[1] - item[0]), item[2])
-            )[0]
-            left = _trim_span(text, start, operator_start)
-            right = _trim_span(text, operator_end, end)
-            while left[1] > left[0] and text[left[1] - 1] in "，,；;":
-                left = _trim_span(text, left[0], left[1] - 1)
-            if left[0] < left[1] and right[0] < right[1]:
-                return node_kind, (operator_start, operator_end), [
-                    (*left, left_role),
-                    (*right, right_role),
-                ]
+                if (
+                    absolute_start > start
+                    or (leading_left_context is not None and absolute_start == start)
+                ) and absolute_end < end:
+                    lexical_candidates.append(
+                        (
+                            absolute_start,
+                            absolute_end,
+                            token,
+                            node_kind,
+                            left_role,
+                            right_role,
+                        )
+                    )
+    if lexical_candidates:
+        operator_start, operator_end, _, node_kind, left_role, right_role = sorted(
+            lexical_candidates,
+            key=lambda item: (item[0], -(item[1] - item[0]), item[3], item[2]),
+        )[0]
+        left = (
+            leading_left_context
+            if operator_start == start and leading_left_context is not None
+            else _trim_span(text, start, operator_start)
+        )
+        right = _trim_span(text, operator_end, end)
+        while left[1] > left[0] and text[left[1] - 1] in "，,；;":
+            left = _trim_span(text, left[0], left[1] - 1)
+        if left[0] < left[1] and right[0] < right[1]:
+            node_span = (
+                (left[0], end)
+                if operator_start == start and leading_left_context is not None
+                else (start, end)
+            )
+            return node_kind, node_span, (operator_start, operator_end), [
+                (*left, left_role),
+                (*right, right_role),
+            ]
 
     if separators:
-        branches: list[tuple[int, int, str]] = []
-        cursor = start
-        for match in separators:
-            separator_start = start + match.start()
-            branch = _trim_span(text, cursor, separator_start)
-            if branch[0] < branch[1]:
-                branches.append((*branch, "COORDINATE_MEMBER"))
-            cursor = separator_start + 1
-        branch = _trim_span(text, cursor, end)
-        if branch[0] < branch[1]:
-            branches.append((*branch, "COORDINATE_MEMBER"))
-        if len(branches) >= 2:
-            operator_start = start + separators[0].start()
-            return "COORDINATION", (operator_start, operator_start + 1), branches
+        operator_start = start + separators[0].start()
+        left = _trim_span(text, start, operator_start)
+        right = _trim_span(text, operator_start + 1, end)
+        if left[0] < left[1] and right[0] < right[1]:
+            return "COORDINATION", (start, end), (operator_start, operator_start + 1), [
+                (*left, "COORDINATE_MEMBER"),
+                (*right, "COORDINATE_MEMBER"),
+            ]
     return None
+
+
+def _append_clause_subtree(
+    text: str,
+    start: int,
+    end: int,
+    parent_node_id: str,
+    scope_role: str,
+    nodes: list[dict[str, Any]],
+    next_node_id: list[int],
+    config: dict[str, Any],
+    leading_left_context: tuple[int, int] | None = None,
+) -> str:
+    """Append a deterministic pre-order, recursively compositional S1 subtree."""
+    plan = _operator_plan(
+        text,
+        start,
+        end,
+        config,
+        leading_left_context=leading_left_context,
+    )
+    node_id = f"S{next_node_id[0]:03d}"
+    next_node_id[0] += 1
+    if plan is None:
+        nodes.append({
+            "node_id": node_id,
+            "node_kind": "PROPOSITION",
+            "source_span": _source_span(text, start, end),
+            "operator_span": None,
+            "parent_node_id": parent_node_id,
+            "child_node_ids": [],
+            "scope_role": scope_role,
+            "assertion_marker_ids": [],
+        })
+        return node_id
+
+    node_kind, node_span, operator_span, branches = plan
+    operator_node = {
+        "node_id": node_id,
+        "node_kind": node_kind,
+        "source_span": _source_span(text, *node_span),
+        "operator_span": _source_span(text, *operator_span),
+        "parent_node_id": parent_node_id,
+        "child_node_ids": [],
+        "scope_role": scope_role,
+        "assertion_marker_ids": [],
+    }
+    nodes.append(operator_node)
+    for index, (branch_start, branch_end, branch_role) in enumerate(branches):
+        branch_context = (
+            (branches[0][0], branches[0][1])
+            if node_kind == "CONDITION" and index == 1
+            else None
+        )
+        child_id = _append_clause_subtree(
+            text,
+            branch_start,
+            branch_end,
+            node_id,
+            branch_role,
+            nodes,
+            next_node_id,
+            config,
+            leading_left_context=branch_context,
+        )
+        operator_node["child_node_ids"].append(child_id)
+    return node_id
 
 
 def _smallest_proposition(nodes: list[dict[str, Any]], start: int, end: int) -> str:
@@ -559,8 +656,6 @@ def _assertion_markers(
     nodes: list[dict[str, Any]],
     mentions: list[dict[str, Any]],
     question_node_id: str | None,
-    operator_node_id: str | None,
-    operator_span: tuple[int, int] | None,
     config: dict[str, Any],
     negation_authority: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -584,40 +679,50 @@ def _assertion_markers(
         marker_id = f"K{len(markers) + 1:03d}"
         source_proposition = _smallest_proposition(nodes, start, end)
         if classification["grammar_class"] == "PARTICIPANT_ABSENCE_NEGATOR":
-            targets = [
-                item for item in mentions
-                if item["containing_node_id"] == source_proposition
-                and item["source_span"]["start_char"] >= end
-            ]
-            if len(targets) != 1:
+            targets = sorted(
+                (
+                    item for item in mentions
+                    if item["containing_node_id"] == source_proposition
+                    and item["source_span"]["start_char"] >= end
+                ),
+                key=lambda item: (
+                    item["source_span"]["start_char"],
+                    item["source_span"]["end_char"],
+                    item["surface_mention_id"],
+                ),
+            )
+            if not targets:
                 _c1_fail(
                     "S1_CLAUSE_AST",
-                    f"participant negator target is not unique: {surface}",
+                    f"participant negator has no licensed target: {surface}",
                 )
-            target = targets[0]["surface_mention_id"]
+            target_ids = [item["surface_mention_id"] for item in targets]
             containing = source_proposition
         elif classification["grammar_class"] == "WH_INTERROGATIVE_FOCUS":
             if question_node_id is None:
                 _c1_fail("S1_CLAUSE_AST", "WH focus is not contained by a QUESTION node")
-            target = source_proposition
+            target_ids = [source_proposition]
             containing = question_node_id
         else:
-            target = source_proposition
+            target_ids = [source_proposition]
             containing = source_proposition
         markers.append({
             "marker_id": marker_id,
             "containing_node_id": containing,
             "marker_kind": classification["marker_kind"],
             "source_span": _source_span(text, start, end),
-            "scope_target_candidate_ids": [target],
-            "scope_status": "UNIQUE",
+            "scope_target_candidate_ids": target_ids,
+            "scope_status": "UNIQUE" if len(target_ids) == 1 else "UNRESOLVED",
         })
-        if classification["grammar_class"] == "WH_INTERROGATIVE_FOCUS":
+        if classification["grammar_class"] in {
+            "PARTICIPANT_ABSENCE_NEGATOR",
+            "WH_INTERROGATIVE_FOCUS",
+        }:
             attachments.append({
                 "attachment_set_id": f"AT{len(attachments) + 1:03d}",
                 "dependent_id": marker_id,
-                "candidate_governor_ids": [target],
-                "status": "UNIQUE",
+                "candidate_governor_ids": target_ids,
+                "status": "UNIQUE" if len(target_ids) == 1 else "UNRESOLVED",
             })
 
     configured_classes = (
@@ -713,14 +818,20 @@ def _assertion_markers(
             "scope_status": "UNIQUE" if len(targets) == 1 else "UNRESOLVED",
         })
 
-    if operator_node_id is not None and operator_span is not None:
+    structural_operators = [
+        item
+        for item in nodes
+        if item["node_kind"]
+        in {"COORDINATION", "CONDITION", "CONTRAST", "OVERRIDE", "ALTERNATIVE_GROUP"}
+    ]
+    for operator in structural_operators:
         marker_id = f"K{len(markers) + 1:03d}"
         markers.append({
             "marker_id": marker_id,
-            "containing_node_id": operator_node_id,
+            "containing_node_id": operator["node_id"],
             "marker_kind": "CONNECTIVE",
-            "source_span": _source_span(text, *operator_span),
-            "scope_target_candidate_ids": [operator_node_id],
+            "source_span": operator["operator_span"],
+            "scope_target_candidate_ids": [operator["node_id"]],
             "scope_status": "UNIQUE",
         })
     return markers, attachments
@@ -734,6 +845,42 @@ def _load_negation_semantic_authority(root: Path) -> Any:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _recognized_lexical_operator_spans(
+    text: str,
+    material_start: int,
+    material_end: int,
+    config: dict[str, Any],
+) -> list[tuple[int, int, str]]:
+    """Return longest, non-overlapping structural surfaces licensed in this span."""
+    candidates: list[tuple[int, int, str, str]] = []
+    for config_key in ("condition", "contrast", "override", "or"):
+        for surface in config["discourse"][config_key]:
+            for match in re.finditer(re.escape(surface), text[material_start:material_end]):
+                start = material_start + match.start()
+                end = material_start + match.end()
+                is_condition = (
+                    config_key == "condition"
+                    and start == material_start
+                    and re.search(r"[，,；;]", text[end:material_end]) is not None
+                )
+                is_infix = (
+                    config_key != "condition"
+                    and start > material_start
+                    and end < material_end
+                )
+                if is_condition or is_infix:
+                    candidates.append((start, end, surface, config_key))
+    selected: list[tuple[int, int, str, str]] = []
+    for item in sorted(
+        candidates,
+        key=lambda value: (value[0], -(value[1] - value[0]), value[3], value[2]),
+    ):
+        if any(not (item[1] <= kept[0] or kept[1] <= item[0]) for kept in selected):
+            continue
+        selected.append(item)
+    return [(start, end, surface) for start, end, surface, _ in selected]
 
 
 def compile_clause_ast(
@@ -795,49 +942,18 @@ def compile_clause_ast(
         nodes[0]["child_node_ids"] = [question_node_id]
         parent_id = question_node_id
 
-    operator = _operator_plan(text, material_start, material_end, aliases)
-    operator_node_id: str | None = None
-    operator_span: tuple[int, int] | None = None
-    if operator is None:
-        proposition_id = f"S{next_id:03d}"
-        nodes.append({
-            "node_id": proposition_id,
-            "node_kind": "PROPOSITION",
-            "source_span": _source_span(text, material_start, material_end),
-            "operator_span": None,
-            "parent_node_id": parent_id,
-            "child_node_ids": [],
-            "scope_role": parent_role,
-            "assertion_marker_ids": [],
-        })
-        next(item for item in nodes if item["node_id"] == parent_id)["child_node_ids"] = [proposition_id]
-    else:
-        node_kind, operator_span, branches = operator
-        operator_node_id = f"S{next_id:03d}"
-        next_id += 1
-        branch_ids = [f"S{next_id + index:03d}" for index in range(len(branches))]
-        nodes.append({
-            "node_id": operator_node_id,
-            "node_kind": node_kind,
-            "source_span": _source_span(text, material_start, material_end),
-            "operator_span": _source_span(text, *operator_span),
-            "parent_node_id": parent_id,
-            "child_node_ids": branch_ids,
-            "scope_role": parent_role,
-            "assertion_marker_ids": [],
-        })
-        next(item for item in nodes if item["node_id"] == parent_id)["child_node_ids"] = [operator_node_id]
-        for branch_id, (branch_start, branch_end, scope_role) in zip(branch_ids, branches):
-            nodes.append({
-                "node_id": branch_id,
-                "node_kind": "PROPOSITION",
-                "source_span": _source_span(text, branch_start, branch_end),
-                "operator_span": None,
-                "parent_node_id": operator_node_id,
-                "child_node_ids": [],
-                "scope_role": scope_role,
-                "assertion_marker_ids": [],
-            })
+    next_node_id = [next_id]
+    material_node_id = _append_clause_subtree(
+        text,
+        material_start,
+        material_end,
+        parent_id,
+        parent_role,
+        nodes,
+        next_node_id,
+        aliases,
+    )
+    next(item for item in nodes if item["node_id"] == parent_id)["child_node_ids"] = [material_node_id]
 
     mentions = _surface_mentions(text, nodes, aliases, ontology)
     markers, attachments = _assertion_markers(
@@ -845,8 +961,6 @@ def compile_clause_ast(
         nodes,
         mentions,
         question_node_id,
-        operator_node_id,
-        operator_span,
         aliases,
         negation_authority,
     )
@@ -972,6 +1086,40 @@ def validate_c1_clause_ast(
             if crossing:
                 _c1_fail("S1_CLAUSE_AST", "crossing node spans")
 
+    grammar_config = _read_yaml(root / CONFIG_PATH)
+    material_start, material_end = _trim_span(text, 0, len(text))
+    while material_end > material_start and text[material_end - 1] in "。.!！？?":
+        material_end -= 1
+        material_start, material_end = _trim_span(text, material_start, material_end)
+    structural_operator_spans = [
+        (
+            item["operator_span"]["start_char"],
+            item["operator_span"]["end_char"],
+            item["operator_span"]["text"],
+        )
+        for item in nodes.values()
+        if item["node_kind"]
+        in {"COORDINATION", "CONDITION", "CONTRAST", "OVERRIDE", "ALTERNATIVE_GROUP"}
+    ]
+    for recognized in _recognized_lexical_operator_spans(
+        text, material_start, material_end, grammar_config
+    ):
+        if structural_operator_spans.count(recognized) != 1:
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                f"recognized operator lacks exactly one structural node: {recognized}",
+            )
+        if any(
+            item["source_span"]["start_char"] <= recognized[0]
+            and recognized[1] <= item["source_span"]["end_char"]
+            for item in nodes.values()
+            if item["node_kind"] == "PROPOSITION"
+        ):
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                f"recognized operator leaked into proposition leaf: {recognized}",
+            )
+
     aliases = _read_yaml(root / CONFIG_PATH).get("entity_alias_extensions", {})
     ontology = _read_yaml(root / ENTITY_ONTOLOGY_PATH)
     for mention in mentions.values():
@@ -986,11 +1134,50 @@ def validate_c1_clause_ast(
 
     negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
     negation_semantic = _load_negation_semantic_authority(root)
-    authority_errors = negation_semantic.validate_surface_scope_target(
-        ast, normalized, negation_authority
-    )
-    if authority_errors:
-        _c1_fail("S1_CLAUSE_AST", f"frozen marker/scope authority failure: {authority_errors[0]}")
+    governed_kinds = {
+        item["marker_kind"]
+        for item in negation_authority["source_classification"].values()
+    }
+    unresolved_governed = [
+        item
+        for item in ast["assertion_markers"]
+        if item["scope_status"] == "UNRESOLVED"
+        and (
+            item["marker_kind"] in governed_kinds
+            or item["source_span"]["text"]
+            in negation_authority["source_classification"]
+        )
+    ]
+    candidate_views: list[dict[str, Any]] = []
+    if unresolved_governed:
+        # The frozen executable derives one path at a time. Validate every
+        # preserved candidate through that executable without selecting a
+        # winner or mutating the frozen authority.
+        for unresolved in unresolved_governed:
+            for target_id in unresolved["scope_target_candidate_ids"]:
+                candidate_view = copy.deepcopy(ast)
+                for marker in candidate_view["assertion_markers"]:
+                    if marker["scope_status"] != "UNRESOLVED":
+                        continue
+                    selected_target = (
+                        target_id
+                        if marker["marker_id"] == unresolved["marker_id"]
+                        else marker["scope_target_candidate_ids"][0]
+                    )
+                    marker["scope_target_candidate_ids"] = [selected_target]
+                    marker["scope_status"] = "UNIQUE"
+                candidate_views.append(candidate_view)
+    else:
+        candidate_views.append(ast)
+    for candidate_view in candidate_views:
+        authority_errors = negation_semantic.validate_surface_scope_target(
+            candidate_view, normalized, negation_authority
+        )
+        if authority_errors:
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                f"frozen marker/scope authority failure: {authority_errors[0]}",
+            )
     validate_c1_stop_boundary(ast)
 
 

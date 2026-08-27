@@ -138,6 +138,218 @@ class C1ClauseASTTests(unittest.TestCase):
                 }
                 self.assertEqual(roles, [children[item]["scope_role"] for item in operator["child_node_ids"]])
 
+    def test_nested_condition_and_contrast_are_compositional(self):
+        normalized, ast = self.compile(
+            "C1-CORRECTION-NESTED",
+            "如果生食淡水鱼，但是粪便检卵阴性。",
+        )
+        operators = [
+            item for item in ast["nodes"]
+            if item["node_kind"] in {"CONDITION", "CONTRAST"}
+        ]
+        self.assertEqual(["CONDITION", "CONTRAST"], [item["node_kind"] for item in operators])
+        self.assertEqual(["如果", "但是"], [item["operator_span"]["text"] for item in operators])
+        self.assertEqual(
+            [(0, 2), (8, 10)],
+            [
+                (item["operator_span"]["start_char"], item["operator_span"]["end_char"])
+                for item in operators
+            ],
+        )
+        propositions = [item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"]
+        self.assertTrue(all("但是" not in item["source_span"]["text"] for item in propositions))
+        for item in propositions:
+            span = item["source_span"]
+            self.assertEqual(
+                span["text"],
+                normalized["normalized_query_text"][span["start_char"] : span["end_char"]],
+            )
+
+    def test_repeated_or_preserves_every_operator_and_three_branches(self):
+        _, ast = self.compile(
+            "C1-CORRECTION-OR3",
+            "粪便检卵或者十二指肠液检卵或者影像检查。",
+        )
+        alternatives = [
+            item for item in ast["nodes"]
+            if item["node_kind"] == "ALTERNATIVE_GROUP"
+        ]
+        self.assertEqual(2, len(alternatives))
+        self.assertEqual(["或者", "或者"], [item["operator_span"]["text"] for item in alternatives])
+        self.assertEqual(
+            [(4, 6), (13, 15)],
+            [
+                (item["operator_span"]["start_char"], item["operator_span"]["end_char"])
+                for item in alternatives
+            ],
+        )
+        leaves = [
+            item["source_span"]["text"]
+            for item in ast["nodes"]
+            if item["node_kind"] == "PROPOSITION"
+        ]
+        self.assertEqual(["粪便检卵", "十二指肠液检卵", "影像检查"], leaves)
+        self.assertTrue(all("或者" not in leaf for leaf in leaves))
+
+    def test_multilevel_coordination_is_non_crossing_and_source_bound(self):
+        normalized, ast = self.compile(
+            "C1-CORRECTION-MULTILEVEL",
+            "粪便检卵或者十二指肠液检卵，但是影像检查阳性。",
+        )
+        operators = [
+            item for item in ast["nodes"]
+            if item["node_kind"] in {"ALTERNATIVE_GROUP", "CONTRAST"}
+        ]
+        self.assertEqual({"ALTERNATIVE_GROUP", "CONTRAST"}, {item["node_kind"] for item in operators})
+        for item in ast["nodes"]:
+            span = item["source_span"]
+            self.assertEqual(
+                span["text"],
+                normalized["normalized_query_text"][span["start_char"] : span["end_char"]],
+            )
+        spans = [item["source_span"] for item in ast["nodes"]]
+        for left_index, left in enumerate(spans):
+            for right in spans[left_index + 1 :]:
+                crossing = (
+                    left["start_char"] < right["start_char"] < left["end_char"] < right["end_char"]
+                    or right["start_char"] < left["start_char"] < right["end_char"] < left["end_char"]
+                )
+                self.assertFalse(crossing)
+
+    def test_property_recognized_operators_have_exactly_one_structure(self):
+        cases = (
+            ("如果生食淡水鱼，但是粪便检卵阴性。", ("如果", "但是")),
+            ("粪便检卵或者十二指肠液检卵或者影像检查。", ("或者", "或者")),
+            ("粪便检卵，十二指肠液检卵，影像检查。", ("，", "，")),
+        )
+        structural_kinds = {
+            "COORDINATION", "CONDITION", "CONTRAST", "OVERRIDE", "ALTERNATIVE_GROUP"
+        }
+        for index, (text, expected_surfaces) in enumerate(cases):
+            with self.subTest(text=text):
+                _, ast = self.compile(f"C1-CORRECTION-PROP-{index}", text)
+                operator_surfaces = [
+                    item["operator_span"]["text"]
+                    for item in ast["nodes"]
+                    if item["node_kind"] in structural_kinds
+                ]
+                self.assertEqual(list(expected_surfaces), operator_surfaces)
+                leaves = [
+                    item["source_span"]["text"]
+                    for item in ast["nodes"]
+                    if item["node_kind"] == "PROPOSITION"
+                ]
+                for surface in set(expected_surfaces):
+                    self.assertTrue(all(surface not in leaf for leaf in leaves))
+
+    def test_metamorphic_third_or_adds_structure_not_leaf_text(self):
+        _, two = self.compile(
+            "C1-CORRECTION-META-OR2",
+            "粪便检卵或者十二指肠液检卵。",
+        )
+        _, three = self.compile(
+            "C1-CORRECTION-META-OR3",
+            "粪便检卵或者十二指肠液检卵或者影像检查。",
+        )
+        operators = lambda ast: [
+            item for item in ast["nodes"] if item["node_kind"] == "ALTERNATIVE_GROUP"
+        ]
+        leaves = lambda ast: [
+            item["source_span"]["text"]
+            for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"
+        ]
+        self.assertEqual(len(operators(two)) + 1, len(operators(three)))
+        self.assertEqual(leaves(two), leaves(three)[:2])
+        self.assertEqual("影像检查", leaves(three)[2])
+
+    def test_recursive_ast_is_byte_deterministic(self):
+        actual = request(
+            "C1-CORRECTION-RECURSIVE-DETERMINISM",
+            "如果生食淡水鱼，但是粪便检卵或者影像检查。",
+        )
+        runs = [compile_clause_ast(normalize_request(copy.deepcopy(actual))) for _ in range(3)]
+        self.assertEqual(1, len({canonical_bytes(item) for item in runs}))
+
+    def test_single_participant_target_remains_unique_without_selection(self):
+        _, ast = self.compile(
+            "C1-CORRECTION-ONE-TARGET",
+            "粪便检查未检出虫卵。",
+        )
+        marker = next(item for item in ast["assertion_markers"] if item["source_span"]["text"] == "未检出")
+        attachment = next(item for item in ast["attachment_sets"] if item["dependent_id"] == marker["marker_id"])
+        self.assertEqual("UNIQUE", marker["scope_status"])
+        self.assertEqual(1, len(marker["scope_target_candidate_ids"]))
+        self.assertEqual(marker["scope_target_candidate_ids"], attachment["candidate_governor_ids"])
+        self.assertEqual("UNIQUE", attachment["status"])
+
+    def test_multiple_participant_targets_are_complete_ordered_and_unresolved(self):
+        _, ast = self.compile(
+            "C1-CORRECTION-MULTI-TARGET",
+            "粪便检查未检出虫卵和成虫。",
+        )
+        marker = next(item for item in ast["assertion_markers"] if item["source_span"]["text"] == "未检出")
+        attachment = next(item for item in ast["attachment_sets"] if item["dependent_id"] == marker["marker_id"])
+        mentions = {item["surface_mention_id"]: item for item in ast["surface_mentions"]}
+        self.assertEqual(
+            ["虫卵", "成虫"],
+            [mentions[item]["source_span"]["text"] for item in marker["scope_target_candidate_ids"]],
+        )
+        self.assertEqual("UNRESOLVED", marker["scope_status"])
+        self.assertEqual(marker["scope_target_candidate_ids"], attachment["candidate_governor_ids"])
+        self.assertEqual("UNRESOLVED", attachment["status"])
+        self.assertNotIn("selected_target_id", marker)
+        self.assertNotIn("selected_governor_id", attachment)
+
+    def test_multiple_target_order_is_deterministic(self):
+        actual = request(
+            "C1-CORRECTION-TARGET-ORDER",
+            "粪便检查未检出虫卵和成虫。",
+        )
+        runs = [compile_clause_ast(normalize_request(copy.deepcopy(actual))) for _ in range(3)]
+        domains = [
+            next(item for item in ast["assertion_markers"] if item["source_span"]["text"] == "未检出")["scope_target_candidate_ids"]
+            for ast in runs
+        ]
+        self.assertEqual(domains[0], domains[1])
+        self.assertEqual(domains[1], domains[2])
+
+    def test_participant_negator_without_candidate_fails_closed(self):
+        normalized = normalize_request(
+            request("C1-CORRECTION-ZERO-TARGET", "粪便检查未检出。")
+        )
+        with self.assertRaises(C1ValidationError):
+            compile_clause_ast(normalized)
+
+    def test_unresolved_target_invokes_no_typed_solver_or_later_stage(self):
+        actual = request(
+            "C1-CORRECTION-NO-SOLVER",
+            "粪便检查未检出虫卵和成虫。",
+        )
+        forbidden = (
+            "interpret_request",
+            "validate_query_ir",
+            "execute_query_ir",
+            "run_scoped_query",
+            "build_bound_execution",
+        )
+        with mock.patch.multiple(
+            "scripts.p9b1q_scoped_query_ir",
+            **{
+                name: mock.DEFAULT for name in forbidden
+            },
+        ) as patched:
+            for value in patched.values():
+                value.side_effect = AssertionError("S2+ must not run in C1")
+            result = compile_c1(actual)
+        self.assertEqual("S1_CLAUSE_AST", result["terminal_stage"])
+        marker = next(
+            item for item in result["clause_ast"]["assertion_markers"]
+            if item["source_span"]["text"] == "未检出"
+        )
+        self.assertEqual("UNRESOLVED", marker["scope_status"])
+        self.assertNotIn("event_frame", result)
+        self.assertNotIn("typed_constraint_result", result)
+
     def test_wh_focus_is_bound_through_question_ast(self):
         _, ast = self.compile("C1-WH", "生食淡水鱼可作为什么证据？")
         marker = next(item for item in ast["assertion_markers"] if item["marker_kind"] == "WH_FOCUS")
