@@ -1,0 +1,174 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C1-AUTH-001"
+authorization_status: "ACTIVE"
+
+repository: "leejianshin/parasitology-kg"
+baseline: "1fea1bd138b0026674e2899ada566cbd9da5208d"
+r3_frozen_candidate: "f565c9e2428dc4409813aa259f2e527059ef39df"
+r11_commitment: "1fea1bd138b0026674e2899ada566cbd9da5208d"
+r11_secret_access: "PROHIBITED"
+r11_execution_during_build: "PROHIBITED"
+
+authority_basis:
+  compiler_pipeline_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+  stage_semantic_validator_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+  r11_public_commitment: "phase9/clonorchis-sinensis/p9b1q/r11-suite-commitment.yml"
+  held_out_governance_contract: "phase9/clonorchis-sinensis/p9b1q/r10-blind-test-design-contract.yml"
+
+authorization_atom:
+  purpose: "AUTHORIZE_C1_SCOPE_ONLY"
+  changed_path_policy: "ADD_THIS_AUTHORIZATION_FILE_ONLY"
+  authorization_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-build-authorization.yml"
+  implementation_bytes_allowed: false
+  existing_tracked_file_mutation_allowed: false
+  local_commit_authorized: true
+  local_commit_message: "governance(p9b2): authorize C1 implementation scope"
+
+first_authorized_atom:
+  atom_id: "C1_CLAUSE_AST_COMPILER"
+  objective: "Implement S0 request normalization and S1 Clause AST only."
+  retrieval: "PROHIBITED"
+  model_or_network_call: "PROHIBITED"
+  next_stage_s2: "PROHIBITED"
+  implementation_may_start_in_this_authorization_atom: false
+  separate_explicit_c1_build_start_required: true
+
+c1_allowed_changed_paths:
+  - "scripts/p9b1q_scoped_query_ir.py"
+  - "tests/test_p9b1q_scoped_query_ir.py"
+
+c1_changed_path_rules:
+  exact_allowed_path_count: 2
+  allow_unlisted_paths: false
+  allow_new_implementation_paths: false
+  allow_new_test_paths: false
+  implementation_tests_must_be_added_to: "tests/test_p9b1q_scoped_query_ir.py"
+  authorization_file_is_not_a_c1_changed_path: true
+
+c1_forbidden_changed_paths:
+  - "phase9/clonorchis-sinensis/p9b1q-architecture-review/**"
+  - "phase9/clonorchis-sinensis/p9b1q/**"
+  - "phase9/clonorchis-sinensis/p9b1q/r11-suite-commitment.yml"
+  - "phase9/clonorchis-sinensis/request-schema.yml"
+  - "phase9/clonorchis-sinensis/response-schema.yml"
+  - "phase9/clonorchis-sinensis/audit-log-schema.yml"
+  - "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
+  - "phase9/clonorchis-sinensis/p9b1-local-acceptance.yml"
+  - "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+  - "scripts/p9b1_local_retrieval.py"
+  - "tests/test_p9b1_retrieval.py"
+  - "knowledge/**"
+  - "knowledge-extensions/**"
+  - "derived/clonorchis-sinensis/pcms-v1/**"
+  - "phase7/clonorchis-sinensis/**"
+  - "schema/**"
+  - "sources/**"
+  - ".github/workflows/validate.yml"
+  - "every path not explicitly listed in c1_allowed_changed_paths"
+
+frozen_semantic_authorities:
+  access_mode: "READ_ONLY"
+  authorities:
+    - "event identity"
+    - "same-event and distinct-event semantics"
+    - "reference and override semantics"
+    - "negation surface, scope, target, and assertion derivation"
+    - "46-entry constraint registry, order, and failure-code mapping"
+    - "QueryIR emission and projection semantics"
+    - "inclusion minimality and removal witnesses"
+    - "rooted acyclic permission and license DAG"
+    - "S5 runtime and actual-object binding semantics"
+    - "canonicalization and content-addressed hash chain"
+    - "P9-A request, response, and audit contracts"
+    - "P9-B1 frozen authority, index, retrieval, and provenance"
+  semantic_redesign_allowed: false
+  implementation_must_conform_to_r3: true
+
+c1_public_acceptance_authority:
+  artifact: "tests/test_p9b1q_scoped_query_ir.py"
+  artifact_status: "PUBLIC_VERSIONED_C1_ACCEPTANCE_AUTHORITY"
+  allowed_new_test_classes:
+    - "S0 normalization tests"
+    - "S1 Clause AST unit tests"
+    - "property tests"
+    - "metamorphic tests"
+  existing_test_expected_semantics_mutation: "PROHIBITED"
+  secret_derived_test_material: "PROHIBITED"
+  additional_acceptance_artifact_path: "PROHIBITED"
+
+c1_local_gates:
+  - gate_id: "C1-S0-S1-SCHEMA"
+    requirement: "S0 and S1 relevant Schema validation PASS"
+  - gate_id: "C1-S0-S1-SEMANTIC"
+    requirement: "S0 and S1 semantic validation PASS"
+  - gate_id: "C1-R3-STRICT-SCHEMA"
+    working_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+    invocation: "node strict-schema-gate.mjs"
+    required_compiled_schema_count: 12
+    required_fixture_pair_count: 27
+    required_result: "PASS"
+  - gate_id: "C1-R3-REFERENCE-VALIDATOR"
+    working_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+    invocation: "python reference-stage-semantic-validator.py --mode all"
+    required_result: "PASS"
+  - gate_id: "C1-REPOSITORY-UNITTEST-DISCOVERY"
+    working_directory: "."
+    invocation: "python -m unittest discover -s tests -p \"test_*.py\""
+    required_result: "ALL_CURRENTLY_DISCOVERED_TESTS_PASS"
+    frozen_numeric_test_count: false
+  - gate_id: "C1-BYTE-DETERMINISM"
+    repeated_runs: 3
+    requirement: "BYTE_IDENTICAL_C1_OUTPUTS"
+  - gate_id: "C1-R3-IMMUTABILITY"
+    requirement: "R3 authority bytes unchanged"
+  - gate_id: "C1-R11-IMMUTABILITY"
+    requirement: "R11 commitment bytes unchanged"
+  - gate_id: "C1-UPSTREAM-IMMUTABILITY"
+    requirement: "P9-A, P9-B1, and PCMS bytes unchanged"
+  - gate_id: "C1-RUNTIME-BOUNDARY"
+    requirement: "No retrieval, model call, network call, or R11 execution"
+
+c1_ci_acceptance_authority:
+  workflow_path: ".github/workflows/validate.yml"
+  workflow_mutation_authorized: false
+  discovery_command: "python -m unittest discover -s tests -p \"test_*.py\""
+  acceptance_artifact_discovered_by_command: "tests/test_p9b1q_scoped_query_ir.py"
+  required_result: "ALL_CURRENTLY_DISCOVERED_TESTS_PASS"
+  old_131_count_is_authority: false
+
+c1_stop_boundary:
+  allowed_terminal_output: "VALIDATED_CLAUSE_AST"
+  implemented_stages: ["S0_REQUEST_NORMALIZATION", "S1_CLAUSE_AST"]
+  prohibited_stages:
+    - "S2_EVENT_FRAME"
+    - "S3_TYPED_CONSTRAINT_SOLVER"
+    - "S4_QUERYIR_EMISSION_IMPLEMENTATION"
+    - "S5_RUNTIME_RETRIEVAL_BINDING"
+  prohibited_operations:
+    - "retrieval"
+    - "model call"
+    - "network call"
+    - "R11 execution"
+
+remote_policy:
+  remote_branch: "agent/p9-b2"
+  main_write: "PROHIBITED"
+  dedicated_branch_push: "AUTHORIZED_AFTER_LOCAL_GATE_PASS"
+  pull_request_creation: "PROHIBITED_UNTIL_SEPARATE_REVIEW_GATE"
+  force_push: "PROHIBITED"
+  remote_branch_rebase: "PROHIBITED"
+  push_destination: "origin/agent/p9-b2"
+  atom_commit_policy: "ONE_LOCAL_ATOM_COMMIT_AFTER_ALL_APPLICABLE_LOCAL_GATES_PASS"
+  remote_history_purpose: "CROSS_WORK_PUBLIC_GIT_RECOVERY"
+
+secret_isolation_self_check:
+  r11_secret_body_in_authorization: false
+  secret_case_or_probe_id_in_authorization: false
+  secret_query_in_authorization: false
+  secret_expected_claim_or_queryir_in_authorization: false
+  private_manifest_or_storage_path_in_authorization: false
+
+authorization_exit:
+  c1_scope_ready_after_authorization_commit: true
+  c1_build_started: false
+  next_state: "NO_GO_PENDING_EXPLICIT_C1_BUILD_START"
