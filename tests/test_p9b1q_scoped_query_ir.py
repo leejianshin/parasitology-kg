@@ -3,17 +3,28 @@ from __future__ import annotations
 import copy
 import json
 import unittest
+from unittest import mock
 
 from scripts.p9b1q_scoped_query_ir import (
     BindingValidationError,
+    C1ValidationError,
+    CLAUSE_AST_SCHEMA_PATH,
+    NORMALIZED_REQUEST_SCHEMA_PATH,
     QUERY_IR_SCHEMA_PATH,
     ROOT,
     build_bound_execution,
     canonical_bytes,
+    canonical_sha256,
+    compile_c1,
+    compile_clause_ast,
     execute_query_ir,
     interpret_request,
+    normalize_request,
     run_scoped_query,
     validate_bound_execution,
+    validate_c1_clause_ast,
+    validate_c1_normalized_request,
+    validate_c1_stop_boundary,
     validate_query_ir,
     validate_schema,
 )
@@ -33,6 +44,202 @@ def replace_object(sidecar, store, name, value):
     ref = store.put_object(value)
     ref["object_kind"] = sidecar["objects"][name]["object_kind"]
     sidecar["objects"][name] = ref
+
+
+class C1RequestNormalizationTests(unittest.TestCase):
+    def test_s0_normal_request_is_schema_valid_and_bound(self):
+        actual = request("C1-S0", "粪便检卵阳性。")
+        normalized = normalize_request(actual)
+        validate_schema(normalized, NORMALIZED_REQUEST_SCHEMA_PATH)
+        validate_c1_normalized_request(actual, normalized)
+        self.assertEqual(actual["query_text"], normalized["normalized_query_text"])
+        self.assertEqual(["NONE"], normalized["normalization_operations"])
+        self.assertEqual(canonical_sha256(actual), normalized["request_sha256"])
+
+    def test_s0_whitespace_profile_is_deterministic_and_losslessly_mapped(self):
+        actual = request("C1-SPACE", "粪便\t检卵  阳性\r\n如何判断？")
+        first = normalize_request(actual)
+        second = normalize_request(copy.deepcopy(actual))
+        self.assertEqual(canonical_bytes(first), canonical_bytes(second))
+        self.assertEqual("粪便 检卵 阳性\n如何判断？", first["normalized_query_text"])
+        self.assertEqual(
+            ["CRLF_TO_LF", "TAB_TO_SINGLE_SPACE", "COLLAPSE_ASCII_SPACE_RUN"],
+            first["normalization_operations"],
+        )
+        self.assertEqual(len(actual["query_text"]), first["raw_to_normalized_spans"][-1]["raw_end"])
+        self.assertEqual(len(first["normalized_query_text"]), first["raw_to_normalized_spans"][-1]["normalized_end"])
+
+    def test_s0_invalid_request_fails_closed(self):
+        invalid = request("C1-INVALID", "粪便检卵")
+        invalid["locale"] = "en-US"
+        with self.assertRaises(C1ValidationError):
+            normalize_request(invalid)
+
+    def test_s0_property_style_allowed_transformations_are_idempotent(self):
+        cases = ["甲  乙", "甲\t乙", "甲\r\n乙", "甲 \t 乙", "甲乙"]
+        for index, text in enumerate(cases):
+            with self.subTest(text=text):
+                first = normalize_request(request(f"C1-PROP-{index}", text))
+                second_request = request(f"C1-PROP-N-{index}", first["normalized_query_text"])
+                second = normalize_request(second_request)
+                self.assertEqual(first["normalized_query_text"], second["normalized_query_text"])
+
+
+class C1ClauseASTTests(unittest.TestCase):
+    def compile(self, case: str, text: str):
+        normalized = normalize_request(request(case, text))
+        ast = compile_clause_ast(normalized)
+        validate_schema(ast, CLAUSE_AST_SCHEMA_PATH)
+        validate_c1_clause_ast(normalized, ast)
+        return normalized, ast
+
+    def test_alias_authority_and_exact_spans_are_preserved(self):
+        normalized, ast = self.compile("C1-ALIAS", "华支睾吸虫病采用粪便检卵。")
+        observed = {
+            (item["normalized_surface"], tuple(item["candidate_entity_ids"]))
+            for item in ast["surface_mentions"]
+        }
+        self.assertIn(("华支睾吸虫病", ("disease.clonorchiasis",)), observed)
+        self.assertIn(("粪便检卵", ("diagnostic.stool_egg_microscopy",)), observed)
+        for item in ast["surface_mentions"]:
+            span = item["source_span"]
+            self.assertEqual(
+                span["text"],
+                normalized["normalized_query_text"][span["start_char"] : span["end_char"]],
+            )
+
+    def test_clause_segmentation_builds_non_crossing_coordination(self):
+        _, ast = self.compile("C1-SEG", "生食淡水鱼，粪便检卵阳性。")
+        operator = next(item for item in ast["nodes"] if item["node_kind"] == "COORDINATION")
+        self.assertEqual(2, len(operator["child_node_ids"]))
+        self.assertEqual("，", operator["operator_span"]["text"])
+        self.assertEqual(
+            ["生食淡水鱼", "粪便检卵阳性"],
+            [
+                next(node for node in ast["nodes"] if node["node_id"] == child)["source_span"]["text"]
+                for child in operator["child_node_ids"]
+            ],
+        )
+
+    def test_frozen_structural_operators_preserve_branch_roles(self):
+        cases = (
+            ("如果生食淡水鱼，粪便检卵阳性。", "CONDITION", ["CONDITION_ANTECEDENT", "CONDITION_CONSEQUENT"]),
+            ("生食淡水鱼，但是粪便检卵阴性。", "CONTRAST", ["CONTRAST_LEFT", "CONTRAST_RIGHT"]),
+            ("粪便检卵阴性，后来粪便检卵阳性。", "OVERRIDE", ["OVERRIDE_EARLIER", "OVERRIDE_LATER"]),
+            ("选择粪便检卵或者十二指肠液检卵。", "ALTERNATIVE_GROUP", ["ALTERNATIVE_BRANCH", "ALTERNATIVE_BRANCH"]),
+        )
+        for index, (text, kind, roles) in enumerate(cases):
+            with self.subTest(kind=kind):
+                _, ast = self.compile(f"C1-OP-{index}", text)
+                operator = next(item for item in ast["nodes"] if item["node_kind"] == kind)
+                children = {
+                    item["node_id"]: item for item in ast["nodes"]
+                    if item["node_id"] in operator["child_node_ids"]
+                }
+                self.assertEqual(roles, [children[item]["scope_role"] for item in operator["child_node_ids"]])
+
+    def test_wh_focus_is_bound_through_question_ast(self):
+        _, ast = self.compile("C1-WH", "生食淡水鱼可作为什么证据？")
+        marker = next(item for item in ast["assertion_markers"] if item["marker_kind"] == "WH_FOCUS")
+        containing = next(item for item in ast["nodes"] if item["node_id"] == marker["containing_node_id"])
+        target = next(item for item in ast["nodes"] if item["node_id"] == marker["scope_target_candidate_ids"][0])
+        self.assertEqual("QUESTION", containing["node_kind"])
+        self.assertEqual("PROPOSITION", target["node_kind"])
+
+    def test_event_and_object_negation_remain_distinct_ast_targets(self):
+        _, event_ast = self.compile("C1-EVENT-NEG", "未生食淡水鱼。")
+        event_marker = next(item for item in event_ast["assertion_markers"] if item["marker_kind"] == "NEGATOR")
+        self.assertTrue(event_marker["scope_target_candidate_ids"][0].startswith("S"))
+
+        _, object_ast = self.compile("C1-OBJECT-NEG", "粪便检查未检出虫卵。")
+        object_marker = next(item for item in object_ast["assertion_markers"] if item["marker_kind"] == "NEGATOR")
+        self.assertEqual("未检出", object_marker["source_span"]["text"])
+        self.assertTrue(object_marker["scope_target_candidate_ids"][0].startswith("U"))
+
+    def test_configured_assertion_marker_classes_are_recorded(self):
+        _, ast = self.compile(
+            "C1-MARKERS",
+            "如果曾经生食淡水鱼，未来不采用减少动物粪便污染。",
+        )
+        kinds = {item["marker_kind"] for item in ast["assertion_markers"]}
+        self.assertTrue(
+            {"HYPOTHETICAL", "HISTORICAL", "FUTURE", "EXCLUSION", "CONNECTIVE"}
+            <= kinds
+        )
+        exclusion = next(
+            item for item in ast["assertion_markers"]
+            if item["marker_kind"] == "EXCLUSION"
+        )
+        self.assertTrue(
+            all(target.startswith("U") for target in exclusion["scope_target_candidate_ids"])
+        )
+
+    def test_double_negation_preserves_two_surface_markers(self):
+        _, ast = self.compile("C1-DOUBLE-NEG", "并非未生食淡水鱼。")
+        self.assertEqual(
+            ["并非", "未"],
+            [item["source_span"]["text"] for item in ast["assertion_markers"] if item["marker_kind"] == "NEGATOR"],
+        )
+
+    def test_invalid_marker_source_combination_fails_closed(self):
+        normalized, ast = self.compile("C1-BAD-MARKER", "未生食淡水鱼。")
+        changed = copy.deepcopy(ast)
+        marker = next(item for item in changed["assertion_markers"] if item["marker_kind"] == "NEGATOR")
+        marker["source_span"]["text"] = "不"
+        with self.assertRaises(C1ValidationError):
+            validate_c1_clause_ast(normalized, changed)
+
+    def test_invalid_scope_path_fails_closed(self):
+        normalized, ast = self.compile("C1-BAD-SCOPE", "未生食淡水鱼。")
+        changed = copy.deepcopy(ast)
+        marker = next(item for item in changed["assertion_markers"] if item["marker_kind"] == "NEGATOR")
+        marker["scope_target_candidate_ids"] = ["S000"]
+        with self.assertRaises(C1ValidationError):
+            validate_c1_clause_ast(normalized, changed)
+
+    def test_ast_canonical_bytes_and_hash_are_deterministic(self):
+        actual = request("C1-DETERMINISM", "生食淡水鱼可作为什么证据？")
+        runs = [compile_c1(copy.deepcopy(actual)) for _ in range(3)]
+        self.assertEqual(1, len({canonical_bytes(item) for item in runs}))
+        self.assertEqual(1, len({item["clause_ast_sha256"] for item in runs}))
+
+    def test_metamorphic_terminal_punctuation_preserves_surface_domains(self):
+        _, first = self.compile("C1-META-A", "粪便检卵阳性。")
+        _, second = self.compile("C1-META-B", "粪便检卵阳性！")
+        project = lambda ast: [
+            (item["normalized_surface"], item["candidate_entity_ids"], item["candidate_entity_types"])
+            for item in ast["surface_mentions"]
+        ]
+        self.assertEqual(project(first), project(second))
+
+    def test_c1_stop_boundary_invokes_no_downstream_stage(self):
+        actual = request("C1-STOP", "生食淡水鱼可作为什么证据？")
+        forbidden = (
+            "interpret_request",
+            "validate_query_ir",
+            "execute_query_ir",
+            "run_scoped_query",
+            "build_bound_execution",
+        )
+        patches = [
+            mock.patch(
+                f"scripts.p9b1q_scoped_query_ir.{name}",
+                side_effect=AssertionError(f"{name} must not run in C1"),
+            )
+            for name in forbidden
+        ]
+        for patcher in patches:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        result = compile_c1(actual)
+        self.assertEqual("S1_CLAUSE_AST", result["terminal_stage"])
+        self.assertNotIn("event_frame", result)
+        self.assertNotIn("query_ir", result)
+        self.assertNotIn("retrieval_result", result)
+
+    def test_stop_boundary_rejects_downstream_objects(self):
+        with self.assertRaises(C1ValidationError):
+            validate_c1_stop_boundary({"event_frame": {}})
 
 
 class ScopedQueryIRTests(unittest.TestCase):

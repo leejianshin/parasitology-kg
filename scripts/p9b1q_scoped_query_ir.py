@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 import re
 import unicodedata
@@ -39,6 +40,25 @@ VALIDATOR_CONTRACT_PATH = P9B1Q / "query-ir-semantic-validator-contract.yml"
 MAPPING_PATH = P9B1Q / "event-predicate-type-role-mapping.yml"
 BINDING_CONTRACT_PATH = P9B1Q / "request-queryir-retrieval-audit-binding.yml"
 AMBIGUITY_RULES_PATH = P9B1Q / "ambiguity-fail-closed-rules.yml"
+
+ARCH_REVIEW = PHASE9 / "p9b1q-architecture-review"
+NORMALIZED_REQUEST_SCHEMA_PATH = ARCH_REVIEW / "normalized-request-schema-candidate.yml"
+CLAUSE_AST_SCHEMA_PATH = ARCH_REVIEW / "clause-ast-schema-candidate.yml"
+CLAUSE_GRAMMAR_PATH = ARCH_REVIEW / "clause-grammar-config.yml"
+STAGE_VALIDATOR_CONTRACT_PATH = ARCH_REVIEW / "stage-semantic-validator-contract.yml"
+CANONICALIZATION_PROFILE_PATH = ARCH_REVIEW / "object-canonicalization-and-hash-chain.yml"
+NEGATION_SURFACE_SCOPE_PATH = ARCH_REVIEW / "negation-surface-scope-authority.yml"
+NEGATION_SEMANTIC_AUTHORITY_PATH = ARCH_REVIEW / "negation_semantic_authority.py"
+ENTITY_ONTOLOGY_PATH = Path("schema/entity-types.yml")
+
+C1_TERMINAL_STAGE = "S1_CLAUSE_AST"
+C1_IMPLEMENTED_STAGES = ("S0_REQUEST_NORMALIZATION", C1_TERMINAL_STAGE)
+C1_PROHIBITED_STAGES = (
+    "S2_EVENT_FRAME",
+    "S3_TYPED_CONSTRAINT_SOLVER",
+    "S4_QUERYIR_EMISSION_IMPLEMENTATION",
+    "S5_RUNTIME_RETRIEVAL_BINDING",
+)
 
 NORMATIVE_SCHEMA_PATHS = {
     "p9a_request_schema": PHASE9 / "request-schema.yml",
@@ -236,6 +256,782 @@ class LocalSchemaValidator:
 
 def validate_schema(instance: Any, schema_path: Path, root: Path = ROOT) -> None:
     LocalSchemaValidator(_read_yaml(root / schema_path)).validate(instance)
+
+
+class C1ValidationError(ValueError):
+    """Fail-closed S0/S1 compilation or semantic validation failure."""
+
+
+def _c1_fail(stage: str, message: str) -> None:
+    raise C1ValidationError(f"{stage}: {message}")
+
+
+def _normalization_units(raw: str) -> tuple[str, list[dict[str, int]], list[str]]:
+    """Apply only the frozen S0 whitespace profile and retain exact mappings."""
+    output: list[str] = []
+    spans: list[dict[str, int]] = []
+    observed: set[str] = set()
+    raw_index = 0
+    normalized_index = 0
+
+    def append(raw_start: int, raw_end: int, value: str, operation: str | None) -> None:
+        nonlocal normalized_index
+        output.append(value)
+        spans.append({
+            "raw_start": raw_start,
+            "raw_end": raw_end,
+            "normalized_start": normalized_index,
+            "normalized_end": normalized_index + len(value),
+        })
+        normalized_index += len(value)
+        if operation is not None:
+            observed.add(operation)
+
+    while raw_index < len(raw):
+        if raw.startswith("\r\n", raw_index):
+            append(raw_index, raw_index + 2, "\n", "CRLF_TO_LF")
+            raw_index += 2
+            continue
+        if raw[raw_index] in " \t":
+            end = raw_index + 1
+            while end < len(raw) and raw[end] in " \t":
+                end += 1
+            if "\t" in raw[raw_index:end]:
+                observed.add("TAB_TO_SINGLE_SPACE")
+            if end - raw_index > 1:
+                observed.add("COLLAPSE_ASCII_SPACE_RUN")
+            append(raw_index, end, " ", None)
+            raw_index = end
+            continue
+        append(raw_index, raw_index + 1, raw[raw_index], None)
+        raw_index += 1
+
+    # Coalesce only adjacent identity units. Changed units remain independently
+    # auditable because their raw and normalized extents can differ.
+    coalesced: list[dict[str, int]] = []
+    normalized = "".join(output)
+    for item in spans:
+        is_identity = (
+            raw[item["raw_start"] : item["raw_end"]]
+            == normalized[item["normalized_start"] : item["normalized_end"]]
+        )
+        if coalesced:
+            prior = coalesced[-1]
+            prior_identity = (
+                raw[prior["raw_start"] : prior["raw_end"]]
+                == normalized[prior["normalized_start"] : prior["normalized_end"]]
+            )
+            if (
+                is_identity
+                and prior_identity
+                and prior["raw_end"] == item["raw_start"]
+                and prior["normalized_end"] == item["normalized_start"]
+            ):
+                prior["raw_end"] = item["raw_end"]
+                prior["normalized_end"] = item["normalized_end"]
+                continue
+        coalesced.append(item)
+
+    operation_order = (
+        "CRLF_TO_LF",
+        "TAB_TO_SINGLE_SPACE",
+        "COLLAPSE_ASCII_SPACE_RUN",
+    )
+    operations = [item for item in operation_order if item in observed] or ["NONE"]
+    return normalized, coalesced, operations
+
+
+def normalize_request(request: dict[str, Any], root: Path = ROOT) -> dict[str, Any]:
+    """Compile a frozen P9-A request into the S0 normalized-request object."""
+    try:
+        validate_schema(request, PHASE9 / "request-schema.yml", root)
+    except (SchemaValidationError, KeyError, TypeError) as exc:
+        _c1_fail("S0_REQUEST_NORMALIZATION", f"invalid P9-A request: {exc}")
+    raw = request["query_text"]
+    normalized, spans, operations = _normalization_units(raw)
+    result = {
+        "normalized_request_version": "0.1-candidate",
+        "request_id": request["request_id"],
+        "request_sha256": canonical_sha256(request),
+        "knowledge_version": request["knowledge_version"],
+        "locale": request["locale"],
+        "raw_query_text": raw,
+        "normalized_query_text": normalized,
+        "normalization_operations": operations,
+        "raw_to_normalized_spans": spans,
+        "producer": {
+            "producer_id": "p9b1q-request-normalizer",
+            "producer_version": "0.1-c1",
+            "executable_sha256": file_sha256(Path(__file__)),
+            "configuration_sha256": file_sha256(root / STAGE_VALIDATOR_CONTRACT_PATH),
+        },
+    }
+    validate_c1_normalized_request(request, result, root)
+    return result
+
+
+def validate_c1_normalized_request(
+    request: dict[str, Any], normalized: dict[str, Any], root: Path = ROOT
+) -> None:
+    """Validate S0 schema, request binding, transformation, and exact span map."""
+    try:
+        validate_schema(request, PHASE9 / "request-schema.yml", root)
+        validate_schema(normalized, NORMALIZED_REQUEST_SCHEMA_PATH, root)
+    except (SchemaValidationError, KeyError, TypeError) as exc:
+        _c1_fail("S0_NORMALIZED_REQUEST", f"schema failure: {exc}")
+    expected_text, expected_spans, expected_operations = _normalization_units(
+        request["query_text"]
+    )
+    expected_binding = (
+        normalized["request_id"] == request["request_id"]
+        and normalized["request_sha256"] == canonical_sha256(request)
+        and normalized["knowledge_version"] == request["knowledge_version"]
+        and normalized["locale"] == request["locale"]
+        and normalized["raw_query_text"] == request["query_text"]
+    )
+    if not expected_binding:
+        _c1_fail("S0_NORMALIZED_REQUEST", "request binding mismatch")
+    if (
+        normalized["normalized_query_text"] != expected_text
+        or normalized["raw_to_normalized_spans"] != expected_spans
+        or normalized["normalization_operations"] != expected_operations
+    ):
+        _c1_fail("S0_NORMALIZED_REQUEST", "non-lossless or unauthorized normalization")
+
+
+def _source_span(text: str, start: int, end: int) -> dict[str, Any]:
+    return {"start_char": start, "end_char": end, "text": text[start:end]}
+
+
+def _trim_span(text: str, start: int, end: int) -> tuple[int, int]:
+    while start < end and text[start].isspace():
+        start += 1
+    while end > start and text[end - 1].isspace():
+        end -= 1
+    return start, end
+
+
+def _entity_type_from_id(entity_id: str, ontology: dict[str, Any]) -> str:
+    prefix = entity_id.split(".", 1)[0]
+    matches = [
+        entity_type
+        for entity_type, authority in ontology["entity_types"].items()
+        if authority["id_prefix"] == prefix
+    ]
+    if len(matches) != 1:
+        _c1_fail("S1_CLAUSE_AST", f"entity type is not licensed: {entity_id}")
+    return matches[0]
+
+
+def _operator_plan(
+    text: str, start: int, end: int, config: dict[str, Any]
+) -> tuple[str, tuple[int, int], list[tuple[int, int, str]]] | None:
+    """Return one frozen top-level structural operator without semantic inference."""
+    discourse = config["discourse"]
+    separators = [match for match in re.finditer(r"[，,；;]", text[start:end])]
+
+    # Prefix condition plus the first structural separator.
+    for token in sorted(discourse["condition"], key=lambda value: (-len(value), value)):
+        if text.startswith(token, start) and separators:
+            sep_start = start + separators[0].start()
+            left = _trim_span(text, start + len(token), sep_start)
+            right = _trim_span(text, sep_start + 1, end)
+            if left[0] < left[1] and right[0] < right[1]:
+                return "CONDITION", (start, start + len(token)), [
+                    (*left, "CONDITION_ANTECEDENT"),
+                    (*right, "CONDITION_CONSEQUENT"),
+                ]
+
+    lexical_kinds = (
+        ("CONTRAST", "contrast", "CONTRAST_LEFT", "CONTRAST_RIGHT"),
+        ("OVERRIDE", "override", "OVERRIDE_EARLIER", "OVERRIDE_LATER"),
+        ("ALTERNATIVE_GROUP", "or", "ALTERNATIVE_BRANCH", "ALTERNATIVE_BRANCH"),
+    )
+    for node_kind, config_key, left_role, right_role in lexical_kinds:
+        candidates: list[tuple[int, int, str]] = []
+        for token in discourse[config_key]:
+            for match in re.finditer(re.escape(token), text[start:end]):
+                absolute_start = start + match.start()
+                absolute_end = start + match.end()
+                if absolute_start > start and absolute_end < end:
+                    candidates.append((absolute_start, absolute_end, token))
+        if candidates:
+            operator_start, operator_end, _ = sorted(
+                candidates, key=lambda item: (item[0], -(item[1] - item[0]), item[2])
+            )[0]
+            left = _trim_span(text, start, operator_start)
+            right = _trim_span(text, operator_end, end)
+            while left[1] > left[0] and text[left[1] - 1] in "，,；;":
+                left = _trim_span(text, left[0], left[1] - 1)
+            if left[0] < left[1] and right[0] < right[1]:
+                return node_kind, (operator_start, operator_end), [
+                    (*left, left_role),
+                    (*right, right_role),
+                ]
+
+    if separators:
+        branches: list[tuple[int, int, str]] = []
+        cursor = start
+        for match in separators:
+            separator_start = start + match.start()
+            branch = _trim_span(text, cursor, separator_start)
+            if branch[0] < branch[1]:
+                branches.append((*branch, "COORDINATE_MEMBER"))
+            cursor = separator_start + 1
+        branch = _trim_span(text, cursor, end)
+        if branch[0] < branch[1]:
+            branches.append((*branch, "COORDINATE_MEMBER"))
+        if len(branches) >= 2:
+            operator_start = start + separators[0].start()
+            return "COORDINATION", (operator_start, operator_start + 1), branches
+    return None
+
+
+def _smallest_proposition(nodes: list[dict[str, Any]], start: int, end: int) -> str:
+    candidates = [
+        item
+        for item in nodes
+        if item["node_kind"] == "PROPOSITION"
+        and item["source_span"]["start_char"] <= start
+        and end <= item["source_span"]["end_char"]
+    ]
+    if not candidates:
+        _c1_fail("S1_CLAUSE_AST", f"no proposition contains span {start}:{end}")
+    return min(
+        candidates,
+        key=lambda item: (
+            item["source_span"]["end_char"] - item["source_span"]["start_char"],
+            item["node_id"],
+        ),
+    )["node_id"]
+
+
+def _surface_mentions(
+    text: str,
+    nodes: list[dict[str, Any]],
+    aliases: dict[str, Any],
+    ontology: dict[str, Any],
+) -> list[dict[str, Any]]:
+    occurrences: dict[str, set[tuple[int, int, str]]] = {}
+    for entity_id, values in aliases.get("entity_alias_extensions", {}).items():
+        for alias in values:
+            if not alias:
+                continue
+            for match in re.finditer(re.escape(alias), text):
+                occurrences.setdefault(entity_id, set()).add(
+                    (match.start(), match.end(), text[match.start() : match.end()])
+                )
+    # Exact-longest removes only overlapping aliases for the same formal entity.
+    # Distinct entities remain separate surface candidates even when nested.
+    candidates: dict[tuple[int, int, str], set[str]] = {}
+    for entity_id, entity_occurrences in occurrences.items():
+        retained: list[tuple[int, int, str]] = []
+        for item in sorted(
+            entity_occurrences,
+            key=lambda value: (-(value[1] - value[0]), value[0], value[1], value[2]),
+        ):
+            if any(not (item[1] <= kept[0] or kept[1] <= item[0]) for kept in retained):
+                continue
+            retained.append(item)
+        for item in retained:
+            candidates.setdefault(item, set()).add(entity_id)
+    result: list[dict[str, Any]] = []
+    for index, ((start, end, surface), entity_ids) in enumerate(
+        sorted(candidates.items(), key=lambda item: (item[0][0], item[0][1], item[0][2])),
+        1,
+    ):
+        ids = sorted(entity_ids)
+        types = sorted({_entity_type_from_id(entity_id, ontology) for entity_id in ids})
+        result.append({
+            "surface_mention_id": f"U{index:03d}",
+            "containing_node_id": _smallest_proposition(nodes, start, end),
+            "source_span": _source_span(text, start, end),
+            "normalized_surface": surface,
+            "candidate_entity_ids": ids,
+            "candidate_entity_types": types,
+            "candidate_origin": "FORMAL_ALIAS_EXACT",
+        })
+    return result
+
+
+def _assertion_markers(
+    text: str,
+    nodes: list[dict[str, Any]],
+    mentions: list[dict[str, Any]],
+    question_node_id: str | None,
+    operator_node_id: str | None,
+    operator_span: tuple[int, int] | None,
+    config: dict[str, Any],
+    negation_authority: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    surfaces = negation_authority["source_classification"]
+    occurrences: list[tuple[int, int, str]] = []
+    for surface in surfaces:
+        for match in re.finditer(re.escape(surface), text):
+            occurrences.append((match.start(), match.end(), surface))
+    # Longest licensed surface wins on overlap (e.g. 未检出 over 未).
+    selected: list[tuple[int, int, str]] = []
+    for item in sorted(occurrences, key=lambda value: (value[0], -(value[1] - value[0]), value[2])):
+        if any(not (item[1] <= kept[0] or kept[1] <= item[0]) for kept in selected):
+            continue
+        selected.append(item)
+    selected.sort(key=lambda value: (value[0], value[1], value[2]))
+
+    markers: list[dict[str, Any]] = []
+    attachments: list[dict[str, Any]] = []
+    for start, end, surface in selected:
+        classification = surfaces[surface]
+        marker_id = f"K{len(markers) + 1:03d}"
+        source_proposition = _smallest_proposition(nodes, start, end)
+        if classification["grammar_class"] == "PARTICIPANT_ABSENCE_NEGATOR":
+            targets = [
+                item for item in mentions
+                if item["containing_node_id"] == source_proposition
+                and item["source_span"]["start_char"] >= end
+            ]
+            if len(targets) != 1:
+                _c1_fail(
+                    "S1_CLAUSE_AST",
+                    f"participant negator target is not unique: {surface}",
+                )
+            target = targets[0]["surface_mention_id"]
+            containing = source_proposition
+        elif classification["grammar_class"] == "WH_INTERROGATIVE_FOCUS":
+            if question_node_id is None:
+                _c1_fail("S1_CLAUSE_AST", "WH focus is not contained by a QUESTION node")
+            target = source_proposition
+            containing = question_node_id
+        else:
+            target = source_proposition
+            containing = source_proposition
+        markers.append({
+            "marker_id": marker_id,
+            "containing_node_id": containing,
+            "marker_kind": classification["marker_kind"],
+            "source_span": _source_span(text, start, end),
+            "scope_target_candidate_ids": [target],
+            "scope_status": "UNIQUE",
+        })
+        if classification["grammar_class"] == "WH_INTERROGATIVE_FOCUS":
+            attachments.append({
+                "attachment_set_id": f"AT{len(attachments) + 1:03d}",
+                "dependent_id": marker_id,
+                "candidate_governor_ids": [target],
+                "status": "UNIQUE",
+            })
+
+    configured_classes = (
+        ("EXCLUSION", config["discourse"]["exclusion"]),
+        ("HYPOTHETICAL", config["discourse"]["hypothetical"]),
+        ("HISTORICAL", config["temporal"]["historical"]),
+        ("CURRENT", config["temporal"]["current"]),
+        ("FUTURE", config["temporal"]["future"]),
+    )
+    configured_occurrences: list[tuple[int, int, str, str]] = []
+    for marker_kind, marker_surfaces in configured_classes:
+        for surface in marker_surfaces:
+            for match in re.finditer(re.escape(surface), text):
+                configured_occurrences.append(
+                    (match.start(), match.end(), surface, marker_kind)
+                )
+    selected_configured: list[tuple[int, int, str, str]] = []
+    for item in sorted(
+        configured_occurrences,
+        key=lambda value: (value[0], -(value[1] - value[0]), value[3], value[2]),
+    ):
+        if any(
+            item[3] == kept[3]
+            and not (item[1] <= kept[0] or kept[1] <= item[0])
+            for kept in selected_configured
+        ):
+            continue
+        selected_configured.append(item)
+    for start, end, _, marker_kind in selected_configured:
+        if any(
+            item["marker_kind"] == marker_kind
+            and item["source_span"]["start_char"] == start
+            and item["source_span"]["end_char"] == end
+            for item in markers
+        ):
+            continue
+        proposition_candidates = [
+            item
+            for item in nodes
+            if item["node_kind"] == "PROPOSITION"
+            and item["source_span"]["start_char"] <= start
+            and end <= item["source_span"]["end_char"]
+        ]
+        if proposition_candidates:
+            containing_node = min(
+                proposition_candidates,
+                key=lambda item: (
+                    item["source_span"]["end_char"] - item["source_span"]["start_char"],
+                    item["node_id"],
+                ),
+            )
+            targets = [containing_node["node_id"]]
+            if marker_kind == "EXCLUSION":
+                mention_targets = sorted(
+                    (
+                        item for item in mentions
+                        if item["containing_node_id"] == containing_node["node_id"]
+                        and item["source_span"]["start_char"] >= end
+                    ),
+                    key=lambda item: (
+                        item["source_span"]["start_char"],
+                        item["surface_mention_id"],
+                    ),
+                )
+                if mention_targets:
+                    targets = [item["surface_mention_id"] for item in mention_targets]
+            containing = containing_node["node_id"]
+        else:
+            operator_candidates = [
+                item for item in nodes
+                if item["node_kind"] not in {"ROOT", "PROPOSITION", "QUESTION"}
+                and item["source_span"]["start_char"] <= start
+                and end <= item["source_span"]["end_char"]
+            ]
+            if not operator_candidates:
+                _c1_fail("S1_CLAUSE_AST", f"configured marker has no structural container: {text[start:end]}")
+            containing_node = min(
+                operator_candidates,
+                key=lambda item: (
+                    item["source_span"]["end_char"] - item["source_span"]["start_char"],
+                    item["node_id"],
+                ),
+            )
+            containing = containing_node["node_id"]
+            targets = [containing_node["child_node_ids"][0]]
+        marker_id = f"K{len(markers) + 1:03d}"
+        markers.append({
+            "marker_id": marker_id,
+            "containing_node_id": containing,
+            "marker_kind": marker_kind,
+            "source_span": _source_span(text, start, end),
+            "scope_target_candidate_ids": targets,
+            "scope_status": "UNIQUE" if len(targets) == 1 else "UNRESOLVED",
+        })
+
+    if operator_node_id is not None and operator_span is not None:
+        marker_id = f"K{len(markers) + 1:03d}"
+        markers.append({
+            "marker_id": marker_id,
+            "containing_node_id": operator_node_id,
+            "marker_kind": "CONNECTIVE",
+            "source_span": _source_span(text, *operator_span),
+            "scope_target_candidate_ids": [operator_node_id],
+            "scope_status": "UNIQUE",
+        })
+    return markers, attachments
+
+
+def _load_negation_semantic_authority(root: Path) -> Any:
+    path = root / NEGATION_SEMANTIC_AUTHORITY_PATH
+    spec = importlib.util.spec_from_file_location("p9b1q_negation_semantic_authority", path)
+    if spec is None or spec.loader is None:
+        _c1_fail("S1_CLAUSE_AST", "cannot resolve frozen negation semantic authority")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def compile_clause_ast(
+    normalized: dict[str, Any], root: Path = ROOT
+) -> dict[str, Any]:
+    """Compile only S1 syntax and surface domains; never construct S2 objects."""
+    try:
+        validate_schema(normalized, NORMALIZED_REQUEST_SCHEMA_PATH, root)
+    except (SchemaValidationError, KeyError, TypeError) as exc:
+        _c1_fail("S1_CLAUSE_AST", f"invalid normalized request: {exc}")
+    text = normalized["normalized_query_text"]
+    grammar = _read_yaml(root / CLAUSE_GRAMMAR_PATH)
+    aliases = _read_yaml(root / CONFIG_PATH)
+    ontology = _read_yaml(root / ENTITY_ONTOLOGY_PATH)
+    negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
+
+    material_start, material_end = _trim_span(text, 0, len(text))
+    while material_end > material_start and text[material_end - 1] in "。.!！？?":
+        material_end -= 1
+        material_start, material_end = _trim_span(text, material_start, material_end)
+    if material_start >= material_end:
+        _c1_fail("S1_CLAUSE_AST", "request contains no material proposition")
+
+    nodes: list[dict[str, Any]] = [{
+        "node_id": "S000",
+        "node_kind": "ROOT",
+        "source_span": _source_span(text, 0, len(text)),
+        "operator_span": None,
+        "parent_node_id": None,
+        "child_node_ids": [],
+        "scope_role": "WHOLE_REQUEST",
+        "assertion_marker_ids": [],
+    }]
+    next_id = 1
+    wh_surfaces = [
+        surface
+        for surface, authority in negation_authority["source_classification"].items()
+        if authority["marker_kind"] == "WH_FOCUS" and surface in text
+    ]
+    is_question = bool(wh_surfaces) or text.rstrip().endswith(("?", "？"))
+    question_node_id: str | None = None
+    parent_id = "S000"
+    parent_role = "MATERIAL_PROPOSITION"
+    if is_question:
+        question_node_id = f"S{next_id:03d}"
+        next_id += 1
+        wh_start = min((text.index(item) for item in wh_surfaces), default=material_end)
+        wh_end = max((wh_start + len(item) for item in wh_surfaces if text.find(item) == wh_start), default=len(text))
+        nodes.append({
+            "node_id": question_node_id,
+            "node_kind": "QUESTION",
+            "source_span": _source_span(text, 0, len(text)),
+            "operator_span": _source_span(text, wh_start, wh_end) if wh_start < wh_end else None,
+            "parent_node_id": "S000",
+            "child_node_ids": [],
+            "scope_role": "QUESTION_FOCUS",
+            "assertion_marker_ids": [],
+        })
+        nodes[0]["child_node_ids"] = [question_node_id]
+        parent_id = question_node_id
+
+    operator = _operator_plan(text, material_start, material_end, aliases)
+    operator_node_id: str | None = None
+    operator_span: tuple[int, int] | None = None
+    if operator is None:
+        proposition_id = f"S{next_id:03d}"
+        nodes.append({
+            "node_id": proposition_id,
+            "node_kind": "PROPOSITION",
+            "source_span": _source_span(text, material_start, material_end),
+            "operator_span": None,
+            "parent_node_id": parent_id,
+            "child_node_ids": [],
+            "scope_role": parent_role,
+            "assertion_marker_ids": [],
+        })
+        next(item for item in nodes if item["node_id"] == parent_id)["child_node_ids"] = [proposition_id]
+    else:
+        node_kind, operator_span, branches = operator
+        operator_node_id = f"S{next_id:03d}"
+        next_id += 1
+        branch_ids = [f"S{next_id + index:03d}" for index in range(len(branches))]
+        nodes.append({
+            "node_id": operator_node_id,
+            "node_kind": node_kind,
+            "source_span": _source_span(text, material_start, material_end),
+            "operator_span": _source_span(text, *operator_span),
+            "parent_node_id": parent_id,
+            "child_node_ids": branch_ids,
+            "scope_role": parent_role,
+            "assertion_marker_ids": [],
+        })
+        next(item for item in nodes if item["node_id"] == parent_id)["child_node_ids"] = [operator_node_id]
+        for branch_id, (branch_start, branch_end, scope_role) in zip(branch_ids, branches):
+            nodes.append({
+                "node_id": branch_id,
+                "node_kind": "PROPOSITION",
+                "source_span": _source_span(text, branch_start, branch_end),
+                "operator_span": None,
+                "parent_node_id": operator_node_id,
+                "child_node_ids": [],
+                "scope_role": scope_role,
+                "assertion_marker_ids": [],
+            })
+
+    mentions = _surface_mentions(text, nodes, aliases, ontology)
+    markers, attachments = _assertion_markers(
+        text,
+        nodes,
+        mentions,
+        question_node_id,
+        operator_node_id,
+        operator_span,
+        aliases,
+        negation_authority,
+    )
+    marker_membership: dict[str, list[str]] = {}
+    for marker in markers:
+        marker_membership.setdefault(marker["containing_node_id"], []).append(marker["marker_id"])
+    for node in nodes:
+        node["assertion_marker_ids"] = marker_membership.get(node["node_id"], [])
+
+    ast = {
+        "clause_ast_version": "0.2-candidate",
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "knowledge_version": normalized["knowledge_version"],
+        "entity_ontology_sha256": file_sha256(root / ENTITY_ONTOLOGY_PATH),
+        "clause_grammar_config_sha256": file_sha256(root / CLAUSE_GRAMMAR_PATH),
+        "canonicalization_profile_sha256": file_sha256(root / CANONICALIZATION_PROFILE_PATH),
+        "stage_validator_contract_sha256": file_sha256(root / STAGE_VALIDATOR_CONTRACT_PATH),
+        "span_basis": "REQUEST_QUERY_TEXT_UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN",
+        "producer": {
+            "producer_id": "p9b1q-clause-ast-compiler",
+            "producer_version": "0.2-c1",
+            "executable_sha256": file_sha256(Path(__file__)),
+            "configuration_sha256": file_sha256(root / CLAUSE_GRAMMAR_PATH),
+        },
+        "root_node_id": "S000",
+        "nodes": nodes,
+        "surface_mentions": mentions,
+        "assertion_markers": markers,
+        "attachment_sets": attachments,
+    }
+    validate_c1_clause_ast(normalized, ast, root)
+    return ast
+
+
+def validate_c1_clause_ast(
+    normalized: dict[str, Any], ast: dict[str, Any], root: Path = ROOT
+) -> None:
+    """Apply frozen S1 schema, binding, graph, span, alias, and scope gates."""
+    try:
+        validate_schema(normalized, NORMALIZED_REQUEST_SCHEMA_PATH, root)
+        validate_schema(ast, CLAUSE_AST_SCHEMA_PATH, root)
+    except (SchemaValidationError, KeyError, TypeError) as exc:
+        _c1_fail("S1_CLAUSE_AST", f"schema failure: {exc}")
+    expected_hashes = {
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "knowledge_version": normalized["knowledge_version"],
+        "entity_ontology_sha256": file_sha256(root / ENTITY_ONTOLOGY_PATH),
+        "clause_grammar_config_sha256": file_sha256(root / CLAUSE_GRAMMAR_PATH),
+        "canonicalization_profile_sha256": file_sha256(root / CANONICALIZATION_PROFILE_PATH),
+        "stage_validator_contract_sha256": file_sha256(root / STAGE_VALIDATOR_CONTRACT_PATH),
+    }
+    if any(ast.get(key) != value for key, value in expected_hashes.items()):
+        _c1_fail("S1_CLAUSE_AST", "input or frozen-authority hash binding mismatch")
+
+    nodes = {item["node_id"]: item for item in ast["nodes"]}
+    mentions = {item["surface_mention_id"]: item for item in ast["surface_mentions"]}
+    markers = {item["marker_id"]: item for item in ast["assertion_markers"]}
+    if len(nodes) != len(ast["nodes"]) or len(mentions) != len(ast["surface_mentions"]) or len(markers) != len(ast["assertion_markers"]):
+        _c1_fail("S1_CLAUSE_AST", "duplicate IDs")
+    roots = [item for item in nodes.values() if item["node_kind"] == "ROOT"]
+    if len(roots) != 1 or roots[0]["node_id"] != ast["root_node_id"] or roots[0]["parent_node_id"] is not None:
+        _c1_fail("S1_CLAUSE_AST", "single-root invariant failed")
+    for node in nodes.values():
+        if node["parent_node_id"] is not None:
+            parent = nodes.get(node["parent_node_id"])
+            if parent is None or node["node_id"] not in parent["child_node_ids"]:
+                _c1_fail("S1_CLAUSE_AST", "parent/child reference mismatch")
+        if any(child not in nodes for child in node["child_node_ids"]):
+            _c1_fail("S1_CLAUSE_AST", "dangling child reference")
+        if any(marker not in markers for marker in node["assertion_marker_ids"]):
+            _c1_fail("S1_CLAUSE_AST", "dangling marker reference")
+    visited: set[str] = set()
+    pending = [ast["root_node_id"]]
+    while pending:
+        node_id = pending.pop()
+        if node_id in visited:
+            _c1_fail("S1_CLAUSE_AST", "cycle or duplicate AST reachability")
+        visited.add(node_id)
+        pending.extend(nodes[node_id]["child_node_ids"])
+    if visited != set(nodes):
+        _c1_fail("S1_CLAUSE_AST", "AST contains unreachable nodes")
+    valid_targets = set(nodes) | set(mentions)
+    for marker in markers.values():
+        candidates = marker["scope_target_candidate_ids"]
+        if any(target not in valid_targets for target in candidates):
+            _c1_fail("S1_CLAUSE_AST", "dangling scope target")
+        if (marker["scope_status"] == "UNIQUE") != (len(candidates) == 1):
+            _c1_fail("S1_CLAUSE_AST", "scope target cardinality mismatch")
+    for attachment in ast["attachment_sets"]:
+        candidates = attachment["candidate_governor_ids"]
+        if any(target not in valid_targets | set(markers) for target in candidates):
+            _c1_fail("S1_CLAUSE_AST", "dangling attachment governor")
+        if (attachment["status"] == "UNIQUE") != (len(candidates) == 1):
+            _c1_fail("S1_CLAUSE_AST", "attachment cardinality mismatch")
+
+    text = normalized["normalized_query_text"]
+    spans: list[dict[str, Any]] = []
+    for node in nodes.values():
+        spans.append(node["source_span"])
+        if node["operator_span"] is not None:
+            spans.append(node["operator_span"])
+    spans.extend(item["source_span"] for item in mentions.values())
+    spans.extend(item["source_span"] for item in markers.values())
+    if any(
+        not (0 <= span["start_char"] < span["end_char"] <= len(text))
+        or text[span["start_char"] : span["end_char"]] != span["text"]
+        for span in spans
+    ):
+        _c1_fail("S1_CLAUSE_AST", "source span mismatch")
+    if roots[0]["source_span"] != _source_span(text, 0, len(text)):
+        _c1_fail("S1_CLAUSE_AST", "root does not cover the complete request")
+    node_spans = [item["source_span"] for item in nodes.values()]
+    for left_index, left in enumerate(node_spans):
+        for right in node_spans[left_index + 1 :]:
+            crossing = (
+                left["start_char"] < right["start_char"] < left["end_char"] < right["end_char"]
+                or right["start_char"] < left["start_char"] < right["end_char"] < left["end_char"]
+            )
+            if crossing:
+                _c1_fail("S1_CLAUSE_AST", "crossing node spans")
+
+    aliases = _read_yaml(root / CONFIG_PATH).get("entity_alias_extensions", {})
+    ontology = _read_yaml(root / ENTITY_ONTOLOGY_PATH)
+    for mention in mentions.values():
+        surface = mention["normalized_surface"]
+        if surface != mention["source_span"]["text"]:
+            _c1_fail("S1_CLAUSE_AST", "normalized surface is not exact")
+        if any(surface not in aliases.get(entity_id, []) for entity_id in mention["candidate_entity_ids"]):
+            _c1_fail("S1_CLAUSE_AST", "surface mention is not licensed by alias authority")
+        expected_types = sorted({_entity_type_from_id(entity_id, ontology) for entity_id in mention["candidate_entity_ids"]})
+        if mention["candidate_entity_types"] != expected_types:
+            _c1_fail("S1_CLAUSE_AST", "candidate entity type domain mismatch")
+
+    negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
+    negation_semantic = _load_negation_semantic_authority(root)
+    authority_errors = negation_semantic.validate_surface_scope_target(
+        ast, normalized, negation_authority
+    )
+    if authority_errors:
+        _c1_fail("S1_CLAUSE_AST", f"frozen marker/scope authority failure: {authority_errors[0]}")
+    validate_c1_stop_boundary(ast)
+
+
+def validate_c1_stop_boundary(value: dict[str, Any]) -> None:
+    """Reject any S2+ or runtime object accidentally introduced into C1 output."""
+    prohibited_keys = {
+        "event_frame",
+        "event_frames",
+        "events",
+        "typed_constraint_result",
+        "selected_solution",
+        "query_ir",
+        "retrieval_result",
+        "model_response",
+    }
+    pending: list[Any] = [value]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, dict):
+            overlap = prohibited_keys.intersection(item)
+            if overlap:
+                _c1_fail("C1_STOP_BOUNDARY", f"prohibited downstream object keys: {sorted(overlap)}")
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+
+
+def compile_c1(request: dict[str, Any], root: Path = ROOT) -> dict[str, Any]:
+    """Run the authorized C1 atom and stop at a validated Clause AST."""
+    normalized = normalize_request(request, root)
+    ast = compile_clause_ast(normalized, root)
+    result = {
+        "implemented_stages": list(C1_IMPLEMENTED_STAGES),
+        "terminal_stage": C1_TERMINAL_STAGE,
+        "normalized_request": normalized,
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "clause_ast": ast,
+        "clause_ast_sha256": canonical_sha256(ast),
+    }
+    validate_c1_stop_boundary(result)
+    return result
 
 
 @dataclass(frozen=True)
