@@ -1,0 +1,276 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-POST-FREEZE-R3-AUTHORITY-CORRECTION-AUTH-001"
+authorization_kind: "POST_FREEZE_R3_AUTHORITY_CORRECTION"
+authorization_status: "ACTIVE_AFTER_FAST_FORWARD_REMOTE_PUBLICATION"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+finding_id: "P9B2-C1-R3-AUTHORITY-INCONSISTENCY-HIGH-001"
+correction_base: "cf6ef066924d4daa67b3ca46876345f8e7cca368"
+
+historical_identity:
+  original_r3_frozen_candidate: "f565c9e2428dc4409813aa259f2e527059ef39df"
+  original_r11_commitment: "1fea1bd138b0026674e2899ada566cbd9da5208d"
+  original_p9b2_authorization: "b78e5ae2d0f1e9ed5e05e1488f169103119192fe"
+  c1_v1: "abd8727efd1fc6379a65e0cf231c4fcd67c0371f"
+  c1_correction_1: "cf6ef066924d4daa67b3ca46876345f8e7cca368"
+  preservation_rule: >-
+    The original R3 freeze, original R11 freeze, original P9-B2
+    authorization, C1 V1 and C1 correction-1 remain immutable historical
+    facts and MUST NOT be modified, replaced, amended, rebased, squashed or
+    otherwise rewritten by this authorization or any authorized correction.
+
+authorization_atom:
+  purpose: "AUTHORIZE_POST_FREEZE_R3_AUTHORITY_CORRECTION_ONLY"
+  authorization_file_only_commit: true
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-post-freeze-authority-correction-authorization.yml"
+  authority_correction_implemented_in_authorization_atom: false
+  fixture_or_evidence_mutation_in_authorization_atom: false
+  c1_implementation_mutation_in_authorization_atom: false
+  c2_or_later_stage_work_in_authorization_atom: false
+
+frozen_design_decision:
+  design_result: "PASS"
+  recommended_representation: "OPTION_D_MINIMIZED_TYPED_LOCAL_SHARED_LEFT_ARGUMENT_REFERENCE_EDGE"
+  owner_node_kind: "CONTRAST"
+  field_name: "shared_left_argument_node_id"
+  representation_contract:
+    typed_local_reference_edge: true
+    ast_node: false
+    child_node_id: false
+    parent_edge: false
+    attachment_set: false
+    s2_reference_hypothesis: false
+    event_identity: false
+    solver_decision: false
+    graph_or_dag_parent_relation: false
+    local_source_span: false
+    own_node_id: false
+    content_addressing: "CANONICALIZED_AS_PART_OF_OWNING_CLAUSE_AST_OBJECT"
+
+design_invariants:
+  rooted_tree_preserved: true
+  single_parent_tree_preserved: true
+  non_crossing_preserved: true
+  exact_source_provenance: true
+  source_bearing_nodes_require_nonempty_exact_span: true
+  no_duplicate_semantic_leaf: true
+  no_fake_grounding: true
+  no_multi_parent: true
+  no_generic_reference_node: true
+  no_arbitrary_reference_array: true
+  no_cross_ast_reference: true
+  no_forward_reference: true
+  no_reference_chain: true
+  no_reference_cycle: true
+  s1_stage_boundary: "PRESERVED"
+
+authorized_authority_paths:
+  exact_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-ast-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validation-result-schema-candidate.yml"
+  allow_unlisted_authority_paths: false
+
+constraint_governance:
+  constraint_registry_change_required: true
+  sole_authorized_new_entry:
+    order: 47
+    id: "CNS-AST-SHARED-ARGUMENT-INTEGRITY"
+    stage: "S1_CLAUSE_AST"
+    operator: "SHARED_ARGUMENT_TARGET_AND_SINGLE_REALIZATION"
+    failure_code: "SHARED_ARGUMENT_INVALID"
+    witness: "SHARED_ARGUMENT_REFERENCES"
+  existing_entries_1_through_46:
+    ids_unchanged: true
+    orders_unchanged: true
+    semantics_unchanged: true
+    failure_codes_unchanged: true
+    reordering_reuse_or_override_prohibited: true
+
+direct_semantic_evidence_authorization:
+  allowed_new_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/request-shared-argument-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-shared-argument-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-shared-argument-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-shared-argument-positive.json"
+  allowed_modified_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-validator-execution-summary-schema-candidate.yml"
+  required_negative_semantic_coverage:
+    - "MISSING_TARGET"
+    - "CROSS_OBJECT_TARGET"
+    - "WRONG_TARGET_NODE_KIND"
+    - "ILLEGAL_OWNER_OR_ROLE"
+    - "SELF_TARGET"
+    - "FORWARD_TARGET"
+    - "DESCENDANT_TARGET"
+    - "REFERENCE_CHAIN_ATTEMPT"
+    - "FAKE_SOURCE_SPAN_ON_REFERENCE"
+    - "SINGLE_CHILD_CONTRAST_WITHOUT_SHARED_REFERENCE"
+    - "SHARED_CONTRAST_WITH_EXPLICIT_CONTRAST_LEFT_CHILD"
+    - "DUPLICATE_ANTECEDENT_PROPOSITION_MATERIALIZATION"
+  negative_fixture_governance:
+    semantic_mutation_target_cardinality: 1
+    existing_single_semantic_mutation_governance_preserved: true
+    multi_operation_semantic_patch: "PROHIBITED"
+
+evidence_runner_and_builder_authorization:
+  modification_policy: "ONLY_WHEN_REQUIRED_BY_ACTUAL_CONTENT_ADDRESS_DEPENDENCY"
+  conditionally_allowed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/build-design-manifest.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/build-r3a-reference-override-evidence.py"
+  r3a_membership_rule:
+    order_less_than_or_equal_to_30_as_s1_proxy: "PROHIBITED"
+    required_selection_basis: "FORMAL_STAGE_AND_CONSTRAINT_MEMBERSHIP"
+    required_new_constraint_coverage: "CNS-AST-SHARED-ARGUMENT-INTEGRITY"
+
+mechanical_hash_refresh_authorization:
+  policy: "ONLY_IF_THE_OBJECT_HAS_AN_ACTUAL_CONTENT_ADDRESS_DEPENDENCY_CHANGE"
+  base_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+  allowed_relative_paths:
+    - "fixtures/normalized-request-exposure-positive.json"
+    - "fixtures/normalized-request-diagnostic-positive.json"
+    - "fixtures/clause-ast-exposure-positive.json"
+    - "fixtures/clause-ast-diagnostic-positive.json"
+    - "fixtures/event-frame-exposure-positive.json"
+    - "fixtures/event-frame-diagnostic-positive.json"
+    - "fixtures/typed-solution-exposure-positive.json"
+    - "fixtures/minimality-removal-probe-M01.json"
+    - "fixtures/minimality-removal-probe-M02.json"
+    - "fixtures/minimality-removal-probe-E01.json"
+    - "fixtures/minimality-removal-probe-R01.json"
+    - "fixtures/minimality-removal-probe-N01.json"
+    - "fixtures/minimality-removal-probe-N02.json"
+    - "fixtures/minimality-removal-probe-Q01.json"
+    - "fixtures/minimality-removal-probe-Q02.json"
+    - "fixtures/queryir-emission-record-exposure-positive.json"
+    - "fixtures/typed-result-exposure-positive.json"
+    - "fixtures/stage-validation-s0-positive.json"
+    - "fixtures/stage-validation-s1-positive.json"
+    - "fixtures/stage-validation-s2-positive.json"
+    - "fixtures/stage-validation-s3-positive.json"
+    - "fixtures/stage-validation-s4-positive.json"
+    - "fixtures/r3a-reference-override-positive.json"
+    - "fixtures/reference-validator-execution-summary.json"
+    - "fixtures/execution-binding-sidecar-positive.json"
+    - "fixtures/object-store-index-positive.json"
+    - "design-manifest.yml"
+
+explicitly_protected_unrelated_paths:
+  byte_identical_exact_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/queryir-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/semantic-universe-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/semantic-validation-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/retrieval-result-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/response-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/audit-record-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3b-negation-scope-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3b-negation-scope-negative-fixtures.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/negation-surface-scope-authority.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/negation_semantic_authority.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-identity-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-projection-rule-set.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.2.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.3.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.4.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.5.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.6.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.7.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-suite-commitment.yml"
+  protected_path_groups:
+    - "P9_A_AUTHORITY"
+    - "P9_B1_AUTHORITY_AND_INDEX"
+    - "RUNTIME"
+    - "KNOWLEDGE"
+    - "PCMS_AND_SOURCE_AUTHORITY"
+    - ".github/workflows/**"
+  historical_manifest_rule: >-
+    Historical versioned manifests MUST NOT be mechanically rewritten merely
+    because they retain hashes of the authority bytes that existed in their
+    own historical version.
+
+c1_implementation_boundary:
+  c1_implementation_authorized: false
+  prohibited_paths:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+  future_authorization_preconditions:
+    - "AUTHORITY_CORRECTION_BUILD_COMPLETE"
+    - "INDEPENDENT_AUTHORITY_AUDIT_PASS"
+    - "R11_POST_CORRECTION_GOVERNANCE_COMPLETE"
+  separate_c1_implementation_correction_authorization_required: true
+
+later_stage_boundary:
+  c2_authorization_eligible: false
+  c2_started: false
+  prohibited_stages: [S2, S3, S4, S5]
+  retrieval: "PROHIBITED"
+  model_call: "PROHIBITED"
+  network_call: "PROHIBITED"
+
+r11_governance:
+  r11_freeze_record_exists: true
+  old_r11_commitment: "1fea1bd138b0026674e2899ada566cbd9da5208d"
+  r11_executed: false
+  r11_secret_body_accessed: false
+  r11_final_acceptance_usability: "PENDING_POST_CORRECTION_HOLDER_REVIEW"
+  required_post_correction_actions:
+    - "HOLDER_SIDE_SECRET_COVERAGE_RECHECK"
+    - "NEW_ADDITIVE_FREEZE_COMMITMENT"
+  old_commitment_mutation: "PROHIBITED"
+  held_out_acceptance_during_authority_correction_build: "PROHIBITED"
+
+correction_build_activation:
+  authority_correction_build_eligible: "YES_AFTER_FAST_FORWARD_REMOTE_PUBLICATION"
+  remote_publication_required: true
+  publication_ref: "refs/heads/agent/p9-b2"
+  publication_must_be_fast_forward: true
+
+authorization_commit_policy:
+  required_parent: "cf6ef066924d4daa67b3ca46876345f8e7cca368"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-post-freeze-authority-correction-authorization.yml"
+  required_commit_message: "governance(p9b2): authorize post-freeze R3 authority correction"
+  amend: "PROHIBITED"
+  rebase: "PROHIBITED"
+  squash: "PROHIBITED"
+
+remote_policy:
+  allowed_destination: "origin/agent/p9-b2"
+  main_write: "PROHIBITED"
+  force_push: "PROHIBITED"
+  pull_request: "PROHIBITED"
+  fallback_if_credentials_unavailable: "PUBLIC_GIT_BUNDLE"
+  fallback_bundle_requirements:
+    ref: "refs/heads/agent/p9-b2"
+    complete_ancestry: true
+    secret_content: false
+    preserve_commit_identity: true
+
+secret_isolation_self_check:
+  r11_secret_body_in_authorization: false
+  secret_query_or_body_fragment_in_authorization: false
+  secret_case_request_or_probe_id_in_authorization: false
+  secret_expected_claim_or_queryir_in_authorization: false
+  private_manifest_or_storage_path_in_authorization: false
+
+authorization_exit:
+  post_freeze_authorization_result: "PASS_AFTER_COMMIT_AND_PUBLICATION"
+  authority_correction_build_eligible: "YES_AFTER_REMOTE_PUBLICATION"
+  c1_implementation_authorized: false
+  c2_authorized: false
+  r11_secret_body_accessed: false
+  r11_executed: false
+  next_state_after_remote_publication: "POST_FREEZE_AUTHORIZATION_COMPLETE_PENDING_AUTHORITY_CORRECTION_BUILD"
