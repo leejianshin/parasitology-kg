@@ -156,6 +156,42 @@ class C1ClauseASTTests(unittest.TestCase):
                 for item in operators
             ],
         )
+        condition, contrast = operators
+        nodes = {item["node_id"]: item for item in ast["nodes"]}
+        antecedent = nodes[condition["child_node_ids"][0]]
+        consequent = nodes[condition["child_node_ids"][1]]
+        right = nodes[contrast["child_node_ids"][0]]
+        self.assertEqual("CONDITION_ANTECEDENT", antecedent["scope_role"])
+        self.assertEqual(
+            {"start_char": 2, "end_char": 7, "text": "生食淡水鱼"},
+            antecedent["source_span"],
+        )
+        self.assertIs(consequent, contrast)
+        self.assertEqual("CONDITION_CONSEQUENT", contrast["scope_role"])
+        self.assertEqual(
+            {"start_char": 8, "end_char": 16, "text": "但是粪便检卵阴性"},
+            contrast["source_span"],
+        )
+        self.assertEqual(
+            {"start_char": 8, "end_char": 10, "text": "但是"},
+            contrast["operator_span"],
+        )
+        self.assertEqual(antecedent["node_id"], contrast["shared_left_argument_node_id"])
+        self.assertNotIn(antecedent["node_id"], contrast["child_node_ids"])
+        self.assertEqual([right["node_id"]], contrast["child_node_ids"])
+        self.assertEqual("CONTRAST_RIGHT", right["scope_role"])
+        self.assertLessEqual(
+            antecedent["source_span"]["end_char"],
+            contrast["source_span"]["start_char"],
+        )
+        self.assertEqual(
+            1,
+            sum(
+                item["node_kind"] == "PROPOSITION"
+                and item["source_span"] == antecedent["source_span"]
+                for item in ast["nodes"]
+            ),
+        )
         propositions = [item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"]
         self.assertTrue(all("但是" not in item["source_span"]["text"] for item in propositions))
         for item in propositions:
@@ -164,6 +200,137 @@ class C1ClauseASTTests(unittest.TestCase):
                 span["text"],
                 normalized["normalized_query_text"][span["start_char"] : span["end_char"]],
             )
+        for mention in ast["surface_mentions"]:
+            container = nodes[mention["containing_node_id"]]
+            self.assertEqual("PROPOSITION", container["node_kind"])
+            self.assertLessEqual(
+                container["source_span"]["start_char"],
+                mention["source_span"]["start_char"],
+            )
+            self.assertLessEqual(
+                mention["source_span"]["end_char"],
+                container["source_span"]["end_char"],
+            )
+
+    def test_shared_left_property_and_metamorphic_boundaries(self):
+        cases = (
+            ("若吃生鱼，不过十二指肠液检卵阳性。", "不过"),
+            ("假如未充分加热淡水鱼，然而影像检查异常。", "然而"),
+            ("如果生食淡水鱼，但是粪便检卵阴性。", "但是"),
+        )
+        for index, (text, contrast_surface) in enumerate(cases):
+            with self.subTest(text=text):
+                _, ast = self.compile(f"C1-SHARED-META-{index}", text)
+                nodes = {item["node_id"]: item for item in ast["nodes"]}
+                condition = next(
+                    item for item in ast["nodes"] if item["node_kind"] == "CONDITION"
+                )
+                contrast = next(
+                    item for item in ast["nodes"] if item["node_kind"] == "CONTRAST"
+                )
+                antecedent = nodes[condition["child_node_ids"][0]]
+                delimiter = text.index("，")
+                contrast_start = text.index(contrast_surface)
+                self.assertEqual(delimiter, antecedent["source_span"]["end_char"])
+                self.assertEqual(contrast_start, contrast["source_span"]["start_char"])
+                self.assertEqual(
+                    contrast_start,
+                    contrast["operator_span"]["start_char"],
+                )
+                self.assertEqual(
+                    antecedent["node_id"], contrast["shared_left_argument_node_id"]
+                )
+                self.assertLessEqual(
+                    antecedent["source_span"]["end_char"],
+                    contrast["source_span"]["start_char"],
+                )
+
+    def test_shared_left_contrast_can_own_repeated_coordination_right_subtree(self):
+        _, ast = self.compile(
+            "C1-SHARED-NESTED-OR",
+            "如果生食淡水鱼，但是粪便检卵或者十二指肠液检卵或者影像检查。",
+        )
+        nodes = {item["node_id"]: item for item in ast["nodes"]}
+        condition = next(item for item in ast["nodes"] if item["node_kind"] == "CONDITION")
+        contrast = next(item for item in ast["nodes"] if item["node_kind"] == "CONTRAST")
+        antecedent = nodes[condition["child_node_ids"][0]]
+        right = nodes[contrast["child_node_ids"][0]]
+        alternatives = [
+            item for item in ast["nodes"] if item["node_kind"] == "ALTERNATIVE_GROUP"
+        ]
+        self.assertEqual(antecedent["node_id"], contrast["shared_left_argument_node_id"])
+        self.assertEqual("CONTRAST_RIGHT", right["scope_role"])
+        self.assertEqual("ALTERNATIVE_GROUP", right["node_kind"])
+        self.assertEqual(2, len(alternatives))
+        self.assertEqual(
+            ["粪便检卵", "十二指肠液检卵", "影像检查"],
+            [
+                item["source_span"]["text"]
+                for item in ast["nodes"]
+                if item["node_kind"] == "PROPOSITION"
+                and item["node_id"] != antecedent["node_id"]
+            ],
+        )
+
+    def test_shared_left_integrity_mutations_fail_closed(self):
+        normalized, valid = self.compile(
+            "C1-SHARED-NEGATIVE",
+            "如果生食淡水鱼，但是粪便检卵阴性。",
+        )
+
+        def node(ast, kind):
+            return next(item for item in ast["nodes"] if item["node_kind"] == kind)
+
+        mutations = {}
+
+        non_unique = copy.deepcopy(valid)
+        condition = node(non_unique, "CONDITION")
+        antecedent = next(
+            item for item in non_unique["nodes"]
+            if item["scope_role"] == "CONDITION_ANTECEDENT"
+        )
+        duplicate = copy.deepcopy(antecedent)
+        duplicate["node_id"] = "S998"
+        condition["child_node_ids"].insert(1, duplicate["node_id"])
+        non_unique["nodes"].append(duplicate)
+        mutations["non-unique antecedent"] = non_unique
+
+        illegal_target = copy.deepcopy(valid)
+        node(illegal_target, "CONTRAST")["shared_left_argument_node_id"] = node(
+            illegal_target, "CONDITION"
+        )["node_id"]
+        mutations["illegal target"] = illegal_target
+
+        explicit_left = copy.deepcopy(valid)
+        explicit_contrast = node(explicit_left, "CONTRAST")
+        explicit_target = explicit_contrast["shared_left_argument_node_id"]
+        explicit_contrast["child_node_ids"].insert(0, explicit_target)
+        mutations["explicit left plus shared reference"] = explicit_left
+
+        forward = copy.deepcopy(valid)
+        forward_contrast = node(forward, "CONTRAST")
+        forward_contrast["shared_left_argument_node_id"] = forward_contrast[
+            "child_node_ids"
+        ][0]
+        mutations["forward target"] = forward
+
+        duplicate_realization = copy.deepcopy(valid)
+        duplicate_target = next(
+            item for item in duplicate_realization["nodes"]
+            if item["scope_role"] == "CONDITION_ANTECEDENT"
+        )
+        second_realization = copy.deepcopy(duplicate_target)
+        second_realization["node_id"] = "S999"
+        second_realization["parent_node_id"] = "S000"
+        second_realization["scope_role"] = "MATERIAL_PROPOSITION"
+        duplicate_realization["nodes"].append(second_realization)
+        duplicate_realization["nodes"][0]["child_node_ids"].append("S999")
+        mutations["duplicate target materialization"] = duplicate_realization
+
+        for name, changed in mutations.items():
+            with self.subTest(name=name):
+                with self.assertRaises(C1ValidationError):
+                    validate_c1_clause_ast(normalized, changed)
 
     def test_repeated_or_preserves_every_operator_and_three_branches(self):
         _, ast = self.compile(

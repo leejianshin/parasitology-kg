@@ -428,12 +428,13 @@ def _operator_plan(
     start: int,
     end: int,
     config: dict[str, Any],
-    leading_left_context: tuple[int, int] | None = None,
+    shared_left_argument_available: bool = False,
 ) -> tuple[
     str,
     tuple[int, int],
     tuple[int, int],
     list[tuple[int, int, str]],
+    bool,
 ] | None:
     """Return one source-bound structural operator without semantic inference.
 
@@ -451,10 +452,16 @@ def _operator_plan(
             left = _trim_span(text, start + len(token), sep_start)
             right = _trim_span(text, sep_start + 1, end)
             if left[0] < left[1] and right[0] < right[1]:
-                return "CONDITION", (start, end), (start, start + len(token)), [
-                    (*left, "CONDITION_ANTECEDENT"),
-                    (*right, "CONDITION_CONSEQUENT"),
-                ]
+                return (
+                    "CONDITION",
+                    (start, end),
+                    (start, start + len(token)),
+                    [
+                        (*left, "CONDITION_ANTECEDENT"),
+                        (*right, "CONDITION_CONSEQUENT"),
+                    ],
+                    False,
+                )
 
     lexical_kinds = (
         ("CONTRAST", "contrast", "CONTRAST_LEFT", "CONTRAST_RIGHT"),
@@ -467,10 +474,12 @@ def _operator_plan(
             for match in re.finditer(re.escape(token), text[start:end]):
                 absolute_start = start + match.start()
                 absolute_end = start + match.end()
-                if (
-                    absolute_start > start
-                    or (leading_left_context is not None and absolute_start == start)
-                ) and absolute_end < end:
+                shared_contrast = (
+                    node_kind == "CONTRAST"
+                    and shared_left_argument_available
+                    and absolute_start == start
+                )
+                if (absolute_start > start or shared_contrast) and absolute_end < end:
                     lexical_candidates.append(
                         (
                             absolute_start,
@@ -486,34 +495,44 @@ def _operator_plan(
             lexical_candidates,
             key=lambda item: (item[0], -(item[1] - item[0]), item[3], item[2]),
         )[0]
-        left = (
-            leading_left_context
-            if operator_start == start and leading_left_context is not None
-            else _trim_span(text, start, operator_start)
-        )
         right = _trim_span(text, operator_end, end)
+        if (
+            node_kind == "CONTRAST"
+            and shared_left_argument_available
+            and operator_start == start
+            and right[0] < right[1]
+        ):
+            return (
+                node_kind,
+                (start, end),
+                (operator_start, operator_end),
+                [(*right, "CONTRAST_RIGHT")],
+                True,
+            )
+        left = _trim_span(text, start, operator_start)
         while left[1] > left[0] and text[left[1] - 1] in "，,；;":
             left = _trim_span(text, left[0], left[1] - 1)
         if left[0] < left[1] and right[0] < right[1]:
-            node_span = (
-                (left[0], end)
-                if operator_start == start and leading_left_context is not None
-                else (start, end)
-            )
-            return node_kind, node_span, (operator_start, operator_end), [
+            return node_kind, (start, end), (operator_start, operator_end), [
                 (*left, left_role),
                 (*right, right_role),
-            ]
+            ], False
 
     if separators:
         operator_start = start + separators[0].start()
         left = _trim_span(text, start, operator_start)
         right = _trim_span(text, operator_start + 1, end)
         if left[0] < left[1] and right[0] < right[1]:
-            return "COORDINATION", (start, end), (operator_start, operator_start + 1), [
-                (*left, "COORDINATE_MEMBER"),
-                (*right, "COORDINATE_MEMBER"),
-            ]
+            return (
+                "COORDINATION",
+                (start, end),
+                (operator_start, operator_start + 1),
+                [
+                    (*left, "COORDINATE_MEMBER"),
+                    (*right, "COORDINATE_MEMBER"),
+                ],
+                False,
+            )
     return None
 
 
@@ -526,7 +545,7 @@ def _append_clause_subtree(
     nodes: list[dict[str, Any]],
     next_node_id: list[int],
     config: dict[str, Any],
-    leading_left_context: tuple[int, int] | None = None,
+    shared_left_argument_node_id: str | None = None,
 ) -> str:
     """Append a deterministic pre-order, recursively compositional S1 subtree."""
     plan = _operator_plan(
@@ -534,7 +553,7 @@ def _append_clause_subtree(
         start,
         end,
         config,
-        leading_left_context=leading_left_context,
+        shared_left_argument_available=shared_left_argument_node_id is not None,
     )
     node_id = f"S{next_node_id[0]:03d}"
     next_node_id[0] += 1
@@ -551,7 +570,7 @@ def _append_clause_subtree(
         })
         return node_id
 
-    node_kind, node_span, operator_span, branches = plan
+    node_kind, node_span, operator_span, branches, uses_shared_left_argument = plan
     operator_node = {
         "node_id": node_id,
         "node_kind": node_kind,
@@ -562,10 +581,15 @@ def _append_clause_subtree(
         "scope_role": scope_role,
         "assertion_marker_ids": [],
     }
+    if uses_shared_left_argument:
+        if shared_left_argument_node_id is None:
+            _c1_fail("S1_CLAUSE_AST", "shared left argument has no target")
+        operator_node["shared_left_argument_node_id"] = shared_left_argument_node_id
     nodes.append(operator_node)
+    condition_antecedent_node_id: str | None = None
     for index, (branch_start, branch_end, branch_role) in enumerate(branches):
-        branch_context = (
-            (branches[0][0], branches[0][1])
+        branch_shared_left_argument_node_id = (
+            condition_antecedent_node_id
             if node_kind == "CONDITION" and index == 1
             else None
         )
@@ -578,9 +602,11 @@ def _append_clause_subtree(
             nodes,
             next_node_id,
             config,
-            leading_left_context=branch_context,
+            shared_left_argument_node_id=branch_shared_left_argument_node_id,
         )
         operator_node["child_node_ids"].append(child_id)
+        if node_kind == "CONDITION" and index == 0:
+            condition_antecedent_node_id = child_id
     return node_id
 
 
@@ -997,6 +1023,106 @@ def compile_clause_ast(
     return ast
 
 
+def _span_contains(parent: dict[str, Any], child: dict[str, Any]) -> bool:
+    return (
+        parent["start_char"] <= child["start_char"]
+        and child["end_char"] <= parent["end_char"]
+    )
+
+
+def _spans_overlap(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    return max(left["start_char"], right["start_char"]) < min(
+        left["end_char"], right["end_char"]
+    )
+
+
+def _validate_shared_left_argument_integrity(
+    nodes: dict[str, dict[str, Any]],
+) -> None:
+    """Enforce the frozen local S1 shared-argument edge and single realization."""
+    for owner in nodes.values():
+        target_id = owner.get("shared_left_argument_node_id")
+        if target_id is None:
+            if owner["node_kind"] == "CONTRAST" and len(owner["child_node_ids"]) == 1:
+                _c1_fail(
+                    "S1_CLAUSE_AST",
+                    "single-child CONTRAST requires a shared left argument",
+                )
+            continue
+        target = nodes.get(target_id)
+        if target is None:
+            _c1_fail("S1_CLAUSE_AST", "shared left argument target is missing")
+        if owner["node_kind"] != "CONTRAST":
+            _c1_fail("S1_CLAUSE_AST", "shared left argument owner is not CONTRAST")
+        if len(owner["child_node_ids"]) != 1:
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                "shared CONTRAST must have exactly one explicit right child",
+            )
+        right = nodes.get(owner["child_node_ids"][0])
+        if right is None or right["scope_role"] != "CONTRAST_RIGHT":
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                "shared CONTRAST explicit child is not CONTRAST_RIGHT",
+            )
+        if target_id in owner["child_node_ids"]:
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                "shared left argument is also materialized as an explicit child",
+            )
+        parent = nodes.get(owner["parent_node_id"])
+        if (
+            parent is None
+            or parent["node_kind"] != "CONDITION"
+            or owner["scope_role"] != "CONDITION_CONSEQUENT"
+            or owner["node_id"] not in parent["child_node_ids"]
+        ):
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                "shared CONTRAST is not the immediate CONDITION consequent",
+            )
+        antecedents = [
+            nodes[child_id]
+            for child_id in parent["child_node_ids"]
+            if nodes[child_id]["scope_role"] == "CONDITION_ANTECEDENT"
+        ]
+        consequents = [
+            nodes[child_id]
+            for child_id in parent["child_node_ids"]
+            if nodes[child_id]["scope_role"] == "CONDITION_CONSEQUENT"
+        ]
+        if (
+            len(antecedents) != 1
+            or antecedents[0]["node_id"] != target_id
+            or target["node_kind"] != "PROPOSITION"
+            or target["parent_node_id"] != parent["node_id"]
+            or len(consequents) != 1
+            or consequents[0]["node_id"] != owner["node_id"]
+        ):
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                "shared target is not the unique immediate CONDITION antecedent proposition",
+            )
+        if (
+            target["source_span"]["start_char"] >= owner["source_span"]["start_char"]
+            or target["source_span"]["end_char"] > owner["source_span"]["start_char"]
+        ):
+            _c1_fail("S1_CLAUSE_AST", "shared left argument is not strictly backward")
+        if "shared_left_argument_node_id" in target:
+            _c1_fail("S1_CLAUSE_AST", "shared left argument reference chain is prohibited")
+        realizations = [
+            node
+            for node in nodes.values()
+            if node["node_kind"] == "PROPOSITION"
+            and node["source_span"] == target["source_span"]
+        ]
+        if len(realizations) != 1:
+            _c1_fail(
+                "S1_CLAUSE_AST",
+                "shared antecedent proposition is not realized exactly once",
+            )
+
+
 def validate_c1_clause_ast(
     normalized: dict[str, Any], ast: dict[str, Any], root: Path = ROOT
 ) -> None:
@@ -1036,6 +1162,7 @@ def validate_c1_clause_ast(
             _c1_fail("S1_CLAUSE_AST", "dangling child reference")
         if any(marker not in markers for marker in node["assertion_marker_ids"]):
             _c1_fail("S1_CLAUSE_AST", "dangling marker reference")
+    _validate_shared_left_argument_integrity(nodes)
     visited: set[str] = set()
     pending = [ast["root_node_id"]]
     while pending:
@@ -1085,6 +1212,27 @@ def validate_c1_clause_ast(
             )
             if crossing:
                 _c1_fail("S1_CLAUSE_AST", "crossing node spans")
+    for parent in nodes.values():
+        children = [nodes[child_id] for child_id in parent["child_node_ids"]]
+        if any(
+            not _span_contains(parent["source_span"], child["source_span"])
+            for child in children
+        ):
+            _c1_fail("S1_CLAUSE_AST", "child span escapes parent source span")
+        for left_index, left in enumerate(children):
+            for right in children[left_index + 1 :]:
+                if _spans_overlap(left["source_span"], right["source_span"]):
+                    _c1_fail("S1_CLAUSE_AST", "sibling node spans overlap or contain")
+    for mention in mentions.values():
+        containing_node = nodes.get(mention["containing_node_id"])
+        if (
+            containing_node is None
+            or containing_node["node_kind"] != "PROPOSITION"
+            or not _span_contains(
+                containing_node["source_span"], mention["source_span"]
+            )
+        ):
+            _c1_fail("S1_CLAUSE_AST", "surface mention lacks proposition grounding")
 
     grammar_config = _read_yaml(root / CONFIG_PATH)
     material_start, material_end = _trim_span(text, 0, len(text))
