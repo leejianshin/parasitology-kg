@@ -11,8 +11,8 @@ properties:
   id_policy: {const: "CNS-{STAGE}-{UPPER_SNAKE_NAME}; never dynamically created"}
   entries:
     type: array
-    minItems: 46
-    maxItems: 46
+    minItems: 47
+    maxItems: 47
     uniqueItems: true
     items: {$ref: "#/$defs/entry"}
 $defs:
@@ -21,7 +21,7 @@ $defs:
     additionalProperties: false
     required: [order, id, stage, operator, failure_code, witness]
     properties:
-      order: {type: integer, minimum: 1, maximum: 46}
+      order: {type: integer, minimum: 1, maximum: 47}
       id: {type: string, pattern: "^CNS-[A-Z0-9_-]{3,96}$"}
       stage:
         enum:

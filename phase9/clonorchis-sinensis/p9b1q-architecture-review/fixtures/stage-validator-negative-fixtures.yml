@@ -6,33 +6,39 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: 82a21d85ea1a8b73e194931bd029d9b717bbd770b81e7510613302dc1eb23375
+  canonical_sha256: 7b0beaf2da1acdd810e8241e355a5c3b57d849415f7676b1ef413ca12e31825f
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 1cc96f5f96f0d5433042d2f5ef1f07f81c24fb335f781cb60874afe0545d12b2
+  canonical_sha256: d15771b77ca43a70f08945aac7522d7a07423cdd3622e0d9740393a1462d9aba
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 07a1ff3f50be77e8aff010565ce7e7b79dd2a131573cbc2aad47ae39dfd00ae1
+  canonical_sha256: c89e2ea49d6c4f25a30b318809e249ff67254f389d109eeebe0a4ca5feb4d71d
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: a33f84811e5c93fcf13099477bc68b83ece96772a928564acf74f0abb58e2217
+  canonical_sha256: bcd8e5c177dcef2f2150d015290e0e62d534182b28d02acbb4ceb3ba9d361714
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: f11f556fb01e758b126e34b9a34845d8b4c1d9aaf9209cd11ce50fd0f31b8efe
+  canonical_sha256: 18fe954103583de6112c4befceb5741ed566d256ab3375e5c39bd6393b5a89aa
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 5d8ae75f8f10abc106bcb746da8b050992809a4eb337b2f7ea6e095e7b21639b
+  canonical_sha256: 655b57122d3cc6458fbb367b6350454eed82e630649ff789c4d6711764d401f4
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 4342b9a5b35c322f5d93e753a3769cfc178eea9f71360a81eb955538e968f59e
+  canonical_sha256: 1b09d67b6b1726096e95b88fcb102dacc4a2f819c3954fff6d9353ec51e39f4e
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 2656f2ca6ea2a4312258292a8db88d25803ae0a91847c2fa2bde96c6b076b41c
+  canonical_sha256: 20b367c96a426b535304730b46e8897f67d67b3d28f9f0e30884ca2ae4906246
 - path: fixtures/typed-solution-exposure-positive.json
-  canonical_sha256: 62d15dfda735ed11c8464662a1a500eba8097e75c20549902def44e0e343083d
+  canonical_sha256: 986ee3e5d372f539ee82f458b0a869472a0dde44e4cef5fe377c8327d40aee3a
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: c305e50fe5909c5596174d2d7c88f43a7489690824deb8cd9b8910f626f780ca
+  canonical_sha256: 75353ef6fa4f52c86319e820678518cfa173794a7779a20947a2d1f59a3d7522
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 58728310630e2794d69a4f9f7ef4e095028ca77b51670a0f37cf38f7b36cac38
+  canonical_sha256: 37025f5662617435d19ae451c266f110b8a6b260bfb84860ac4204d8c62acab9
+- path: fixtures/request-shared-argument-positive.json
+  canonical_sha256: 95cf7ef66a4734cade42ddec49422b1f99c4b75381d5c2c58d7a9fb4923d304b
+- path: fixtures/normalized-request-shared-argument-positive.json
+  canonical_sha256: 5abe0e8777700593a4afadfcfe78de7b3f2ea01ee27538fb1b0c732c719c6450
+- path: fixtures/clause-ast-shared-argument-positive.json
+  canonical_sha256: e385f328997ef267dd5860dfefbc9385941526654f37da52f2ee866f24b40af8
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -461,7 +467,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 58728310630e2794d69a4f9f7ef4e095028ca77b51670a0f37cf38f7b36cac38
+  base_object_canonical_sha256: 37025f5662617435d19ae451c266f110b8a6b260bfb84860ac4204d8c62acab9
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -1101,6 +1107,265 @@ cases:
   - target_object: STAGE_BASE_OBJECT
     target_path: /selected_solution/queryir_emission_record/minimality_witness/witness_sha256
     derivation_rule: RECOMPUTE_MINIMALITY_WITNESS_SHA256
+- fixture_id: NEG-S1-SHARED-MISSING-TARGET
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: MISSING_TARGET
+  patch:
+  - op: replace
+    path: /nodes/3/shared_left_argument_node_id
+    value: S999
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: MISSING_TARGET
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-CROSS-OBJECT-TARGET
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: CROSS_OBJECT_TARGET
+  patch:
+  - op: replace
+    path: /nodes/3/shared_left_argument_node_id
+    value: S998
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: CROSS_OBJECT_TARGET
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-WRONG-TARGET-KIND
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: WRONG_TARGET_NODE_KIND
+  patch:
+  - op: replace
+    path: /nodes/3/shared_left_argument_node_id
+    value: S001
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: WRONG_TARGET_NODE_KIND
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-ILLEGAL-OWNER
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: ILLEGAL_OWNER_OR_ROLE
+  patch:
+  - op: replace
+    path: /nodes/3/node_kind
+    value: OVERRIDE
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/node_kind
+    mutation_intent: ILLEGAL_OWNER_OR_ROLE
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-SELF-TARGET
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: SELF_TARGET
+  patch:
+  - op: replace
+    path: /nodes/3/shared_left_argument_node_id
+    value: S003
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: SELF_TARGET
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-FORWARD-TARGET
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: FORWARD_TARGET
+  patch:
+  - op: replace
+    path: /nodes/3/shared_left_argument_node_id
+    value: S004
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: FORWARD_TARGET
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-DESCENDANT-TARGET
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: DESCENDANT_TARGET
+  patch:
+  - op: replace
+    path: /nodes/3/shared_left_argument_node_id
+    value: S004
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: DESCENDANT_TARGET
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-REFERENCE-CHAIN
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: REFERENCE_CHAIN_ATTEMPT
+  patch:
+  - op: add
+    path: /nodes/2/shared_left_argument_node_id
+    value: S000
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/2/shared_left_argument_node_id
+    mutation_intent: REFERENCE_CHAIN_ATTEMPT
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-FAKE-SPAN
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: FAKE_SOURCE_SPAN_ON_REFERENCE
+  patch:
+  - op: add
+    path: /nodes/3/shared_left_argument_source_span
+    value:
+      start_char: 2
+      end_char: 7
+      text: 生食淡水鱼
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_source_span
+    mutation_intent: FAKE_SOURCE_SPAN_ON_REFERENCE
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-CONTRAST-ONE-CHILD-NO-SHARED
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: SINGLE_CHILD_CONTRAST_WITHOUT_SHARED_REFERENCE
+  patch:
+  - op: remove
+    path: /nodes/3/shared_left_argument_node_id
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/shared_left_argument_node_id
+    mutation_intent: SINGLE_CHILD_CONTRAST_WITHOUT_SHARED_REFERENCE
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-AND-EXPLICIT-LEFT
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: SHARED_CONTRAST_WITH_EXPLICIT_CONTRAST_LEFT_CHILD
+  patch:
+  - op: replace
+    path: /nodes/3/child_node_ids
+    value:
+    - S002
+    - S004
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/3/child_node_ids
+    mutation_intent: SHARED_CONTRAST_WITH_EXPLICIT_CONTRAST_LEFT_CHILD
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
+- fixture_id: NEG-S1-SHARED-DUPLICATE-ANTECEDENT
+  stage: S1_CLAUSE_AST
+  valid_base_object_path: fixtures/clause-ast-shared-argument-positive.json
+  paired_actual_object_paths:
+  - fixtures/normalized-request-shared-argument-positive.json
+  fault_class: DUPLICATE_ANTECEDENT_PROPOSITION_MATERIALIZATION
+  patch:
+  - op: replace
+    path: /nodes/4/source_span
+    value:
+      start_char: 2
+      end_char: 7
+      text: 生食淡水鱼
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+  expected_failure_code: SHARED_ARGUMENT_INVALID
+  semantic_mutation_target_count: 1
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /nodes/4/source_span
+    mutation_intent: DUPLICATE_ANTECEDENT_PROPOSITION_MATERIALIZATION
+    expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
+    mechanism: RFC6902
+  derived_updates: []
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true

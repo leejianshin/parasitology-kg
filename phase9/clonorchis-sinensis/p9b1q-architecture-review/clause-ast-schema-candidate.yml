@@ -138,13 +138,32 @@ $defs:
         maxItems: 32
         uniqueItems: true
         items: {type: string, pattern: "^K[0-9]{3}$"}
+      shared_left_argument_node_id:
+        description: >-
+          Optional typed local S1 grammar edge from a CONTRAST owner to the
+          single already-realized CONDITION antecedent proposition supplying
+          its elided left argument. It is not a node, child, parent, span,
+          attachment, or S2 reference hypothesis.
+        type: string
+        pattern: "^S[0-9]{3}$"
     allOf:
       - if: {properties: {node_kind: {const: ROOT}}}
         then:
           properties:
             parent_node_id: {type: "null"}
             scope_role: {const: WHOLE_REQUEST}
-      - if: {properties: {node_kind: {enum: [COORDINATION, CONDITION, CONTRAST, OVERRIDE, ALTERNATIVE_GROUP]}}}
+      - if:
+          properties: {shared_left_argument_node_id: {type: string}}
+          required: [shared_left_argument_node_id]
+        then:
+          properties:
+            node_kind: {const: CONTRAST}
+            child_node_ids: {type: array, minItems: 1, maxItems: 1}
+        else:
+          if: {properties: {node_kind: {const: CONTRAST}}}
+          then:
+            properties: {child_node_ids: {type: array, minItems: 2}}
+      - if: {properties: {node_kind: {enum: [COORDINATION, CONDITION, OVERRIDE, ALTERNATIVE_GROUP]}}}
         then:
           properties: {child_node_ids: {type: array, minItems: 2}}
       - if: {properties: {node_kind: {const: PROPOSITION}}}

@@ -223,7 +223,7 @@ def build() -> dict[str, Any]:
             {"anaphor_key": "RE003", "hypothesis_id": "RH002", "identity_relation": "DISTINCT_EVENT", "reference_key": "RREF002", "referent_key": "RE002"},
         ],
         "resolved_relations": [{"activation_policy": "REQUIRED", "derivation_mode": "EVENT_DERIVED", "object_selector": {"entity_ids": ["diagnostic.stool_egg_microscopy"], "entity_types": []}, "predicate": "diagnosed_by", "relation_key": "RR001", "root_keys": ["RE002"], "subject_selector": {"entity_ids": ["disease.clonorchiasis"], "entity_types": []}}],
-        "satisfied_constraint_ids": [entry["id"] for entry in v.load_yaml(v.REGISTRY)["entries"] if entry["order"] <= 30],
+        "satisfied_constraint_ids": [entry["id"] for entry in v.load_yaml(v.REGISTRY)["entries"] if entry["stage"] in {"S0_NORMALIZED_REQUEST", "S1_CLAUSE_AST", "S2_EVENT_FRAME", "S3_TYPED_SOLVER"}],
         "semantic_object_set_sha256": "0" * 64,
         "semantic_roles": [],
         "solution_id": "SOL-" + "0" * 24,

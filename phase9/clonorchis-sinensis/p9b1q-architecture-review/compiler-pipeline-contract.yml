@@ -41,7 +41,16 @@ stages:
       - construct_rooted_non_crossing_clause_tree
       - preserve_coordination_condition_contrast_override_and_OR_structure
       - record_all_assertion_markers_and_attachment_alternatives
+      - record_strictly_local_typed_shared_left_argument_edges_for_grammatical_operator_arguments
       - produce_surface_mentions_with_authority_derived_candidate_domains
+    shared_argument_boundary:
+      stage: S1_CLAUSE_AST
+      meaning: GRAMMAR_LEVEL_OPERATOR_ARGUMENT_RELATION_ONLY
+      content_addressing: CANONICALIZED_IN_OWNING_CLAUSE_AST_OBJECT
+      not_ast_parent_or_child: true
+      not_s2_reference_hypothesis: true
+      no_event_identity_resolution: true
+      no_solver_or_retrieval_decision: true
     gate:
       pass: valid_AST_with_complete_span_coverage_and_no_crossing_nodes
       fail: INVALID_or_AMBIGUOUS_attachment_object_no_event_compilation

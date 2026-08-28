@@ -54,10 +54,12 @@ for (const absolute of externalSchemas) {
 }
 
 const pairs = [
+  ["normalized-request-schema-candidate.yml", "normalized-request-shared-argument-positive.json"],
   ["normalized-request-schema-candidate.yml", "normalized-request-exposure-positive.json"],
   ["normalized-request-schema-candidate.yml", "normalized-request-diagnostic-positive.json"],
   ["clause-ast-schema-candidate.yml", "clause-ast-exposure-positive.json"],
   ["clause-ast-schema-candidate.yml", "clause-ast-diagnostic-positive.json"],
+  ["clause-ast-schema-candidate.yml", "clause-ast-shared-argument-positive.json"],
   ["event-frame-schema-candidate.yml", "event-frame-exposure-positive.json"],
   ["event-frame-schema-candidate.yml", "event-frame-diagnostic-positive.json"],
   ["typed-solution-core-schema-candidate.yml", "typed-solution-exposure-positive.json"],
@@ -70,6 +72,8 @@ const pairs = [
   ...["s0", "s1", "s2", "s3", "s4"].map(
     (stage) => ["stage-semantic-validation-result-schema-candidate.yml", `stage-validation-${stage}-positive.json`],
   ),
+  ["stage-semantic-validation-result-schema-candidate.yml", "stage-validation-s1-shared-argument-positive.json"],
+  ["https://example.invalid/parasitology-kg/phase9/request-schema.yml", "request-shared-argument-positive.json"],
   ["execution-binding-sidecar-architecture-schema-candidate.yml", "execution-binding-sidecar-positive.json"],
   ["constraint-id-registry-schema-candidate.yml", "../constraint-id-registry.yml", "yaml"],
   ["constraint-set-schema-candidate.yml", "../constraint-set-v0.1.yml", "yaml"],

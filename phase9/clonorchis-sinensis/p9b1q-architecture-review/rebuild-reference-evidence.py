@@ -159,6 +159,55 @@ def main() -> None:
     negation_semantic_sha = raw_sha(HERE / "negation_semantic_authority.py")
     projection_sha = raw_sha(HERE / "queryir-projection-rule-set.yml")
 
+    # Direct authority proof for the post-freeze shared-left correction.
+    shared_request = {
+        "knowledge_version": "clonorchis_pcms_v1", "locale": "zh-CN",
+        "query_text": "如果生食淡水鱼，但是粪便检卵阴性。",
+        "request_id": "P9B1Q-ARCH-SHARED-ARGUMENT-001", "schema_version": "1.0",
+    }
+    write("request-shared-argument-positive.json", shared_request)
+    shared_norm = {
+        "knowledge_version": "clonorchis_pcms_v1", "locale": "zh-CN",
+        "normalization_operations": ["NONE"],
+        "normalized_query_text": shared_request["query_text"],
+        "normalized_request_version": "0.1-candidate",
+        "producer": {"configuration_sha256": new_contract, "executable_sha256": new_exec,
+                     "producer_id": "p9b1q-request-normalizer", "producer_version": "0.1-fixture"},
+        "raw_query_text": shared_request["query_text"],
+        "raw_to_normalized_spans": [{"normalized_end": 17, "normalized_start": 0, "raw_end": 17, "raw_start": 0}],
+        "request_id": shared_request["request_id"], "request_sha256": csha(shared_request),
+    }
+    write("normalized-request-shared-argument-positive.json", shared_norm)
+    span = lambda start, end: {"start_char": start, "end_char": end, "text": shared_request["query_text"][start:end]}
+    def snode(node_id: str, kind: str, start: int, end: int, parent: str | None,
+              children: list[str], role: str, operator: tuple[int, int] | None = None,
+              shared: str | None = None) -> dict[str, Any]:
+        value = {"assertion_marker_ids": [], "child_node_ids": children, "node_id": node_id,
+                 "node_kind": kind, "operator_span": span(*operator) if operator else None,
+                 "parent_node_id": parent, "scope_role": role, "source_span": span(start, end)}
+        if shared is not None:
+            value["shared_left_argument_node_id"] = shared
+        return value
+    shared_ast = {
+        "assertion_markers": [], "attachment_sets": [], "canonicalization_profile_sha256": profile_sha,
+        "clause_ast_version": "0.2-candidate", "clause_grammar_config_sha256": raw_sha(HERE / "clause-grammar-config.yml"),
+        "entity_ontology_sha256": raw_sha(REPO / "schema/entity-types.yml"), "knowledge_version": "clonorchis_pcms_v1",
+        "nodes": [
+            snode("S000", "ROOT", 0, 17, None, ["S001"], "WHOLE_REQUEST"),
+            snode("S001", "CONDITION", 0, 16, "S000", ["S002", "S003"], "MATERIAL_PROPOSITION", (0, 2)),
+            snode("S002", "PROPOSITION", 2, 7, "S001", [], "CONDITION_ANTECEDENT"),
+            snode("S003", "CONTRAST", 8, 16, "S001", ["S004"], "CONDITION_CONSEQUENT", (8, 10), "S002"),
+            snode("S004", "PROPOSITION", 10, 16, "S003", [], "CONTRAST_RIGHT"),
+        ],
+        "normalized_request_sha256": csha(shared_norm),
+        "producer": {"configuration_sha256": raw_sha(HERE / "clause-grammar-config.yml"), "executable_sha256": new_exec,
+                     "producer_id": "p9b1q-clause-ast-compiler", "producer_version": "0.1-fixture"},
+        "request_id": shared_request["request_id"], "request_sha256": csha(shared_request), "root_node_id": "S000",
+        "span_basis": "REQUEST_QUERY_TEXT_UNICODE_CODEPOINT_ZERO_BASED_HALF_OPEN",
+        "stage_validator_contract_sha256": new_contract, "surface_mentions": [],
+    }
+    write("clause-ast-shared-argument-positive.json", shared_ast)
+
     requests: dict[str, dict[str, Any]] = {}
     normalized: dict[str, dict[str, Any]] = {}
     asts: dict[str, dict[str, Any]] = {}
@@ -353,6 +402,20 @@ def main() -> None:
         result["result_sha256"] = csha(body)
         write(name, result)
 
+    shared_stage = copy.deepcopy(load("stage-validation-s1-positive.json"))
+    shared_stage["request_id"] = shared_request["request_id"]
+    for item in shared_stage["actual_input_objects"]:
+        if item["object_kind"] == "NORMALIZED_REQUEST":
+            item["content_path"] = "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-shared-argument-positive.json"
+            item["canonical_sha256"] = raw_sha(FIX / "normalized-request-shared-argument-positive.json")
+            item["byte_length"] = len((FIX / "normalized-request-shared-argument-positive.json").read_bytes())
+    shared_stage["actual_output_object"]["content_path"] = "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-shared-argument-positive.json"
+    shared_stage["actual_output_object"]["canonical_sha256"] = raw_sha(FIX / "clause-ast-shared-argument-positive.json")
+    shared_stage["actual_output_object"]["byte_length"] = len((FIX / "clause-ast-shared-argument-positive.json").read_bytes())
+    shared_body = copy.deepcopy(shared_stage); shared_body.pop("result_sha256", None)
+    shared_stage["result_sha256"] = csha(shared_body)
+    write("stage-validation-s1-shared-argument-positive.json", shared_stage)
+
     sidecar = load("execution-binding-sidecar-positive.json")
     replace_hashes(sidecar, old_exec, new_exec, old_contract, new_contract)
     sidecar["canonicalization_profile_sha256"] = profile_sha
@@ -418,6 +481,22 @@ def main() -> None:
     summary["configuration_sha256"] = new_contract
     governance, governance_diagnostics = bootstrap_failure_code_governance()
     summary["registry_failure_governance"] = governance
+    bootstrap_validator = runpy.run_path(
+        str(HERE / "reference-stage-semantic-validator.py"),
+        run_name="p9b1q_reference_validator_shared_bootstrap",
+    )
+    shared_s0_errors = bootstrap_validator["validate_s0"](shared_norm, shared_request)
+    shared_s1_errors = bootstrap_validator["validate_s1"](shared_ast, shared_norm)
+    if shared_s0_errors or shared_s1_errors:
+        raise RuntimeError(f"shared argument positive bootstrap failed: S0={shared_s0_errors}; S1={shared_s1_errors}")
+    summary["positive"] = [
+        item for item in summary["positive"]
+        if item["case"] not in {"POS-S0-shared-argument", "POS-S1-shared-argument"}
+    ] + [
+        {"case": "POS-S0-shared-argument", "errors": []},
+        {"case": "POS-S1-shared-argument", "errors": []},
+    ]
+    summary["positive_pass_count"] = len(summary["positive"])
     stage_negative_run = subprocess.run(
         ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "negative"],
         cwd=REPO,
@@ -441,8 +520,8 @@ def main() -> None:
         "ajv_version": "8.17.1",
         "strict": True,
         "compiled_schema_count": 12,
-        "fixture_pair_count": 27,
-        "valid_fixture_count": 27,
+        "fixture_pair_count": 31,
+        "valid_fixture_count": 31,
         "result": "PASS",
         "runner_sha256": raw_sha(HERE / "strict-schema-gate.mjs"),
         "lockfile_sha256": raw_sha(HERE / "package-lock.json"),
@@ -463,8 +542,8 @@ def main() -> None:
     if (
         schema_result.get("result") != "PASS"
         or schema_result.get("compiled_schema_count") != 12
-        or schema_result.get("fixture_pair_count") != 27
-        or schema_result.get("valid_fixture_count") != 27
+        or schema_result.get("fixture_pair_count") != 31
+        or schema_result.get("valid_fixture_count") != 31
     ):
         raise RuntimeError(
             f"bootstrap strict schema gate count/result mismatch: {schema_result}"

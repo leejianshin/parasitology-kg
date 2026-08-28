@@ -417,6 +417,66 @@ def spans_in_ast(ast: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     return values
 
 
+def validate_shared_argument_integrity(ast: dict[str, Any]) -> list[dict[str, str]]:
+    """Validate the sole authorized S1 shared-argument edge shape."""
+    nodes = ast.get("nodes", [])
+    by_id = {node.get("node_id"): node for node in nodes}
+    errors: list[dict[str, str]] = []
+    for index, owner in enumerate(nodes):
+        target_id = owner.get("shared_left_argument_node_id")
+        if target_id is None:
+            if owner.get("node_kind") == "CONTRAST" and len(owner.get("child_node_ids", [])) != 2:
+                errors.append(error("CNS-AST-SHARED-ARGUMENT-INTEGRITY", "SHARED_ARGUMENT_INVALID", f"/nodes/{index}"))
+            continue
+        target = by_id.get(target_id)
+        parent = by_id.get(owner.get("parent_node_id"))
+        children = [by_id.get(value) for value in owner.get("child_node_ids", [])]
+        structurally_valid = (
+            owner.get("node_kind") == "CONTRAST"
+            and parent is not None
+            and parent.get("node_kind") == "CONDITION"
+            and owner.get("scope_role") == "CONDITION_CONSEQUENT"
+            and owner.get("node_id") in parent.get("child_node_ids", [])
+            and target is not None
+            and target.get("node_kind") == "PROPOSITION"
+            and target.get("scope_role") == "CONDITION_ANTECEDENT"
+            and target.get("parent_node_id") == parent.get("node_id")
+            and target_id in parent.get("child_node_ids", [])
+            and target_id != owner.get("node_id")
+            and len(children) == 1
+            and children[0] is not None
+            and children[0].get("scope_role") == "CONTRAST_RIGHT"
+            and target.get("source_span", {}).get("end_char", 0)
+                <= owner.get("source_span", {}).get("start_char", -1)
+            and not any(child and child.get("scope_role") == "CONTRAST_LEFT" for child in children)
+            and "shared_left_argument_node_id" not in target
+        )
+        # The antecedent must have one semantic realization: it may not also
+        # occur as a proposition descendant of the owning CONTRAST.
+        descendants: set[str] = set()
+        pending = list(owner.get("child_node_ids", []))
+        while pending:
+            current_id = pending.pop()
+            if current_id in descendants:
+                structurally_valid = False
+                break
+            descendants.add(current_id)
+            current = by_id.get(current_id)
+            if current:
+                pending.extend(current.get("child_node_ids", []))
+        structurally_valid = structurally_valid and target_id not in descendants
+        if target is not None:
+            target_span = target.get("source_span")
+            for descendant_id in descendants:
+                descendant = by_id.get(descendant_id)
+                if (descendant and descendant.get("node_kind") == "PROPOSITION"
+                        and descendant.get("source_span") == target_span):
+                    structurally_valid = False
+        if not structurally_valid:
+            errors.append(error("CNS-AST-SHARED-ARGUMENT-INTEGRITY", "SHARED_ARGUMENT_INVALID", f"/nodes/{index}/shared_left_argument_node_id"))
+    return errors
+
+
 def validate_s1(
     ast: dict[str, Any],
     normalized: dict[str, Any],
@@ -426,7 +486,14 @@ def validate_s1(
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("clause-ast-schema-candidate.yml", ast):
-        errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", "/"))
+        if any(
+            "shared_left_argument_node_id" in node
+            or (node.get("node_kind") == "CONTRAST" and len(node.get("child_node_ids", [])) != 2)
+            for node in ast.get("nodes", [])
+        ):
+            errors.append(error("CNS-AST-SHARED-ARGUMENT-INTEGRITY", "SHARED_ARGUMENT_INVALID", "/"))
+        else:
+            errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", "/"))
     nodes = ast["nodes"]
     node_ids = {item["node_id"] for item in nodes}
     mention_ids = {item["surface_mention_id"] for item in ast["surface_mentions"]}
@@ -451,6 +518,7 @@ def validate_s1(
         dangling |= any(target not in valid_ids for target in item["scope_target_candidate_ids"])
     if dangling:
         errors.append(error("CNS-AST-REF_INTEGRITY", "DANGLING_REFERENCE", "/"))
+    errors.extend(validate_shared_argument_integrity(ast))
     text = normalized["normalized_query_text"]
     alias_authority = alias_authority or load_yaml(
         REPO / "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
@@ -1133,8 +1201,8 @@ def run_schema_gate() -> dict[str, Any]:
     if (
         result.get("result") != "PASS"
         or result.get("compiled_schema_count") != 12
-        or result.get("fixture_pair_count") != 27
-        or result.get("valid_fixture_count") != 27
+        or result.get("fixture_pair_count") != 31
+        or result.get("valid_fixture_count") != 31
     ):
         raise RuntimeError("AJV strict schema gate count/result mismatch")
     _SCHEMA_GATE_CACHE = copy.deepcopy(result)
@@ -2093,8 +2161,9 @@ def validate_actual_reference(reference: dict[str, Any]) -> bool:
     )
 
 
-def load_stage_result(stage: str) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    result = load_json(FIXTURES / f"stage-validation-{stage.lower()}-positive.json")
+def load_stage_result(stage: str, fixture_suffix: str | None = None) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    name = f"stage-validation-{stage.lower()}-{fixture_suffix}-positive.json" if fixture_suffix else f"stage-validation-{stage.lower()}-positive.json"
+    result = load_json(FIXTURES / name)
     body = copy.deepcopy(result)
     declared = body.pop("result_sha256")
     if canonical_sha(body) != declared:
@@ -2609,6 +2678,14 @@ def run_positive() -> list[dict[str, Any]]:
             {"case": f"POS-S1-{suffix}", "errors": s1_errors},
             {"case": f"POS-S2-{suffix}", "errors": s2_errors},
         ])
+    shared_request = load_json(FIXTURES / "request-shared-argument-positive.json")
+    shared_norm = load_json(FIXTURES / "normalized-request-shared-argument-positive.json")
+    shared_ast = load_json(FIXTURES / "clause-ast-shared-argument-positive.json")
+    shared_record, _, _ = load_stage_result("S1", "shared-argument")
+    results.extend([
+        {"case": "POS-S0-shared-argument", "errors": validate_s0(shared_norm, shared_request)},
+        {"case": "POS-S1-shared-argument", "errors": stage_record_errors(shared_record, validate_s1(shared_ast, shared_norm))},
+    ])
     s3_record, s3_inputs, typed = load_stage_result("S3")
     s3_hashes = {
         item["object_kind"]: item["canonical_sha256"]

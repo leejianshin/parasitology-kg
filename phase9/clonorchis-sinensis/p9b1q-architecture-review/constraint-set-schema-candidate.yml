@@ -39,8 +39,8 @@ properties:
       negation_semantic_implementation_sha256: {$ref: "#/$defs/sha256"}
   selected_constraints:
     type: array
-    minItems: 46
-    maxItems: 46
+    minItems: 47
+    maxItems: 47
     uniqueItems: true
     prefixItems:
       - {const: CNS-NORM-LOSSLESS_ROUNDTRIP}
@@ -89,6 +89,7 @@ properties:
       - {const: CNS-BIND-REQUEST_CHAIN}
       - {const: CNS-BIND-RETRIEVAL_CHAIN}
       - {const: CNS-BIND-RESPONSE_AUDIT_CHAIN}
+      - {const: CNS-AST-SHARED-ARGUMENT-INTEGRITY}
     items: false
   execution_policy:
     type: object
@@ -148,4 +149,5 @@ $defs:
       - CNS-BIND-CANONICAL_PROFILE
       - CNS-BIND-REQUEST_CHAIN
       - CNS-BIND-RETRIEVAL_CHAIN
+      - CNS-AST-SHARED-ARGUMENT-INTEGRITY
       - CNS-BIND-RESPONSE_AUDIT_CHAIN

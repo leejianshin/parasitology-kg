@@ -16,9 +16,9 @@ reference_execution:
   required_exit_code: 0
   required_result: PASS
   required_counts:
-    positive: 13
+    positive: 15
     minimality: 8
-    negative: 51
+    negative: 63
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -31,8 +31,8 @@ reference_execution:
     engine: "AJV 8.17.1 Draft 2020-12"
     strict: true
     required_compiled_schema_count: 12
-    required_fixture_pair_count: 27
-    required_valid_fixture_count: 27
+    required_fixture_pair_count: 31
+    required_valid_fixture_count: 31
 
 failure_code_authority:
   canonical_source: constraint-id-registry.yml
@@ -95,6 +95,7 @@ validators:
       - CNS-AST-NONCROSSING
       - CNS-AST-UNIQUE_ATTACHMENT_CARDINALITY
       - CNS-AST-SCOPE_TARGET_INTEGRITY
+      - CNS-AST-SHARED-ARGUMENT-INTEGRITY
     additional_checks:
       - "root_node_id resolves to the only ROOT and only it has null parent"
       - "all child, marker, mention, scope target, and attachment IDs resolve with the declared type"
@@ -107,6 +108,8 @@ validators:
       - "UNIQUE attachment or scope target has exactly one candidate; UNRESOLVED has at least two"
       - "NEGATOR and EXCLUSION can scope over S proposition/operator or U mention/object"
       - "every material request codepoint is covered by one proposition or operator span"
+      - "a shared left argument is a single local backward edge from an immediate CONDITION-consequent CONTRAST to its unique antecedent PROPOSITION"
+      - "shared argument edges have no node, parent, child or source span and cannot chain, cycle, cross objects, point forward, or duplicate proposition materialization"
   S2_EVENT_FRAME:
     validator_id: p9b1q-stage-semantic-validator-s2
     required_actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]

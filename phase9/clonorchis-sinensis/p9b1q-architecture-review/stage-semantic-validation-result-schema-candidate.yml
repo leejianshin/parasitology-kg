@@ -138,6 +138,7 @@ $defs:
           - NORMALIZATION_NOT_LOSSLESS
           - DUPLICATE_ID
           - DANGLING_REFERENCE
+          - SHARED_ARGUMENT_INVALID
           - SPAN_ORDER_INVALID
           - SPAN_TEXT_MISMATCH
           - MULTIPLE_ROOTS

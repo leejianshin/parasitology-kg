@@ -2,7 +2,7 @@ constraint_set_version: "0.1-candidate"
 constraint_set_id: "clonorchis_p9b1q_typed_constraints_v0_1"
 knowledge_version: "clonorchis_pcms_v1"
 canonicalization_profile_sha256: "998840f8bd3fe7f5c47a2703208db1fbf05485300b7fdc3b12c7aeeaa927627c"
-constraint_registry_sha256: "6854a25a6008e46c8863d2fb885d2cf9b8187deed63820b45eac3cc8e7bba462"
+constraint_registry_sha256: "76728a0542d0770064b7b34f2fe8b94650a564e1b4c51f82e17bc035894521fa"
 authority_object_hashes:
   entity_ontology_sha256: "3637cfb14fd385ac6913ca6a5a8ba362304c865e4c630eeb21ff86e46f0fc77e"
   relation_ontology_sha256: "4d5c56c9a9df8c65a49705b91c8c8081b43f17d8096a471398ae234fdb0584c5"
@@ -58,6 +58,7 @@ selected_constraints:
   - CNS-BIND-REQUEST_CHAIN
   - CNS-BIND-RETRIEVAL_CHAIN
   - CNS-BIND-RESPONSE_AUDIT_CHAIN
+  - CNS-AST-SHARED-ARGUMENT-INTEGRITY
 execution_policy:
   order: "REGISTRY_VALIDATION_ORDER_ASCENDING"
   enumerate_all_minimal_solutions: true

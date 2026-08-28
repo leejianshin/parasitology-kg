@@ -18,6 +18,27 @@ node_operators:
   CONTRAST:
     surface_classes: [转折标记, 对照标记]
     required_roles: [CONTRAST_LEFT, CONTRAST_RIGHT]
+    shared_left_argument:
+      representation: TYPED_LOCAL_REFERENCE_EDGE
+      field: shared_left_argument_node_id
+      owner_role: CONTRAST_LEFT
+      owner_must_be_immediate_condition_consequent: true
+      target_must_be_unique_condition_antecedent_proposition: true
+      same_clause_ast_object: true
+      source_order: STRICTLY_BACKWARD
+      explicit_left_child_mutually_exclusive: true
+      right_child_role: CONTRAST_RIGHT
+      prohibited:
+        - self_reference
+        - descendant_target
+        - forward_reference
+        - cross_ast_reference
+        - reference_targeting_reference
+        - reference_chain
+        - reference_cycle
+        - local_source_span
+        - duplicate_antecedent_materialization
+        - arbitrary_operator_or_argument_role
   OVERRIDE:
     surface_classes: [后项覆盖标记]
     required_roles: [OVERRIDE_EARLIER, OVERRIDE_LATER]

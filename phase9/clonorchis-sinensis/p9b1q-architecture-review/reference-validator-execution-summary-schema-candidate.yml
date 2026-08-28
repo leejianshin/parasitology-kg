@@ -60,12 +60,12 @@ properties:
       - s4_minimality_fixture_governed
       - result
     properties:
-      registry_mapping_count: {const: 46}
-      validator_constraint_mapping_count: {const: 46}
-      executable_constraint_count: {const: 46}
-      formal_fixture_count: {const: 67}
-      explicit_fixture_failure_code_count: {const: 67}
-      match_count: {const: 46}
+      registry_mapping_count: {const: 47}
+      validator_constraint_mapping_count: {const: 47}
+      executable_constraint_count: {const: 47}
+      formal_fixture_count: {const: 79}
+      explicit_fixture_failure_code_count: {const: 79}
+      match_count: {const: 47}
       mismatch_count: {const: 0}
       unknown_constraint_ids: {const: 0}
       validator_failure_code_mismatches: {const: 0}
@@ -86,8 +86,8 @@ properties:
       result: {const: PASS}
   positive:
     type: array
-    minItems: 13
-    maxItems: 13
+    minItems: 15
+    maxItems: 15
     uniqueItems: true
     items: {$ref: "#/$defs/positive_result"}
   minimality:
@@ -98,13 +98,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 51
-    maxItems: 51
+    minItems: 63
+    maxItems: 63
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
-  positive_pass_count: {const: 13}
+  positive_pass_count: {const: 15}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 51}
+  negative_pass_count: {const: 63}
   schema_gate:
     type: object
     additionalProperties: false
@@ -114,8 +114,8 @@ properties:
       ajv_version: {const: "8.17.1"}
       strict: {const: true}
       compiled_schema_count: {const: 12}
-      fixture_pair_count: {const: 27}
-      valid_fixture_count: {const: 27}
+      fixture_pair_count: {const: 31}
+      valid_fixture_count: {const: 31}
       result: {const: PASS}
       runner_sha256: {$ref: "#/$defs/sha256"}
       lockfile_sha256: {$ref: "#/$defs/sha256"}
@@ -135,7 +135,7 @@ $defs:
     additionalProperties: false
     required: [case, errors]
     properties:
-      case: {type: string, pattern: "^(POS-S[0-5]-(exposure|diagnostic)|POS-R3B-[A-Z0-9-]+)$"}
+      case: {type: string, pattern: "^(POS-S[0-5]-(exposure|diagnostic|shared-argument)|POS-R3B-[A-Z0-9-]+)$"}
       errors: {type: array, maxItems: 0}
   minimality_result:
     type: object
