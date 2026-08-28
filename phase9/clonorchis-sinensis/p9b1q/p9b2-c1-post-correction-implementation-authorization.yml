@@ -1,0 +1,266 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C1-POST-CORRECTION-REAUTH-001"
+authorization_kind: "C1_POST_CORRECTION_IMPLEMENTATION_REAUTHORIZATION"
+authorization_status: "ACTIVE_AFTER_FAST_FORWARD_REMOTE_PUBLICATION"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+authorization_base: "24135888f910d196acb140eb2d288e2987874755"
+corrected_authority: "5a28cc600333e2904728a1754b5d228740f44ddb"
+r11_v2_commitment: "24135888f910d196acb140eb2d288e2987874755"
+r11_v2_public_commitment_audit: "PASS"
+r11_secret_access: "PROHIBITED"
+r11_execution_during_build: "PROHIBITED"
+
+historical_identity:
+  original_r3_frozen_candidate: "f565c9e2428dc4409813aa259f2e527059ef39df"
+  old_r11_commitment: "1fea1bd138b0026674e2899ada566cbd9da5208d"
+  original_c1_authorization: "b78e5ae2d0f1e9ed5e05e1488f169103119192fe"
+  c1_v1: "abd8727efd1fc6379a65e0cf231c4fcd67c0371f"
+  c1_correction_1: "cf6ef066924d4daa67b3ca46876345f8e7cca368"
+  post_freeze_authorization: "728f77c80bd0d93bbf331b243a68a49a385d5273"
+  corr1: "381db21ae9df2a16bc41dc298d5e288354333a75"
+  corr2: "5a28cc600333e2904728a1754b5d228740f44ddb"
+  preservation_rule: >-
+    All listed commits and their bytes remain immutable historical facts and
+    MUST NOT be amended, rebased, squashed, replaced or otherwise rewritten.
+  original_authorization_status: >-
+    HISTORICAL_FACT_NOT_CURRENT_CORRECTED_AUTHORITY_IMPLEMENTATION_AUTHORITY
+
+authorization_atom:
+  purpose: "AUTHORIZE_FUTURE_C1_POST_CORRECTION_IMPLEMENTATION_ONLY"
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c1-post-correction-implementation-authorization.yml"
+  authorization_file_only_commit: true
+  implementation_mutation_this_turn: false
+  test_mutation_this_turn: false
+  authority_mutation_this_turn: false
+  commitment_mutation_this_turn: false
+  c1_build_may_start_this_turn: false
+  c2_or_later_stage_work_this_turn: false
+
+authority_basis:
+  compiler_pipeline_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+  normalized_request_schema: "phase9/clonorchis-sinensis/p9b1q-architecture-review/normalized-request-schema-candidate.yml"
+  clause_ast_schema: "phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-ast-schema-candidate.yml"
+  clause_grammar_config: "phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml"
+  stage_semantic_validator_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+  constraint_registry: "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml"
+  r11_v2_public_commitment: "phase9/clonorchis-sinensis/p9b1q/r11-v2-suite-commitment.yml"
+
+c1_objective:
+  objective: "Implement S0 request normalization and S1 Clause AST against the corrected R3 authority only."
+  allowed_stages:
+    - "S0_REQUEST_NORMALIZATION"
+    - "S1_CLAUSE_AST"
+  allowed_terminal_output: "VALIDATED_CLAUSE_AST"
+  retrieval: "PROHIBITED"
+  model_or_network_call: "PROHIBITED"
+  s2_or_later_stage: "PROHIBITED"
+
+c1_allowed_changed_paths:
+  - "scripts/p9b1q_scoped_query_ir.py"
+  - "tests/test_p9b1q_scoped_query_ir.py"
+
+c1_changed_path_rules:
+  exact_allowed_path_count: 2
+  allow_unlisted_paths: false
+  allow_new_implementation_paths: false
+  allow_new_test_paths: false
+  implementation_tests_must_be_added_to: "tests/test_p9b1q_scoped_query_ir.py"
+  authorization_file_is_not_a_c1_implementation_changed_path: true
+
+corrected_authority_adaptation:
+  design_representation: "OPTION_D_MINIMIZED_TYPED_LOCAL_SHARED_LEFT_ARGUMENT_REFERENCE_EDGE"
+  field: "shared_left_argument_node_id"
+  owner_node_kind: "CONTRAST"
+  constraint:
+    order: 47
+    id: "CNS-AST-SHARED-ARGUMENT-INTEGRITY"
+    stage: "S1_CLAUSE_AST"
+    operator: "SHARED_ARGUMENT_TARGET_AND_SINGLE_REALIZATION"
+    failure_code: "SHARED_ARGUMENT_INVALID"
+    witness: "SHARED_ARGUMENT_REFERENCES"
+  constraint_order_domain: "1..47"
+  required_semantics:
+    owner_is_immediate_condition_consequent: true
+    target_is_unique_condition_antecedent_proposition: true
+    target_is_in_same_clause_ast_object: true
+    target_is_strictly_backward: true
+    target_is_realized_exactly_once: true
+    target_is_not_in_child_node_ids: true
+    reference_has_no_source_span: true
+    creates_no_second_mention: true
+    explicit_contrast_left_child_is_mutually_exclusive: true
+    forward_reference: "PROHIBITED"
+    cross_ast_reference: "PROHIBITED"
+    reference_chain: "PROHIBITED"
+    reference_cycle: "PROHIBITED"
+    duplicate_materialization: "PROHIBITED"
+    fake_grounding: "PROHIBITED"
+    multi_parent: "PROHIBITED"
+  nested_condition_contrast_requirement:
+    condition_antecedent: "UNIQUE_SOURCE_BEARING_ANTECEDENT"
+    condition_consequent: "EXACT_CONSEQUENT_SPAN"
+    contrast: "SOURCE_BEARING_CONSEQUENT_SUBTREE"
+    shared_left_argument_target: "THE_CONDITION_UNIQUE_ANTECEDENT_NODE"
+
+high_002_preservation:
+  finding_id: "P9B2-C1-S1-ATTACHMENT-ALTERNATIVE-HIGH-002"
+  status: "CLOSED_MUST_BE_PRESERVED"
+  multiple_compatible_participant_negation_targets:
+    preserve_complete_candidate_set: true
+    resolution_state: "UNRESOLVED"
+    selection_in_parser: false
+    selection_by_typed_solver_only: true
+    parser_winner_selected: false
+    s3_invoked: false
+
+required_c1_implementation_tests:
+  acceptance_artifact: "tests/test_p9b1q_scoped_query_ir.py"
+  existing_expected_semantics_mutation: "PROHIBITED"
+  public_authority_fixture_mutation: "PROHIBITED"
+  positive_and_regression_coverage:
+    - "shared-left positive"
+    - "exact antecedent span"
+    - "exact consequent span"
+    - "exact CONTRAST operator span"
+    - "exactly one antecedent semantic leaf"
+    - "shared_left_argument_node_id correct target"
+    - "no duplicate leaf"
+    - "no sibling overlap or containment"
+    - "no fake grounding"
+    - "ordinary CONTRAST backward compatibility"
+    - "ordinary CONDITION backward compatibility"
+    - "repeated OR and coordination regression"
+    - "multiple-target UNRESOLVED regression"
+    - "deterministic canonical bytes and hash"
+  negative_implementation_coverage:
+    - "non-unique antecedent fails"
+    - "illegal target fails"
+    - "explicit CONTRAST_LEFT and shared reference double realization fails"
+    - "forward target fails"
+    - "shared target duplicate materialization fails"
+
+c1_public_gates:
+  numeric_test_count_frozen: false
+  legacy_fixture_pair_count_is_authority: false
+  legacy_constraint_count_is_authority: false
+  required_current_constraint_domain: "1..47"
+  gates:
+    - gate_id: "C1-CURRENT-S0-S1-SCHEMA"
+      requirement: "Current S0 and S1 Schema validation PASS"
+    - gate_id: "C1-CURRENT-S0-S1-SEMANTIC"
+      requirement: "Current S0 and S1 semantic validation PASS"
+    - gate_id: "C1-CURRENT-STRICT-SCHEMA"
+      working_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+      invocation: "node strict-schema-gate.mjs"
+      requirement: "ALL_CURRENTLY_DISCOVERED_SCHEMA_AND_FIXTURE_CHECKS_PASS"
+    - gate_id: "C1-REFERENCE-STAGE-SEMANTIC-VALIDATOR"
+      working_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+      invocation: "python reference-stage-semantic-validator.py --mode all"
+      requirement: "PASS"
+    - gate_id: "C1-CONSTRAINT-GOVERNANCE"
+      requirement: "Constraint registry and governance PASS for current 1..47 domain"
+    - gate_id: "C1-REPOSITORY-UNITTEST-DISCOVERY"
+      working_directory: "."
+      invocation: "python -m unittest discover -s tests -p \"test_*.py\""
+      requirement: "ALL_CURRENTLY_DISCOVERED_TESTS_PASS"
+    - gate_id: "C1-BYTE-DETERMINISM"
+      repeated_runs: 3
+      requirement: "BYTE_IDENTICAL_C1_OUTPUTS"
+    - gate_id: "C1-DIFF-CHECK"
+      invocation: "git diff --check"
+      requirement: "PASS"
+
+c1_stop_boundary:
+  s2_object_created: false
+  s3_invoked: false
+  s4_invoked: false
+  s5_invoked: false
+  retrieval_invoked: false
+  model_network_invoked: false
+  r11_executed: false
+  shared_left_edge_is_s1_grammar_relation_only: true
+  shared_left_edge_is_s2_reference_semantics: false
+
+protected_paths:
+  byte_identical_patterns:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/**"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-suite-commitment.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-v2-suite-commitment.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-build-authorization.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-post-freeze-authority-correction-authorization.yml"
+    - "phase9/clonorchis-sinensis/request-schema.yml"
+    - "phase9/clonorchis-sinensis/response-schema.yml"
+    - "phase9/clonorchis-sinensis/audit-log-schema.yml"
+    - "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1-local-acceptance.yml"
+    - "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+    - "scripts/p9b1_local_retrieval.py"
+    - "tests/test_p9b1_retrieval.py"
+    - "knowledge/**"
+    - "knowledge-extensions/**"
+    - "derived/clonorchis-sinensis/pcms-v1/**"
+    - "phase7/clonorchis-sinensis/**"
+    - "schema/**"
+    - "sources/**"
+    - ".github/workflows/**"
+    - "every path not explicitly listed in c1_allowed_changed_paths"
+
+r11_v2_isolation:
+  allowed_information: "PUBLIC_COMMITMENT_METADATA_ONLY"
+  commitment: "24135888f910d196acb140eb2d288e2987874755"
+  secret_body_access: "PROHIBITED"
+  secret_case_or_probe_material_access: "PROHIBITED"
+  secret_expected_material_access: "PROHIBITED"
+  private_recovery_material_access: "PROHIBITED"
+  execution: "PROHIBITED"
+  implementation_adaptation_from_secret_results: "PROHIBITED"
+
+later_stage_boundary:
+  c2_authorized: false
+  c2_authorization_eligible: "NO_UNTIL_C1_CORRECTION_AND_INDEPENDENT_REAUDIT_PASS"
+  c2_started: false
+  prohibited_stages: [S2, S3, S4, S5]
+  retrieval: "PROHIBITED"
+  model_call: "PROHIBITED"
+  network_call: "PROHIBITED"
+
+authorization_commit_policy:
+  required_parent: "24135888f910d196acb140eb2d288e2987874755"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-c1-post-correction-implementation-authorization.yml"
+  required_commit_message: "governance(p9b2): reauthorize C1 against corrected authority"
+  amend: "PROHIBITED"
+  rebase: "PROHIBITED"
+  squash: "PROHIBITED"
+
+remote_policy:
+  allowed_destination: "origin/agent/p9-b2"
+  publication_must_be_fast_forward: true
+  main_write: "PROHIBITED"
+  force_push: "PROHIBITED"
+  pull_request: "PROHIBITED"
+  fallback_if_credentials_unavailable: "PUBLIC_GIT_BUNDLE"
+  fallback_bundle_requirements:
+    ref: "refs/heads/agent/p9-b2"
+    complete_ancestry: true
+    secret_content: false
+    preserve_commit_identity: true
+
+secret_isolation_self_check:
+  r11_secret_body_in_authorization: false
+  secret_query_or_body_fragment_in_authorization: false
+  secret_case_request_or_probe_id_in_authorization: false
+  secret_expected_claim_or_queryir_in_authorization: false
+  recovery_key_or_private_storage_path_in_authorization: false
+
+authorization_exit:
+  c1_implementation_authorized: "YES_AFTER_REMOTE_PUBLICATION_AND_EXPLICIT_BUILD_START"
+  c1_build_started: false
+  c2_authorized: false
+  r11_secret_body_accessed: false
+  r11_executed: false
+  next_state_after_remote_publication: "C1_REAUTHORIZATION_COMPLETE_PENDING_EXPLICIT_C1_CORRECTION_BUILD_START"
