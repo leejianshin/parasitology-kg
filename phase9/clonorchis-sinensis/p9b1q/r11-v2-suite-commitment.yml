@@ -1,0 +1,78 @@
+commitment_version: "2.0"
+commitment_id: "clonorchis_p9b1q_r11_v2_suite_commitment"
+commitment_kind: "NEW_ADDITIVE_R11_HELD_OUT_FREEZE"
+suite_version: "R11_V2"
+status: "SECRET_SUITE_FROZEN_NOT_EXECUTED"
+
+history:
+  predecessor_commitment: "1fea1bd138b0026674e2899ada566cbd9da5208d"
+  predecessor_private_asset_status: "UNRECOVERABLE_HISTORICAL"
+  predecessor_commitment_status: "HISTORICAL_RECORD_PRESERVED"
+  predecessor_private_executability: "UNAVAILABLE"
+  byte_equivalent_reconstruction_or_replacement: false
+
+design_authority:
+  commit: "5a28cc600333e2904728a1754b5d228740f44ddb"
+  authority_correction_2_independent_reaudit: "PASS"
+  finding_status: "CLOSED_AT_AUTHORITY_LEVEL"
+
+secret_suite_public_metadata:
+  suite_id: "p9b1q-r11-v2-zhcn-c3ea59163397"
+  language: "zh-CN"
+  frozen_at_utc: "2026-08-28T08:50:48Z"
+  semantic_case_count: 26
+  positive_binding_probe_count: 4
+  negative_binding_probe_count: 18
+  base_case_and_probe_execution_count: 48
+  determinism_additional_execution_count: 4
+  total_execution_count: 52
+  executed_count: 0
+  canonical_content_sha256: "cdf5fb160740e0ee3a22dc86df8294a9a3b8e35a9b34bdfa218aa557fd1e3a65"
+  private_manifest_sha256: "71e7615f4f53e7150f84336c23067f6e1cf1f1521ab2bb381bde03d2abbbc39a"
+  sha256sums_sha256: "b04784bb4ce78fd27894430b99e95408e87eac08fa3692da25234575a6328a76"
+  recovery_archive_sha256: "3644dd6c98a273595c82d60b1b4e262b710a5b68d3a3834bf5959163fc5cdf01"
+
+storage_recovery_governance:
+  secret_storage_policy_version: "R11_V2_PRIVATE_3_DOMAIN"
+  recovery_policy_version: "R11_V2_OPAQUE_EXTERNAL_RECOVERY"
+  holder_local_canonical: true
+  holder_local_backup: true
+  cross_session_recovery: true
+  recovery_drill: "PASS"
+  recovery_key_in_commitment: false
+  private_storage_paths_in_commitment: false
+
+coverage_aggregates:
+  shared_left_positive_hidden_coverage: true
+  shared_left_negative_hidden_coverage: true
+  unique_antecedent_hidden_coverage: true
+  duplicate_realization_hidden_coverage: true
+  stage_boundary_hidden_coverage: true
+  implementation_bytes_used_for_secret_design: false
+  candidate_used_during_freeze: false
+
+execution_boundary:
+  r11_v2_freeze: true
+  r11_executed: false
+  candidate_used_during_freeze: false
+  secret_body_changed_after_freeze: false
+  secret_body_in_git: false
+  implementation_access: "PROHIBITED"
+  c1_implementation_authorized: false
+  c2_authorized: false
+
+disclosure_boundary:
+  contains_secret_queries: false
+  contains_secret_expected_outputs: false
+  contains_secret_queryir: false
+  contains_secret_case_or_probe_ids: false
+  contains_secret_case_mapping: false
+  contains_recovery_key: false
+  contains_recovery_key_sha256: false
+  contains_private_paths: false
+
+commit_policy:
+  additive_only: true
+  required_parent: "5a28cc600333e2904728a1754b5d228740f44ddb"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/r11-v2-suite-commitment.yml"
