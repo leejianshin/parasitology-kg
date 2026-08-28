@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 15
     minimality: 8
-    negative: 63
+    negative: 64
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -173,7 +173,7 @@ validators:
       - CNS-SOLVER-AMBIGUITY_CERTIFICATE
     additional_checks:
       - "all constraint IDs occur exactly once in the bound registry and selected constraint set"
-      - "registry entry orders are exactly integers 1 through 46 with no duplicate or gap"
+      - "registry entry orders are exactly integers 1 through 47 with no duplicate or gap"
       - "selected constraint IDs equal the complete registry ID sequence in registry validation order"
       - "registry and constraint set both pass their frozen Schemas before any constraint executes"
       - "the actual registry Schema and constraint-set Schema equal their independently content-addressed frozen objects"

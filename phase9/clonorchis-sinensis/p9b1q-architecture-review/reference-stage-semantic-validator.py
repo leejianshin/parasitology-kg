@@ -431,6 +431,14 @@ def validate_shared_argument_integrity(ast: dict[str, Any]) -> list[dict[str, st
         target = by_id.get(target_id)
         parent = by_id.get(owner.get("parent_node_id"))
         children = [by_id.get(value) for value in owner.get("child_node_ids", [])]
+        parent_children = [
+            by_id.get(value) for value in parent.get("child_node_ids", [])
+        ] if parent is not None else []
+        antecedent_children = [
+            child for child in parent_children
+            if child is not None
+            and child.get("scope_role") == "CONDITION_ANTECEDENT"
+        ]
         structurally_valid = (
             owner.get("node_kind") == "CONTRAST"
             and parent is not None
@@ -442,6 +450,8 @@ def validate_shared_argument_integrity(ast: dict[str, Any]) -> list[dict[str, st
             and target.get("scope_role") == "CONDITION_ANTECEDENT"
             and target.get("parent_node_id") == parent.get("node_id")
             and target_id in parent.get("child_node_ids", [])
+            and len(antecedent_children) == 1
+            and antecedent_children[0].get("node_id") == target_id
             and target_id != owner.get("node_id")
             and len(children) == 1
             and children[0] is not None
@@ -451,8 +461,9 @@ def validate_shared_argument_integrity(ast: dict[str, Any]) -> list[dict[str, st
             and not any(child and child.get("scope_role") == "CONTRAST_LEFT" for child in children)
             and "shared_left_argument_node_id" not in target
         )
-        # The antecedent must have one semantic realization: it may not also
-        # occur as a proposition descendant of the owning CONTRAST.
+        # The antecedent must have one semantic realization in the complete
+        # Clause AST. Exact source coordinates plus PROPOSITION kind identify
+        # the realization; equal text at another position remains legal.
         descendants: set[str] = set()
         pending = list(owner.get("child_node_ids", []))
         while pending:
@@ -467,11 +478,16 @@ def validate_shared_argument_integrity(ast: dict[str, Any]) -> list[dict[str, st
         structurally_valid = structurally_valid and target_id not in descendants
         if target is not None:
             target_span = target.get("source_span")
-            for descendant_id in descendants:
-                descendant = by_id.get(descendant_id)
-                if (descendant and descendant.get("node_kind") == "PROPOSITION"
-                        and descendant.get("source_span") == target_span):
-                    structurally_valid = False
+            matching_realizations = [
+                node for node in nodes
+                if node.get("node_kind") == "PROPOSITION"
+                and node.get("source_span") == target_span
+            ]
+            structurally_valid = (
+                structurally_valid
+                and len(matching_realizations) == 1
+                and matching_realizations[0].get("node_id") == target_id
+            )
         if not structurally_valid:
             errors.append(error("CNS-AST-SHARED-ARGUMENT-INTEGRITY", "SHARED_ARGUMENT_INVALID", f"/nodes/{index}/shared_left_argument_node_id"))
     return errors

@@ -36,6 +36,18 @@ fixtures = {
     if path.is_file()
 }
 protected = {path: sha(REPO / path) for path in protected_paths}
+stage_negative_count = len(yaml.safe_load(
+    (HERE / "fixtures/stage-validator-negative-fixtures.yml").read_text(encoding="utf-8")
+)["cases"])
+r3a_negative_count = len(yaml.safe_load(
+    (HERE / "fixtures/r3a-reference-override-negative-fixtures.yml").read_text(encoding="utf-8")
+)["cases"])
+r3b_negative_count = len(yaml.safe_load(
+    (HERE / "fixtures/r3b-negation-scope-negative-fixtures.yml").read_text(encoding="utf-8")
+)["cases"])
+total_formal_negative_count = (
+    stage_negative_count + r3a_negative_count + r3b_negative_count
+)
 manifest = {
     "manifest_id": "P9B1Q-R3H-SIDECAR-INDEX-EVIDENCE-BINDING-DESIGN-MANIFEST-v1.0",
     "status": "R3H_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW",
@@ -62,7 +74,7 @@ manifest = {
         "positive_cases": 11,
         "integrated_r3b_positive_cases": 4,
         "minimality_cases": 8,
-        "negative_cases": 63,
+        "negative_cases": stage_negative_count + r3b_negative_count,
         "repeat_runs": 3,
     },
     "shared_negation_semantic_authority": {
@@ -105,8 +117,8 @@ manifest = {
         "registry_mapping_count": 47,
         "validator_constraint_mapping_count": 47,
         "executable_constraint_count": 47,
-        "formal_fixture_count": 79,
-        "explicit_fixture_failure_code_count": 79,
+        "formal_fixture_count": total_formal_negative_count,
+        "explicit_fixture_failure_code_count": total_formal_negative_count,
         "required_missing_executable_constraint_count": 0,
         "required_mismatch_count": 0,
         "wrong_fixture_code_gate": "REJECT",
@@ -120,10 +132,10 @@ manifest = {
     "negative_fixture_mutation_isolation": {
         "model_path": "negative-fixture-semantic-mutation-model.yml",
         "semantic_mutation_target_cardinality": 1,
-        "stage_fixture_count": 37,
-        "r3a_fixture_count": 16,
-        "r3b_fixture_count": 14,
-        "total_fixture_count": 67,
+        "stage_fixture_count": stage_negative_count,
+        "r3a_fixture_count": r3a_negative_count,
+        "r3b_fixture_count": r3b_negative_count,
+        "total_fixture_count": total_formal_negative_count,
         "derived_updates_runner_owned": True,
         "legacy_cases": [
             "NEG-S3-EMPTY-UNIQUE",
