@@ -50,11 +50,24 @@ CANONICALIZATION_PROFILE_PATH = ARCH_REVIEW / "object-canonicalization-and-hash-
 NEGATION_SURFACE_SCOPE_PATH = ARCH_REVIEW / "negation-surface-scope-authority.yml"
 NEGATION_SEMANTIC_AUTHORITY_PATH = ARCH_REVIEW / "negation_semantic_authority.py"
 ENTITY_ONTOLOGY_PATH = Path("schema/entity-types.yml")
+EVENT_FRAME_SCHEMA_PATH = ARCH_REVIEW / "event-frame-schema-candidate.yml"
+EVENT_IDENTITY_CONTRACT_PATH = ARCH_REVIEW / "event-identity-contract.yml"
+EVENT_RELATION_AUTHORITY_PATH = (
+    ARCH_REVIEW / "fixtures/authority-event-relation-mapping.json"
+)
 
 C1_TERMINAL_STAGE = "S1_CLAUSE_AST"
 C1_IMPLEMENTED_STAGES = ("S0_REQUEST_NORMALIZATION", C1_TERMINAL_STAGE)
 C1_PROHIBITED_STAGES = (
     "S2_EVENT_FRAME",
+    "S3_TYPED_CONSTRAINT_SOLVER",
+    "S4_QUERYIR_EMISSION_IMPLEMENTATION",
+    "S5_RUNTIME_RETRIEVAL_BINDING",
+)
+
+C2_TERMINAL_STAGE = "S2_EVENT_FRAME"
+C2_IMPLEMENTED_STAGES = (*C1_IMPLEMENTED_STAGES, C2_TERMINAL_STAGE)
+C2_PROHIBITED_STAGES = (
     "S3_TYPED_CONSTRAINT_SOLVER",
     "S4_QUERYIR_EMISSION_IMPLEMENTATION",
     "S5_RUNTIME_RETRIEVAL_BINDING",
@@ -1366,6 +1379,1090 @@ def compile_c1(request: dict[str, Any], root: Path = ROOT) -> dict[str, Any]:
         "clause_ast_sha256": canonical_sha256(ast),
     }
     validate_c1_stop_boundary(result)
+    return result
+
+
+class C2ValidationError(ValueError):
+    pass
+
+
+def _c2_fail(stage: str, message: str) -> None:
+    raise C2ValidationError(f"{stage}: {message}")
+
+
+def _load_event_authority(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    mapping = json.loads((root / EVENT_RELATION_AUTHORITY_PATH).read_text(encoding="utf-8"))
+    public_mapping = _read_yaml(root / MAPPING_PATH)
+    if mapping.get("event_mapping") != public_mapping.get("event_mapping"):
+        _c2_fail("S2_EVENT_FRAME", "event mapping projection differs from public authority")
+    return mapping, public_mapping
+
+
+def _entity_type_map(ontology: dict[str, Any]) -> dict[str, str]:
+    return {
+        authority["id_prefix"]: entity_type
+        for entity_type, authority in ontology["entity_types"].items()
+    }
+
+
+def _candidate_domain(
+    mention: dict[str, Any],
+    allowed_types: set[str],
+    prefix_types: dict[str, str],
+) -> tuple[list[str], list[str]]:
+    entity_ids = sorted(
+        entity_id
+        for entity_id in mention["candidate_entity_ids"]
+        if prefix_types.get(entity_id.split(".", 1)[0]) in allowed_types
+    )
+    entity_types = sorted(
+        {prefix_types[entity_id.split(".", 1)[0]] for entity_id in entity_ids}
+    )
+    return entity_ids, entity_types
+
+
+def _node_descendants(
+    node_id: str, nodes_by_id: dict[str, dict[str, Any]]
+) -> set[str]:
+    result: set[str] = set()
+    pending = list(nodes_by_id[node_id]["child_node_ids"])
+    while pending:
+        current = pending.pop()
+        if current in result:
+            continue
+        result.add(current)
+        pending.extend(nodes_by_id[current]["child_node_ids"])
+    return result
+
+
+def _node_ancestors(
+    node_id: str, nodes_by_id: dict[str, dict[str, Any]]
+) -> list[str]:
+    result: list[str] = []
+    current = nodes_by_id[node_id]["parent_node_id"]
+    while current is not None:
+        result.append(current)
+        current = nodes_by_id[current]["parent_node_id"]
+    return result
+
+
+def _event_domain_for_proposition(
+    proposition: dict[str, Any],
+    mentions: list[dict[str, Any]],
+    config: dict[str, Any],
+    mapping: dict[str, Any],
+) -> tuple[list[str], dict[str, set[str]]]:
+    """Return every formally licensed event type and its expressed predicates."""
+    text = proposition["source_span"]["text"]
+    present_types = {
+        entity_type
+        for mention in mentions
+        for entity_type in mention["candidate_entity_types"]
+    }
+    if "diagnostic_method" in present_types:
+        return ["DIAGNOSTIC_FINDING"], {"DIAGNOSTIC_FINDING": set()}
+
+    expressed_predicates = {
+        predicate
+        for predicate, cues in config["predicate_cues"].items()
+        if _contains_any(text, cues)
+    }
+    candidates: dict[str, set[str]] = {}
+    for event_type, authority in mapping["event_mapping"].items():
+        matched = expressed_predicates.intersection(authority.get("predicates", {}))
+        if matched:
+            candidates[event_type] = matched
+
+    exposure_cue = (
+        _contains_any(text, config["role_cues"]["epidemiologic_exposure_clue"])
+        or _contains_any(text, config["topic_cues"]["exposure"])
+    )
+    if exposure_cue and present_types.intersection({"behavior", "environment"}):
+        candidates = {"EXPOSURE": candidates.get("EXPOSURE", set())}
+
+    if not candidates and "behavior" in present_types:
+        # The reviewed consumption behavior is a target licensed by both event
+        # classes.  Without an expressed narrowing cue S2 preserves both.
+        candidates = {"EXPOSURE": set(), "INGESTION": set()}
+
+    viable: dict[str, set[str]] = {}
+    for event_type, predicates in candidates.items():
+        authority = mapping["event_mapping"][event_type]
+        actor_types = set(authority.get("allowed_actor_types", []))
+        target_types = set(authority.get("allowed_target_types", []))
+        if present_types.intersection(actor_types | target_types):
+            viable[event_type] = predicates
+    ordered = [
+        event_type
+        for event_type in mapping["event_mapping"]
+        if event_type in viable
+    ]
+    return ordered, viable
+
+
+def _role_type_domains(
+    event_types: list[str],
+    expressed: dict[str, set[str]],
+    mapping: dict[str, Any],
+) -> tuple[set[str], set[str]]:
+    actor_domains: list[set[str]] = []
+    target_domains: list[set[str]] = []
+    for event_type in event_types:
+        authority = mapping["event_mapping"][event_type]
+        predicates = expressed.get(event_type, set())
+        if predicates:
+            actor = {
+                entity_type
+                for predicate in predicates
+                for entity_type in authority["predicates"][predicate]["subject_from"]
+                if entity_type != "method_entity_id"
+            }
+            target = {
+                entity_type
+                for predicate in predicates
+                for entity_type in authority["predicates"][predicate]["object_from"]
+                if entity_type != "method_entity_id"
+            }
+        else:
+            actor = set(authority.get("allowed_actor_types", []))
+            target = set(authority.get("allowed_target_types", []))
+        actor_domains.append(actor)
+        target_domains.append(target)
+    return set.intersection(*actor_domains), set.intersection(*target_domains)
+
+
+def _maximal_role_candidates(
+    candidates: list[tuple[dict[str, Any], list[str], list[str]]]
+) -> list[tuple[dict[str, Any], list[str], list[str]]]:
+    result: list[tuple[dict[str, Any], list[str], list[str]]] = []
+    for candidate in candidates:
+        span = candidate[0]["source_span"]
+        if any(
+            other is not candidate
+            and other[0]["source_span"]["start_char"] <= span["start_char"]
+            and span["end_char"] <= other[0]["source_span"]["end_char"]
+            and other[0]["source_span"] != span
+            for other in candidates
+        ):
+            continue
+        result.append(candidate)
+    return result
+
+
+def _frame_marker_context(
+    proposition: dict[str, Any],
+    participant_source_ids: set[str],
+    ast: dict[str, Any],
+) -> list[dict[str, Any]]:
+    nodes_by_id = {node["node_id"]: node for node in ast["nodes"]}
+    ancestors = set(_node_ancestors(proposition["node_id"], nodes_by_id))
+    governed_ids = {proposition["node_id"], *participant_source_ids}
+    result: list[dict[str, Any]] = []
+    for marker in ast["assertion_markers"]:
+        targets = set(marker["scope_target_candidate_ids"])
+        if targets.intersection(governed_ids):
+            result.append(marker)
+            continue
+        if (
+            marker["containing_node_id"] in ancestors
+            and targets.intersection(ancestors | {proposition["node_id"]})
+        ):
+            result.append(marker)
+    return sorted(result, key=lambda item: item["marker_id"])
+
+
+def _assertion_envelope(
+    proposition: dict[str, Any],
+    participant_source_ids: set[str],
+    ast: dict[str, Any],
+    config: dict[str, Any],
+    negation_authority: dict[str, Any],
+    diagnostic: bool,
+) -> tuple[dict[str, Any], list[str]]:
+    markers = _frame_marker_context(proposition, participant_source_ids, ast)
+    status_candidates: set[str] = set()
+    temporal_candidates: set[str] = set()
+    polarity_sources: list[str] = []
+    for marker in markers:
+        kind = marker["marker_kind"]
+        if kind == "EXCLUSION":
+            status_candidates.add("EXCLUDED")
+        elif kind == "HYPOTHETICAL":
+            status_candidates.add("HYPOTHETICAL")
+        elif kind in {"HISTORICAL", "CURRENT", "FUTURE"}:
+            temporal_candidates.add(kind)
+        elif kind == "NEGATOR":
+            authority = negation_authority["source_classification"].get(
+                marker["source_span"]["text"]
+            )
+            if authority is None:
+                _c2_fail("S2_EVENT_FRAME", "negator lacks frozen surface authority")
+            if authority["semantic_effect"] == "EVENT_NEGATION":
+                status_candidates.add("NEGATED")
+            elif authority["semantic_effect"] == "PARTICIPANT_NEGATION":
+                polarity_sources.append(marker["marker_id"])
+    if len(status_candidates) > 1 or len(temporal_candidates) > 1:
+        _c2_fail("S2_EVENT_FRAME", "assertion or temporal scope remains unrepresentable")
+    assertion_status = next(iter(status_candidates), "AFFIRMED")
+    temporal_scope = next(iter(temporal_candidates), "GENERAL")
+    finding_polarity = "NOT_APPLICABLE"
+    if diagnostic:
+        finding_polarity = _diagnostic_polarity(
+            proposition["source_span"]["text"], config
+        )
+        if polarity_sources:
+            finding_polarity = "NEGATIVE"
+        if not polarity_sources:
+            polarity_sources = [proposition["node_id"]]
+    envelope = {
+        "assertion_status": assertion_status,
+        "finding_polarity": finding_polarity,
+        "temporal_scope": temporal_scope,
+        "governing_ast_node_ids": [proposition["node_id"]],
+        "marker_ids": [
+            marker["marker_id"]
+            for marker in markers
+            if marker["marker_kind"] != "CONNECTIVE"
+        ],
+    }
+    return envelope, polarity_sources
+
+
+def _specimen_surface(
+    mention: dict[str, Any], specimen_code: str
+) -> dict[str, Any] | None:
+    surfaces = {
+        "STOOL": ("粪便", "粪样", "大便"),
+        "DUODENAL_FLUID": ("十二指肠引流液", "十二指肠液"),
+    }
+    source = mention["source_span"]
+    for surface in surfaces.get(specimen_code, ()):
+        offset = source["text"].find(surface)
+        if offset >= 0:
+            start = source["start_char"] + offset
+            return {
+                "start_char": start,
+                "end_char": start + len(surface),
+                "text": surface,
+            }
+    return None
+
+
+def _method_specimen_code(entity_id: str) -> str:
+    codes = {
+        "diagnostic.stool_egg_microscopy": "STOOL",
+        "diagnostic.duodenal_fluid_egg_microscopy": "DUODENAL_FLUID",
+        "diagnostic.biliary_imaging": "NOT_APPLICABLE",
+    }
+    if entity_id not in codes:
+        _c2_fail("S2_EVENT_FRAME", f"diagnostic specimen mapping is absent: {entity_id}")
+    return codes[entity_id]
+
+
+def _frame_identity_signature(
+    frame: dict[str, Any], specimens: dict[str, dict[str, Any]]
+) -> tuple[Any, ...]:
+    slots = {slot["slot_id"]: slot for slot in frame["participant_slots"]}
+    identity = frame["normalized_identity"]
+
+    def entities(slot_ids: list[str]) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                {
+                    entity_id
+                    for slot_id in slot_ids
+                    for entity_id in slots[slot_id]["domain"]["entity_ids"]
+                }
+            )
+        )
+
+    method_ids = ()
+    if identity["method_slot_id"] is not None:
+        method_ids = entities([identity["method_slot_id"]])
+    specimen_codes = tuple(
+        sorted(
+            {
+                code
+                for slot_id in identity["specimen_slot_ids"]
+                for code in specimens[slot_id]["specimen_code_domain"]
+            }
+        )
+    ) or ("NOT_APPLICABLE",)
+    return (
+        tuple(frame["event_type_domain"]),
+        entities(identity["actor_slot_ids"]),
+        method_ids,
+        specimen_codes,
+        entities(identity["target_slot_ids"]),
+        entities(identity["anatomical_site_slot_ids"]),
+    )
+
+
+def normalized_event_identity(
+    frame: dict[str, Any], event_frame: dict[str, Any]
+) -> tuple[Any, ...]:
+    """Execute the frozen event identity contract without using frame IDs."""
+    specimens = {
+        item["specimen_slot_id"]: item for item in event_frame["specimen_slots"]
+    }
+    return _frame_identity_signature(frame, specimens)
+
+
+def same_normalized_event_identity(
+    left: dict[str, Any], right: dict[str, Any], event_frame: dict[str, Any]
+) -> bool:
+    return normalized_event_identity(left, event_frame) == normalized_event_identity(
+        right, event_frame
+    )
+
+
+def _state_difference_domain(
+    earlier: dict[str, Any], later: dict[str, Any]
+) -> list[str]:
+    fields = (
+        ("ASSERTION_STATUS", "assertion_status"),
+        ("FINDING_POLARITY", "finding_polarity"),
+        ("TEMPORAL_SCOPE", "temporal_scope"),
+    )
+    return [
+        dimension
+        for dimension, field in fields
+        if earlier["assertion"][field] != later["assertion"][field]
+    ]
+
+
+def _build_reference_hypotheses(
+    proposition_nodes: list[dict[str, Any]],
+    frames: list[dict[str, Any]],
+    frame_node_ids: dict[str, str],
+    specimens: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    node_start = {
+        node["node_id"]: node["source_span"]["start_char"]
+        for node in proposition_nodes
+    }
+    for node in proposition_nodes:
+        text = node["source_span"]["text"]
+        current = [
+            frame
+            for frame in frames
+            if frame_node_ids[frame["frame_id"]] == node["node_id"]
+        ]
+        prior = [
+            frame
+            for frame in frames
+            if node_start[frame_node_ids[frame["frame_id"]]]
+            < node["source_span"]["start_char"]
+        ]
+        if "同一" in text and "事件" in text and not current:
+            if "诊断" in text:
+                prior = [
+                    frame
+                    for frame in prior
+                    if "DIAGNOSTIC_FINDING" in frame["event_type_domain"]
+                ]
+            if len(prior) < 2:
+                continue
+            anaphor = prior[-1]
+            candidates = prior[:-1]
+            relations = sorted(
+                {
+                    "SAME_EVENT"
+                    if _frame_identity_signature(anaphor, specimens)
+                    == _frame_identity_signature(candidate, specimens)
+                    else "DISTINCT_EVENT"
+                    for candidate in candidates
+                }
+            )
+            result.append({
+                "reference_hypothesis_id": f"RH{len(result) + 1:03d}",
+                "anaphor_source_id": frame_node_ids[anaphor["frame_id"]],
+                "anaphor_frame_id": anaphor["frame_id"],
+                "candidate_referent_ids": [
+                    candidate["frame_id"] for candidate in candidates
+                ],
+                "identity_relation_domain": relations,
+                "status": (
+                    "UNIQUE"
+                    if len(candidates) == 1 and len(relations) == 1
+                    else "UNRESOLVED"
+                ),
+            })
+        if "另一" in text and "事件" in text and current and prior:
+            for anaphor in current:
+                # The frozen R3A evidence defines “另一…事件” against the
+                # immediately preceding explicit event anchor.  This is a
+                # grammatical anchor relation, not a distance-based winner
+                # chosen from multiple otherwise compatible referents.
+                candidates = prior[-1:]
+                relations = sorted(
+                    {
+                        "SAME_EVENT"
+                        if _frame_identity_signature(anaphor, specimens)
+                        == _frame_identity_signature(candidate, specimens)
+                        else "DISTINCT_EVENT"
+                        for candidate in candidates
+                    }
+                )
+                result.append({
+                    "reference_hypothesis_id": f"RH{len(result) + 1:03d}",
+                    "anaphor_source_id": frame_node_ids[anaphor["frame_id"]],
+                    "anaphor_frame_id": anaphor["frame_id"],
+                    "candidate_referent_ids": [
+                        candidate["frame_id"] for candidate in candidates
+                    ],
+                    "identity_relation_domain": relations,
+                    "status": (
+                        "UNIQUE"
+                        if len(candidates) == 1 and len(relations) == 1
+                        else "UNRESOLVED"
+                    ),
+                })
+    return result
+
+
+def _override_hypothesis(
+    override_node_id: str,
+    earlier: list[dict[str, Any]],
+    later: list[dict[str, Any]],
+    specimens: dict[str, dict[str, Any]],
+    number: int,
+) -> dict[str, Any] | None:
+    if not earlier or not later:
+        return None
+    valid: list[tuple[dict[str, Any], dict[str, Any], list[str]]] = []
+    observed_dimensions: set[str] = set()
+    for left in earlier:
+        for right in later:
+            differences = _state_difference_domain(left, right)
+            observed_dimensions.update(differences)
+            if (
+                _frame_identity_signature(left, specimens)
+                == _frame_identity_signature(right, specimens)
+                and differences
+            ):
+                valid.append((left, right, differences))
+    if valid:
+        earlier_ids = sorted({item[0]["frame_id"] for item in valid})
+        later_ids = sorted({item[1]["frame_id"] for item in valid})
+        dimensions = [
+            dimension
+            for dimension in (
+                "ASSERTION_STATUS",
+                "FINDING_POLARITY",
+                "TEMPORAL_SCOPE",
+            )
+            if any(dimension in item[2] for item in valid)
+        ]
+        status = (
+            "UNIQUE"
+            if len(valid) == 1 and len(dimensions) == 1
+            else "UNRESOLVED"
+        )
+    else:
+        earlier_ids = [item["frame_id"] for item in earlier]
+        later_ids = [item["frame_id"] for item in later]
+        dimensions = [
+            dimension
+            for dimension in (
+                "ASSERTION_STATUS",
+                "FINDING_POLARITY",
+                "TEMPORAL_SCOPE",
+            )
+            if dimension in observed_dimensions
+        ] or ["ASSERTION_STATUS", "FINDING_POLARITY", "TEMPORAL_SCOPE"]
+        status = "NO_MATCH"
+    return {
+        "override_hypothesis_id": f"OH{number:03d}",
+        "override_ast_node_id": override_node_id,
+        "earlier_frame_ids": earlier_ids,
+        "later_frame_ids": later_ids,
+        "identity_constraint": "SAME_NORMALIZED_IDENTITY_EXCLUDING_ASSERTION",
+        "overridden_dimension_domain": dimensions,
+        "status": status,
+    }
+
+
+def _build_override_hypotheses(
+    nodes: list[dict[str, Any]],
+    frames: list[dict[str, Any]],
+    frame_node_ids: dict[str, str],
+    specimens: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    nodes_by_id = {node["node_id"]: node for node in nodes}
+    frames_by_node: dict[str, list[dict[str, Any]]] = {}
+    for frame in frames:
+        frames_by_node.setdefault(frame_node_ids[frame["frame_id"]], []).append(frame)
+    result: list[dict[str, Any]] = []
+    covered_statements: set[str] = set()
+    for node in nodes:
+        if node["node_kind"] != "OVERRIDE" or len(node["child_node_ids"]) != 2:
+            continue
+        left_ids = _node_descendants(node["child_node_ids"][0], nodes_by_id) | {
+            node["child_node_ids"][0]
+        }
+        right_ids = _node_descendants(node["child_node_ids"][1], nodes_by_id) | {
+            node["child_node_ids"][1]
+        }
+        earlier = [
+            frame for source_id in left_ids for frame in frames_by_node.get(source_id, [])
+        ]
+        later = [
+            frame for source_id in right_ids for frame in frames_by_node.get(source_id, [])
+        ]
+        hypothesis = _override_hypothesis(
+            node["node_id"], earlier, later, specimens, len(result) + 1
+        )
+        if hypothesis:
+            result.append(hypothesis)
+            covered_statements.add(node["node_id"])
+
+    proposition_nodes = [node for node in nodes if node["node_kind"] == "PROPOSITION"]
+    for node in proposition_nodes:
+        if "覆盖" not in node["source_span"]["text"] or node["node_id"] in covered_statements:
+            continue
+        prior = [
+            frame
+            for frame in frames
+            if nodes_by_id[frame_node_ids[frame["frame_id"]]]["source_span"]["end_char"]
+            <= node["source_span"]["start_char"]
+        ]
+        if len(prior) < 2:
+            continue
+        if "结果" in node["source_span"]["text"]:
+            prior = [
+                frame
+                for frame in prior
+                if "DIAGNOSTIC_FINDING" in frame["event_type_domain"]
+            ]
+        if len(prior) < 2:
+            continue
+        if (
+            "后次" in node["source_span"]["text"]
+            and "前次" in node["source_span"]["text"]
+        ):
+            earlier, later = prior[-2:-1], prior[-1:]
+        else:
+            earlier, later = prior[:-1], prior[-1:]
+        hypothesis = _override_hypothesis(
+            node["node_id"], earlier, later, specimens, len(result) + 1
+        )
+        if hypothesis:
+            result.append(hypothesis)
+    return result
+
+
+def _build_event_frame(
+    normalized: dict[str, Any], ast: dict[str, Any], root: Path
+) -> dict[str, Any]:
+    ontology = _read_yaml(root / ENTITY_ONTOLOGY_PATH)
+    prefix_types = _entity_type_map(ontology)
+    mapping, _ = _load_event_authority(root)
+    config = _load_configuration(root)
+    negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
+    nodes_by_id = {node["node_id"]: node for node in ast["nodes"]}
+    propositions = sorted(
+        (node for node in ast["nodes"] if node["node_kind"] == "PROPOSITION"),
+        key=lambda node: (
+            node["source_span"]["start_char"],
+            node["source_span"]["end_char"],
+            node["node_id"],
+        ),
+    )
+    mentions_by_node: dict[str, list[dict[str, Any]]] = {}
+    for mention in ast["surface_mentions"]:
+        mentions_by_node.setdefault(mention["containing_node_id"], []).append(mention)
+    unresolved_target_groups = [
+        set(attachment["candidate_governor_ids"])
+        for attachment in ast["attachment_sets"]
+        if attachment["status"] == "UNRESOLVED"
+    ]
+
+    frames: list[dict[str, Any]] = []
+    specimen_slots: list[dict[str, Any]] = []
+    frame_node_ids: dict[str, str] = {}
+    next_slot = 1
+    for proposition in propositions:
+        mentions = sorted(
+            mentions_by_node.get(proposition["node_id"], []),
+            key=lambda item: (
+                item["source_span"]["start_char"],
+                item["source_span"]["end_char"],
+                item["surface_mention_id"],
+            ),
+        )
+        event_types, expressed = _event_domain_for_proposition(
+            proposition, mentions, config, mapping
+        )
+        if not event_types:
+            continue
+        diagnostic = event_types == ["DIAGNOSTIC_FINDING"]
+        actor_types, target_types = _role_type_domains(event_types, expressed, mapping)
+        role_candidates: dict[
+            str, list[tuple[dict[str, Any], list[str], list[str]]]
+        ] = {"ACTOR": [], "METHOD": [], "TARGET": [], "LOCATION": []}
+        for mention in mentions:
+            if diagnostic:
+                ids, types = _candidate_domain(
+                    mention, {"diagnostic_method"}, prefix_types
+                )
+                if ids:
+                    role_candidates["METHOD"].append((mention, ids, types))
+            ids, types = _candidate_domain(mention, actor_types, prefix_types)
+            if ids:
+                role_candidates["ACTOR"].append((mention, ids, types))
+            location_ids, location_types = _candidate_domain(
+                mention, {"anatomical_site"}.intersection(target_types), prefix_types
+            )
+            if location_ids:
+                role_candidates["LOCATION"].append(
+                    (mention, location_ids, location_types)
+                )
+            ids, types = _candidate_domain(
+                mention, target_types - {"anatomical_site"}, prefix_types
+            )
+            if ids:
+                role_candidates["TARGET"].append((mention, ids, types))
+        for role in role_candidates:
+            role_candidates[role] = _maximal_role_candidates(role_candidates[role])
+
+        participant_slots: list[dict[str, Any]] = []
+        slots_by_role: dict[str, list[str]] = {
+            "ACTOR": [], "METHOD": [], "TARGET": [], "LOCATION": []
+        }
+
+        def add_slot(
+            role: str,
+            group: list[tuple[dict[str, Any], list[str], list[str]]],
+        ) -> str:
+            nonlocal next_slot
+            source_ids = sorted({item[0]["surface_mention_id"] for item in group})
+            entity_ids = sorted({entity_id for item in group for entity_id in item[1]})
+            entity_types = sorted({entity_type for item in group for entity_type in item[2]})
+            if not source_ids or not entity_ids or not entity_types:
+                _c2_fail("S2_EVENT_FRAME", f"empty {role} participant domain")
+            slot_id = f"V{next_slot:03d}"
+            next_slot += 1
+            participant_slots.append({
+                "slot_id": slot_id,
+                "semantic_role": role,
+                "source_ids": source_ids,
+                "domain": {
+                    "entity_ids": entity_ids,
+                    "entity_types": entity_types,
+                },
+                "binding_status": "FIXED" if len(entity_ids) == 1 else "COMPETING",
+            })
+            slots_by_role[role].append(slot_id)
+            return slot_id
+
+        for role in ("ACTOR", "METHOD"):
+            candidates = role_candidates[role]
+            if role == "METHOD" and len(candidates) > 1:
+                add_slot(role, candidates)
+            else:
+                for candidate in candidates:
+                    add_slot(role, [candidate])
+
+        target_candidates = role_candidates["TARGET"]
+        consumed: set[str] = set()
+        for unresolved in unresolved_target_groups:
+            group = [
+                candidate
+                for candidate in target_candidates
+                if candidate[0]["surface_mention_id"] in unresolved
+            ]
+            if len(group) >= 2:
+                add_slot("TARGET", group)
+                consumed.update(item[0]["surface_mention_id"] for item in group)
+        for candidate in target_candidates:
+            if candidate[0]["surface_mention_id"] not in consumed:
+                add_slot("TARGET", [candidate])
+        for candidate in role_candidates["LOCATION"]:
+            add_slot("LOCATION", [candidate])
+
+        if not participant_slots:
+            continue
+        participant_source_ids = {
+            source_id
+            for slot in participant_slots
+            for source_id in slot["source_ids"]
+        }
+        assertion, polarity_sources = _assertion_envelope(
+            proposition,
+            participant_source_ids,
+            ast,
+            config,
+            negation_authority,
+            diagnostic,
+        )
+        diagnostic_binding = None
+        specimen_ids: list[str] = []
+        if diagnostic:
+            if len(slots_by_role["METHOD"]) != 1:
+                _c2_fail("S2_EVENT_FRAME", "diagnostic frame lacks one method domain")
+            method_slot_id = slots_by_role["METHOD"][0]
+            method_slot = next(
+                slot for slot in participant_slots if slot["slot_id"] == method_slot_id
+            )
+            source_mentions = [
+                mention
+                for mention in mentions
+                if mention["surface_mention_id"] in method_slot["source_ids"]
+            ]
+            specimen_codes = sorted(
+                {_method_specimen_code(entity_id) for entity_id in method_slot["domain"]["entity_ids"]}
+            )
+            specimen_spans: list[dict[str, Any]] = []
+            for code in specimen_codes:
+                if code == "NOT_APPLICABLE":
+                    # This is the frozen non-concrete code for biliary
+                    # imaging, not an inferred specimen.  The method mention
+                    # is the auditable source for the formal absence.
+                    specimen_spans.extend(
+                        mention["source_span"] for mention in source_mentions
+                    )
+                    continue
+                matches = [
+                    span
+                    for mention in source_mentions
+                    if (span := _specimen_surface(mention, code)) is not None
+                ]
+                if not matches:
+                    _c2_fail(
+                        "S2_EVENT_FRAME",
+                        f"specimen {code} is not explicitly source-grounded",
+                    )
+                specimen_spans.extend(matches)
+            specimen_slot_id = f"SP{len(specimen_slots) + 1:03d}"
+            specimen_slots.append({
+                "specimen_slot_id": specimen_slot_id,
+                "source_ids": method_slot["source_ids"],
+                "source_spans": sorted(
+                    {canonical_bytes(span): span for span in specimen_spans}.values(),
+                    key=lambda span: (span["start_char"], span["end_char"], span["text"]),
+                ),
+                "specimen_code_domain": specimen_codes,
+                "binding_status": "FIXED" if len(specimen_codes) == 1 else "COMPETING",
+            })
+            specimen_ids = [specimen_slot_id]
+            diagnostic_binding = {
+                "method_slot_id": method_slot_id,
+                "specimen_slot_id": specimen_slot_id,
+                "target_slot_ids": slots_by_role["TARGET"],
+                "polarity_source_ids": polarity_sources,
+            }
+
+        incomplete = diagnostic and (
+            assertion["finding_polarity"] == "UNSPECIFIED"
+            or not slots_by_role["TARGET"]
+        )
+        competing = (
+            len(event_types) > 1
+            or any(slot["binding_status"] == "COMPETING" for slot in participant_slots)
+            or any(
+                specimen["binding_status"] == "COMPETING"
+                for specimen in specimen_slots
+                if specimen["specimen_slot_id"] in specimen_ids
+            )
+        )
+        frame_id = f"EF{len(frames) + 1:03d}"
+        frame = {
+            "frame_id": frame_id,
+            "event_type_domain": event_types,
+            "source_ast_node_ids": [proposition["node_id"]],
+            "source_spans": [proposition["source_span"]],
+            "participant_slots": participant_slots,
+            "assertion": assertion,
+            "diagnostic_binding": diagnostic_binding,
+            "normalized_identity": {
+                "event_type_domain": event_types,
+                "actor_slot_ids": slots_by_role["ACTOR"],
+                "method_slot_id": slots_by_role["METHOD"][0]
+                if slots_by_role["METHOD"]
+                else None,
+                "specimen_slot_ids": specimen_ids,
+                "target_slot_ids": slots_by_role["TARGET"],
+                "anatomical_site_slot_ids": slots_by_role["LOCATION"],
+                "temporal_scope_domain": [assertion["temporal_scope"]],
+            },
+            "frame_status": (
+                "INCOMPLETE" if incomplete else "COMPETING" if competing else "FIXED"
+            ),
+        }
+        frames.append(frame)
+        frame_node_ids[frame_id] = proposition["node_id"]
+
+    specimens_by_id = {
+        item["specimen_slot_id"]: item for item in specimen_slots
+    }
+    event_frame = {
+        "event_frame_version": "0.2-candidate",
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "knowledge_version": normalized["knowledge_version"],
+        "clause_ast_sha256": canonical_sha256(ast),
+        "entity_ontology_sha256": file_sha256(root / ENTITY_ONTOLOGY_PATH),
+        "event_relation_mapping_sha256": file_sha256(
+            root / EVENT_RELATION_AUTHORITY_PATH
+        ),
+        "canonicalization_profile_sha256": file_sha256(
+            root / CANONICALIZATION_PROFILE_PATH
+        ),
+        "stage_validator_contract_sha256": file_sha256(
+            root / STAGE_VALIDATOR_CONTRACT_PATH
+        ),
+        "producer": {
+            "producer_id": "p9b1q-event-frame-compiler",
+            "producer_version": "0.2-c2",
+            "executable_sha256": file_sha256(Path(__file__)),
+            "configuration_sha256": file_sha256(
+                root / EVENT_RELATION_AUTHORITY_PATH
+            ),
+        },
+        "frames": frames,
+        "specimen_slots": specimen_slots,
+        "reference_hypotheses": _build_reference_hypotheses(
+            propositions, frames, frame_node_ids, specimens_by_id
+        ),
+        "override_hypotheses": _build_override_hypotheses(
+            ast["nodes"], frames, frame_node_ids, specimens_by_id
+        ),
+    }
+    return event_frame
+
+
+def validate_c2_event_frame(
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    event_frame: dict[str, Any],
+    root: Path = ROOT,
+    *,
+    require_compiler_projection: bool = True,
+) -> None:
+    """Validate S2 schema, content bindings, domains, identity, and completeness."""
+    try:
+        validate_schema(normalized, NORMALIZED_REQUEST_SCHEMA_PATH, root)
+        validate_c1_clause_ast(normalized, ast, root)
+        validate_schema(event_frame, EVENT_FRAME_SCHEMA_PATH, root)
+    except (SchemaValidationError, C1ValidationError, KeyError, TypeError) as exc:
+        _c2_fail("S2_EVENT_FRAME", f"schema or input failure: {exc}")
+    expected_bindings = {
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "knowledge_version": normalized["knowledge_version"],
+        "clause_ast_sha256": canonical_sha256(ast),
+        "entity_ontology_sha256": file_sha256(root / ENTITY_ONTOLOGY_PATH),
+        "event_relation_mapping_sha256": file_sha256(
+            root / EVENT_RELATION_AUTHORITY_PATH
+        ),
+        "canonicalization_profile_sha256": file_sha256(
+            root / CANONICALIZATION_PROFILE_PATH
+        ),
+        "stage_validator_contract_sha256": file_sha256(
+            root / STAGE_VALIDATOR_CONTRACT_PATH
+        ),
+    }
+    if any(event_frame.get(key) != value for key, value in expected_bindings.items()):
+        _c2_fail("S2_EVENT_FRAME", "actual input hash or request binding mismatch")
+    expected_producer = {
+        "producer_id": "p9b1q-event-frame-compiler",
+        "producer_version": "0.2-c2",
+        "executable_sha256": file_sha256(Path(__file__)),
+        "configuration_sha256": file_sha256(root / EVENT_RELATION_AUTHORITY_PATH),
+    }
+    if event_frame["producer"] != expected_producer:
+        _c2_fail("S2_EVENT_FRAME", "producer binding mismatch")
+
+    ast_nodes = {node["node_id"]: node for node in ast["nodes"]}
+    mentions = {
+        mention["surface_mention_id"]: mention for mention in ast["surface_mentions"]
+    }
+    marker_ids = {marker["marker_id"] for marker in ast["assertion_markers"]}
+    specimen_slots = {
+        specimen["specimen_slot_id"]: specimen
+        for specimen in event_frame["specimen_slots"]
+    }
+    all_ids: list[str] = []
+    for frame in event_frame["frames"]:
+        all_ids.append(frame["frame_id"])
+        all_ids.extend(slot["slot_id"] for slot in frame["participant_slots"])
+    all_ids.extend(specimen_slots)
+    all_ids.extend(
+        reference["reference_hypothesis_id"]
+        for reference in event_frame["reference_hypotheses"]
+    )
+    all_ids.extend(
+        override["override_hypothesis_id"]
+        for override in event_frame["override_hypotheses"]
+    )
+    if len(all_ids) != len(set(all_ids)):
+        _c2_fail("S2_EVENT_FRAME", "semantic IDs are not globally unique")
+
+    for frame in event_frame["frames"]:
+        if any(source_id not in ast_nodes for source_id in frame["source_ast_node_ids"]):
+            _c2_fail("S2_EVENT_FRAME", "frame has dangling AST provenance")
+        expected_spans = [
+            ast_nodes[source_id]["source_span"]
+            for source_id in frame["source_ast_node_ids"]
+        ]
+        if frame["source_spans"] != expected_spans:
+            _c2_fail("S2_EVENT_FRAME", "frame source span is not exact AST provenance")
+        slots = {slot["slot_id"]: slot for slot in frame["participant_slots"]}
+        for slot in frame["participant_slots"]:
+            if any(source_id not in mentions for source_id in slot["source_ids"]):
+                _c2_fail("S2_EVENT_FRAME", "participant has dangling mention source")
+            licensed = {
+                entity_id
+                for source_id in slot["source_ids"]
+                for entity_id in mentions[source_id]["candidate_entity_ids"]
+                if _entity_type_from_id(
+                    entity_id, _read_yaml(root / ENTITY_ONTOLOGY_PATH)
+                ) in slot["domain"]["entity_types"]
+            }
+            if set(slot["domain"]["entity_ids"]) != licensed:
+                _c2_fail("S2_EVENT_FRAME", "participant domain is incomplete or unlicensed")
+            if slot["binding_status"] == "FIXED" and (
+                len(slot["domain"]["entity_ids"]) != 1
+                or len(slot["domain"]["entity_types"]) != 1
+            ):
+                _c2_fail("S2_EVENT_FRAME", "FIXED participant is not singleton")
+            if slot["binding_status"] == "COMPETING" and len(
+                slot["domain"]["entity_ids"]
+            ) < 2:
+                _c2_fail("S2_EVENT_FRAME", "COMPETING participant lacks alternatives")
+        identity = frame["normalized_identity"]
+        if identity["event_type_domain"] != frame["event_type_domain"]:
+            _c2_fail("S2_EVENT_FRAME", "event type and identity domains differ")
+        role_fields = {
+            "actor_slot_ids": "ACTOR",
+            "target_slot_ids": "TARGET",
+            "anatomical_site_slot_ids": "LOCATION",
+        }
+        used_dimensions: list[set[str]] = []
+        for field, role in role_fields.items():
+            values = set(identity[field])
+            used_dimensions.append(values)
+            if any(slots.get(slot_id, {}).get("semantic_role") != role for slot_id in values):
+                _c2_fail("S2_EVENT_FRAME", "identity references a wrong-role slot")
+        method_values = (
+            {identity["method_slot_id"]} if identity["method_slot_id"] else set()
+        )
+        used_dimensions.append(method_values)
+        if method_values and any(
+            slots.get(slot_id, {}).get("semantic_role") != "METHOD"
+            for slot_id in method_values
+        ):
+            _c2_fail("S2_EVENT_FRAME", "identity method is not a METHOD slot")
+        if any(
+            left.intersection(right)
+            for index, left in enumerate(used_dimensions)
+            for right in used_dimensions[index + 1 :]
+        ):
+            _c2_fail("S2_EVENT_FRAME", "one slot is reused across identity dimensions")
+        if any(
+            specimen_id not in specimen_slots
+            for specimen_id in identity["specimen_slot_ids"]
+        ):
+            _c2_fail("S2_EVENT_FRAME", "identity has dangling specimen slot")
+        diagnostic = "DIAGNOSTIC_FINDING" in frame["event_type_domain"]
+        binding = frame["diagnostic_binding"]
+        if diagnostic != (binding is not None):
+            _c2_fail("S2_EVENT_FRAME", "diagnostic binding nullability mismatch")
+        if binding is not None:
+            if (
+                binding["method_slot_id"] != identity["method_slot_id"]
+                or binding["target_slot_ids"] != identity["target_slot_ids"]
+                or binding["specimen_slot_id"] not in identity["specimen_slot_ids"]
+                or slots[binding["method_slot_id"]]["semantic_role"] != "METHOD"
+                or any(slots[target]["semantic_role"] != "TARGET" for target in binding["target_slot_ids"])
+            ):
+                _c2_fail("S2_EVENT_FRAME", "diagnostic components do not share one frame")
+        if any(
+            source_id not in ast_nodes
+            for source_id in frame["assertion"]["governing_ast_node_ids"]
+        ) or any(
+            marker_id not in marker_ids for marker_id in frame["assertion"]["marker_ids"]
+        ):
+            _c2_fail("S2_EVENT_FRAME", "assertion has dangling AST authority")
+
+    text = normalized["normalized_query_text"]
+    for specimen in specimen_slots.values():
+        for span in specimen["source_spans"]:
+            if text[span["start_char"] : span["end_char"]] != span["text"]:
+                _c2_fail("S2_EVENT_FRAME", "specimen span is not an exact request slice")
+            if not any(
+                source_id in mentions
+                and mentions[source_id]["source_span"]["start_char"] <= span["start_char"]
+                and span["end_char"] <= mentions[source_id]["source_span"]["end_char"]
+                for source_id in specimen["source_ids"]
+            ):
+                _c2_fail("S2_EVENT_FRAME", "specimen span lacks mention grounding")
+
+    if require_compiler_projection:
+        expected = _build_event_frame(normalized, ast, root)
+        if canonical_bytes(event_frame) != canonical_bytes(expected):
+            _c2_fail("S2_EVENT_FRAME", "output differs from complete deterministic projection")
+
+
+def compile_event_frame(
+    normalized: dict[str, Any], ast: dict[str, Any], root: Path = ROOT
+) -> dict[str, Any]:
+    """Compile validated S1 authority into S2 and stop before constraint solving."""
+    try:
+        validate_schema(normalized, NORMALIZED_REQUEST_SCHEMA_PATH, root)
+        validate_c1_clause_ast(normalized, ast, root)
+    except (SchemaValidationError, C1ValidationError, KeyError, TypeError) as exc:
+        _c2_fail("S2_EVENT_FRAME", f"invalid S1 input: {exc}")
+    event_frame = _build_event_frame(normalized, ast, root)
+    validate_c2_event_frame(normalized, ast, event_frame, root)
+    validate_c2_stop_boundary(event_frame)
+    return event_frame
+
+
+def validate_c2_stop_boundary(value: dict[str, Any]) -> None:
+    prohibited_keys = {
+        "typed_constraint_result",
+        "selected_solution",
+        "query_ir",
+        "queryir",
+        "retrieval_result",
+        "model_response",
+    }
+    pending: list[Any] = [value]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, dict):
+            overlap = prohibited_keys.intersection(item)
+            if overlap:
+                _c2_fail(
+                    "C2_STOP_BOUNDARY",
+                    f"prohibited downstream object keys: {sorted(overlap)}",
+                )
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+
+
+def compile_c2(request: dict[str, Any], root: Path = ROOT) -> dict[str, Any]:
+    """Run the authorized C2 atom and stop at a validated Event Frame object."""
+    normalized = normalize_request(request, root)
+    ast = compile_clause_ast(normalized, root)
+    event_frame = compile_event_frame(normalized, ast, root)
+    result = {
+        "implemented_stages": list(C2_IMPLEMENTED_STAGES),
+        "terminal_stage": C2_TERMINAL_STAGE,
+        "normalized_request": normalized,
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "clause_ast": ast,
+        "clause_ast_sha256": canonical_sha256(ast),
+        "event_frame": event_frame,
+        "event_frame_sha256": canonical_sha256(event_frame),
+    }
+    validate_c2_stop_boundary(result)
     return result
 
 

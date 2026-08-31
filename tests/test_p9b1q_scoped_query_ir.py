@@ -8,7 +8,9 @@ from unittest import mock
 from scripts.p9b1q_scoped_query_ir import (
     BindingValidationError,
     C1ValidationError,
+    C2ValidationError,
     CLAUSE_AST_SCHEMA_PATH,
+    EVENT_FRAME_SCHEMA_PATH,
     NORMALIZED_REQUEST_SCHEMA_PATH,
     QUERY_IR_SCHEMA_PATH,
     ROOT,
@@ -16,15 +18,20 @@ from scripts.p9b1q_scoped_query_ir import (
     canonical_bytes,
     canonical_sha256,
     compile_c1,
+    compile_c2,
     compile_clause_ast,
+    compile_event_frame,
     execute_query_ir,
     interpret_request,
     normalize_request,
+    normalized_event_identity,
     run_scoped_query,
     validate_bound_execution,
     validate_c1_clause_ast,
     validate_c1_normalized_request,
     validate_c1_stop_boundary,
+    validate_c2_event_frame,
+    validate_c2_stop_boundary,
     validate_query_ir,
     validate_schema,
 )
@@ -619,6 +626,420 @@ class C1ClauseASTTests(unittest.TestCase):
     def test_stop_boundary_rejects_downstream_objects(self):
         with self.assertRaises(C1ValidationError):
             validate_c1_stop_boundary({"event_frame": {}})
+
+
+class C2EventFrameTests(unittest.TestCase):
+    def compile(self, case: str, text: str):
+        result = compile_c2(request(case, text))
+        self.assertEqual("S2_EVENT_FRAME", result["terminal_stage"])
+        validate_c2_event_frame(
+            result["normalized_request"], result["clause_ast"], result["event_frame"]
+        )
+        return result
+
+    def assert_invalid_projection(self, result, mutate):
+        changed = copy.deepcopy(result["event_frame"])
+        mutate(changed)
+        with self.assertRaises(C2ValidationError):
+            validate_c2_event_frame(
+                result["normalized_request"], result["clause_ast"], changed
+            )
+
+    def test_event_core_diagnostic_exposure_and_ordinary_frames(self):
+        diagnostic = self.compile("C2-CORE-D", "粪便检卵阳性。")
+        frame = diagnostic["event_frame"]["frames"][0]
+        self.assertEqual(["DIAGNOSTIC_FINDING"], frame["event_type_domain"])
+        self.assertEqual(["S001"], frame["source_ast_node_ids"])
+        self.assertEqual("粪便检卵阳性", frame["source_spans"][0]["text"])
+        self.assertIsNotNone(frame["diagnostic_binding"])
+
+        exposure = self.compile(
+            "C2-CORE-E",
+            "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？",
+        )
+        exposure_frame = exposure["event_frame"]["frames"][0]
+        self.assertEqual(["EXPOSURE"], exposure_frame["event_type_domain"])
+        self.assertIsNone(exposure_frame["diagnostic_binding"])
+
+        ordinary = self.compile("C2-CORE-P", "成虫寄生于肝内胆管。")
+        ordinary_frame = ordinary["event_frame"]["frames"][0]
+        self.assertEqual(["PARASITISM"], ordinary_frame["event_type_domain"])
+        roles = {slot["semantic_role"] for slot in ordinary_frame["participant_slots"]}
+        self.assertEqual({"ACTOR", "LOCATION"}, roles)
+        self.assertIsNone(ordinary_frame["diagnostic_binding"])
+
+    def test_event_type_and_participant_ambiguity_are_preserved(self):
+        behavior = self.compile("C2-DOMAIN", "生食淡水鱼。")
+        frame = behavior["event_frame"]["frames"][0]
+        self.assertEqual(["EXPOSURE", "INGESTION"], frame["event_type_domain"])
+        self.assertEqual("COMPETING", frame["frame_status"])
+
+        multiple = self.compile("C2-HIGH002", "粪便检查未检出虫卵和成虫。")
+        frame = multiple["event_frame"]["frames"][0]
+        target = next(
+            slot for slot in frame["participant_slots"]
+            if slot["semantic_role"] == "TARGET"
+        )
+        self.assertEqual("COMPETING", target["binding_status"])
+        self.assertEqual(
+            ["stage.clonorchis_adult", "stage.clonorchis_egg"],
+            target["domain"]["entity_ids"],
+        )
+        marker = next(
+            marker for marker in multiple["clause_ast"]["assertion_markers"]
+            if marker["source_span"]["text"] == "未检出"
+        )
+        self.assertEqual("UNRESOLVED", marker["scope_status"])
+
+    def test_diagnostic_components_are_same_frame_and_never_cross_bound(self):
+        result = self.compile(
+            "C2-DIAG-PAIR", "粪便检卵阳性，十二指肠液检卵阴性。"
+        )
+        event_frame = result["event_frame"]
+        self.assertEqual(2, len(event_frame["frames"]))
+        specimens = {
+            slot["specimen_slot_id"]: slot
+            for slot in event_frame["specimen_slots"]
+        }
+        self.assertEqual(
+            [{"STOOL"}, {"DUODENAL_FLUID"}],
+            [
+                set(specimens[frame["diagnostic_binding"]["specimen_slot_id"]]["specimen_code_domain"])
+                for frame in event_frame["frames"]
+            ],
+        )
+        for frame in event_frame["frames"]:
+            slots = {slot["slot_id"]: slot for slot in frame["participant_slots"]}
+            binding = frame["diagnostic_binding"]
+            self.assertEqual("METHOD", slots[binding["method_slot_id"]]["semantic_role"])
+            self.assertTrue(
+                all(slots[item]["semantic_role"] == "TARGET" for item in binding["target_slot_ids"])
+            )
+
+    def test_negative_finding_is_not_infection_exclusion(self):
+        result = self.compile("C2-DIAG-NEG", "粪便检查未检出虫卵。")
+        assertion = result["event_frame"]["frames"][0]["assertion"]
+        self.assertEqual("AFFIRMED", assertion["assertion_status"])
+        self.assertEqual("NEGATIVE", assertion["finding_polarity"])
+
+    def test_imaging_uses_formal_not_applicable_specimen_without_inference(self):
+        result = self.compile("C2-DIAG-IMAGING", "影像检查异常。")
+        event_frame = result["event_frame"]
+        frame = event_frame["frames"][0]
+        specimen = event_frame["specimen_slots"][0]
+        self.assertEqual(["NOT_APPLICABLE"], specimen["specimen_code_domain"])
+        self.assertEqual("影像检查", specimen["source_spans"][0]["text"])
+        self.assertEqual([], frame["diagnostic_binding"]["target_slot_ids"])
+        self.assertEqual("INCOMPLETE", frame["frame_status"])
+
+    def test_assertion_and_temporal_scopes_come_from_ast_markers(self):
+        cases = (
+            ("未生食淡水鱼。", "NEGATED", "GENERAL"),
+            ("不涉及生食淡水鱼。", "EXCLUDED", "GENERAL"),
+            ("如果生食淡水鱼，粪便检卵阳性。", "HYPOTHETICAL", "GENERAL"),
+        )
+        for number, (text, status, temporal) in enumerate(cases):
+            with self.subTest(text=text):
+                result = self.compile(f"C2-ASSERT-{number}", text)
+                frame = result["event_frame"]["frames"][0]
+                self.assertEqual(status, frame["assertion"]["assertion_status"])
+                self.assertEqual(temporal, frame["assertion"]["temporal_scope"])
+                self.assertTrue(frame["assertion"]["marker_ids"])
+
+        temporal = self.compile(
+            "C2-TEMPORAL", "曾经生食淡水鱼，目前生食淡水鱼。"
+        )
+        self.assertEqual(
+            ["HISTORICAL", "CURRENT"],
+            [frame["assertion"]["temporal_scope"] for frame in temporal["event_frame"]["frames"]],
+        )
+
+    def test_normalized_identity_excludes_assertion_and_frame_id(self):
+        result = self.compile(
+            "C2-ID-SAME", "粪便检卵阳性，粪便检卵阴性。"
+        )
+        first, second = result["event_frame"]["frames"]
+        self.assertNotEqual(
+            first["assertion"]["finding_polarity"],
+            second["assertion"]["finding_polarity"],
+        )
+        self.assertEqual(
+            normalized_event_identity(first, result["event_frame"]),
+            normalized_event_identity(second, result["event_frame"]),
+        )
+        renamed = copy.deepcopy(first)
+        renamed["frame_id"] = "EF999"
+        self.assertEqual(
+            normalized_event_identity(first, result["event_frame"]),
+            normalized_event_identity(renamed, result["event_frame"]),
+        )
+
+    def test_identity_changes_for_method_specimen_target_and_anatomy(self):
+        method = self.compile(
+            "C2-ID-METHOD", "粪便检卵阳性，十二指肠液检卵阳性。"
+        )
+        left, right = method["event_frame"]["frames"]
+        self.assertNotEqual(
+            normalized_event_identity(left, method["event_frame"]),
+            normalized_event_identity(right, method["event_frame"]),
+        )
+
+        target = self.compile(
+            "C2-ID-TARGET", "粪便检查检出虫卵，粪便检查检出成虫。"
+        )
+        left, right = target["event_frame"]["frames"]
+        self.assertNotEqual(
+            normalized_event_identity(left, target["event_frame"]),
+            normalized_event_identity(right, target["event_frame"]),
+        )
+
+        anatomy = self.compile(
+            "C2-ID-SITE", "成虫寄生于肝内胆管，成虫寄生于胆道。"
+        )
+        left, right = anatomy["event_frame"]["frames"]
+        self.assertNotEqual(
+            normalized_event_identity(left, anatomy["event_frame"]),
+            normalized_event_identity(right, anatomy["event_frame"]),
+        )
+
+    def test_reference_unique_and_unresolved_candidate_completeness(self):
+        unique = self.compile(
+            "C2-REF-UNIQUE",
+            "粪便检卵阳性，粪便检卵阴性，两次检查是同一诊断事件。",
+        )["event_frame"]["reference_hypotheses"][0]
+        self.assertEqual("UNIQUE", unique["status"])
+        self.assertEqual(["EF001"], unique["candidate_referent_ids"])
+        self.assertEqual(["SAME_EVENT"], unique["identity_relation_domain"])
+
+        unresolved = self.compile(
+            "C2-REF-UNRESOLVED",
+            "粪便检卵阳性，粪便检卵阴性，粪便检卵阳性，这些检查是同一诊断事件。",
+        )["event_frame"]["reference_hypotheses"][0]
+        self.assertEqual("UNRESOLVED", unresolved["status"])
+        self.assertEqual(["EF001", "EF002"], unresolved["candidate_referent_ids"])
+
+    def test_public_r3a_reference_override_evidence_projection(self):
+        result = self.compile(
+            "C2-R3A-EVIDENCE",
+            "华支睾吸虫病粪便检查检出虫卵，华支睾吸虫病粪便检查未检出虫卵；"
+            "两次检查是同一诊断事件，生食淡水鱼是另一暴露事件，后次结果覆盖前次结果。",
+        )["event_frame"]
+        self.assertEqual(
+            [
+                ("EF002", ["EF001"], ["SAME_EVENT"], "UNIQUE"),
+                ("EF003", ["EF002"], ["DISTINCT_EVENT"], "UNIQUE"),
+            ],
+            [
+                (
+                    item["anaphor_frame_id"],
+                    item["candidate_referent_ids"],
+                    item["identity_relation_domain"],
+                    item["status"],
+                )
+                for item in result["reference_hypotheses"]
+            ],
+        )
+        override = result["override_hypotheses"][0]
+        self.assertEqual(["EF001"], override["earlier_frame_ids"])
+        self.assertEqual(["EF002"], override["later_frame_ids"])
+        self.assertEqual(["FINDING_POLARITY"], override["overridden_dimension_domain"])
+        self.assertEqual("UNIQUE", override["status"])
+
+    def test_override_unique_unresolved_and_no_match(self):
+        unique = self.compile(
+            "C2-OVERRIDE-UNIQUE", "粪便检卵阳性，后来粪便检卵阴性。"
+        )["event_frame"]["override_hypotheses"][0]
+        self.assertEqual("UNIQUE", unique["status"])
+        self.assertEqual(["FINDING_POLARITY"], unique["overridden_dimension_domain"])
+
+        unresolved = self.compile(
+            "C2-OVERRIDE-UNRESOLVED",
+            "粪便检卵阳性，粪便检卵阴性，后来粪便检卵阴性，粪便检卵阳性。",
+        )["event_frame"]["override_hypotheses"][0]
+        self.assertEqual("UNRESOLVED", unresolved["status"])
+        self.assertEqual(["EF001", "EF002"], unresolved["earlier_frame_ids"])
+        self.assertEqual(["EF003", "EF004"], unresolved["later_frame_ids"])
+
+        no_match = self.compile(
+            "C2-OVERRIDE-NO-MATCH", "粪便检卵阳性，后来十二指肠液检卵阴性。"
+        )["event_frame"]["override_hypotheses"][0]
+        self.assertEqual("NO_MATCH", no_match["status"])
+
+    def test_shared_left_is_s1_only_and_c1_object_is_unchanged(self):
+        actual = request("C2-SHARED", "如果生食淡水鱼，但是粪便检卵阴性。")
+        before = compile_c1(copy.deepcopy(actual))
+        after = compile_c2(copy.deepcopy(actual))
+        self.assertEqual(canonical_bytes(before["clause_ast"]), canonical_bytes(after["clause_ast"]))
+        contrast = next(
+            node for node in after["clause_ast"]["nodes"] if node["node_kind"] == "CONTRAST"
+        )
+        self.assertIsNotNone(contrast["shared_left_argument_node_id"])
+        self.assertEqual([], after["event_frame"]["reference_hypotheses"])
+
+    def test_condition_contrast_or_and_coordination_frame_completeness(self):
+        condition = self.compile("C2-CONDITION", "如果生食淡水鱼，粪便检卵阳性。")
+        self.assertEqual(2, len(condition["event_frame"]["frames"]))
+        contrast = self.compile("C2-CONTRAST", "生食淡水鱼，但是粪便检卵阴性。")
+        self.assertEqual(2, len(contrast["event_frame"]["frames"]))
+        repeated = self.compile(
+            "C2-OR",
+            "粪便检卵或者十二指肠液检卵或者成虫寄生于肝内胆管。",
+        )
+        self.assertEqual(3, len(repeated["event_frame"]["frames"]))
+        coordinated = self.compile(
+            "C2-COORD", "粪便检卵阳性，十二指肠液检卵阴性。"
+        )
+        self.assertEqual(2, len(coordinated["event_frame"]["frames"]))
+
+    def test_public_s2_fixtures_remain_schema_valid_evidence(self):
+        fixture_root = ROOT / "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures"
+        for name in (
+            "event-frame-exposure-positive.json",
+            "event-frame-diagnostic-positive.json",
+        ):
+            with self.subTest(name=name):
+                fixture = json.loads((fixture_root / name).read_text(encoding="utf-8"))
+                validate_schema(fixture, EVENT_FRAME_SCHEMA_PATH)
+
+    def test_invalid_s1_fails_closed_without_event_frame(self):
+        actual = request("C2-BAD-S1", "未生食淡水鱼。")
+        normalized = normalize_request(actual)
+        ast = compile_clause_ast(normalized)
+        ast["nodes"][0]["source_span"]["text"] = "corrupt"
+        with self.assertRaises(C2ValidationError):
+            compile_event_frame(normalized, ast)
+
+    def test_adversarial_participant_domain_and_cardinality_fail(self):
+        result = self.compile("C2-ADV-DOMAIN", "粪便检卵阳性。")
+
+        def unlicensed(value):
+            value["frames"][0]["participant_slots"][0]["domain"]["entity_ids"] = [
+                "stage.unlicensed"
+            ]
+        self.assert_invalid_projection(result, unlicensed)
+
+        multiple = self.compile("C2-ADV-FIXED", "粪便检查未检出虫卵和成虫。")
+        self.assert_invalid_projection(
+            multiple,
+            lambda value: value["frames"][0]["participant_slots"][-1].__setitem__(
+                "binding_status", "FIXED"
+            ),
+        )
+        self.assert_invalid_projection(
+            result,
+            lambda value: value["frames"][0]["participant_slots"][0].__setitem__(
+                "binding_status", "COMPETING"
+            ),
+        )
+
+    def test_adversarial_diagnostic_specimen_and_identity_mutations_fail(self):
+        pair = self.compile(
+            "C2-ADV-DIAG", "粪便检卵阳性，十二指肠液检卵阴性。"
+        )
+
+        def cross_bind(value):
+            first = value["frames"][0]["diagnostic_binding"]["specimen_slot_id"]
+            value["frames"][1]["diagnostic_binding"]["specimen_slot_id"] = first
+            value["frames"][1]["normalized_identity"]["specimen_slot_ids"] = [first]
+        self.assert_invalid_projection(pair, cross_bind)
+
+        self.assert_invalid_projection(
+            pair,
+            lambda value: value["specimen_slots"][0]["source_spans"][0].__setitem__(
+                "text", "胆汁"
+            ),
+        )
+
+        def wrong_role(value):
+            frame = value["frames"][0]
+            target = next(
+                slot["slot_id"] for slot in frame["participant_slots"]
+                if slot["semantic_role"] == "TARGET"
+            )
+            frame["normalized_identity"]["actor_slot_ids"] = [target]
+        self.assert_invalid_projection(pair, wrong_role)
+
+        def reuse_slot(value):
+            frame = value["frames"][0]
+            frame["normalized_identity"]["target_slot_ids"] = [
+                frame["normalized_identity"]["method_slot_id"]
+            ]
+        self.assert_invalid_projection(pair, reuse_slot)
+
+    def test_adversarial_reference_override_and_shared_left_mutations_fail(self):
+        reference = self.compile(
+            "C2-ADV-REF",
+            "粪便检卵阳性，粪便检卵阴性，粪便检卵阳性，这些检查是同一诊断事件。",
+        )
+        self.assert_invalid_projection(
+            reference,
+            lambda value: value["reference_hypotheses"][0].__setitem__(
+                "candidate_referent_ids", ["EF002"]
+            ),
+        )
+        self.assert_invalid_projection(
+            reference,
+            lambda value: value["reference_hypotheses"][0].__setitem__(
+                "status", "UNIQUE"
+            ),
+        )
+
+        override = self.compile(
+            "C2-ADV-OVERRIDE", "粪便检卵阳性，后来粪便检卵阴性。"
+        )
+        self.assert_invalid_projection(
+            override,
+            lambda value: value["override_hypotheses"][0].__setitem__(
+                "overridden_dimension_domain", ["EVENT_TYPE"]
+            ),
+        )
+
+        shared = self.compile("C2-ADV-SHARED", "如果生食淡水鱼，但是粪便检卵阴性。")
+        def invent_reference(value):
+            value["reference_hypotheses"].append({
+                "reference_hypothesis_id": "RH001",
+                "anaphor_source_id": "S004",
+                "anaphor_frame_id": "EF002",
+                "candidate_referent_ids": ["EF001"],
+                "identity_relation_domain": ["DISTINCT_EVENT"],
+                "status": "UNIQUE",
+            })
+        self.assert_invalid_projection(shared, invent_reference)
+
+    def test_hash_bindings_determinism_and_stop_boundary(self):
+        actual = request("C2-DETERMINISM", "粪便检卵阳性，粪便检卵阴性。")
+        runs = [compile_c2(copy.deepcopy(actual)) for _ in range(3)]
+        self.assertEqual(1, len({canonical_bytes(item["event_frame"]) for item in runs}))
+        self.assertEqual(1, len({item["event_frame_sha256"] for item in runs}))
+        self.assertEqual(
+            canonical_sha256(runs[0]["event_frame"]), runs[0]["event_frame_sha256"]
+        )
+        self.assert_invalid_projection(
+            runs[0],
+            lambda value: value.__setitem__("clause_ast_sha256", "0" * 64),
+        )
+        with self.assertRaises(C2ValidationError):
+            validate_c2_stop_boundary({"query_ir": {}})
+
+    def test_c2_invokes_no_solver_queryir_retrieval_or_model(self):
+        forbidden = (
+            "interpret_request",
+            "validate_query_ir",
+            "execute_query_ir",
+            "run_scoped_query",
+            "build_bound_execution",
+        )
+        with mock.patch.multiple(
+            "scripts.p9b1q_scoped_query_ir",
+            **{name: mock.DEFAULT for name in forbidden},
+        ) as patched:
+            for value in patched.values():
+                value.side_effect = AssertionError("S3+ must not run in C2")
+            result = compile_c2(request("C2-STOP", "粪便检卵阳性。"))
+        self.assertEqual("S2_EVENT_FRAME", result["terminal_stage"])
+        self.assertNotIn("typed_constraint_result", result)
+        self.assertNotIn("query_ir", result)
+        self.assertNotIn("retrieval_result", result)
 
 
 class ScopedQueryIRTests(unittest.TestCase):
