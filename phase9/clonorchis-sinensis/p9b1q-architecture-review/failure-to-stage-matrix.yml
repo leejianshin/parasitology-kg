@@ -2,6 +2,16 @@ matrix_id: P9B1Q-R10-ARCHITECTURE-FAILURE-TO-STAGE-v0.1
 status: REVISED_DESIGN_CANDIDATE_PENDING_INDEPENDENT_READ_ONLY_REVIEW
 evidence_boundary: aggregate_R10_findings_only_no_secret_case_body
 
+additive_constraint_failure_stage_mappings:
+  - constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+    stage: S2_EVENT_FRAME
+    witness: DIAGNOSTIC_ROLE_BINDINGS
+    ownership: >-
+      Exact materialization of explicitly bound formal diagnostic predicate
+      sides, canonical participant merging, and normalized identity role
+      membership are owned by S2 and fail closed without later-stage repair.
+
 baseline_observation:
   implementation_commit: 6ac0e4b2978e5fb41e7b90e27ced17826d35a394
   schema_valid_QueryIR: 24/24

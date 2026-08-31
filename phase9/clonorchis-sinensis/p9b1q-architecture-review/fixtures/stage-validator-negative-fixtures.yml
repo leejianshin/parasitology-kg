@@ -6,39 +6,47 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: cc28cdd1914226764e7431f9e61ca2f4d471570cefc5cdc052894962ecc2285c
+  canonical_sha256: 09594996c1e79c1ec85ecbb13f76bc0c4f8def84370b71e5df896a8958a32057
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: f356848e39ddc4f4ded1501f9c544d70e06ed5a80d3ea7d57cfbf1a0a5646c05
+  canonical_sha256: 4e7a6f7fa1e340b6a56eee90dfde0662f08c721c29499b7e9694c587f9d6fd01
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 5e8782b1aab5975473971df3a202c90eb7646a3af15530f3708bb3a4eef819ad
+  canonical_sha256: 1c85d17bd51f9e13648b1bff8e5a29b1affba611ae275b8ae6ee7b9c12f0e1e3
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: 5cdb0ef53b02337892725dab48c2ca5e5bbc7ae51a60fee5c9d7be766ef75d9a
+  canonical_sha256: 468346d130fa0c56f722906e1b3bb6ebeb070778be96e0ad3dd4d0ea18342821
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: ad7ab8f014fd399492eabd3b24dfb363a7f72aa2589cf9a5bff11c279e4ca755
+  canonical_sha256: bcf608c950955ccaa8b2f72d5664b6c5b5b2c5804f37ddb035243bf871af1875
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 2939d9a3a6cf91fe9973d7754994c1bede06f9fc528e4a3ea6cf1fedfe520067
+  canonical_sha256: 9f1d71a8048305650aeb12b6766c4e0fba77d4ad07e43479d5f4e6af4830927e
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: 4c8f8d51a6ea1ed7130b79098c297fb90d6a4e21d80bccd6c977c9ecc1657b9e
+  canonical_sha256: 9ec2372bb13eb03039ba6686667865b6df1a795b99f51eac22bbb60445951a6c
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 66ebf36f3edfed0649b98c2dca25fb95ff8014dba0134d3cb8f6d6cb39a7d42b
+  canonical_sha256: 1944616b3c5ab5bcc2c616573163e0c44651c0d0b93b8f50927446da3e819d95
 - path: fixtures/typed-solution-exposure-positive.json
-  canonical_sha256: 986ee3e5d372f539ee82f458b0a869472a0dde44e4cef5fe377c8327d40aee3a
+  canonical_sha256: c782fa4fad2220d422f897886ca0c26f549aeccc092613aae1548bbc44c1dae5
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 320d9718ce13dec333d7cf40dbfefc47af12de9968bf0e943a69c0d4fe7e1963
+  canonical_sha256: c980ab0b5251f6d1a99ee2289f40d20fa77266dc0767658100374c5d2cd76d50
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 0e908896056f98105a9a0565e4c9cc11dbf69276bdd1cd245ad37f964e7fb547
+  canonical_sha256: aeaebd765f970dc11f724b1c0dc49886699654c1d9123d95d261aacb17c5ae16
 - path: fixtures/request-shared-argument-positive.json
   canonical_sha256: 95cf7ef66a4734cade42ddec49422b1f99c4b75381d5c2c58d7a9fb4923d304b
 - path: fixtures/normalized-request-shared-argument-positive.json
-  canonical_sha256: 7dc06df98f8e0df623fe590e49d64a34694ac6318e046dc52d945a8cc87937c0
+  canonical_sha256: a8a08ddc6c974260b698c2a8bbfa7c005edfd8dd12ecc6b5da80759c50a4ffc6
 - path: fixtures/clause-ast-shared-argument-positive.json
-  canonical_sha256: ff5a3a8542b4ad27391d0d64a640891e638d1234068cd64ec46210a10e5e83d9
+  canonical_sha256: 4ad5f6c508503e439bbb5e3759fa71c72e3297eefa047c224c9b11dd62dc103c
+- path: fixtures/request-diagnostic-role-catalog-positive.json
+  canonical_sha256: 93f45d30c57ec6a24fbe000c1190ad7e6fdfeeaf3f917eb076c887b67b811e0e
+- path: fixtures/normalized-request-diagnostic-role-catalog-positive.json
+  canonical_sha256: 96f83c22b0d9dc0f5f6d7e46c36aed7a1fad04f208eed6e4f50e28361a53eef1
+- path: fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  canonical_sha256: f6f68e66e1c04e9a278658dad3c72b4cd36dc61ab4a66799c49024e59eb9bc1b
+- path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  canonical_sha256: 29f84ed01d12d42f6f8414ed71cfe790358bdbf09369b20b60c92ab6d29c03b4
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -467,7 +475,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 0e908896056f98105a9a0565e4c9cc11dbf69276bdd1cd245ad37f964e7fb547
+  base_object_canonical_sha256: aeaebd765f970dc11f724b1c0dc49886699654c1d9123d95d261aacb17c5ae16
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -1465,6 +1473,270 @@ cases:
     expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
     mechanism: RFC6902
   derived_updates: []
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-MISSING-REQUIRED-PARTICIPANT
+  fault_class: MISSING_REQUIRED_PREDICATE_PARTICIPANT
+  patch:
+  - op: replace
+    path: /frames/0/participant_slots/3/source_ids
+    value:
+    - U004
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/3/source_ids
+    mutation_intent: MISSING_REQUIRED_PREDICATE_PARTICIPANT
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-EXTRA-UNLICENSED
+  fault_class: EXTRA_PREDICATE_UNLICENSED_PARTICIPANT_ROLE
+  patch:
+  - op: add
+    path: /frames/0/participant_slots/4
+    value:
+      binding_status: FIXED
+      domain:
+        entity_ids:
+        - disease.clonorchiasis
+        entity_types:
+        - disease
+      semantic_role: THEME
+      slot_id: V005
+      source_ids:
+      - U004
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/4
+    mutation_intent: EXTRA_PREDICATE_UNLICENSED_PARTICIPANT_ROLE
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-SUBJECT-OBJECT-REVERSAL
+  fault_class: SUBJECT_OBJECT_ROLE_REVERSAL
+  patch: []
+  actual_input_mutation:
+    object_kind: EVENT_RELATION_MAPPING
+    patch:
+    - op: replace
+      path: /event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog/diagnostic_stage_for/subject/semantic_role
+      value: ACTOR
+  semantic_mutation:
+    target_object: EVENT_RELATION_MAPPING
+    target_path: /event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog/diagnostic_stage_for/subject/semantic_role
+    mutation_intent: SUBJECT_OBJECT_ROLE_REVERSAL
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: CROSS_OBJECT_RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-TYPE-ONLY-EXPANSION
+  fault_class: TYPE_ONLY_ROLE_EXPANSION
+  patch:
+  - op: add
+    path: /frames/0/participant_slots/4
+    value:
+      binding_status: FIXED
+      domain:
+        entity_ids:
+        - stage.clonorchis_egg
+        entity_types:
+        - life_cycle_stage
+      semantic_role: ACTOR
+      slot_id: V005
+      source_ids:
+      - U002
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/4
+    mutation_intent: TYPE_ONLY_ROLE_EXPANSION
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-SAME-MENTION-DUPLICATE
+  fault_class: SAME_MENTION_ILLEGAL_DUPLICATE_ROLE
+  patch:
+  - op: add
+    path: /frames/0/participant_slots/4
+    value:
+      binding_status: FIXED
+      domain:
+        entity_ids:
+        - diagnostic.stool_egg_microscopy
+        entity_types:
+        - diagnostic_method
+      semantic_role: THEME
+      slot_id: V005
+      source_ids:
+      - U001
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/4
+    mutation_intent: SAME_MENTION_ILLEGAL_DUPLICATE_ROLE
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-METHOD-SHORTCUT-PREDICATE-LOSS
+  fault_class: METHOD_SHORTCUT_DROPS_EXPRESSED_PREDICATE
+  patch:
+  - op: replace
+    path: /frames/0/source_ast_node_ids
+    value:
+    - S002
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/source_ast_node_ids
+    mutation_intent: METHOD_SHORTCUT_DROPS_EXPRESSED_PREDICATE
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-CATALOG-DIRECTION-DRIFT
+  fault_class: CATALOG_SOURCE_TOKEN_DRIFT
+  patch: []
+  actual_input_mutation:
+    object_kind: EVENT_RELATION_MAPPING
+    patch:
+    - op: replace
+      path: /event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog/diagnostic_stage_for/subject/source_token
+      value: disease
+  semantic_mutation:
+    target_object: EVENT_RELATION_MAPPING
+    target_path: /event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog/diagnostic_stage_for/subject/source_token
+    mutation_intent: CATALOG_SOURCE_TOKEN_DRIFT
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: CROSS_OBJECT_RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-DUPLICATE-METHOD
+  fault_class: DUPLICATE_METHOD_INSTEAD_OF_CANONICAL_MERGE
+  patch:
+  - op: add
+    path: /frames/0/participant_slots/4
+    value:
+      binding_status: FIXED
+      domain:
+        entity_ids:
+        - diagnostic.stool_egg_microscopy
+        entity_types:
+        - diagnostic_method
+      semantic_role: METHOD
+      slot_id: V005
+      source_ids:
+      - U001
+      - U005
+      - U007
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/4
+    mutation_intent: DUPLICATE_METHOD_INSTEAD_OF_CANONICAL_MERGE
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-WRONG-IDENTITY-DIMENSION
+  fault_class: NORMALIZED_IDENTITY_WRONG_ROLE_DIMENSION
+  patch:
+  - op: replace
+    path: /frames/0/normalized_identity/actor_slot_ids
+    value:
+    - V003
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/normalized_identity/actor_slot_ids
+    mutation_intent: NORMALIZED_IDENTITY_WRONG_ROLE_DIMENSION
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-ROLE-PARTICIPANT-SET-MISMATCH
+  fault_class: ACTUAL_PARTICIPANT_SET_DIFFERS_FROM_RECOMPUTED_EXPECTED_SET
+  patch:
+  - op: replace
+    path: /frames/0/participant_slots/3/source_ids
+    value:
+    - U003
+    - U004
+    - U006
+  semantic_mutation:
+    target_object: STAGE_BASE_OBJECT
+    target_path: /frames/0/participant_slots/3/source_ids
+    mutation_intent: ACTUAL_PARTICIPANT_SET_DIFFERS_FROM_RECOMPUTED_EXPECTED_SET
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: RFC6902
 execution_requirements:
   base_must_pass_schema_and_semantic_validator: true
   apply_patch_to_deep_copy: true

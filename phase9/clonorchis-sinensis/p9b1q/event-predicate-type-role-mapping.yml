@@ -122,6 +122,51 @@ event_mapping:
       diagnosed_by: {subject_from: [disease], object_from: [method_entity_id]}
       diagnostic_stage_for: {subject_from: [life_cycle_stage], object_from: [host]}
       has_diagnostic_clue: {subject_from: [disease], object_from: [diagnostic_method]}
+    diagnostic_participant_role_catalog:
+      diagnosed_by:
+        subject:
+          source_token: disease
+          semantic_role: ACTOR
+          materialization: REQUIRED_WHEN_EXPLICITLY_BOUND
+          cardinality: EXACTLY_ONCE_PER_CANONICAL_PARTICIPANT
+        object:
+          source_token: method_entity_id
+          semantic_role: METHOD
+          materialization: REQUIRED_WHEN_EXPLICITLY_BOUND
+          cardinality: EXACTLY_ONE_METHOD_SLOT_PER_EVENT_METHOD_DOMAIN
+      diagnostic_stage_for:
+        subject:
+          source_token: life_cycle_stage
+          semantic_role: TARGET
+          materialization: REQUIRED_WHEN_EXPLICITLY_BOUND
+          cardinality: EXACTLY_ONCE_PER_CANONICAL_PARTICIPANT
+        object:
+          source_token: host
+          semantic_role: ACTOR
+          materialization: REQUIRED_WHEN_EXPLICITLY_BOUND
+          cardinality: EXACTLY_ONCE_PER_CANONICAL_PARTICIPANT
+      has_diagnostic_clue:
+        subject:
+          source_token: disease
+          semantic_role: ACTOR
+          materialization: REQUIRED_WHEN_EXPLICITLY_BOUND
+          cardinality: EXACTLY_ONCE_PER_CANONICAL_PARTICIPANT
+        object:
+          source_token: diagnostic_method
+          semantic_role: METHOD
+          materialization: REQUIRED_WHEN_EXPLICITLY_BOUND
+          cardinality: EXACTLY_ONE_METHOD_SLOT_PER_EVENT_METHOD_DOMAIN
+    diagnostic_role_materialization:
+      expressed_predicates: "RECOMPUTE_FROM_ACTUAL_PROPOSITION_SCOPE_AND_FORMAL_PREDICATE_CUES"
+      base_diagnostic_roles: "METHOD_AND_TARGET_FROM_DIAGNOSTIC_BINDING_FIELDS_NOT_DECLARED_SLOT_ROLES"
+      participant_set_comparison: "EXACT"
+      canonical_participant_key: [frame, semantic_role, canonical_entity_domain]
+      repeated_same_role_participant: "MERGE_ONE_SLOT_UNION_SOURCE_IDS"
+      same_mention_multiple_roles: "PROHIBITED"
+      method_coexistence: "ADDITIVE_CANONICAL_MERGE"
+      type_compatibility_only_materialization: "PROHIBITED"
+      ambiguity: "PRESERVE_TYPED_COMPETITION_NO_S2_WINNER"
+      catalog_direction_integrity: "SOURCE_TOKEN_MUST_EQUAL_PREDICATE_SIDE_TOKEN"
     polarity_effect:
       POSITIVE: "AFFIRMS_FINDING_EVENT_NOT_AUTOMATICALLY_ALL_PREDICATES"
       NEGATIVE: "DOES_NOT_AFFIRM_DIAGNOSED_BY_OR_EXCLUDE_INFECTION"

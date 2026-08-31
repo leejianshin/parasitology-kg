@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 import yaml
@@ -48,6 +49,12 @@ r3b_negative_count = len(yaml.safe_load(
 total_formal_negative_count = (
     stage_negative_count + r3a_negative_count + r3b_negative_count
 )
+execution_summary = json.loads(
+    (HERE / "fixtures/reference-validator-execution-summary.json").read_text(
+        encoding="utf-8"
+    )
+)
+schema_gate_summary = execution_summary["schema_gate"]
 manifest = {
     "manifest_id": "P9B1Q-R3H-SIDECAR-INDEX-EVIDENCE-BINDING-DESIGN-MANIFEST-v1.0",
     "status": "R3H_LOCAL_CANDIDATE_PENDING_FINAL_RE_REVIEW",
@@ -71,11 +78,14 @@ manifest = {
         "summary_path": "fixtures/reference-validator-execution-summary.json",
         "summary_sha256": sha(HERE / "fixtures/reference-validator-execution-summary.json"),
         "required_result": "PASS",
-        "positive_cases": 11,
-        "integrated_r3b_positive_cases": 4,
-        "minimality_cases": 8,
-        "negative_cases": stage_negative_count + r3b_negative_count,
-        "repeat_runs": 3,
+        "positive_cases": len(execution_summary["positive"]),
+        "integrated_r3b_positive_cases": sum(
+            item["case"].startswith("POS-R3B-")
+            for item in execution_summary["positive"]
+        ),
+        "minimality_cases": len(execution_summary["minimality"]),
+        "negative_cases": len(execution_summary["negative"]),
+        "repeat_runs": execution_summary["repeat_runs"],
     },
     "shared_negation_semantic_authority": {
         "data_path": "negation-surface-scope-authority.yml",
@@ -95,8 +105,8 @@ manifest = {
         "dependency_lock": "package-lock.json",
         "dependency_lock_sha256": sha(HERE / "package-lock.json"),
         "engine": "AJV_8_17_1_DRAFT_2020_12_STRICT",
-        "compiled_schema_count": 12,
-        "positive_fixture_pair_count": 31,
+        "compiled_schema_count": schema_gate_summary["compiled_schema_count"],
+        "positive_fixture_pair_count": schema_gate_summary["fixture_pair_count"],
     },
     "object_store_index_binding": {
         "index_path": "fixtures/object-store-index-positive.json",
@@ -114,9 +124,9 @@ manifest = {
             "reference-stage-semantic-validator.py",
             "negation_semantic_authority.py",
         ],
-        "registry_mapping_count": 47,
-        "validator_constraint_mapping_count": 47,
-        "executable_constraint_count": 47,
+        "registry_mapping_count": execution_summary["registry_failure_governance"]["registry_mapping_count"],
+        "validator_constraint_mapping_count": execution_summary["registry_failure_governance"]["validator_constraint_mapping_count"],
+        "executable_constraint_count": execution_summary["registry_failure_governance"]["executable_constraint_count"],
         "formal_fixture_count": total_formal_negative_count,
         "explicit_fixture_failure_code_count": total_formal_negative_count,
         "required_missing_executable_constraint_count": 0,

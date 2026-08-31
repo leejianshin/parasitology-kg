@@ -44,6 +44,7 @@ NEGATION_SEMANTIC_IMPLEMENTATION = HERE / "negation_semantic_authority.py"
 R3B_NEGATIVE = FIXTURES / "r3b-negation-scope-negative-fixtures.yml"
 R3B_POSITIVE = FIXTURES / "r3b-negation-scope-positive.json"
 NEGATIVE_MUTATION_MODEL = HERE / "negative-fixture-semantic-mutation-model.yml"
+QUERY_INTERPRETER_CONFIG = REPO / "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
 _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
@@ -586,6 +587,7 @@ def validate_s2(
     frame: dict[str, Any],
     normalized: dict[str, Any],
     ast: dict[str, Any] | None = None,
+    query_interpreter_config: dict[str, Any] | None = None,
     entity_ontology: dict[str, Any] | None = None,
     event_mapping: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
@@ -593,6 +595,9 @@ def validate_s2(
     if not schema_valid("event-frame-schema-candidate.yml", frame):
         errors.append(error("CNS-EF-REF_INTEGRITY", "DANGLING_REFERENCE", "/"))
     ast = ast or {}
+    query_interpreter_config = query_interpreter_config or load_yaml(
+        QUERY_INTERPRETER_CONFIG
+    )
     entity_ontology = entity_ontology or load_yaml(REPO / "schema/entity-types.yml")
     event_mapping = event_mapping or load_json(FIXTURES / "authority-event-relation-mapping.json")
     frame_ids = {item["frame_id"] for item in frame["frames"]}
@@ -750,7 +755,244 @@ def validate_s2(
             )
             if not exact_slice or not allowed_surface:
                 errors.append(error("CNS-EF-SPECIMEN_SOURCE", "SPECIMEN_SOURCE_MISSING", f"/specimen_slots/{si}/source_spans/{pi}"))
+    errors.extend(
+        validate_diagnostic_role_derivation(
+            frame,
+            normalized,
+            ast,
+            query_interpreter_config,
+            event_mapping,
+        )
+    )
     return ordered(errors)
+
+
+def _ast_scope_node_ids(ast: dict[str, Any], roots: list[str]) -> set[str]:
+    children = {
+        node["node_id"]: node.get("child_node_ids", [])
+        for node in ast.get("nodes", [])
+    }
+    result: set[str] = set()
+    pending = list(roots)
+    while pending:
+        node_id = pending.pop()
+        if node_id in result:
+            continue
+        result.add(node_id)
+        pending.extend(children.get(node_id, []))
+    return result
+
+
+def _diagnostic_scope(
+    item: dict[str, Any], ast: dict[str, Any]
+) -> tuple[set[str], list[dict[str, Any]], list[dict[str, Any]]]:
+    node_ids = _ast_scope_node_ids(ast, item.get("source_ast_node_ids", []))
+    nodes = [
+        node for node in ast.get("nodes", []) if node.get("node_id") in node_ids
+    ]
+    mentions = [
+        mention
+        for mention in ast.get("surface_mentions", [])
+        if mention.get("containing_node_id") in node_ids
+    ]
+    return node_ids, nodes, mentions
+
+
+def _cue_is_in_nodes(cue: str, nodes: list[dict[str, Any]]) -> bool:
+    return any(cue in node.get("source_span", {}).get("text", "") for node in nodes)
+
+
+def _mention_groups_for_token(
+    token: str,
+    mentions: list[dict[str, Any]],
+) -> dict[tuple[tuple[str, ...], tuple[str, ...]], set[str]]:
+    entity_type = "diagnostic_method" if token == "method_entity_id" else token
+    grouped: dict[tuple[tuple[str, ...], tuple[str, ...]], set[str]] = {}
+    for mention in mentions:
+        if entity_type not in mention.get("candidate_entity_types", []):
+            continue
+        key = (
+            tuple(sorted(mention.get("candidate_entity_ids", []))),
+            tuple(sorted(mention.get("candidate_entity_types", []))),
+        )
+        grouped.setdefault(key, set()).add(mention["surface_mention_id"])
+    return grouped
+
+
+def _slot_key(slot: dict[str, Any], role: str | None = None) -> tuple[str, tuple[str, ...], tuple[str, ...]]:
+    domain = slot["domain"]
+    return (
+        role or slot["semantic_role"],
+        tuple(sorted(domain["entity_ids"])),
+        tuple(sorted(domain["entity_types"])),
+    )
+
+
+def validate_diagnostic_role_derivation(
+    frame: dict[str, Any],
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    query_interpreter_config: dict[str, Any],
+    event_mapping: dict[str, Any],
+) -> list[dict[str, str]]:
+    """Recompute formal diagnostic participant roles without compiler logic.
+
+    Predicate expression comes only from exact configured cues inside actual
+    proposition scope.  Direction comes only from the event relation mapping,
+    while participant roles come only from its dedicated diagnostic catalog.
+    The pre-existing method and target roles are derived from diagnostic
+    binding field positions, never from declared slot roles or type defaults.
+    """
+    errors: list[dict[str, str]] = []
+    mapping = event_mapping.get("event_mapping", {}).get("DIAGNOSTIC_FINDING", {})
+    catalog = mapping.get("diagnostic_participant_role_catalog")
+    predicates = mapping.get("predicates", {})
+    if (
+        mapping.get("required_role_derivation")
+        != "FORMAL_DIAGNOSTIC_ROLE_CATALOG_ONLY"
+        or not isinstance(catalog, dict)
+    ):
+        return [
+            error(
+                "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
+                "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
+                "/event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog",
+            )
+        ]
+
+    direction_invalid = False
+    for predicate, sides in catalog.items():
+        formal = predicates.get(predicate)
+        if not isinstance(formal, dict) or not isinstance(sides, dict):
+            direction_invalid = True
+            continue
+        for side, direction_field in (("subject", "subject_from"), ("object", "object_from")):
+            rule = sides.get(side)
+            direction = formal.get(direction_field)
+            if (
+                not isinstance(rule, dict)
+                or direction != [rule.get("source_token")]
+                or rule.get("materialization") != "REQUIRED_WHEN_EXPLICITLY_BOUND"
+                or rule.get("semantic_role")
+                not in {"ACTOR", "TARGET", "METHOD"}
+                or rule.get("cardinality")
+                not in {
+                    "EXACTLY_ONCE_PER_CANONICAL_PARTICIPANT",
+                    "EXACTLY_ONE_METHOD_SLOT_PER_EVENT_METHOD_DOMAIN",
+                }
+            ):
+                direction_invalid = True
+    if set(catalog) != set(predicates) or direction_invalid:
+        errors.append(
+            error(
+                "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
+                "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
+                "/event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog",
+            )
+        )
+
+    predicate_cues = query_interpreter_config.get("predicate_cues", {})
+    for frame_index, item in enumerate(frame.get("frames", [])):
+        if item.get("event_type_domain") != ["DIAGNOSTIC_FINDING"]:
+            continue
+        pointer = f"/frames/{frame_index}/participant_slots"
+        binding = item.get("diagnostic_binding")
+        if not isinstance(binding, dict):
+            continue
+        slots = item.get("participant_slots", [])
+        slots_by_id = {slot["slot_id"]: slot for slot in slots}
+        _, scope_nodes, scope_mentions = _diagnostic_scope(item, ast)
+        expected: dict[
+            tuple[str, tuple[str, ...], tuple[str, ...]], set[str]
+        ] = {}
+
+        def add_expected(
+            key: tuple[str, tuple[str, ...], tuple[str, ...]],
+            source_ids: set[str],
+        ) -> None:
+            expected.setdefault(key, set()).update(source_ids)
+
+        method_slot = slots_by_id.get(binding.get("method_slot_id"))
+        if method_slot is not None:
+            add_expected(_slot_key(method_slot, "METHOD"), set(method_slot["source_ids"]))
+        for target_id in binding.get("target_slot_ids", []):
+            target_slot = slots_by_id.get(target_id)
+            if target_slot is not None:
+                add_expected(_slot_key(target_slot, "TARGET"), set(target_slot["source_ids"]))
+
+        expressed: set[str] = set()
+        for predicate in catalog:
+            cues = predicate_cues.get(predicate, [])
+            if isinstance(cues, list) and any(
+                isinstance(cue, str) and cue and _cue_is_in_nodes(cue, scope_nodes)
+                for cue in cues
+            ):
+                expressed.add(predicate)
+
+        for predicate in sorted(expressed):
+            for side in ("subject", "object"):
+                rule = catalog[predicate][side]
+                groups = _mention_groups_for_token(
+                    rule["source_token"], scope_mentions
+                )
+                for (entity_ids, entity_types), source_ids in groups.items():
+                    add_expected(
+                        (rule["semantic_role"], entity_ids, entity_types), source_ids
+                    )
+
+        actual: dict[
+            tuple[str, tuple[str, ...], tuple[str, ...]], tuple[str, set[str]]
+        ] = {}
+        duplicate_key = False
+        source_roles: dict[str, set[str]] = {}
+        for slot in slots:
+            key = _slot_key(slot)
+            if key in actual:
+                duplicate_key = True
+            else:
+                actual[key] = (slot["slot_id"], set(slot["source_ids"]))
+            for source_id in slot["source_ids"]:
+                source_roles.setdefault(source_id, set()).add(slot["semantic_role"])
+
+        actual_sources = {key: sources for key, (_, sources) in actual.items()}
+        same_mention_conflict = any(len(roles) > 1 for roles in source_roles.values())
+        if duplicate_key or same_mention_conflict or expected != actual_sources:
+            errors.append(
+                error(
+                    "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
+                    "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
+                    pointer,
+                )
+            )
+            continue
+
+        identity = item["normalized_identity"]
+        expected_actor_ids = {
+            actual[key][0] for key in expected if key[0] == "ACTOR"
+        }
+        expected_target_ids = {
+            actual[key][0] for key in expected if key[0] == "TARGET"
+        }
+        expected_method_ids = {
+            actual[key][0] for key in expected if key[0] == "METHOD"
+        }
+        identity_invalid = (
+            set(identity["actor_slot_ids"]) != expected_actor_ids
+            or set(identity["target_slot_ids"]) != expected_target_ids
+            or len(expected_method_ids) != 1
+            or identity["method_slot_id"] not in expected_method_ids
+            or binding["method_slot_id"] not in expected_method_ids
+            or set(binding["target_slot_ids"]) != expected_target_ids
+        )
+        if identity_invalid:
+            errors.append(
+                error(
+                    "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
+                    "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
+                    f"/frames/{frame_index}/normalized_identity",
+                )
+            )
+    return errors
 
 
 def solution_core(typed_result: dict[str, Any]) -> dict[str, Any]:
@@ -1217,8 +1459,8 @@ def run_schema_gate() -> dict[str, Any]:
     if (
         result.get("result") != "PASS"
         or result.get("compiled_schema_count") != 12
-        or result.get("fixture_pair_count") != 31
-        or result.get("valid_fixture_count") != 31
+        or result.get("fixture_pair_count") != 36
+        or result.get("valid_fixture_count") != 36
     ):
         raise RuntimeError("AJV strict schema gate count/result mismatch")
     _SCHEMA_GATE_CACHE = copy.deepcopy(result)
@@ -2664,7 +2906,7 @@ def run_positive() -> list[dict[str, Any]]:
     schema_gate = run_schema_gate()
     results: list[dict[str, Any]] = []
     normalized = normalized_by_request_id()
-    for suffix in ("exposure", "diagnostic"):
+    for suffix in ("exposure", "diagnostic", "diagnostic-role-catalog"):
         request = load_json(FIXTURES / f"request-{suffix}-positive.json")
         norm = load_json(FIXTURES / f"normalized-request-{suffix}-positive.json")
         ast = load_json(FIXTURES / f"clause-ast-{suffix}-positive.json")
@@ -2688,6 +2930,19 @@ def run_positive() -> list[dict[str, Any]]:
             s2_record, _, _ = load_stage_result("S2")
             s0_errors = stage_record_errors(s0_record, s0_errors)
             s1_errors = stage_record_errors(s1_record, s1_errors)
+            s2_errors = stage_record_errors(s2_record, s2_errors)
+        elif suffix == "diagnostic-role-catalog":
+            s2_record, s2_inputs, _ = load_stage_result(
+                "S2", "diagnostic-role-catalog"
+            )
+            s2_errors = validate_s2(
+                frame,
+                norm,
+                ast,
+                s2_inputs.get("QUERY_INTERPRETER_CONFIG"),
+                s2_inputs.get("ENTITY_ONTOLOGY"),
+                s2_inputs.get("EVENT_RELATION_MAPPING"),
+            )
             s2_errors = stage_record_errors(s2_record, s2_errors)
         results.extend([
             {"case": f"POS-S0-{suffix}", "errors": s0_errors},
@@ -2778,7 +3033,9 @@ def run_negative() -> list[dict[str, Any]]:
                 and "clause-ast" in case["paired_actual_object_paths"][0]
                 else None
             )
-            base_errors = validate_s2(base, normalized[base["request_id"]], base_ast)
+            base_errors = validate_s2(
+                base, normalized[base["request_id"]], base_ast
+            )
         elif stage == "S3_TYPED_SOLVER":
             s3_record, s3_inputs, _ = load_stage_result("S3")
             s3_hashes = {item["object_kind"]: item["canonical_sha256"] for item in s3_record["actual_input_objects"]}
@@ -2806,10 +3063,28 @@ def run_negative() -> list[dict[str, Any]]:
         mutated = apply_declared_semantic_mutation(base, case)
         mutated_s3_inputs: dict[str, Any] | None = None
         mutated_s3_hashes: dict[str, str] | None = None
+        mutated_s2_event_mapping: dict[str, Any] | None = None
+        mutated_s2_query_config: dict[str, Any] | None = None
         mutated_s5_index: dict[str, Any] | None = None
         s5_actual_overrides: dict[str, dict[str, Any]] = {}
         derived_source_objects: dict[str, Any] | None = None
-        if stage == "S3_TYPED_SOLVER":
+        if stage == "S2_EVENT_FRAME" and case.get("actual_input_mutation"):
+            input_mutation = case["actual_input_mutation"]
+            object_kind = input_mutation["object_kind"]
+            if object_kind == "EVENT_RELATION_MAPPING":
+                mutated_s2_event_mapping = apply_patch(
+                    load_json(FIXTURES / "authority-event-relation-mapping.json"),
+                    input_mutation["patch"],
+                )
+            elif object_kind == "QUERY_INTERPRETER_CONFIG":
+                mutated_s2_query_config = apply_patch(
+                    load_yaml(QUERY_INTERPRETER_CONFIG), input_mutation["patch"]
+                )
+            else:
+                raise RuntimeError(
+                    f"unsupported S2 actual input mutation: {object_kind}"
+                )
+        elif stage == "S3_TYPED_SOLVER":
             s3_record, mutated_s3_inputs, _ = load_stage_result("S3")
             mutated_s3_hashes = {
                 item["object_kind"]: item["canonical_sha256"]
@@ -2865,7 +3140,12 @@ def run_negative() -> list[dict[str, Any]]:
                 else None
             )
             errors = validate_s2(
-                mutated, normalized[mutated["request_id"]], paired_ast
+                mutated,
+                normalized[mutated["request_id"]],
+                paired_ast,
+                mutated_s2_query_config,
+                None,
+                mutated_s2_event_mapping,
             )
         elif stage == "S3_TYPED_SOLVER":
             assert mutated_s3_inputs is not None and mutated_s3_hashes is not None

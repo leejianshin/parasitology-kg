@@ -16,9 +16,9 @@ reference_execution:
   required_exit_code: 0
   required_result: PASS
   required_counts:
-    positive: 15
+    positive: 18
     minimality: 8
-    negative: 64
+    negative: 74
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -31,8 +31,8 @@ reference_execution:
     engine: "AJV 8.17.1 Draft 2020-12"
     strict: true
     required_compiled_schema_count: 12
-    required_fixture_pair_count: 31
-    required_valid_fixture_count: 31
+    required_fixture_pair_count: 36
+    required_valid_fixture_count: 36
 
 failure_code_authority:
   canonical_source: constraint-id-registry.yml
@@ -112,7 +112,7 @@ validators:
       - "shared argument edges have no node, parent, child or source span and cannot chain, cycle, cross objects, point forward, or duplicate proposition materialization"
   S2_EVENT_FRAME:
     validator_id: p9b1q-stage-semantic-validator-s2
-    required_actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
+    required_actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, QUERY_INTERPRETER_CONFIG, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
     required_actual_output: EVENT_FRAME
     registered_constraints:
       - CNS-EF-ID_UNIQUE
@@ -124,6 +124,7 @@ validators:
       - CNS-EF-IDENTITY_CONSISTENCY
       - CNS-EF-REFERENCE_DOMAIN
       - CNS-EF-OVERRIDE_DOMAIN
+      - CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
     additional_checks:
       - "every slot, specimen, frame, AST source, reference, and override ID resolves with type"
       - "every concrete participant domain value is licensed by the cited Clause AST surface mention candidate"
@@ -135,6 +136,12 @@ validators:
       - "every normalized_identity slot references the matching ACTOR, TARGET, METHOD or LOCATION semantic_role and no slot is reused across conflicting dimensions"
       - "reference identity_relation_domain explicitly contains all and only viable SAME_EVENT/DISTINCT_EVENT alternatives"
       - "override dimension is selected only from overridden_dimension_domain"
+      - "expressed diagnostic predicates are independently recomputed from actual Clause AST proposition scope and exact formal predicate cues in the content-addressed QUERY_INTERPRETER_CONFIG"
+      - "diagnostic catalog subject/object source tokens equal the corresponding predicate subject_from/object_from token; catalog drift fails closed"
+      - "diagnostic binding fields independently establish the pre-existing METHOD and TARGET base roles; declared participant semantic_role is never authority"
+      - "every explicitly bound formal diagnostic predicate side materializes exactly the catalog role, while type compatibility alone never creates a participant"
+      - "same frame, semantic role and canonical entity domain merge to one slot with the exact union of source IDs; duplicate METHOD slots and same-mention conflicting roles fail closed"
+      - "the complete expected diagnostic participant set and normalized identity role membership exactly equal the actual Event Frame"
   S3_TYPED_SOLVER:
     validator_id: p9b1q-stage-semantic-validator-s3
     required_actual_inputs:
@@ -173,7 +180,7 @@ validators:
       - CNS-SOLVER-AMBIGUITY_CERTIFICATE
     additional_checks:
       - "all constraint IDs occur exactly once in the bound registry and selected constraint set"
-      - "registry entry orders are exactly integers 1 through 47 with no duplicate or gap"
+      - "registry entry orders are exactly integers 1 through 48 with no duplicate or gap"
       - "selected constraint IDs equal the complete registry ID sequence in registry validation order"
       - "registry and constraint set both pass their frozen Schemas before any constraint executes"
       - "the actual registry Schema and constraint-set Schema equal their independently content-addressed frozen objects"
