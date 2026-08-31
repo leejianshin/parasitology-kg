@@ -232,6 +232,9 @@ def main() -> None:
         "华支睾吸虫病的确诊方法是粪便检查",
         "华支睾吸虫病的诊断线索包括粪便检查",
         "十二指肠液检查未检出虫卵",
+        "比较粪便检查与影像检查后，华支睾吸虫病的确诊方法是粪便检查",
+        "粪便检查是华支睾吸虫病的确诊方法，影像检查仅用于比较",
+        "犬猫猪与成虫仅用于比较",
     ]
     role_text = "；".join(role_parts) + "。"
     role_request = {
@@ -336,11 +339,14 @@ def main() -> None:
         "knowledge_version": "clonorchis_pcms_v1",
         "nodes": [
             role_node("S000", "ROOT", 0, len(role_text), None, ["S001"], "WHOLE_REQUEST"),
-            role_node("S001", "COORDINATION", 0, len(role_text) - 1, "S000", ["S002", "S003", "S004", "S005"], "MATERIAL_PROPOSITION", (role_ends[0], role_ends[0] + 1)),
+            role_node("S001", "COORDINATION", 0, len(role_text) - 1, "S000", ["S002", "S003", "S004", "S005", "S006", "S007", "S008"], "MATERIAL_PROPOSITION", (role_ends[0], role_ends[0] + 1)),
             role_node("S002", "PROPOSITION", role_starts[0], role_ends[0], "S001", [], "COORDINATE_MEMBER"),
             role_node("S003", "PROPOSITION", role_starts[1], role_ends[1], "S001", [], "COORDINATE_MEMBER"),
             role_node("S004", "PROPOSITION", role_starts[2], role_ends[2], "S001", [], "COORDINATE_MEMBER"),
             role_node("S005", "PROPOSITION", role_starts[3], role_ends[3], "S001", [], "COORDINATE_MEMBER", assertion_markers=["K001"]),
+            role_node("S006", "PROPOSITION", role_starts[4], role_ends[4], "S001", [], "COORDINATE_MEMBER"),
+            role_node("S007", "PROPOSITION", role_starts[5], role_ends[5], "S001", [], "COORDINATE_MEMBER"),
+            role_node("S008", "PROPOSITION", role_starts[6], role_ends[6], "S001", [], "COORDINATE_MEMBER"),
         ],
         "normalized_request_sha256": csha(role_norm),
         "producer": {
@@ -364,14 +370,24 @@ def main() -> None:
             role_mention("U007", "粪便检查", "diagnostic.stool_egg_microscopy", "diagnostic_method", "S004", role_starts[2]),
             role_mention("U008", "十二指肠液检查", "diagnostic.duodenal_fluid_egg_microscopy", "diagnostic_method", "S005", role_starts[3]),
             role_mention("U009", "虫卵", "stage.clonorchis_egg", "life_cycle_stage", "S005", role_starts[3]),
+            role_mention("U010", "粪便检查", "diagnostic.stool_egg_microscopy", "diagnostic_method", "S006", role_starts[4]),
+            role_mention("U011", "影像检查", "diagnostic.biliary_imaging", "diagnostic_method", "S006", role_starts[4]),
+            role_mention("U012", "华支睾吸虫病", "disease.clonorchiasis", "disease", "S006", role_starts[4]),
+            role_mention("U013", "粪便检查", "diagnostic.stool_egg_microscopy", "diagnostic_method", "S006", role_text.rindex("粪便检查", role_starts[4], role_ends[4])),
+            role_mention("U014", "粪便检查", "diagnostic.stool_egg_microscopy", "diagnostic_method", "S007", role_starts[5]),
+            role_mention("U015", "华支睾吸虫病", "disease.clonorchiasis", "disease", "S007", role_starts[5]),
+            role_mention("U016", "影像检查", "diagnostic.biliary_imaging", "diagnostic_method", "S007", role_starts[5]),
+            role_mention("U017", "犬猫猪", "host.domestic_dogs_cats_pigs", "host", "S008", role_starts[6]),
+            role_mention("U018", "成虫", "stage.clonorchis_adult", "life_cycle_stage", "S008", role_starts[6]),
         ],
     }
     write("clause-ast-diagnostic-role-catalog-positive.json", role_ast)
 
-    method_starts = [
-        role_text.index("粪便检查", role_starts[index])
-        for index in range(3)
-    ]
+    role_mentions = {
+        item["surface_mention_id"]: item
+        for item in role_ast["surface_mentions"]
+    }
+    stool_method_source_ids = ["U001", "U005", "U007", "U013", "U014"]
     role_frame = {
         "canonicalization_profile_sha256": profile_sha,
         "clause_ast_sha256": csha(role_ast),
@@ -382,13 +398,13 @@ def main() -> None:
             "assertion": {
                 "assertion_status": "AFFIRMED",
                 "finding_polarity": "POSITIVE",
-                "governing_ast_node_ids": ["S002", "S003", "S004"],
+                "governing_ast_node_ids": ["S002", "S003", "S004", "S006", "S007"],
                 "marker_ids": [],
                 "temporal_scope": "GENERAL",
             },
             "diagnostic_binding": {
                 "method_slot_id": "V001",
-                "polarity_source_ids": ["S002", "S003", "S004"],
+                "polarity_source_ids": ["S002", "S003", "S004", "S006", "S007"],
                 "specimen_slot_id": "SP001",
                 "target_slot_ids": ["V002"],
             },
@@ -405,13 +421,16 @@ def main() -> None:
                 "temporal_scope_domain": ["GENERAL"],
             },
             "participant_slots": [
-                {"binding_status": "FIXED", "domain": {"entity_ids": ["diagnostic.stool_egg_microscopy"], "entity_types": ["diagnostic_method"]}, "semantic_role": "METHOD", "slot_id": "V001", "source_ids": ["U001", "U005", "U007"]},
+                {"binding_status": "FIXED", "domain": {"entity_ids": ["diagnostic.stool_egg_microscopy"], "entity_types": ["diagnostic_method"]}, "semantic_role": "METHOD", "slot_id": "V001", "source_ids": stool_method_source_ids},
                 {"binding_status": "FIXED", "domain": {"entity_ids": ["stage.clonorchis_egg"], "entity_types": ["life_cycle_stage"]}, "semantic_role": "TARGET", "slot_id": "V002", "source_ids": ["U002"]},
                 {"binding_status": "FIXED", "domain": {"entity_ids": ["host.human"], "entity_types": ["host"]}, "semantic_role": "ACTOR", "slot_id": "V003", "source_ids": ["U003"]},
-                {"binding_status": "FIXED", "domain": {"entity_ids": ["disease.clonorchiasis"], "entity_types": ["disease"]}, "semantic_role": "ACTOR", "slot_id": "V004", "source_ids": ["U004", "U006"]},
+                {"binding_status": "FIXED", "domain": {"entity_ids": ["disease.clonorchiasis"], "entity_types": ["disease"]}, "semantic_role": "ACTOR", "slot_id": "V004", "source_ids": ["U004", "U006", "U012", "U015"]},
             ],
-            "source_ast_node_ids": ["S002", "S003", "S004"],
-            "source_spans": [role_span(start, end) for start, end in zip(role_starts[:3], role_ends[:3])],
+            "source_ast_node_ids": ["S002", "S003", "S004", "S006", "S007", "S008"],
+            "source_spans": [
+                role_span(role_starts[index], role_ends[index])
+                for index in (0, 1, 2, 4, 5, 6)
+            ],
         }, {
             "assertion": {
                 "assertion_status": "AFFIRMED",
@@ -459,8 +478,14 @@ def main() -> None:
         "request_sha256": csha(role_request),
         "specimen_slots": [{
             "binding_status": "FIXED",
-            "source_ids": ["U001", "U005", "U007"],
-            "source_spans": [role_span(start, start + 2) for start in method_starts],
+            "source_ids": stool_method_source_ids,
+            "source_spans": [
+                role_span(
+                    role_mentions[source_id]["source_span"]["start_char"],
+                    role_mentions[source_id]["source_span"]["start_char"] + 2,
+                )
+                for source_id in stool_method_source_ids
+            ],
             "specimen_code_domain": ["STOOL"],
             "specimen_slot_id": "SP001",
         }, {
@@ -859,7 +884,7 @@ def main() -> None:
             "entity_types": ["disease"],
         },
         "semantic_role": "THEME",
-        "slot_id": "V005",
+        "slot_id": "V900",
         "source_ids": ["U004"],
     }
     type_only_slot = {
@@ -869,7 +894,7 @@ def main() -> None:
             "entity_types": ["life_cycle_stage"],
         },
         "semantic_role": "ACTOR",
-        "slot_id": "V005",
+        "slot_id": "V900",
         "source_ids": ["U002"],
     }
     duplicate_role_slot = {
@@ -879,12 +904,32 @@ def main() -> None:
             "entity_types": ["diagnostic_method"],
         },
         "semantic_role": "THEME",
-        "slot_id": "V005",
+        "slot_id": "V900",
         "source_ids": ["U001"],
     }
     duplicate_method_slot = copy.deepcopy(duplicate_role_slot)
     duplicate_method_slot["semantic_role"] = "METHOD"
-    duplicate_method_slot["source_ids"] = ["U001", "U005", "U007"]
+    duplicate_method_slot["source_ids"] = stool_method_source_ids
+    unrelated_method_slot = {
+        "binding_status": "FIXED",
+        "domain": {
+            "entity_ids": ["diagnostic.biliary_imaging"],
+            "entity_types": ["diagnostic_method"],
+        },
+        "semantic_role": "METHOD",
+        "slot_id": "V900",
+        "source_ids": ["U011"],
+    }
+    duplicate_id_slot = {
+        "binding_status": "FIXED",
+        "domain": {
+            "entity_ids": ["disease.clonorchiasis"],
+            "entity_types": ["disease"],
+        },
+        "semantic_role": "ACTOR",
+        "slot_id": "V001",
+        "source_ids": ["U004"],
+    }
 
     role_cases = [
         output_case("NEG-S2-DIAGNOSTIC-ROLE-MISSING-REQUIRED-PARTICIPANT", "MISSING_REQUIRED_PREDICATE_PARTICIPANT", "/frames/0/participant_slots/3/source_ids", "replace", ["U004"]),
@@ -897,12 +942,27 @@ def main() -> None:
         output_case("NEG-S2-DIAGNOSTIC-ROLE-DUPLICATE-METHOD", "DUPLICATE_METHOD_INSTEAD_OF_CANONICAL_MERGE", "/frames/0/participant_slots/4", "add", duplicate_method_slot),
         output_case("NEG-S2-DIAGNOSTIC-ROLE-WRONG-IDENTITY-DIMENSION", "NORMALIZED_IDENTITY_WRONG_ROLE_DIMENSION", "/frames/0/normalized_identity/actor_slot_ids", "replace", ["V003"]),
         output_case("NEG-S2-DIAGNOSTIC-ROLE-PARTICIPANT-SET-MISMATCH", "ACTUAL_PARTICIPANT_SET_DIFFERS_FROM_RECOMPUTED_EXPECTED_SET", "/frames/0/participant_slots/3/source_ids", "replace", ["U003", "U004", "U006"]),
+        output_case("NEG-S2-DIAGNOSTIC-ROLE-UNRELATED-SAME-TYPE-METHOD", "UNRELATED_SAME_TYPE_MENTION_NOT_BOUND", "/frames/0/participant_slots/4", "add", unrelated_method_slot),
     ]
-    new_fixture_ids = {item["fixture_id"] for item in role_cases}
+    duplicate_id_case = output_case(
+        "NEG-S2-DUPLICATE-PARTICIPANT-SLOT-ID",
+        "DUPLICATE_PARTICIPANT_SLOT_ID",
+        "/frames/0/participant_slots/4",
+        "add",
+        duplicate_id_slot,
+    )
+    duplicate_id_case["expected_constraint_id"] = "CNS-EF-ID_UNIQUE"
+    duplicate_id_case["expected_failure_code"] = "DUPLICATE_ID"
+    duplicate_id_case["semantic_mutation"]["expected_constraint_id"] = (
+        "CNS-EF-ID_UNIQUE"
+    )
+    new_fixture_ids = {
+        item["fixture_id"] for item in role_cases + [duplicate_id_case]
+    }
     negative["cases"] = [
         item for item in negative["cases"]
         if item.get("fixture_id") not in new_fixture_ids
-    ] + role_cases
+    ] + role_cases + [duplicate_id_case]
     for item in negative["base_objects"]:
         item["canonical_sha256"] = raw_sha(resolve(item["path"]))
     for case in negative["cases"]:

@@ -600,13 +600,32 @@ def validate_s2(
     )
     entity_ontology = entity_ontology or load_yaml(REPO / "schema/entity-types.yml")
     event_mapping = event_mapping or load_json(FIXTURES / "authority-event-relation-mapping.json")
-    frame_ids = {item["frame_id"] for item in frame["frames"]}
-    specimen_ids = {item["specimen_slot_id"] for item in frame["specimen_slots"]}
-    slot_ids = {slot["slot_id"] for item in frame["frames"] for slot in item["participant_slots"]}
-    reference_ids = {item["reference_hypothesis_id"] for item in frame["reference_hypotheses"]}
-    override_ids = {item["override_hypothesis_id"] for item in frame["override_hypotheses"]}
-    all_ids = frame_ids | specimen_ids | slot_ids | reference_ids | override_ids
-    if len(all_ids) != len(frame_ids) + len(specimen_ids) + len(slot_ids) + len(reference_ids) + len(override_ids):
+    raw_frame_ids = [item["frame_id"] for item in frame["frames"]]
+    raw_specimen_ids = [item["specimen_slot_id"] for item in frame["specimen_slots"]]
+    raw_slot_ids = [
+        slot["slot_id"]
+        for item in frame["frames"]
+        for slot in item["participant_slots"]
+    ]
+    raw_reference_ids = [
+        item["reference_hypothesis_id"] for item in frame["reference_hypotheses"]
+    ]
+    raw_override_ids = [
+        item["override_hypothesis_id"] for item in frame["override_hypotheses"]
+    ]
+    raw_global_ids = (
+        raw_frame_ids
+        + raw_specimen_ids
+        + raw_slot_ids
+        + raw_reference_ids
+        + raw_override_ids
+    )
+    frame_ids = set(raw_frame_ids)
+    specimen_ids = set(raw_specimen_ids)
+    slot_ids = set(raw_slot_ids)
+    reference_ids = set(raw_reference_ids)
+    override_ids = set(raw_override_ids)
+    if len(raw_global_ids) != len(set(raw_global_ids)):
         errors.append(error("CNS-EF-ID_UNIQUE", "DUPLICATE_ID", "/"))
     dangling = False
     for item in frame["frames"]:
@@ -802,6 +821,31 @@ def _cue_is_in_nodes(cue: str, nodes: list[dict[str, Any]]) -> bool:
     return any(cue in node.get("source_span", {}).get("text", "") for node in nodes)
 
 
+def _minimal_cue_node_ids(
+    ast: dict[str, Any],
+    scope_node_ids: set[str],
+    cues: list[str],
+) -> set[str]:
+    """Return the structurally most local proposition scopes bearing a cue."""
+    candidates = {
+        node["node_id"]
+        for node in ast.get("nodes", [])
+        if node.get("node_id") in scope_node_ids
+        and any(
+            cue in node.get("source_span", {}).get("text", "")
+            for cue in cues
+            if isinstance(cue, str) and cue
+        )
+    }
+    return {
+        node_id
+        for node_id in candidates
+        if not (
+            (_ast_scope_node_ids(ast, [node_id]) - {node_id}) & candidates
+        )
+    }
+
+
 def _mention_groups_for_token(
     token: str,
     mentions: list[dict[str, Any]],
@@ -901,7 +945,11 @@ def validate_diagnostic_role_derivation(
             continue
         slots = item.get("participant_slots", [])
         slots_by_id = {slot["slot_id"]: slot for slot in slots}
-        _, scope_nodes, scope_mentions = _diagnostic_scope(item, ast)
+        scope_node_ids, scope_nodes, scope_mentions = _diagnostic_scope(item, ast)
+        mentions_by_id = {
+            mention["surface_mention_id"]: mention
+            for mention in scope_mentions
+        }
         expected: dict[
             tuple[str, tuple[str, ...], tuple[str, ...]], set[str]
         ] = {}
@@ -914,28 +962,63 @@ def validate_diagnostic_role_derivation(
 
         method_slot = slots_by_id.get(binding.get("method_slot_id"))
         if method_slot is not None:
-            add_expected(_slot_key(method_slot, "METHOD"), set(method_slot["source_ids"]))
+            method_entities = set(method_slot["domain"]["entity_ids"])
+            formal_method_sources = {
+                source_id
+                for source_id in method_slot["source_ids"]
+                if method_entities
+                <= set(
+                    mentions_by_id.get(source_id, {}).get(
+                        "candidate_entity_ids", []
+                    )
+                )
+            }
+            add_expected(
+                _slot_key(method_slot, "METHOD"),
+                formal_method_sources,
+            )
         for target_id in binding.get("target_slot_ids", []):
             target_slot = slots_by_id.get(target_id)
             if target_slot is not None:
                 add_expected(_slot_key(target_slot, "TARGET"), set(target_slot["source_ids"]))
 
-        expressed: set[str] = set()
+        expressed: dict[str, set[str]] = {}
         for predicate in catalog:
             cues = predicate_cues.get(predicate, [])
-            if isinstance(cues, list) and any(
-                isinstance(cue, str) and cue and _cue_is_in_nodes(cue, scope_nodes)
-                for cue in cues
-            ):
-                expressed.add(predicate)
+            if isinstance(cues, list):
+                cue_node_ids = _minimal_cue_node_ids(
+                    ast,
+                    scope_node_ids,
+                    cues,
+                )
+                if cue_node_ids:
+                    expressed[predicate] = cue_node_ids
 
+        ambiguous_binding = False
         for predicate in sorted(expressed):
             for side in ("subject", "object"):
                 rule = catalog[predicate][side]
-                groups = _mention_groups_for_token(
-                    rule["source_token"], scope_mentions
-                )
-                for (entity_ids, entity_types), source_ids in groups.items():
+                if rule["source_token"] == "method_entity_id":
+                    continue
+                for predicate_node_id in sorted(expressed[predicate]):
+                    argument_node_ids = _ast_scope_node_ids(
+                        ast, [predicate_node_id]
+                    )
+                    argument_mentions = [
+                        mention
+                        for mention in scope_mentions
+                        if mention.get("containing_node_id")
+                        in argument_node_ids
+                    ]
+                    groups = _mention_groups_for_token(
+                        rule["source_token"], argument_mentions
+                    )
+                    if len(groups) != 1:
+                        ambiguous_binding = True
+                        continue
+                    (entity_ids, entity_types), source_ids = next(
+                        iter(groups.items())
+                    )
                     add_expected(
                         (rule["semantic_role"], entity_ids, entity_types), source_ids
                     )
@@ -956,7 +1039,12 @@ def validate_diagnostic_role_derivation(
 
         actual_sources = {key: sources for key, (_, sources) in actual.items()}
         same_mention_conflict = any(len(roles) > 1 for roles in source_roles.values())
-        if duplicate_key or same_mention_conflict or expected != actual_sources:
+        if (
+            ambiguous_binding
+            or duplicate_key
+            or same_mention_conflict
+            or expected != actual_sources
+        ):
             errors.append(
                 error(
                     "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
