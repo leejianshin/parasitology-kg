@@ -645,6 +645,17 @@ class C2EventFrameTests(unittest.TestCase):
                 result["normalized_request"], result["clause_ast"], changed
             )
 
+    def assert_invalid_semantics(self, result, mutate):
+        changed = copy.deepcopy(result["event_frame"])
+        mutate(changed)
+        with self.assertRaises(C2ValidationError):
+            validate_c2_event_frame(
+                result["normalized_request"],
+                result["clause_ast"],
+                changed,
+                require_compiler_projection=False,
+            )
+
     def test_event_core_diagnostic_exposure_and_ordinary_frames(self):
         diagnostic = self.compile("C2-CORE-D", "粪便检卵阳性。")
         frame = diagnostic["event_frame"]["frames"][0]
@@ -716,6 +727,57 @@ class C2EventFrameTests(unittest.TestCase):
                 all(slots[item]["semantic_role"] == "TARGET" for item in binding["target_slot_ids"])
             )
 
+    def test_diagnostic_formal_catalog_materializes_method_and_target_only(self):
+        for index, text in enumerate(("粪便检卵阳性。", "十二指肠液检卵阴性。")):
+            with self.subTest(text=text):
+                result = self.compile(f"C2-DIAG-ROLE-{index}", text)
+                frame = result["event_frame"]["frames"][0]
+                self.assertEqual(
+                    ["METHOD", "TARGET"],
+                    [slot["semantic_role"] for slot in frame["participant_slots"]],
+                )
+                self.assertEqual([], frame["normalized_identity"]["actor_slot_ids"])
+                sources = [
+                    source_id
+                    for slot in frame["participant_slots"]
+                    for source_id in slot["source_ids"]
+                ]
+                self.assertEqual(len(sources), len(set(sources)))
+
+    def test_diagnostic_disease_context_is_the_only_formally_licensed_actor(self):
+        result = self.compile(
+            "C2-DIAG-DISEASE-ACTOR", "华支睾吸虫病粪便检查检出虫卵。"
+        )
+        frame = result["event_frame"]["frames"][0]
+        actor = next(
+            slot for slot in frame["participant_slots"]
+            if slot["semantic_role"] == "ACTOR"
+        )
+        self.assertEqual(["disease.clonorchiasis"], actor["domain"]["entity_ids"])
+        target = next(
+            slot for slot in frame["participant_slots"]
+            if slot["semantic_role"] == "TARGET"
+        )
+        self.assertEqual(["stage.clonorchis_egg"], target["domain"]["entity_ids"])
+        self.assertTrue(set(actor["source_ids"]).isdisjoint(target["source_ids"]))
+
+    def test_diagnostic_role_validator_rejects_duplicate_actor_target_mention(self):
+        result = self.compile("C2-DIAG-ROLE-ADV", "粪便检卵阳性。")
+
+        def duplicate_target_as_actor(value):
+            frame = value["frames"][0]
+            target = next(
+                slot for slot in frame["participant_slots"]
+                if slot["semantic_role"] == "TARGET"
+            )
+            actor = copy.deepcopy(target)
+            actor["slot_id"] = "V999"
+            actor["semantic_role"] = "ACTOR"
+            frame["participant_slots"].append(actor)
+            frame["normalized_identity"]["actor_slot_ids"] = ["V999"]
+
+        self.assert_invalid_semantics(result, duplicate_target_as_actor)
+
     def test_negative_finding_is_not_infection_exclusion(self):
         result = self.compile("C2-DIAG-NEG", "粪便检查未检出虫卵。")
         assertion = result["event_frame"]["frames"][0]["assertion"]
@@ -752,6 +814,56 @@ class C2EventFrameTests(unittest.TestCase):
         self.assertEqual(
             ["HISTORICAL", "CURRENT"],
             [frame["assertion"]["temporal_scope"] for frame in temporal["event_frame"]["frames"]],
+        )
+
+    def test_event_negation_parity_zero_through_three(self):
+        cases = (
+            ("生食淡水鱼。", "AFFIRMED", 0),
+            ("未生食淡水鱼。", "NEGATED", 1),
+            ("并非未生食淡水鱼。", "AFFIRMED", 2),
+            ("并非并非未生食淡水鱼。", "NEGATED", 3),
+        )
+        for index, (text, expected, count) in enumerate(cases):
+            with self.subTest(text=text):
+                result = self.compile(f"C2-PARITY-{index}", text)
+                markers = [
+                    marker
+                    for marker in result["clause_ast"]["assertion_markers"]
+                    if marker["marker_kind"] == "NEGATOR"
+                ]
+                self.assertEqual(count, len(markers))
+                self.assertEqual(
+                    expected,
+                    result["event_frame"]["frames"][0]["assertion"]["assertion_status"],
+                )
+
+    def test_event_negation_parity_metamorphic_toggle_and_participant_isolation(self):
+        surfaces = ("生食淡水鱼。", "未生食淡水鱼。", "未未生食淡水鱼。", "未未未生食淡水鱼。")
+        statuses = [
+            self.compile(f"C2-PARITY-META-{index}", text)["event_frame"]["frames"][0]["assertion"]["assertion_status"]
+            for index, text in enumerate(surfaces)
+        ]
+        self.assertEqual(["AFFIRMED", "NEGATED", "AFFIRMED", "NEGATED"], statuses)
+        participant = self.compile(
+            "C2-PARITY-PARTICIPANT", "粪便检查未检出虫卵。"
+        )["event_frame"]["frames"][0]
+        self.assertEqual("AFFIRMED", participant["assertion"]["assertion_status"])
+        self.assertEqual("NEGATIVE", participant["assertion"]["finding_polarity"])
+
+    def test_assertion_validator_rederives_odd_and_even_parity(self):
+        even = self.compile("C2-PARITY-ADV-EVEN", "并非未生食淡水鱼。")
+        self.assert_invalid_semantics(
+            even,
+            lambda value: value["frames"][0]["assertion"].__setitem__(
+                "assertion_status", "NEGATED"
+            ),
+        )
+        odd = self.compile("C2-PARITY-ADV-ODD", "未生食淡水鱼。")
+        self.assert_invalid_semantics(
+            odd,
+            lambda value: value["frames"][0]["assertion"].__setitem__(
+                "assertion_status", "AFFIRMED"
+            ),
         )
 
     def test_normalized_identity_excludes_assertion_and_frame_id(self):
@@ -818,6 +930,58 @@ class C2EventFrameTests(unittest.TestCase):
         self.assertEqual("UNRESOLVED", unresolved["status"])
         self.assertEqual(["EF001", "EF002"], unresolved["candidate_referent_ids"])
 
+    def test_reference_preserves_all_prior_legal_candidates_without_nearest_selection(self):
+        result = self.compile(
+            "C2-REF-COMPLETE",
+            "粪便检卵阳性，十二指肠液检卵阴性，生食淡水鱼是另一暴露事件。",
+        )
+        reference = result["event_frame"]["reference_hypotheses"][0]
+        self.assertEqual(["EF001", "EF002"], reference["candidate_referent_ids"])
+        self.assertEqual(["DISTINCT_EVENT"], reference["identity_relation_domain"])
+        self.assertEqual("UNRESOLVED", reference["status"])
+        self.assert_invalid_semantics(
+            result,
+            lambda value: value["reference_hypotheses"][0].update(
+                {"candidate_referent_ids": ["EF002"], "status": "UNIQUE"}
+            ),
+        )
+
+    def test_reference_relation_domain_enumerates_overlapping_typed_assignments(self):
+        result = self.compile(
+            "C2-REF-OVERLAP",
+            "生食淡水鱼，来自流行地区并有生食淡水鱼史，两次暴露是同一事件。",
+        )
+        reference = result["event_frame"]["reference_hypotheses"][0]
+        self.assertEqual(["EF001"], reference["candidate_referent_ids"])
+        self.assertEqual(
+            ["SAME_EVENT", "DISTINCT_EVENT"],
+            reference["identity_relation_domain"],
+        )
+        self.assertEqual("UNRESOLVED", reference["status"])
+        for incomplete in (["SAME_EVENT"], ["DISTINCT_EVENT"]):
+            with self.subTest(incomplete=incomplete):
+                self.assert_invalid_semantics(
+                    result,
+                    lambda value, domain=incomplete: value["reference_hypotheses"][0].__setitem__(
+                        "identity_relation_domain", domain
+                    ),
+                )
+
+    def test_reference_relation_domain_same_only_and_distinct_only(self):
+        same = self.compile(
+            "C2-REF-SAME-ONLY",
+            "粪便检卵阳性，粪便检卵阴性，两次检查是同一诊断事件。",
+        )["event_frame"]["reference_hypotheses"][0]
+        self.assertEqual(["SAME_EVENT"], same["identity_relation_domain"])
+        self.assertEqual("UNIQUE", same["status"])
+
+        distinct = self.compile(
+            "C2-REF-DISTINCT-ONLY",
+            "粪便检卵阳性，生食淡水鱼是另一暴露事件。",
+        )["event_frame"]["reference_hypotheses"][0]
+        self.assertEqual(["DISTINCT_EVENT"], distinct["identity_relation_domain"])
+        self.assertEqual("UNIQUE", distinct["status"])
+
     def test_public_r3a_reference_override_evidence_projection(self):
         result = self.compile(
             "C2-R3A-EVIDENCE",
@@ -827,7 +991,12 @@ class C2EventFrameTests(unittest.TestCase):
         self.assertEqual(
             [
                 ("EF002", ["EF001"], ["SAME_EVENT"], "UNIQUE"),
-                ("EF003", ["EF002"], ["DISTINCT_EVENT"], "UNIQUE"),
+                (
+                    "EF003",
+                    ["EF001", "EF002"],
+                    ["DISTINCT_EVENT"],
+                    "UNRESOLVED",
+                ),
             ],
             [
                 (

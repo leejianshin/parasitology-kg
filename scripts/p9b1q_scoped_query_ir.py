@@ -17,6 +17,7 @@ import json
 import re
 import unicodedata
 from dataclasses import dataclass
+from itertools import product
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
@@ -1583,6 +1584,7 @@ def _assertion_envelope(
     status_candidates: set[str] = set()
     temporal_candidates: set[str] = set()
     polarity_sources: list[str] = []
+    event_negator_count = 0
     for marker in markers:
         kind = marker["marker_kind"]
         if kind == "EXCLUSION":
@@ -1598,9 +1600,11 @@ def _assertion_envelope(
             if authority is None:
                 _c2_fail("S2_EVENT_FRAME", "negator lacks frozen surface authority")
             if authority["semantic_effect"] == "EVENT_NEGATION":
-                status_candidates.add("NEGATED")
+                event_negator_count += 1
             elif authority["semantic_effect"] == "PARTICIPANT_NEGATION":
                 polarity_sources.append(marker["marker_id"])
+    if event_negator_count % 2:
+        status_candidates.add("NEGATED")
     if len(status_candidates) > 1 or len(temporal_candidates) > 1:
         _c2_fail("S2_EVENT_FRAME", "assertion or temporal scope remains unrepresentable")
     assertion_status = next(iter(status_candidates), "AFFIRMED")
@@ -1698,6 +1702,83 @@ def _frame_identity_signature(
     )
 
 
+def _identity_dimension_alternatives(
+    slot_ids: list[str], slots: dict[str, dict[str, Any]]
+) -> tuple[tuple[str, ...], ...]:
+    if not slot_ids:
+        return ((),)
+    choices = [slots[slot_id]["domain"]["entity_ids"] for slot_id in slot_ids]
+    return tuple(
+        sorted(
+            {
+                tuple(sorted(set(selected)))
+                for selected in product(*choices)
+            }
+        )
+    )
+
+
+def _frame_identity_assignments(
+    frame: dict[str, Any], specimens: dict[str, dict[str, Any]]
+) -> set[tuple[Any, ...]]:
+    """Enumerate the finite frozen identity domain without selecting a winner."""
+    slots = {slot["slot_id"]: slot for slot in frame["participant_slots"]}
+    identity = frame["normalized_identity"]
+    actor = _identity_dimension_alternatives(identity["actor_slot_ids"], slots)
+    method = _identity_dimension_alternatives(
+        [identity["method_slot_id"]] if identity["method_slot_id"] else [], slots
+    )
+    target = _identity_dimension_alternatives(identity["target_slot_ids"], slots)
+    anatomy = _identity_dimension_alternatives(
+        identity["anatomical_site_slot_ids"], slots
+    )
+    specimen_choices = [
+        specimens[slot_id]["specimen_code_domain"]
+        for slot_id in identity["specimen_slot_ids"]
+    ]
+    specimen = (
+        tuple(
+            sorted(
+                {
+                    tuple(sorted(set(selected)))
+                    for selected in product(*specimen_choices)
+                }
+            )
+        )
+        if specimen_choices
+        else (("NOT_APPLICABLE",),)
+    )
+    return {
+        (event_type, actors, methods, specimen_codes, targets, sites)
+        for event_type, actors, methods, specimen_codes, targets, sites in product(
+            frame["event_type_domain"], actor, method, specimen, target, anatomy
+        )
+    }
+
+
+def _identity_relation_domain(
+    left: dict[str, Any],
+    right: dict[str, Any],
+    specimens: dict[str, dict[str, Any]],
+) -> list[str]:
+    left_assignments = _frame_identity_assignments(left, specimens)
+    right_assignments = _frame_identity_assignments(right, specimens)
+    same_viable = bool(left_assignments.intersection(right_assignments))
+    distinct_viable = any(
+        left_assignment != right_assignment
+        for left_assignment in left_assignments
+        for right_assignment in right_assignments
+    )
+    return [
+        relation
+        for relation, viable in (
+            ("SAME_EVENT", same_viable),
+            ("DISTINCT_EVENT", distinct_viable),
+        )
+        if viable
+    ]
+
+
 def normalized_event_identity(
     frame: dict[str, Any], event_frame: dict[str, Any]
 ) -> tuple[Any, ...]:
@@ -1766,15 +1847,18 @@ def _build_reference_hypotheses(
                 continue
             anaphor = prior[-1]
             candidates = prior[:-1]
-            relations = sorted(
-                {
-                    "SAME_EVENT"
-                    if _frame_identity_signature(anaphor, specimens)
-                    == _frame_identity_signature(candidate, specimens)
-                    else "DISTINCT_EVENT"
-                    for candidate in candidates
-                }
-            )
+            viable_relations = {
+                relation
+                for candidate in candidates
+                for relation in _identity_relation_domain(
+                    anaphor, candidate, specimens
+                )
+            }
+            relations = [
+                relation
+                for relation in ("SAME_EVENT", "DISTINCT_EVENT")
+                if relation in viable_relations
+            ]
             result.append({
                 "reference_hypothesis_id": f"RH{len(result) + 1:03d}",
                 "anaphor_source_id": frame_node_ids[anaphor["frame_id"]],
@@ -1791,20 +1875,19 @@ def _build_reference_hypotheses(
             })
         if "另一" in text and "事件" in text and current and prior:
             for anaphor in current:
-                # The frozen R3A evidence defines “另一…事件” against the
-                # immediately preceding explicit event anchor.  This is a
-                # grammatical anchor relation, not a distance-based winner
-                # chosen from multiple otherwise compatible referents.
-                candidates = prior[-1:]
-                relations = sorted(
-                    {
-                        "SAME_EVENT"
-                        if _frame_identity_signature(anaphor, specimens)
-                        == _frame_identity_signature(candidate, specimens)
-                        else "DISTINCT_EVENT"
-                        for candidate in candidates
-                    }
-                )
+                candidates = prior
+                viable_relations = {
+                    relation
+                    for candidate in candidates
+                    for relation in _identity_relation_domain(
+                        anaphor, candidate, specimens
+                    )
+                }
+                relations = [
+                    relation
+                    for relation in ("SAME_EVENT", "DISTINCT_EVENT")
+                    if relation in viable_relations
+                ]
                 result.append({
                     "reference_hypothesis_id": f"RH{len(result) + 1:03d}",
                     "anaphor_source_id": frame_node_ids[anaphor["frame_id"]],
@@ -1999,6 +2082,15 @@ def _build_event_frame(
             continue
         diagnostic = event_types == ["DIAGNOSTIC_FINDING"]
         actor_types, target_types = _role_type_domains(event_types, expressed, mapping)
+        if diagnostic:
+            # The formal diagnostic catalog assigns disease/host context to
+            # ACTOR and finding objects to TARGET.  Broad allowed_* type sets
+            # are legality bounds, not permission to duplicate one mention
+            # across every compatible identity role.
+            actor_types = actor_types.intersection({"disease", "host"})
+            target_types = target_types.intersection(
+                {"life_cycle_stage", "pathological_process"}
+            )
         role_candidates: dict[
             str, list[tuple[dict[str, Any], list[str], list[str]]]
         ] = {"ACTOR": [], "METHOD": [], "TARGET": [], "LOCATION": []}
@@ -2282,6 +2374,8 @@ def validate_c2_event_frame(
         mention["surface_mention_id"]: mention for mention in ast["surface_mentions"]
     }
     marker_ids = {marker["marker_id"] for marker in ast["assertion_markers"]}
+    config = _load_configuration(root)
+    negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
     specimen_slots = {
         specimen["specimen_slot_id"]: specimen
         for specimen in event_frame["specimen_slots"]
@@ -2381,6 +2475,53 @@ def validate_c2_event_frame(
                 or any(slots[target]["semantic_role"] != "TARGET" for target in binding["target_slot_ids"])
             ):
                 _c2_fail("S2_EVENT_FRAME", "diagnostic components do not share one frame")
+        if diagnostic:
+            diagnostic_role_types = {
+                "ACTOR": {"disease", "host"},
+                "METHOD": {"diagnostic_method"},
+                "TARGET": {"life_cycle_stage", "pathological_process"},
+            }
+            source_roles: dict[str, set[str]] = {}
+            for slot in frame["participant_slots"]:
+                role = slot["semantic_role"]
+                if role not in diagnostic_role_types or not set(
+                    slot["domain"]["entity_types"]
+                ).issubset(diagnostic_role_types[role]):
+                    _c2_fail(
+                        "S2_EVENT_FRAME",
+                        "diagnostic participant role lacks formal catalog authority",
+                    )
+                for source_id in slot["source_ids"]:
+                    source_roles.setdefault(source_id, set()).add(role)
+            if any(len(roles) != 1 for roles in source_roles.values()):
+                _c2_fail(
+                    "S2_EVENT_FRAME",
+                    "diagnostic mention is duplicated across identity roles",
+                )
+        if (
+            len(frame["source_ast_node_ids"]) != 1
+            or ast_nodes[frame["source_ast_node_ids"][0]]["node_kind"]
+            != "PROPOSITION"
+        ):
+            _c2_fail("S2_EVENT_FRAME", "frame assertion lacks one proposition root")
+        proposition = ast_nodes[frame["source_ast_node_ids"][0]]
+        participant_source_ids = {
+            source_id
+            for slot in frame["participant_slots"]
+            for source_id in slot["source_ids"]
+        }
+        expected_assertion, expected_polarity_sources = _assertion_envelope(
+            proposition,
+            participant_source_ids,
+            ast,
+            config,
+            negation_authority,
+            diagnostic,
+        )
+        if frame["assertion"] != expected_assertion:
+            _c2_fail("S2_EVENT_FRAME", "assertion differs from actual S1 marker parity")
+        if binding is not None and binding["polarity_source_ids"] != expected_polarity_sources:
+            _c2_fail("S2_EVENT_FRAME", "diagnostic polarity sources differ from S1")
         if any(
             source_id not in ast_nodes
             for source_id in frame["assertion"]["governing_ast_node_ids"]
@@ -2401,6 +2542,32 @@ def validate_c2_event_frame(
                 for source_id in specimen["source_ids"]
             ):
                 _c2_fail("S2_EVENT_FRAME", "specimen span lacks mention grounding")
+
+    frame_node_ids = {
+        frame["frame_id"]: frame["source_ast_node_ids"][0]
+        for frame in event_frame["frames"]
+    }
+    propositions = sorted(
+        (node for node in ast["nodes"] if node["node_kind"] == "PROPOSITION"),
+        key=lambda node: (
+            node["source_span"]["start_char"],
+            node["source_span"]["end_char"],
+            node["node_id"],
+        ),
+    )
+    expected_references = _build_reference_hypotheses(
+        propositions,
+        event_frame["frames"],
+        frame_node_ids,
+        specimen_slots,
+    )
+    if canonical_bytes(event_frame["reference_hypotheses"]) != canonical_bytes(
+        expected_references
+    ):
+        _c2_fail(
+            "S2_EVENT_FRAME",
+            "reference candidate or identity relation domain is incomplete",
+        )
 
     if require_compiler_projection:
         expected = _build_event_frame(normalized, ast, root)
