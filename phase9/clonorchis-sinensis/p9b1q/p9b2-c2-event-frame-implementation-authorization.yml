@@ -1,0 +1,391 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C2-EVENT-FRAME-AUTH-001"
+authorization_kind: "C2_EVENT_FRAME_IMPLEMENTATION_AUTHORIZATION"
+authorization_status: "ACTIVE_AFTER_FAST_FORWARD_REMOTE_PUBLICATION"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+authorization_base: "f1d4db990ca02365c2d2a340df2b3b5a44614c1e"
+c1_closed_candidate: "f1d4db990ca02365c2d2a340df2b3b5a44614c1e"
+corrected_authority: "5a28cc600333e2904728a1754b5d228740f44ddb"
+r11_v2_commitment: "24135888f910d196acb140eb2d288e2987874755"
+r11_secret_access: "PROHIBITED"
+r11_execution_during_build: "PROHIBITED"
+
+c1_closed_precondition:
+  independent_reaudit: "PASS"
+  shared_left_semantics: "PASS"
+  single_realization: "PASS"
+  exact_provenance: "PASS"
+  high_002_preservation: "PASS"
+  recorded_unittest_count: 162
+  recorded_count_is_future_numeric_authority: false
+  r11_executed: false
+  upstream_semantics_are_closed_read_only_input: true
+  c2_may_reinterpret_repair_or_rewrite_s1: false
+
+authorization_atom:
+  purpose: "AUTHORIZE_FUTURE_C2_EVENT_FRAME_IMPLEMENTATION_ONLY"
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-event-frame-implementation-authorization.yml"
+  authorization_file_only_commit: true
+  implementation_mutation_this_turn: false
+  test_mutation_this_turn: false
+  authority_mutation_this_turn: false
+  commitment_mutation_this_turn: false
+  c2_build_may_start_this_turn: false
+  c3_or_later_stage_work_this_turn: false
+
+c2_objective:
+  objective: >-
+    Deterministically compile one validated S1 Clause AST into one validated
+    S2 Event Frame object under the corrected frozen authority.
+  allowed_stages:
+    - "S0_REQUEST_NORMALIZATION"
+    - "S1_CLAUSE_AST"
+    - "S2_EVENT_FRAME"
+  terminal_output: "VALIDATED_EVENT_FRAME"
+  prohibited_stages:
+    - "S3_TYPED_CONSTRAINT_SOLVER"
+    - "S4_QUERYIR_EMISSION_IMPLEMENTATION"
+    - "S5_RUNTIME_RETRIEVAL_BINDING"
+  retrieval: "PROHIBITED"
+  model_or_network_call: "PROHIBITED"
+
+authority_basis:
+  event_frame_schema: "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-frame-schema-candidate.yml"
+  event_identity_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-identity-contract.yml"
+  compiler_pipeline_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+  stage_semantic_validator_contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+  event_predicate_type_role_mapping: "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml"
+  clause_ast_schema: "phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-ast-schema-candidate.yml"
+  constraint_registry: "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml"
+  r11_v2_public_commitment: "phase9/clonorchis-sinensis/p9b1q/r11-v2-suite-commitment.yml"
+  additional_frozen_inputs:
+    - "current frozen entity ontology"
+    - "current frozen event ontology"
+    - "current frozen event mapping"
+    - "public S0, S1, and S2 fixtures"
+  access_mode: "READ_ONLY"
+  authority_mutation_to_accommodate_implementation: "PROHIBITED"
+
+c2_required_output_structure:
+  top_level_collections:
+    - "frames"
+    - "specimen_slots"
+    - "reference_hypotheses"
+    - "override_hypotheses"
+  required_frame_fields:
+    - "frame_id"
+    - "event_type_domain"
+    - "source_ast_node_ids"
+    - "source_spans"
+    - "participant_slots"
+    - "assertion"
+    - "diagnostic_binding"
+    - "normalized_identity"
+    - "frame_status"
+
+event_type_and_participant_domain_rules:
+  derivation_inputs:
+    - "validated Clause AST"
+    - "frozen entity ontology"
+    - "frozen event ontology"
+    - "frozen event mapping"
+  lexical_heuristic_event_type_guessing: "PROHIBITED"
+  ast_unlicensed_entity_addition: "PROHIBITED"
+  claim_or_retrieval_driven_event_typing: "PROHIBITED"
+  competing_candidate_winner_selection: "PROHIBITED"
+  binding_status_rules:
+    FIXED: "ONLY_WHEN_AUTHORITY_SUPPORTS_ONE_VALUE"
+    COMPETING: "PRESERVE_ALL_LEGAL_CANDIDATES"
+    INCOMPLETE: "ONLY_AS_DEFINED_BY_SCHEMA_AND_AUTHORITY"
+  s3_invoked: false
+
+assertion_and_temporal_binding:
+  source: "VALIDATED_AST_SCOPE_PATH"
+  required_fields:
+    - "assertion_status"
+    - "finding_polarity"
+    - "temporal_scope"
+    - "governing_ast_node_ids"
+    - "marker_ids"
+  second_text_negation_parse: "PROHIBITED"
+  bypass_s1_scope_authority: "PROHIBITED"
+  confidence_threshold: "PROHIBITED"
+  silent_s1_ambiguity_repair: "PROHIBITED"
+
+diagnostic_event_invariant:
+  event_type: "DIAGNOSTIC_FINDING"
+  same_frame_required_components:
+    - "method"
+    - "specimen"
+    - "target"
+    - "finding_polarity"
+    - "assertion"
+  cross_event_binding: "PROHIBITED"
+  diagnostic_binding_must_match_schema_and_formal_mapping: true
+  non_diagnostic_binding: null
+
+specimen_governance:
+  permitted_sources:
+    - "REAL_SPECIMEN_SURFACE_EXPRESSION"
+    - "AUTHORITY_ALLOWED_EXPLICIT_TYPED_UNKNOWN_SLOT"
+  infer_unexpressed_concrete_specimen_from_method: "PROHIBITED"
+  borrow_specimen_across_events: "PROHIBITED"
+  conflate_method_and_specimen_slot: "PROHIBITED"
+
+normalized_event_identity:
+  contract: "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-identity-contract.yml"
+  identity_dimensions:
+    - "EVENT_TYPE"
+    - "ACTOR_ENTITY_IDS"
+    - "METHOD_ENTITY_ID"
+    - "SPECIMEN_CODE"
+    - "TARGET_ENTITY_IDS"
+    - "ANATOMICAL_SITE_ENTITY_IDS"
+  temporal_scope_domain_binding: "AS_DEFINED_BY_EVENT_FRAME_AUTHORITY"
+  same_event: "ALL_NORMALIZED_IDENTITY_DIMENSIONS_EQUAL"
+  distinct_event: "AT_LEAST_ONE_NORMALIZED_IDENTITY_DIMENSION_DIFFERS"
+  prohibited_semantic_identity_shortcuts:
+    - "frame_id"
+    - "event_key"
+    - "source position convenience"
+
+reference_hypothesis_governance:
+  allowed_output: true
+  required_fields:
+    - "candidate_referent_ids"
+    - "identity_relation_domain"
+    - "status"
+  allowed_status:
+    - "UNIQUE"
+    - "UNRESOLVED"
+  multiple_legal_referents:
+    preserve_complete_candidate_set: true
+    status: "UNRESOLVED"
+  winner_selection_in_s2: "PROHIBITED"
+  distance_or_nearest_mention_heuristic: "PROHIBITED"
+  probability_or_confidence_heuristic: "PROHIBITED"
+  early_s3_invocation: "PROHIBITED"
+
+override_hypothesis_governance:
+  allowed_output: true
+  required_fields:
+    - "override_ast_node_id"
+    - "earlier_frame_ids"
+    - "later_frame_ids"
+    - "identity_constraint"
+    - "overridden_dimension_domain"
+    - "status"
+  identity_constraint: "SAME_NORMALIZED_IDENTITY_EXCLUDING_ASSERTION"
+  allowed_status:
+    - "UNIQUE"
+    - "UNRESOLVED"
+    - "NO_MATCH"
+  competing_solution_in_s2: "PRESERVE_FOR_SOLVER"
+  winner_selection_in_s2: "PROHIBITED"
+
+shared_left_boundary:
+  field: "shared_left_argument_node_id"
+  formal_s1_meaning: "GRAMMAR_LEVEL_OPERATOR_ARGUMENT_RELATION_ONLY"
+  may_be_used_as_provenance_or_context_input: >-
+    ONLY_WHEN_S2_AUTHORITY_AND_ACTUAL_AST_EVENT_MAPPING_EXPLICITLY_LICENSE_IT
+  automatic_reference_hypothesis: false
+  automatic_same_event: false
+  automatic_distinct_event: false
+  automatic_solver_decision: false
+  antecedent_rematerialization: "PROHIBITED"
+
+s2_fail_closed_boundary:
+  ambiguity_rule: "SOLUTION_CARDINALITY_NOT_CONFIDENCE"
+  unresolved_event_reference_or_override: "PRESERVE_TYPED_COMPETING_HYPOTHESES"
+  guess_winner: "PROHIBITED"
+  delete_legal_candidate: "PROHIBITED"
+  default_fill_hiding_material_ambiguity: "PROHIBITED"
+  silent_s3_entry: "PROHIBITED"
+  legal_competing_output_must_be_schema_and_semantic_valid: true
+
+c2_allowed_changed_paths:
+  - "scripts/p9b1q_scoped_query_ir.py"
+  - "tests/test_p9b1q_scoped_query_ir.py"
+
+c2_changed_path_rules:
+  exact_allowed_path_count: 2
+  allow_unlisted_paths: false
+  allow_new_implementation_paths: false
+  allow_new_test_paths: false
+  implementation_tests_must_be_added_to: "tests/test_p9b1q_scoped_query_ir.py"
+  authorization_file_is_not_a_c2_implementation_changed_path: true
+  implementation_path_authority_inspected: true
+  implementation_path_authority_insufficient: false
+
+required_c2_test_coverage:
+  acceptance_artifact: "tests/test_p9b1q_scoped_query_ir.py"
+  existing_expected_semantics_mutation: "PROHIBITED"
+  public_authority_fixture_mutation: "PROHIBITED"
+  event_frame_core:
+    - "diagnostic finding event"
+    - "exposure event"
+    - "ordinary non-diagnostic event"
+    - "participant type domain preservation"
+    - "exact source_ast_node_ids"
+    - "exact source spans"
+  diagnostic_binding:
+    - "method, specimen, target and polarity bind to one event"
+    - "two diagnostic events do not cross-bind method or specimen"
+    - "negative diagnostic finding does not imply infection exclusion"
+    - "non-diagnostic frame has diagnostic_binding null"
+  identity:
+    - "same-event pair"
+    - "distinct-event pair"
+    - "method difference changes identity"
+    - "specimen difference changes identity"
+    - "target difference changes identity"
+    - "anatomical-site difference changes identity"
+    - "frame_id does not alter identity"
+  assertion_and_temporal:
+    - "AFFIRMED"
+    - "NEGATED"
+    - "EXCLUDED"
+    - "HYPOTHETICAL"
+    - "historical and current separation"
+  reference_and_override:
+    - "unique reference hypothesis"
+    - "unresolved reference preserves all candidates"
+    - "override UNIQUE"
+    - "override UNRESOLVED"
+    - "override NO_MATCH"
+  regression:
+    - "C1 shared-left remains valid"
+    - "shared-left is not automatically an S2 reference hypothesis"
+    - "HIGH-002 multiple-target remains unresolved"
+    - "ordinary CONDITION and CONTRAST remain unchanged"
+    - "repeated OR and coordination frame completeness"
+  determinism:
+    - "repeated compile is byte-identical"
+    - "stable canonical event_frame_sha256"
+
+c2_public_gates:
+  numeric_test_count_frozen: false
+  c1_public_tests_must_continue_to_pass: true
+  gates:
+    - gate_id: "C2-CURRENT-S0-S1-S2-SCHEMA"
+      requirement: "Current S0, S1 and S2 Schema validation PASS"
+    - gate_id: "C2-CURRENT-S0-S1-S2-SEMANTIC"
+      requirement: "Current S0, S1 and S2 semantic validation PASS"
+    - gate_id: "C2-CURRENT-STRICT-SCHEMA"
+      working_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+      invocation: "node strict-schema-gate.mjs"
+      requirement: "ALL_CURRENTLY_DISCOVERED_SCHEMA_AND_FIXTURE_CHECKS_PASS"
+    - gate_id: "C2-REFERENCE-STAGE-SEMANTIC-VALIDATOR"
+      working_directory: "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+      invocation: "python reference-stage-semantic-validator.py --mode all"
+      requirement: "PASS"
+    - gate_id: "C2-CONSTRAINT-GOVERNANCE"
+      requirement: "Constraint registry and governance PASS for domain 1..47"
+    - gate_id: "C2-REPOSITORY-UNITTEST-DISCOVERY"
+      working_directory: "."
+      invocation: "python -m unittest discover -s tests -p \"test_*.py\""
+      requirement: "ALL_CURRENTLY_DISCOVERED_TESTS_PASS"
+    - gate_id: "C2-BYTE-DETERMINISM"
+      repeated_runs: 3
+      requirement: "BYTE_IDENTICAL_C2_OUTPUTS"
+    - gate_id: "C2-DIFF-CHECK"
+      invocation: "git diff --check"
+      requirement: "PASS"
+
+c2_stop_boundary:
+  terminal_output: "VALIDATED_EVENT_FRAME"
+  s3_invoked: false
+  s4_invoked: false
+  s5_invoked: false
+  queryir_emitted: false
+  retrieval_invoked: false
+  model_network_invoked: false
+  r11_executed: false
+  constraint_solving_implemented: false
+
+protected_paths:
+  byte_identical_patterns:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/**"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-suite-commitment.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-v2-suite-commitment.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/*authorization.yml"
+    - "phase9/clonorchis-sinensis/request-schema.yml"
+    - "phase9/clonorchis-sinensis/response-schema.yml"
+    - "phase9/clonorchis-sinensis/audit-log-schema.yml"
+    - "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1-local-acceptance.yml"
+    - "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
+    - "scripts/p9b1_local_retrieval.py"
+    - "tests/test_p9b1_retrieval.py"
+    - "runtime/**"
+    - "knowledge/**"
+    - "knowledge-extensions/**"
+    - "derived/clonorchis-sinensis/pcms-v1/**"
+    - "phase7/clonorchis-sinensis/**"
+    - "schema/**"
+    - "sources/**"
+    - ".github/workflows/**"
+    - "every tracked path not explicitly listed in c2_allowed_changed_paths"
+  authorization_creation_exception: >-
+    This authorization atom may add only its own authorization file; after
+    publication that file is protected during the C2 implementation atom.
+
+r11_v2_isolation:
+  allowed_information: "PUBLIC_COMMITMENT_METADATA_ONLY"
+  commitment: "24135888f910d196acb140eb2d288e2987874755"
+  secret_body_access: "PROHIBITED"
+  secret_case_or_probe_material_access: "PROHIBITED"
+  secret_expected_material_access: "PROHIBITED"
+  private_recovery_material_access: "PROHIBITED"
+  execution: "PROHIBITED"
+  implementation_adaptation_from_secret_results: "PROHIBITED"
+
+later_stage_boundary:
+  c3_authorized: false
+  c3_authorization_eligible: "NO_UNTIL_C2_BUILD_AND_INDEPENDENT_AUDIT_PASS"
+  s3_started: false
+  s4_started: false
+  s5_started: false
+  r11_executed: false
+
+authorization_commit_policy:
+  required_parent: "f1d4db990ca02365c2d2a340df2b3b5a44614c1e"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-event-frame-implementation-authorization.yml"
+  required_commit_message: "governance(p9b2): authorize C2 Event Frame implementation"
+  amend: "PROHIBITED"
+  rebase: "PROHIBITED"
+  squash: "PROHIBITED"
+
+remote_policy:
+  allowed_destination: "origin/agent/p9-b2"
+  publication_must_be_fast_forward: true
+  main_write: "PROHIBITED"
+  force_push: "PROHIBITED"
+  pull_request: "PROHIBITED"
+  fallback_if_credentials_unavailable: "PUBLIC_GIT_BUNDLE"
+  fallback_bundle_requirements:
+    ref: "refs/heads/agent/p9-b2"
+    complete_ancestry: true
+    secret_content: false
+    preserve_commit_identity: true
+
+secret_isolation_self_check:
+  r11_secret_body_in_authorization: false
+  secret_query_or_body_fragment_in_authorization: false
+  secret_case_request_or_probe_id_in_authorization: false
+  secret_expected_claim_or_queryir_in_authorization: false
+  recovery_key_or_private_storage_path_in_authorization: false
+
+authorization_exit:
+  c1_closed: true
+  c2_implementation_authorized: "YES_AFTER_REMOTE_PUBLICATION_AND_EXPLICIT_BUILD_START"
+  c2_build_started: false
+  c3_authorized: false
+  r11_secret_body_accessed: false
+  r11_executed: false
+  next_state_after_remote_publication: "C2_AUTHORIZATION_COMPLETE_PENDING_EXPLICIT_C2_BUILD_START"
