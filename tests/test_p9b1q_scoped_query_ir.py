@@ -881,18 +881,22 @@ class C2EventFrameTests(unittest.TestCase):
                 "华支睾吸虫病的确诊方法是粪便检查。",
                 [("diagnosed_by", "华支睾吸虫病", "粪便检查")],
                 {
-                    "ACTOR": ["disease.clonorchiasis"],
-                    "METHOD": ["diagnostic.stool_egg_microscopy"],
+                    ("ACTOR", "disease.clonorchiasis"),
+                    ("METHOD", "diagnostic.stool_egg_microscopy"),
                 },
             ),
             (
                 "DIAGNOSTIC-STAGE",
-                "粪便检查显示虫卵是人的诊断阶段。",
-                [("diagnostic_stage_for", "虫卵", "人")],
+                "华支睾吸虫病的确诊方法是粪便检查同时虫卵是人的诊断阶段。",
+                [
+                    ("diagnosed_by", "华支睾吸虫病", "粪便检查"),
+                    ("diagnostic_stage_for", "虫卵", "人"),
+                ],
                 {
-                    "ACTOR": ["host.human"],
-                    "METHOD": ["diagnostic.stool_egg_microscopy"],
-                    "TARGET": ["stage.clonorchis_egg"],
+                    ("ACTOR", "disease.clonorchiasis"),
+                    ("ACTOR", "host.human"),
+                    ("METHOD", "diagnostic.stool_egg_microscopy"),
+                    ("TARGET", "stage.clonorchis_egg"),
                 },
             ),
             (
@@ -900,8 +904,8 @@ class C2EventFrameTests(unittest.TestCase):
                 "华支睾吸虫病的诊断线索包括粪便检查。",
                 [("has_diagnostic_clue", "华支睾吸虫病", "粪便检查")],
                 {
-                    "ACTOR": ["disease.clonorchiasis"],
-                    "METHOD": ["diagnostic.stool_egg_microscopy"],
+                    ("ACTOR", "disease.clonorchiasis"),
+                    ("METHOD", "diagnostic.stool_egg_microscopy"),
                 },
             ),
         )
@@ -910,8 +914,9 @@ class C2EventFrameTests(unittest.TestCase):
                 result = self.compile_bound(case, text, occurrences)
                 frame = result["event_frame"]["frames"][0]
                 observed = {
-                    slot["semantic_role"]: slot["domain"]["entity_ids"]
+                    (slot["semantic_role"], entity_id)
                     for slot in frame["participant_slots"]
+                    for entity_id in slot["domain"]["entity_ids"]
                 }
                 self.assertEqual(expected, observed)
 
@@ -960,11 +965,98 @@ class C2EventFrameTests(unittest.TestCase):
                 require_compiler_projection=False,
             )
 
+    def test_high011_unbound_same_entity_method_occurrence_is_excluded(self):
+        result = self.compile_bound(
+            "C2-HIGH011-BOUND-SECOND",
+            "华支睾吸虫病的确诊方法是粪便检查粪便检查。",
+            [("diagnosed_by", "华支睾吸虫病", ("粪便检查", 1))],
+        )
+        methods = [
+            mention
+            for mention in result["clause_ast"]["surface_mentions"]
+            if mention["normalized_surface"] == "粪便检查"
+        ]
+        self.assertEqual(["U003", "U004"], [item["surface_mention_id"] for item in methods])
+        slot = next(
+            slot
+            for slot in result["event_frame"]["frames"][0]["participant_slots"]
+            if slot["semantic_role"] == "METHOD"
+        )
+        self.assertEqual(["U004"], slot["source_ids"])
+
+        def add_unbound_same_entity_occurrence(value):
+            method = next(
+                item
+                for item in value["frames"][0]["participant_slots"]
+                if item["semantic_role"] == "METHOD"
+            )
+            method["source_ids"] = ["U003", "U004"]
+
+        self.assert_invalid_semantics(result, add_unbound_same_entity_occurrence)
+
+    def test_high011_mirror_bound_occurrence_defeats_position_heuristics(self):
+        result = self.compile_bound(
+            "C2-HIGH011-BOUND-FIRST",
+            "华支睾吸虫病的确诊方法是粪便检查粪便检查。",
+            [("diagnosed_by", "华支睾吸虫病", ("粪便检查", 0))],
+        )
+        method = next(
+            slot
+            for slot in result["event_frame"]["frames"][0]["participant_slots"]
+            if slot["semantic_role"] == "METHOD"
+        )
+        self.assertEqual(["U003"], method["source_ids"])
+        self.assertNotIn("U004", method["source_ids"])
+
+    def test_high011_multiple_licensed_method_occurrences_are_exactly_additive(self):
+        result = self.compile_bound(
+            "C2-HIGH011-MULTI-BOUND",
+            "华支睾吸虫病的确诊方法是粪便检查粪便检查。",
+            [
+                ("diagnosed_by", "华支睾吸虫病", ("粪便检查", 0)),
+                ("diagnosed_by", "华支睾吸虫病", ("粪便检查", 1)),
+            ],
+        )
+        method = next(
+            slot
+            for slot in result["event_frame"]["frames"][0]["participant_slots"]
+            if slot["semantic_role"] == "METHOD"
+        )
+        self.assertEqual(["U003", "U004"], method["source_ids"])
+        self.assertEqual(
+            2,
+            len(
+                result["diagnostic_argument_binding"]["request_bindings"][0]
+                ["diagnostic_contexts"][0]["method_entity_bindings"]
+            ),
+        )
+
+    def test_high011_formal_stage_predicate_does_not_license_typed_method(self):
+        normalized = normalize_request(request(
+            "C2-HIGH011-STAGE-NO-METHOD-LICENSE",
+            "粪便检查显示虫卵是人的诊断阶段。",
+        ))
+        ast = compile_clause_ast(normalized)
+        binding = diagnostic_argument_binding(
+            normalized,
+            ast,
+            [("diagnostic_stage_for", "虫卵", "人")],
+        )
+        with self.assertRaisesRegex(C2ValidationError, "lacks one method domain"):
+            compile_event_frame(
+                normalized,
+                ast,
+                diagnostic_argument_binding=binding,
+            )
+
     def test_high003_validator_rejects_missing_reversed_and_unlicensed_roles(self):
         result = self.compile_bound(
             "C2-HIGH003-NEG-ROLE",
-            "粪便检查显示虫卵是人的诊断阶段。",
-            [("diagnostic_stage_for", "虫卵", "人")],
+            "华支睾吸虫病的确诊方法是粪便检查同时虫卵是人的诊断阶段。",
+            [
+                ("diagnosed_by", "华支睾吸虫病", "粪便检查"),
+                ("diagnostic_stage_for", "虫卵", "人"),
+            ],
         )
 
         def omit_target(value):
@@ -1003,8 +1095,11 @@ class C2EventFrameTests(unittest.TestCase):
     def test_high003_exact_occurrence_and_candidate_self_authorization_fail_closed(self):
         result = self.compile_bound(
             "C2-HIGH003-OCCURRENCE",
-            "粪便检查显示虫卵和虫卵是人的诊断阶段。",
-            [("diagnostic_stage_for", ("虫卵", 0), "人")],
+            "华支睾吸虫病的确诊方法是粪便检查同时虫卵和虫卵是人的诊断阶段。",
+            [
+                ("diagnosed_by", "华支睾吸虫病", "粪便检查"),
+                ("diagnostic_stage_for", ("虫卵", 0), "人"),
+            ],
         )
         egg_mentions = [
             mention
@@ -1034,11 +1129,14 @@ class C2EventFrameTests(unittest.TestCase):
     def test_high003_binding_ambiguity_and_forged_provenance_fail_closed(self):
         result = self.compile_bound(
             "C2-HIGH003-BINDING-NEG",
-            "粪便检查显示虫卵是人的诊断阶段。",
-            [("diagnostic_stage_for", "虫卵", "人")],
+            "华支睾吸虫病的确诊方法是粪便检查同时虫卵是人的诊断阶段。",
+            [
+                ("diagnosed_by", "华支睾吸虫病", "粪便检查"),
+                ("diagnostic_stage_for", "虫卵", "人"),
+            ],
         )
         authority = copy.deepcopy(result["diagnostic_argument_binding"])
-        subject = authority["request_bindings"][0]["diagnostic_contexts"][0]["predicate_occurrences"][0]["argument_bindings"][0]
+        subject = authority["request_bindings"][0]["diagnostic_contexts"][0]["predicate_occurrences"][1]["argument_bindings"][0]
         subject["binding_state"] = "AMBIGUOUS"
         subject["surface_mention_ids"].append("U999")
         with self.assertRaises(C2ValidationError):
@@ -1062,8 +1160,14 @@ class C2EventFrameTests(unittest.TestCase):
 
     def test_high003_metamorphic_method_surface_preserves_predicate_roles(self):
         cases = (
-            ("粪便检查显示虫卵是人的诊断阶段。", "粪便检查"),
-            ("十二指肠液检查显示成虫是人的诊断期。", "十二指肠液检查"),
+            (
+                "华支睾吸虫病的确诊方法是粪便检查同时虫卵是人的诊断阶段。",
+                "粪便检查",
+            ),
+            (
+                "华支睾吸虫病的确诊方法是十二指肠液检查同时成虫是人的诊断期。",
+                "十二指肠液检查",
+            ),
         )
         for index, (text, method_surface) in enumerate(cases):
             with self.subTest(text=text):
@@ -1071,15 +1175,19 @@ class C2EventFrameTests(unittest.TestCase):
                 result = self.compile_bound(
                     f"C2-HIGH003-META-{index}",
                     text,
-                    [("diagnostic_stage_for", stage_surface, "人")],
+                    [
+                        ("diagnosed_by", "华支睾吸虫病", method_surface),
+                        ("diagnostic_stage_for", stage_surface, "人"),
+                    ],
                 )
                 roles = {
-                    slot["semantic_role"]: slot["domain"]["entity_types"]
+                    (slot["semantic_role"], entity_type)
                     for slot in result["event_frame"]["frames"][0]["participant_slots"]
+                    for entity_type in slot["domain"]["entity_types"]
                 }
-                self.assertEqual(["host"], roles["ACTOR"])
-                self.assertEqual(["diagnostic_method"], roles["METHOD"])
-                self.assertEqual(["life_cycle_stage"], roles["TARGET"])
+                self.assertIn(("ACTOR", "host"), roles)
+                self.assertIn(("METHOD", "diagnostic_method"), roles)
+                self.assertIn(("TARGET", "life_cycle_stage"), roles)
                 self.assertIn(
                     method_surface,
                     [

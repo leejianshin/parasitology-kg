@@ -1738,12 +1738,8 @@ def _diagnostic_bound_participants(
             _c2_fail("S2_EVENT_FRAME", "diagnostic participant domain is invalid")
         expected.setdefault((role, key[0], key[1]), set()).update(source_ids)
 
-    # METHOD is additive and independently rederived from exact S1 mentions;
-    # it never discovers, clears, or redirects a formal predicate.
-    for mention in mentions:
-        if "diagnostic_method" in mention["candidate_entity_types"]:
-            add("METHOD", [mention["surface_mention_id"]], "diagnostic_method")
-
+    # With formal predicates, only their validated argument occurrences license
+    # participants; a diagnostic_method type match is not occurrence authority.
     method_bindings = {
         item["method_entity_binding_id"]: item
         for item in context["method_entity_bindings"]
@@ -2927,16 +2923,8 @@ def validate_c2_event_frame(
                     )
                 context = matching[0]
 
-                # Independently rederive additive METHOD claims from the actual
-                # Clause AST, never from candidate participant source_ids.
-                for mention in frame_mentions:
-                    if "diagnostic_method" in mention["candidate_entity_types"]:
-                        add_expected(
-                            "METHOD",
-                            [mention["surface_mention_id"]],
-                            "diagnostic_method",
-                        )
-
+                # Recompute the exact set solely from the validated occurrence
+                # context, independently of candidate participant source_ids.
                 method_bindings = {
                     item["method_entity_binding_id"]: item
                     for item in context["method_entity_bindings"]
