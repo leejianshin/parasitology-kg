@@ -6,47 +6,47 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: c69d017385094222070d584cf4a432e8168ac64d7b1706de5076e8e44ea58a64
+  canonical_sha256: 9f6e669481c50a670f54e4c1c8a6027679789d2c2b0cda75a1940c86adeba0da
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 8e19e18c59701c356056995d36894b1d8172d2209ba6ee4406ff94b03117963a
+  canonical_sha256: 8959e2cd26cd26fcb155d1accb9d345b05f0e1ebd59d6606ec4552c9f3f0f5cc
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 1d600248fc1e41ab55c11345e8d4db051616e94ba48137c6fcda6d210d27b26a
+  canonical_sha256: d1bee1413030aa3a32563360aaaf5efca19b25516dbafbc371ba8e9b8b21dd85
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: 0b0b7a016a2ad861eacfe4ceefb3da48958953d57416fec0ea1a71e9e8f86a6c
+  canonical_sha256: 62692842fc3b12fd3fb838554120b73ff053ca0214d59719d8b1b391207789f7
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: 525a81b85324f55485ef9229e387f8749910af5d9c34edfa5040cf2d28c487d1
+  canonical_sha256: bf4c511f74b86b482e3dbeaf003efb153b885e3bfcbf059f75cde027158b3670
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 6f8f937ff2290107a40f5a38be552fa58ffe5505b5bbd3a03cbf8c09c013bf85
+  canonical_sha256: af5e25849f5825250587b742dd8bd0f3be7901c5ebff742e3eeaec76e81eb1dc
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: d63a78f27dd46f79c2e91b9f9abeac509afce24e88c6e8abbbeaea2d37f126c7
+  canonical_sha256: 23b658dbc3fd432a04ffc722dd07cb31f7a8c0ec926e331b96bd3ff0b18d22af
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: df1e38f2e5d592ba5cf81db6c254282ca76114f1206a011b33b6ffe66ea704bb
+  canonical_sha256: ca0a6a5dc018c4d5674c1737eff5cbf181bd133dfe2982a991a2b166a87acfb3
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: c782fa4fad2220d422f897886ca0c26f549aeccc092613aae1548bbc44c1dae5
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: 3e9bdc4a664bf496a18d6feeffb3d3e3484e618a1171474bfd4dfb207ff7d7d0
+  canonical_sha256: 41af4701f4e87142d0d19ea2be36a079afd7aa21b1f6a7f30d99b5f724b037cb
 - path: fixtures/semantic-universe-exposure-positive.json
   canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: 058ba920d0a01fdf92b0243c0fec599ef072a96738d1221aadf1a38d3a3c291f
+  canonical_sha256: 7984e44620416474d81756ed6c29cc41ca4cc5169c9900305734e05aec370edc
 - path: fixtures/request-shared-argument-positive.json
   canonical_sha256: 95cf7ef66a4734cade42ddec49422b1f99c4b75381d5c2c58d7a9fb4923d304b
 - path: fixtures/normalized-request-shared-argument-positive.json
-  canonical_sha256: 4e692b25d3ed42dd08700527d980ce869cdb7b4cc5376bf38575141a32140f09
+  canonical_sha256: eb3f2d44f14423d309ef010c464bd36088de4640beb3785f5a9d165c2f4129a7
 - path: fixtures/clause-ast-shared-argument-positive.json
-  canonical_sha256: 1ef6c871aea81097dc83d4abf6335a091dd0c91845d5e86e3494d6251cc7dbd6
+  canonical_sha256: 5cb64fa1f365a400f1bee6711ef63142541dd8fb852200e5fe0843dba8e3b63a
 - path: fixtures/request-diagnostic-role-catalog-positive.json
   canonical_sha256: c632d4eb18c1e93340c1c342c1d5424f4aca393535f3d4dcb8eea72b4de34394
 - path: fixtures/normalized-request-diagnostic-role-catalog-positive.json
-  canonical_sha256: 5282161e71dd78d5debce2d8d6bc5544cab7e418003b9f7829a5a4c56e9d4403
+  canonical_sha256: 78ca045d82084a93057c12ce1d7718fd1e08e395624a50134dc2c23a94643312
 - path: fixtures/clause-ast-diagnostic-role-catalog-positive.json
-  canonical_sha256: ad48d9cbdf4f0c129c1f137a59eb045d3557feac394e93d97021dec3aebd075e
+  canonical_sha256: 0650988dd2301625b2c6b7c5e355f68bdc7da07150568a622cdd68ffea399a8b
 - path: fixtures/event-frame-diagnostic-role-catalog-positive.json
-  canonical_sha256: 64ebff591826032c21b20becf300c8da8cf3ca3e86cd8a992e56223f74992bb6
+  canonical_sha256: ee419ef2df180c63748070d78e16eb8cc173d39977f4e5656cd0865172eb5e8f
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -476,7 +476,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: 058ba920d0a01fdf92b0243c0fec599ef072a96738d1221aadf1a38d3a3c291f
+  base_object_canonical_sha256: 7984e44620416474d81756ed6c29cc41ca4cc5169c9900305734e05aec370edc
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT
@@ -1477,6 +1477,49 @@ cases:
     expected_constraint_id: CNS-AST-SHARED-ARGUMENT-INTEGRITY
     mechanism: RFC6902
   derived_updates: []
+- stage: S2_EVENT_FRAME
+  valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
+  paired_actual_object_paths:
+  - fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  expected_result: FAIL_CLOSED
+  expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  expected_failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  semantic_mutation_target_count: 1
+  derived_updates: []
+  fixture_id: NEG-S2-DIAGNOSTIC-BINDING-UNSELECTED-DANGLING-CONTEXT
+  fault_class: UNSELECTED_DANGLING_AUTHORITY_CONTEXT
+  patch: []
+  actual_input_mutation:
+    object_kind: DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING
+    patch:
+    - op: add
+      path: /request_bindings/0/diagnostic_contexts/1
+      value:
+        diagnostic_context_id: DC999
+        governing_ast_node_ids:
+        - S999
+        method_entity_bindings: []
+        predicate_occurrences:
+        - predicate_occurrence_id: DPO999
+          canonical_predicate: diagnostic_stage_for
+          proposition_node_id: S999
+          argument_bindings:
+          - argument_side: SUBJECT
+            binding_state: BOUND
+            surface_mention_ids:
+            - U999
+            method_entity_binding_id: null
+          - argument_side: OBJECT
+            binding_state: BOUND
+            surface_mention_ids:
+            - U998
+            method_entity_binding_id: null
+  semantic_mutation:
+    target_object: DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING
+    target_path: /request_bindings/0/diagnostic_contexts/1
+    mutation_intent: UNSELECTED_DANGLING_AUTHORITY_CONTEXT
+    expected_constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+    mechanism: CROSS_OBJECT_RFC6902
 - stage: S2_EVENT_FRAME
   valid_base_object_path: fixtures/event-frame-diagnostic-role-catalog-positive.json
   paired_actual_object_paths:

@@ -90,4 +90,3 @@ constraint_binding:
   failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
   witness: DIAGNOSTIC_ROLE_BINDINGS
   new_constraint_created: false
-

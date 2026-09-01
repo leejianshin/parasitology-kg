@@ -1156,18 +1156,9 @@ def main() -> None:
         raise RuntimeError("bootstrap negative execution did not pass")
     summary["negative"] = stage_negative + r3b_negative
     summary["negative_pass_count"] = len(summary["negative"])
-    summary["schema_gate"] = {
-        "gate_id": "p9b1q-ajv-draft2020-strict",
-        "ajv_version": "8.17.1",
-        "strict": True,
-        "compiled_schema_count": 13,
-        "fixture_pair_count": 37,
-        "valid_fixture_count": 37,
-        "result": "PASS",
-        "runner_sha256": raw_sha(HERE / "strict-schema-gate.mjs"),
-        "lockfile_sha256": raw_sha(HERE / "package-lock.json"),
-    }
-    write("reference-validator-execution-summary.json", summary)
+    # Discover the live inventory before serializing its counts.  The existing
+    # summary remains a schema fixture during this bootstrap pass, but none of
+    # its previously recorded counts controls discovery or gate success.
     schema_run = subprocess.run(
         ["node", str(HERE / "strict-schema-gate.mjs")],
         cwd=HERE,
@@ -1175,19 +1166,63 @@ def main() -> None:
         capture_output=True,
         text=True,
     )
-    if schema_run.returncode != 0:
-        raise RuntimeError(
-            f"bootstrap strict schema gate failed: {schema_run.stderr.strip()}"
-        )
     schema_result = json.loads(schema_run.stdout)
+    invalid_fixtures = {
+        item.get("fixture")
+        for item in schema_result.get("results", [])
+        if not item.get("valid")
+    }
     if (
-        schema_result.get("result") != "PASS"
-        or schema_result.get("compiled_schema_count") != 13
-        or schema_result.get("fixture_pair_count") != 37
-        or schema_result.get("valid_fixture_count") != 37
+        not isinstance(schema_result.get("compiled_schema_count"), int)
+        or not isinstance(schema_result.get("fixture_pair_count"), int)
+        or invalid_fixtures
+        - {"fixtures/reference-validator-execution-summary.json"}
     ):
         raise RuntimeError(
-            f"bootstrap strict schema gate count/result mismatch: {schema_result}"
+            f"bootstrap strict schema gate discovery/result mismatch: {schema_result}"
+        )
+    summary["schema_gate"] = {
+        key: schema_result[key]
+        for key in (
+            "gate_id",
+            "ajv_version",
+            "strict",
+            "compiled_schema_count",
+            "fixture_pair_count",
+        )
+    }
+    summary["schema_gate"].update(
+        {
+            # The only bootstrap-invalid fixture is this summary itself.  Once
+            # replaced below, the fresh full gate must independently prove the
+            # dynamically discovered pair inventory is entirely valid.
+            "valid_fixture_count": schema_result["fixture_pair_count"],
+            "result": "PASS",
+            "runner_sha256": raw_sha(HERE / "strict-schema-gate.mjs"),
+            "lockfile_sha256": raw_sha(HERE / "package-lock.json"),
+        }
+    )
+    write("reference-validator-execution-summary.json", summary)
+    verified_schema_run = subprocess.run(
+        ["node", str(HERE / "strict-schema-gate.mjs")],
+        cwd=HERE,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    verified_schema_result = json.loads(verified_schema_run.stdout)
+    if (
+        verified_schema_run.returncode != 0
+        or verified_schema_result.get("result") != "PASS"
+        or verified_schema_result.get("compiled_schema_count")
+        != schema_result.get("compiled_schema_count")
+        or verified_schema_result.get("fixture_pair_count")
+        != schema_result.get("fixture_pair_count")
+        or verified_schema_result.get("valid_fixture_count")
+        != verified_schema_result.get("fixture_pair_count")
+    ):
+        raise RuntimeError(
+            f"verified strict schema gate discovery/result mismatch: {verified_schema_result}"
         )
     completed = subprocess.run(
         ["python", str(HERE / "reference-stage-semantic-validator.py"), "--mode", "all"],

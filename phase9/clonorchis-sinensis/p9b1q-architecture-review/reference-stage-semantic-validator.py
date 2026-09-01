@@ -603,9 +603,7 @@ def validate_s2(
     )
     entity_ontology = entity_ontology or load_yaml(REPO / "schema/entity-types.yml")
     event_mapping = event_mapping or load_json(FIXTURES / "authority-event-relation-mapping.json")
-    diagnostic_argument_binding = diagnostic_argument_binding or load_json(
-        DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE
-    )
+    diagnostic_binding_missing = not isinstance(diagnostic_argument_binding, dict) or not diagnostic_argument_binding
     raw_frame_ids = [item["frame_id"] for item in frame["frames"]]
     raw_specimen_ids = [item["specimen_slot_id"] for item in frame["specimen_slots"]]
     raw_slot_ids = [
@@ -780,16 +778,28 @@ def validate_s2(
             )
             if not exact_slice or not allowed_surface:
                 errors.append(error("CNS-EF-SPECIMEN_SOURCE", "SPECIMEN_SOURCE_MISSING", f"/specimen_slots/{si}/source_spans/{pi}"))
-    errors.extend(
-        validate_diagnostic_role_derivation(
-            frame,
-            normalized,
-            ast,
-            query_interpreter_config,
-            event_mapping,
-            diagnostic_argument_binding,
+    if diagnostic_binding_missing:
+        errors.append(
+            error(
+                "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
+                "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
+                "/diagnostic_predicate_argument_binding",
+            )
         )
-    )
+    elif any(
+        item.get("event_type_domain") == ["DIAGNOSTIC_FINDING"]
+        for item in frame.get("frames", [])
+    ):
+        errors.extend(
+            validate_diagnostic_role_derivation(
+                frame,
+                normalized,
+                ast,
+                query_interpreter_config,
+                event_mapping,
+                diagnostic_argument_binding,
+            )
+        )
     return ordered(errors)
 
 
@@ -946,6 +956,22 @@ def validate_diagnostic_role_derivation(
         fail("/diagnostic_predicate_argument_binding")
         return errors
 
+    predicate_cues = query_interpreter_config.get("predicate_cues", {})
+    has_expressed_diagnostic_predicate = any(
+        _minimal_cue_node_ids(
+            ast,
+            _diagnostic_scope(item, ast)[0],
+            predicate_cues.get(predicate, [])
+            if isinstance(predicate_cues.get(predicate, []), list)
+            else [],
+        )
+        for item in frame.get("frames", [])
+        if item.get("event_type_domain") == ["DIAGNOSTIC_FINDING"]
+        for predicate in catalog
+    )
+    if not has_expressed_diagnostic_predicate:
+        return errors
+
     default_query_config = load_yaml(QUERY_INTERPRETER_CONFIG)
     query_config_hash = (
         sha_bytes(QUERY_INTERPRETER_CONFIG.read_bytes())
@@ -961,14 +987,15 @@ def validate_diagnostic_role_derivation(
         or diagnostic_argument_binding.get("event_relation_mapping_sha256")
         != canonical_sha(event_mapping)
     )
-    request_bindings = [
-        item
-        for item in diagnostic_argument_binding.get("request_bindings", [])
-        if item.get("request_id") == normalized.get("request_id")
-    ]
-    if len(request_bindings) > 1:
-        identity_invalid = True
+    request_bindings = diagnostic_argument_binding.get("request_bindings", [])
     request_binding = request_bindings[0] if len(request_bindings) == 1 else None
+    if (
+        request_binding is None
+        or request_binding.get("request_id") != normalized.get("request_id")
+        or request_binding.get("normalized_request_sha256") != canonical_sha(normalized)
+        or request_binding.get("clause_ast_sha256") != canonical_sha(ast)
+    ):
+        identity_invalid = True
     if request_binding is not None and (
         request_binding.get("normalized_request_sha256") != canonical_sha(normalized)
         or request_binding.get("clause_ast_sha256") != canonical_sha(ast)
@@ -983,7 +1010,6 @@ def validate_diagnostic_role_derivation(
         for mention in ast.get("surface_mentions", [])
     }
     ast_node_ids = {node["node_id"] for node in ast.get("nodes", [])}
-    predicate_cues = query_interpreter_config.get("predicate_cues", {})
 
     def domain_key(
         source_ids: list[str], expected_type: str
@@ -1026,6 +1052,111 @@ def validate_diagnostic_role_derivation(
         len(values) != len(set(values))
         for values in (raw_context_ids, raw_occurrence_ids, raw_method_binding_ids)
     ):
+        fail("/diagnostic_predicate_argument_binding/request_bindings")
+        return errors
+
+    # Validate the complete supplied authority object before consulting any
+    # candidate Event Frame.  No unselected context, occurrence, side, method
+    # binding, node, or mention may escape referential-integrity validation.
+    authority_invalid = False
+    for context in all_contexts:
+        governing_node_ids = set(context.get("governing_ast_node_ids", []))
+        if not governing_node_ids or not governing_node_ids <= ast_node_ids:
+            authority_invalid = True
+            continue
+        declared_pairs = {
+            (
+                occurrence.get("canonical_predicate"),
+                occurrence.get("proposition_node_id"),
+            )
+            for occurrence in context.get("predicate_occurrences", [])
+        }
+        formally_expressed_pairs = {
+            (predicate, node_id)
+            for predicate in catalog
+            for node_id in _minimal_cue_node_ids(
+                ast,
+                governing_node_ids,
+                predicate_cues.get(predicate, [])
+                if isinstance(predicate_cues.get(predicate, []), list)
+                else [],
+            )
+        }
+        if declared_pairs != formally_expressed_pairs or {
+            node_id for _, node_id in declared_pairs
+        } != governing_node_ids:
+            authority_invalid = True
+
+        method_bindings = {
+            method.get("method_entity_binding_id"): method
+            for method in context.get("method_entity_bindings", [])
+        }
+        referenced_method_binding_ids: set[str] = set()
+        for method in method_bindings.values():
+            source_ids = method.get("surface_mention_ids", [])
+            key = domain_key(source_ids, "diagnostic_method")
+            if (
+                method.get("binding_state") != "BOUND"
+                or key is None
+                or key[0] != (method.get("method_entity_id"),)
+            ):
+                authority_invalid = True
+
+        for occurrence in context.get("predicate_occurrences", []):
+            predicate = occurrence.get("canonical_predicate")
+            proposition_node_id = occurrence.get("proposition_node_id")
+            if (
+                predicate not in catalog
+                or proposition_node_id not in governing_node_ids
+                or proposition_node_id not in ast_node_ids
+            ):
+                authority_invalid = True
+                continue
+            sides = {
+                side.get("argument_side"): side
+                for side in occurrence.get("argument_bindings", [])
+            }
+            if set(sides) != {"SUBJECT", "OBJECT"}:
+                authority_invalid = True
+                continue
+            proposition_scope = _ast_scope_node_ids(ast, [proposition_node_id])
+            for side_name, catalog_side in (("SUBJECT", "subject"), ("OBJECT", "object")):
+                side = sides[side_name]
+                rule = catalog[predicate][catalog_side]
+                source_ids = side.get("surface_mention_ids", [])
+                expected_type = (
+                    "diagnostic_method"
+                    if rule["source_token"] == "method_entity_id"
+                    else rule["source_token"]
+                )
+                key = domain_key(source_ids, expected_type)
+                method_binding_id = side.get("method_entity_binding_id")
+                if (
+                    side.get("binding_state") != "BOUND"
+                    or key is None
+                    or any(
+                        mentions_by_id[source_id].get("containing_node_id")
+                        not in proposition_scope
+                        for source_id in source_ids
+                    )
+                ):
+                    authority_invalid = True
+                    continue
+                if rule["source_token"] == "method_entity_id":
+                    method_authority = method_bindings.get(method_binding_id)
+                    if (
+                        method_authority is None
+                        or key[0] != (method_authority.get("method_entity_id"),)
+                    ):
+                        authority_invalid = True
+                    elif isinstance(method_binding_id, str):
+                        referenced_method_binding_ids.add(method_binding_id)
+                elif method_binding_id is not None:
+                    authority_invalid = True
+        if set(method_bindings) != referenced_method_binding_ids:
+            authority_invalid = True
+
+    if authority_invalid:
         fail("/diagnostic_predicate_argument_binding/request_bindings")
         return errors
 
@@ -1664,11 +1795,11 @@ def run_schema_gate() -> dict[str, Any]:
     result = json.loads(completed.stdout)
     if (
         result.get("result") != "PASS"
-        or result.get("compiled_schema_count") != 13
-        or result.get("fixture_pair_count") != 37
-        or result.get("valid_fixture_count") != 37
+        or not isinstance(result.get("compiled_schema_count"), int)
+        or not isinstance(result.get("fixture_pair_count"), int)
+        or result.get("valid_fixture_count") != result.get("fixture_pair_count")
     ):
-        raise RuntimeError("AJV strict schema gate count/result mismatch")
+        raise RuntimeError("AJV strict schema gate discovery/result mismatch")
     _SCHEMA_GATE_CACHE = copy.deepcopy(result)
     return result
 
@@ -2625,6 +2756,39 @@ def validate_actual_reference(reference: dict[str, Any]) -> bool:
     )
 
 
+def stage_actual_input_errors(result: dict[str, Any]) -> list[dict[str, str]]:
+    """Fail closed on absent, duplicate, or content-mismatched actual inputs."""
+    if result.get("stage") != "S2_EVENT_FRAME":
+        return []
+    contract = load_yaml(CONTRACT)
+    validator_contract = contract["validators"].get(result.get("stage"), {})
+    required = validator_contract.get("required_actual_inputs", [])
+    references = result.get("actual_input_objects", [])
+    actual_kinds = [reference.get("object_kind") for reference in references]
+    missing_or_duplicate = (
+        not isinstance(required, list)
+        or not set(required) <= set(actual_kinds)
+        or len(actual_kinds) != len(set(actual_kinds))
+    )
+    invalid_reference = any(
+        not isinstance(reference, dict) or not validate_actual_reference(reference)
+        for reference in references
+    )
+    if not missing_or_duplicate and not invalid_reference:
+        return []
+    if result.get("stage") == "S2_EVENT_FRAME":
+        return [
+            error(
+                "CNS-EF-REF_INTEGRITY",
+                "DANGLING_REFERENCE",
+                "/actual_input_objects",
+            )
+        ]
+    registered = validator_contract.get("registered_constraints", [])
+    constraint_id = registered[0] if registered else "CNS-NORM-REQUEST_BINDING"
+    return [error(constraint_id, registry_failure(constraint_id), "/actual_input_objects")]
+
+
 def load_stage_result(stage: str, fixture_suffix: str | None = None) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     name = f"stage-validation-{stage.lower()}-{fixture_suffix}-positive.json" if fixture_suffix else f"stage-validation-{stage.lower()}-positive.json"
     result = load_json(FIXTURES / name)
@@ -2637,7 +2801,9 @@ def load_stage_result(stage: str, fixture_suffix: str | None = None) -> tuple[di
     if result["validator"]["configuration_sha256"] != sha_bytes(CONTRACT.read_bytes()):
         raise RuntimeError(f"{stage} contract binding mismatch")
     references = result["actual_input_objects"] + [result["actual_output_object"]]
-    if not all(validate_actual_reference(reference) for reference in references):
+    if stage_actual_input_errors(result) or not all(
+        validate_actual_reference(reference) for reference in references
+    ):
         raise RuntimeError(f"{stage} actual object binding mismatch")
     inputs = {
         reference["object_kind"]: pointer_get(
@@ -2657,6 +2823,9 @@ def load_stage_result(stage: str, fixture_suffix: str | None = None) -> tuple[di
 def stage_record_errors(result: dict[str, Any], observed: list[dict[str, str]]) -> list[dict[str, str]]:
     contract = load_yaml(CONTRACT)
     expected = contract["validators"][result["stage"]]["registered_constraints"]
+    actual_input_errors = stage_actual_input_errors(result)
+    if actual_input_errors:
+        return actual_input_errors
     if result["result"] != ("PASS" if not observed else "FAIL_CLOSED") or result["errors"] != observed:
         return [error(expected[0], registry_failure(expected[0]), "/result")]
     if result["verified_constraint_ids"] != expected:
@@ -3112,6 +3281,7 @@ def run_positive() -> list[dict[str, Any]]:
     schema_gate = run_schema_gate()
     results: list[dict[str, Any]] = []
     normalized = normalized_by_request_id()
+    explicit_diagnostic_binding = load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE)
     for suffix in ("exposure", "diagnostic", "diagnostic-role-catalog"):
         request = load_json(FIXTURES / f"request-{suffix}-positive.json")
         norm = load_json(FIXTURES / f"normalized-request-{suffix}-positive.json")
@@ -3130,7 +3300,12 @@ def run_positive() -> list[dict[str, Any]]:
             )
         else:
             s1_errors = validate_s1(ast, norm)
-        s2_errors = validate_s2(frame, norm, ast)
+        s2_errors = validate_s2(
+            frame,
+            norm,
+            ast,
+            diagnostic_argument_binding=explicit_diagnostic_binding,
+        )
         if suffix == "exposure":
             s0_record, _, _ = load_stage_result("S0")
             s2_record, _, _ = load_stage_result("S2")
@@ -3221,6 +3396,7 @@ def run_negative() -> list[dict[str, Any]]:
     if manifest.get("mutation_model_path") != "../negative-fixture-semantic-mutation-model.yml":
         raise RuntimeError("stage negative fixture manifest is not bound to the R3-D2 mutation model")
     normalized = normalized_by_request_id()
+    explicit_diagnostic_binding = load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE)
     results = []
     for case in manifest["cases"]:
         mutation = validate_mutation_isolation(case)
@@ -3241,7 +3417,10 @@ def run_negative() -> list[dict[str, Any]]:
                 else None
             )
             base_errors = validate_s2(
-                base, normalized[base["request_id"]], base_ast
+                base,
+                normalized[base["request_id"]],
+                base_ast,
+                diagnostic_argument_binding=explicit_diagnostic_binding,
             )
         elif stage == "S3_TYPED_SOLVER":
             s3_record, s3_inputs, _ = load_stage_result("S3")
@@ -3272,7 +3451,11 @@ def run_negative() -> list[dict[str, Any]]:
         mutated_s3_hashes: dict[str, str] | None = None
         mutated_s2_event_mapping: dict[str, Any] | None = None
         mutated_s2_query_config: dict[str, Any] | None = None
-        mutated_s2_diagnostic_argument_binding: dict[str, Any] | None = None
+        mutated_s2_diagnostic_argument_binding: dict[str, Any] | None = (
+            copy.deepcopy(explicit_diagnostic_binding)
+            if stage == "S2_EVENT_FRAME"
+            else None
+        )
         mutated_s5_index: dict[str, Any] | None = None
         s5_actual_overrides: dict[str, dict[str, Any]] = {}
         derived_source_objects: dict[str, Any] | None = None
@@ -3422,7 +3605,10 @@ def r3b_authoritative_case_errors(case: dict[str, Any]) -> list[dict[str, str]]:
     if s1_errors:
         return s1_errors
     s2_errors = validate_s2(
-        case["event_frame"], case["normalized_request"], case["clause_ast"]
+        case["event_frame"],
+        case["normalized_request"],
+        case["clause_ast"],
+        diagnostic_argument_binding=load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE),
     )
     if s2_errors:
         return s2_errors
@@ -3520,7 +3706,12 @@ def r3a_positive_checks(bundle: dict[str, Any]) -> list[dict[str, Any]]:
     schema_pass = sum(schema_valid(schema, objects[key]) for schema, key in schema_pairs)
     checks.append({"check": "DRAFT_2020_12_SCHEMA", "actual_count": len(schema_pairs), "pass_count": schema_pass, "passed": schema_pass == len(schema_pairs)})
 
-    s2_errors = validate_s2(objects["event_frame"], objects["normalized_request"], objects["clause_ast"])
+    s2_errors = validate_s2(
+        objects["event_frame"],
+        objects["normalized_request"],
+        objects["clause_ast"],
+        diagnostic_argument_binding=load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE),
+    )
     semantic_errors = validate_semantic_authority(core, inputs, require_complete=True)
     projection_errors = validate_queryir_projection(core, query_ir, inputs)
     checks.extend([
