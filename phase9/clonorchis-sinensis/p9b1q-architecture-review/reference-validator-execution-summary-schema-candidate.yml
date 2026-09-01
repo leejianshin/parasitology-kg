@@ -63,8 +63,8 @@ properties:
       registry_mapping_count: {const: 48}
       validator_constraint_mapping_count: {const: 48}
       executable_constraint_count: {const: 48}
-      formal_fixture_count: {const: 92}
-      explicit_fixture_failure_code_count: {const: 92}
+      formal_fixture_count: {const: 95}
+      explicit_fixture_failure_code_count: {const: 95}
       match_count: {const: 48}
       mismatch_count: {const: 0}
       unknown_constraint_ids: {const: 0}
@@ -98,13 +98,13 @@ properties:
     items: {$ref: "#/$defs/minimality_result"}
   negative:
     type: array
-    minItems: 76
-    maxItems: 76
+    minItems: 79
+    maxItems: 79
     uniqueItems: true
     items: {$ref: "#/$defs/negative_result"}
   positive_pass_count: {const: 18}
   minimality_pass_count: {const: 8}
-  negative_pass_count: {const: 76}
+  negative_pass_count: {const: 79}
   schema_gate:
     type: object
     additionalProperties: false
@@ -113,9 +113,9 @@ properties:
       gate_id: {const: p9b1q-ajv-draft2020-strict}
       ajv_version: {const: "8.17.1"}
       strict: {const: true}
-      compiled_schema_count: {const: 12}
-      fixture_pair_count: {const: 36}
-      valid_fixture_count: {const: 36}
+      compiled_schema_count: {const: 13}
+      fixture_pair_count: {const: 37}
+      valid_fixture_count: {const: 37}
       result: {const: PASS}
       runner_sha256: {$ref: "#/$defs/sha256"}
       lockfile_sha256: {$ref: "#/$defs/sha256"}

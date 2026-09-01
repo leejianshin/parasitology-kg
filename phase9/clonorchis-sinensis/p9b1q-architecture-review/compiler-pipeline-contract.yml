@@ -61,6 +61,7 @@ stages:
       - frozen_entity_ontology
       - frozen_event_mapping
       - content_addressed_query_interpreter_config_for_formal_predicate_cues
+      - content_addressed_diagnostic_predicate_argument_occurrence_binding
     output_schema: event-frame-schema-candidate.yml
     semantic_validator: "stage-semantic-validator-contract.yml#S2_EVENT_FRAME"
     responsibilities:
@@ -70,11 +71,19 @@ stages:
       - expose_event_coreference_and_override_hypotheses
       - compute_assertion_independent_event_identity_signatures
       - independently_recompute_expressed_diagnostic_predicates_from_actual_proposition_scope_and_formal_predicate_cues
+      - independently_validate_request_and_clause_ast_bound_diagnostic_predicate_argument_occurrences_before_event_frame_comparison
       - materialize_each_explicitly_bound_diagnostic_predicate_side_from_the_formal_diagnostic_participant_role_catalog
       - canonically_merge_same_role_same_domain_participants_and_union_source_ids
       - compare_expected_and_actual_diagnostic_participant_and_identity_role_membership_exactly
     diagnostic_role_boundary:
       authority: "event-predicate-type-role-mapping.yml#event_mapping.DIAGNOSTIC_FINDING.diagnostic_participant_role_catalog"
+      occurrence_binding_authority: diagnostic-predicate-argument-binding-contract.yml
+      occurrence_binding_scope: DIAGNOSTIC_ONLY
+      occurrence_binding_precedes_event_frame_validation: true
+      candidate_event_frame_provenance_is_expected_authority: false
+      same_entity_implies_same_bound_occurrence: false
+      ambiguous_or_unresolved_occurrence_binding: FAIL_CLOSED
+      production_binding_producer_authorized: false
       predicate_direction_is_participant_role_authority: false
       type_compatibility_is_materialization_authority: false
       declared_slot_role_is_validation_authority: false

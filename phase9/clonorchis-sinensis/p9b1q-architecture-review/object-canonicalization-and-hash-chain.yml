@@ -69,13 +69,15 @@ object_chain:
       - negation_semantic_implementation_sha256
       - clause_ast_sha256
   S2_EVENT_FRAME:
-    actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
+    actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, QUERY_INTERPRETER_CONFIG, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING, DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING]
     actual_output: EVENT_FRAME
     independent_hash_fields:
       - normalized_request_sha256
       - clause_ast_sha256
       - entity_ontology_sha256
       - event_relation_mapping_sha256
+      - query_interpreter_config_sha256
+      - diagnostic_predicate_argument_binding_sha256
       - event_frame_sha256
   S3_TYPED_SOLVER:
     actual_inputs:

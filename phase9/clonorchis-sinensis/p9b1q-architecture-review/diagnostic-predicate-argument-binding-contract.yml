@@ -1,0 +1,93 @@
+contract_id: P9B1Q_DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING_V0_1
+status: POST_FREEZE_AUTHORITY_EXECUTABILITY_CORRECTION_CANDIDATE
+stage: S2_EVENT_FRAME
+scope: DIAGNOSTIC_ONLY
+
+purpose:
+  semantic_function: >-
+    Identify the exact surface-mention occurrences bound to each argument side
+    of an already-authorized diagnostic predicate occurrence.
+  predicate_discovery_authority: EXISTING_FORMAL_PREDICATE_CUES_ONLY
+  predicate_direction_authority: EXISTING_SUBJECT_FROM_OBJECT_FROM_ONLY
+  participant_role_authority: EXISTING_DIAGNOSTIC_PARTICIPANT_ROLE_CATALOG_ONLY
+  production_binding_producer: NOT_AUTHORIZED_BY_THIS_CONTRACT
+
+independence:
+  location: OUTSIDE_CANDIDATE_EVENT_FRAME
+  availability: BEFORE_EVENT_FRAME_SEMANTIC_VALIDATION
+  public: true
+  content_addressed: true
+  identity_bound: true
+  independently_schema_validated: true
+  independently_semantically_validated: true
+  prohibited_expected_authority_sources:
+    - CANDIDATE_EVENT_FRAME_PARTICIPANT_SOURCE_IDS
+    - CANDIDATE_EVENT_FRAME_METHOD_SOURCE_IDS
+    - CANDIDATE_EVENT_FRAME_DIAGNOSTIC_BINDING
+    - CANDIDATE_EVENT_FRAME_ROLE_DECLARATIONS
+
+identity_binding:
+  request_binding_fields:
+    - request_id
+    - normalized_request_sha256
+    - clause_ast_sha256
+  predicate_occurrence_fields:
+    - predicate_occurrence_id
+    - canonical_predicate
+    - proposition_node_id
+  argument_binding_fields:
+    - argument_side
+    - binding_state
+    - surface_mention_ids
+  surface_mention_resolution: EXACT_ID_IN_BOUND_CLAUSE_AST
+
+binding_states:
+  BOUND:
+    surface_mention_ids: EXACT_NONEMPTY_BOUND_OCCURRENCE_SET
+    validator_action: EXACT_OCCURRENCE_PROVENANCE_COMPARISON
+  AMBIGUOUS:
+    surface_mention_ids: COMPLETE_NONEMPTY_COMPETING_OCCURRENCE_SET
+    validator_action: FAIL_CLOSED_NO_WINNER_SELECTION
+  UNRESOLVED:
+    surface_mention_ids: EMPTY
+    validator_action: FAIL_CLOSED_NO_HEURISTIC_SELECTION
+
+method_entity_id_resolution:
+  meaning: EXACT_EVENT_METHOD_BINDING_REFERENCE
+  authority_location: diagnostic_contexts.method_entity_bindings
+  requirement: >-
+    A method_entity_id predicate side references one independently declared
+    canonical diagnostic-method entity and its exact licensed occurrence set.
+  merge_rule: CANONICAL_METHOD_SLOT_UNION_WITH_EXACT_OCCURRENCE_PROVENANCE
+  prohibited_interpretation: ALL_DIAGNOSTIC_METHOD_MENTIONS_IN_SCOPE
+
+semantic_validation:
+  - REQUEST_AND_CLAUSE_AST_HASHES_MUST_MATCH_ACTUAL_INPUTS
+  - EACH_CONTEXT_NODE_AND_SURFACE_MENTION_ID_MUST_RESOLVE_IN_BOUND_CLAUSE_AST
+  - PREDICATE_OCCURRENCES_MUST_EQUAL_FORMAL_CUE_DERIVATION_IN_CONTEXT
+  - EACH_PREDICATE_OCCURRENCE_MUST_HAVE_EXACTLY_ONE_SUBJECT_AND_ONE_OBJECT_BINDING
+  - SOURCE_TOKEN_COMPATIBILITY_MUST_FOLLOW_EXISTING_PREDICATE_DIRECTION_AUTHORITY
+  - METHOD_ENTITY_REFERENCE_AND_RESOLVED_OCCURRENCE_SET_MUST_MATCH_EXACTLY
+  - AMBIGUOUS_OR_UNRESOLVED_BINDING_MUST_FAIL_CLOSED
+  - SAME_ENTITY_DOES_NOT_IMPLY_SAME_BOUND_OCCURRENCE
+  - CANDIDATE_EVENT_FRAME_SOURCE_IDS_ARE_ACTUAL_CLAIMS_ONLY
+
+prohibited_heuristics:
+  - ENTITY_EQUALITY
+  - ENTITY_TYPE_EQUALITY
+  - SAME_CLAUSE
+  - SAME_PROPOSITION
+  - TOKEN_ORDER
+  - WORD_ORDER
+  - NEAREST_OCCURRENCE
+  - FIRST_OCCURRENCE
+  - LAST_OCCURRENCE
+  - LEXICAL_PROXIMITY
+
+constraint_binding:
+  constraint_id: CNS-EF-DIAGNOSTIC-ROLE-DERIVATION
+  order: 48
+  failure_code: DIAGNOSTIC_ROLE_DERIVATION_INVALID
+  witness: DIAGNOSTIC_ROLE_BINDINGS
+  new_constraint_created: false
+

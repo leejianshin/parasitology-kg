@@ -112,7 +112,7 @@ validators:
       - "shared argument edges have no node, parent, child or source span and cannot chain, cycle, cross objects, point forward, or duplicate proposition materialization"
   S2_EVENT_FRAME:
     validator_id: p9b1q-stage-semantic-validator-s2
-    required_actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, QUERY_INTERPRETER_CONFIG, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING]
+    required_actual_inputs: [NORMALIZED_REQUEST, CLAUSE_AST, QUERY_INTERPRETER_CONFIG, ENTITY_ONTOLOGY, EVENT_RELATION_MAPPING, DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING]
     required_actual_output: EVENT_FRAME
     registered_constraints:
       - CNS-EF-ID_UNIQUE
@@ -137,8 +137,12 @@ validators:
       - "reference identity_relation_domain explicitly contains all and only viable SAME_EVENT/DISTINCT_EVENT alternatives"
       - "override dimension is selected only from overridden_dimension_domain"
       - "expressed diagnostic predicates are independently recomputed from actual Clause AST proposition scope and exact formal predicate cues in the content-addressed QUERY_INTERPRETER_CONFIG"
+      - "the public DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING input is Schema-valid, content-addressed, and bound to the exact NORMALIZED_REQUEST and CLAUSE_AST hashes before Event Frame validation"
+      - "each diagnostic predicate occurrence and SUBJECT/OBJECT binding is independently checked against formal cues, direction authority, exact Clause AST surface mention IDs and the declared BOUND state"
+      - "AMBIGUOUS and UNRESOLVED occurrence bindings fail closed; entity identity, type, clause, proposition, order and proximity never select an occurrence"
+      - "candidate Event Frame participant and METHOD source_ids are actual claims only and never define or expand expected occurrence authority"
       - "diagnostic catalog subject/object source tokens equal the corresponding predicate subject_from/object_from token; catalog drift fails closed"
-      - "diagnostic binding fields independently establish the pre-existing METHOD and TARGET base roles; declared participant semantic_role is never authority"
+      - "an exact independent method_entity_id occurrence binding establishes the canonical METHOD provenance used by formal predicate sides; declared participant semantic_role and candidate source_ids are never authority"
       - "every explicitly bound formal diagnostic predicate side materializes exactly the catalog role, while type compatibility alone never creates a participant"
       - "same frame, semantic role and canonical entity domain merge to one slot with the exact union of source IDs; duplicate METHOD slots and same-mention conflicting roles fail closed"
       - "the complete expected diagnostic participant set and normalized identity role membership exactly equal the actual Event Frame"

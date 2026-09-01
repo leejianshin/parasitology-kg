@@ -1,0 +1,137 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.invalid/parasitology-kg/phase9/p9b1q/diagnostic-predicate-argument-binding-v0.1"
+title: "P9-B1Q diagnostic predicate argument occurrence binding candidate"
+type: object
+additionalProperties: false
+required:
+  - binding_object_version
+  - binding_scope
+  - binding_contract_sha256
+  - query_interpreter_config_sha256
+  - event_relation_mapping_sha256
+  - request_bindings
+properties:
+  binding_object_version: {const: "0.1-candidate"}
+  binding_scope: {const: DIAGNOSTIC_ONLY}
+  binding_contract_sha256: {$ref: "#/$defs/sha256"}
+  query_interpreter_config_sha256: {$ref: "#/$defs/sha256"}
+  event_relation_mapping_sha256: {$ref: "#/$defs/sha256"}
+  request_bindings:
+    type: array
+    minItems: 1
+    maxItems: 128
+    items: {$ref: "#/$defs/request_binding"}
+$defs:
+  sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+  local_id: {type: string, pattern: "^[A-Z][A-Z0-9_-]{2,63}$"}
+  surface_id: {type: string, pattern: "^U[0-9]{3,}$"}
+  ast_node_id: {type: string, pattern: "^S[0-9]{3,}$"}
+  request_binding:
+    type: object
+    additionalProperties: false
+    required:
+      - request_id
+      - normalized_request_sha256
+      - clause_ast_sha256
+      - diagnostic_contexts
+    properties:
+      request_id: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+      normalized_request_sha256: {$ref: "#/$defs/sha256"}
+      clause_ast_sha256: {$ref: "#/$defs/sha256"}
+      diagnostic_contexts:
+        type: array
+        maxItems: 128
+        items: {$ref: "#/$defs/diagnostic_context"}
+  diagnostic_context:
+    type: object
+    additionalProperties: false
+    required:
+      - diagnostic_context_id
+      - governing_ast_node_ids
+      - method_entity_bindings
+      - predicate_occurrences
+    properties:
+      diagnostic_context_id: {$ref: "#/$defs/local_id"}
+      governing_ast_node_ids:
+        type: array
+        minItems: 1
+        maxItems: 128
+        uniqueItems: true
+        items: {$ref: "#/$defs/ast_node_id"}
+      method_entity_bindings:
+        type: array
+        maxItems: 32
+        items: {$ref: "#/$defs/method_entity_binding"}
+      predicate_occurrences:
+        type: array
+        minItems: 1
+        maxItems: 256
+        items: {$ref: "#/$defs/predicate_occurrence"}
+  method_entity_binding:
+    type: object
+    additionalProperties: false
+    required:
+      - method_entity_binding_id
+      - method_entity_id
+      - binding_state
+      - surface_mention_ids
+    properties:
+      method_entity_binding_id: {$ref: "#/$defs/local_id"}
+      method_entity_id: {type: string, pattern: '^diagnostic\.[a-z0-9._-]+$'}
+      binding_state: {enum: [BOUND, AMBIGUOUS, UNRESOLVED]}
+      surface_mention_ids:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/surface_id"}
+    allOf:
+      - if: {properties: {binding_state: {const: BOUND}}}
+        then: {properties: {surface_mention_ids: {type: array, minItems: 1}}}
+      - if: {properties: {binding_state: {const: AMBIGUOUS}}}
+        then: {properties: {surface_mention_ids: {type: array, minItems: 2}}}
+      - if: {properties: {binding_state: {const: UNRESOLVED}}}
+        then: {properties: {surface_mention_ids: {type: array, maxItems: 0}}}
+  predicate_occurrence:
+    type: object
+    additionalProperties: false
+    required:
+      - predicate_occurrence_id
+      - canonical_predicate
+      - proposition_node_id
+      - argument_bindings
+    properties:
+      predicate_occurrence_id: {$ref: "#/$defs/local_id"}
+      canonical_predicate: {enum: [diagnosed_by, diagnostic_stage_for, has_diagnostic_clue]}
+      proposition_node_id: {$ref: "#/$defs/ast_node_id"}
+      argument_bindings:
+        type: array
+        minItems: 2
+        maxItems: 2
+        items: {$ref: "#/$defs/argument_binding"}
+  argument_binding:
+    type: object
+    additionalProperties: false
+    required:
+      - argument_side
+      - binding_state
+      - surface_mention_ids
+      - method_entity_binding_id
+    properties:
+      argument_side: {enum: [SUBJECT, OBJECT]}
+      binding_state: {enum: [BOUND, AMBIGUOUS, UNRESOLVED]}
+      surface_mention_ids:
+        type: array
+        maxItems: 256
+        uniqueItems: true
+        items: {$ref: "#/$defs/surface_id"}
+      method_entity_binding_id:
+        oneOf:
+          - {$ref: "#/$defs/local_id"}
+          - {type: "null"}
+    allOf:
+      - if: {properties: {binding_state: {const: BOUND}}}
+        then: {properties: {surface_mention_ids: {type: array, minItems: 1}}}
+      - if: {properties: {binding_state: {const: AMBIGUOUS}}}
+        then: {properties: {surface_mention_ids: {type: array, minItems: 2}}}
+      - if: {properties: {binding_state: {const: UNRESOLVED}}}
+        then: {properties: {surface_mention_ids: {type: array, maxItems: 0}}}

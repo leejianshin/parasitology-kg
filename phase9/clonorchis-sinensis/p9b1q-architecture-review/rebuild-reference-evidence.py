@@ -383,11 +383,106 @@ def main() -> None:
     }
     write("clause-ast-diagnostic-role-catalog-positive.json", role_ast)
 
+    method_occurrence_ids = ["U001", "U005", "U007", "U013", "U014"]
+    event_method_occurrence_ids = ["U001"]
+
+    def bound_argument(
+        side: str,
+        surface_ids: list[str],
+        method_binding_id: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "argument_side": side,
+            "binding_state": "BOUND",
+            "surface_mention_ids": surface_ids,
+            "method_entity_binding_id": method_binding_id,
+        }
+
+    diagnostic_argument_binding = {
+        "binding_object_version": "0.1-candidate",
+        "binding_scope": "DIAGNOSTIC_ONLY",
+        "binding_contract_sha256": raw_sha(
+            HERE / "diagnostic-predicate-argument-binding-contract.yml"
+        ),
+        "query_interpreter_config_sha256": raw_sha(
+            REPO / "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+        ),
+        "event_relation_mapping_sha256": raw_sha(
+            FIX / "authority-event-relation-mapping.json"
+        ),
+        "request_bindings": [{
+            "request_id": role_request["request_id"],
+            "normalized_request_sha256": csha(role_norm),
+            "clause_ast_sha256": csha(role_ast),
+            "diagnostic_contexts": [{
+                "diagnostic_context_id": "DC001",
+                "governing_ast_node_ids": ["S002", "S003", "S004", "S006", "S007"],
+                "method_entity_bindings": [{
+                    "method_entity_binding_id": "DMB001",
+                    "method_entity_id": "diagnostic.stool_egg_microscopy",
+                    "binding_state": "BOUND",
+                    "surface_mention_ids": event_method_occurrence_ids,
+                }],
+                "predicate_occurrences": [
+                    {
+                        "predicate_occurrence_id": "DPO001",
+                        "canonical_predicate": "diagnostic_stage_for",
+                        "proposition_node_id": "S002",
+                        "argument_bindings": [
+                            bound_argument("SUBJECT", ["U002"]),
+                            bound_argument("OBJECT", ["U003"]),
+                        ],
+                    },
+                    {
+                        "predicate_occurrence_id": "DPO002",
+                        "canonical_predicate": "diagnosed_by",
+                        "proposition_node_id": "S003",
+                        "argument_bindings": [
+                            bound_argument("SUBJECT", ["U004"]),
+                            bound_argument("OBJECT", ["U005"], "DMB001"),
+                        ],
+                    },
+                    {
+                        "predicate_occurrence_id": "DPO003",
+                        "canonical_predicate": "has_diagnostic_clue",
+                        "proposition_node_id": "S004",
+                        "argument_bindings": [
+                            bound_argument("SUBJECT", ["U006"]),
+                            bound_argument("OBJECT", ["U007"]),
+                        ],
+                    },
+                    {
+                        "predicate_occurrence_id": "DPO004",
+                        "canonical_predicate": "diagnosed_by",
+                        "proposition_node_id": "S006",
+                        "argument_bindings": [
+                            bound_argument("SUBJECT", ["U012"]),
+                            bound_argument("OBJECT", ["U013"], "DMB001"),
+                        ],
+                    },
+                    {
+                        "predicate_occurrence_id": "DPO005",
+                        "canonical_predicate": "diagnosed_by",
+                        "proposition_node_id": "S007",
+                        "argument_bindings": [
+                            bound_argument("SUBJECT", ["U015"]),
+                            bound_argument("OBJECT", ["U014"], "DMB001"),
+                        ],
+                    },
+                ],
+            }],
+        }],
+    }
+    write(
+        "diagnostic-predicate-argument-binding-positive.json",
+        diagnostic_argument_binding,
+    )
+
     role_mentions = {
         item["surface_mention_id"]: item
         for item in role_ast["surface_mentions"]
     }
-    stool_method_source_ids = ["U001", "U005", "U007", "U013", "U014"]
+    stool_method_source_ids = method_occurrence_ids
     role_frame = {
         "canonicalization_profile_sha256": profile_sha,
         "clause_ast_sha256": csha(role_ast),
@@ -708,6 +803,19 @@ def main() -> None:
                 "canonical_sha256": raw_sha(query_config_path),
                 "byte_length": len(query_config_path.read_bytes()),
             })
+        if name == "stage-validation-s2-positive.json" and not any(
+            item["object_kind"] == "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING"
+            for item in result["actual_input_objects"]
+        ):
+            binding_path = FIX / "diagnostic-predicate-argument-binding-positive.json"
+            result["actual_input_objects"].append({
+                "object_kind": "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+                "content_path": "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json",
+                "content_json_pointer": None,
+                "schema_id": "diagnostic-predicate-argument-binding-schema-candidate.yml",
+                "canonical_sha256": raw_sha(binding_path),
+                "byte_length": len(binding_path.read_bytes()),
+            })
         for item in result["actual_input_objects"] + [result["actual_output_object"]]:
             absolute = resolve(item["content_path"])
             item["canonical_sha256"] = raw_sha(absolute)
@@ -943,6 +1051,31 @@ def main() -> None:
         output_case("NEG-S2-DIAGNOSTIC-ROLE-WRONG-IDENTITY-DIMENSION", "NORMALIZED_IDENTITY_WRONG_ROLE_DIMENSION", "/frames/0/normalized_identity/actor_slot_ids", "replace", ["V003"]),
         output_case("NEG-S2-DIAGNOSTIC-ROLE-PARTICIPANT-SET-MISMATCH", "ACTUAL_PARTICIPANT_SET_DIFFERS_FROM_RECOMPUTED_EXPECTED_SET", "/frames/0/participant_slots/3/source_ids", "replace", ["U003", "U004", "U006"]),
         output_case("NEG-S2-DIAGNOSTIC-ROLE-UNRELATED-SAME-TYPE-METHOD", "UNRELATED_SAME_TYPE_MENTION_NOT_BOUND", "/frames/0/participant_slots/4", "add", unrelated_method_slot),
+        output_case("NEG-S2-DIAGNOSTIC-ROLE-UNBOUND-SAME-ENTITY-OCCURRENCE", "UNBOUND_SAME_ENTITY_OCCURRENCE_PROVENANCE", "/frames/0/participant_slots/0/source_ids/5", "add", "U010"),
+        input_case(
+            "NEG-S2-DIAGNOSTIC-ROLE-AMBIGUOUS-OCCURRENCE-BINDING",
+            "AMBIGUOUS_OCCURRENCE_BINDING",
+            "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+            "/request_bindings/0/diagnostic_contexts/0/predicate_occurrences/3/argument_bindings/1",
+            {
+                "argument_side": "OBJECT",
+                "binding_state": "AMBIGUOUS",
+                "surface_mention_ids": ["U010", "U013"],
+                "method_entity_binding_id": "DMB001",
+            },
+        ),
+        input_case(
+            "NEG-S2-DIAGNOSTIC-ROLE-UNRESOLVED-OCCURRENCE-BINDING",
+            "UNRESOLVED_OCCURRENCE_BINDING",
+            "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+            "/request_bindings/0/diagnostic_contexts/0/predicate_occurrences/3/argument_bindings/1",
+            {
+                "argument_side": "OBJECT",
+                "binding_state": "UNRESOLVED",
+                "surface_mention_ids": [],
+                "method_entity_binding_id": "DMB001",
+            },
+        ),
     ]
     duplicate_id_case = output_case(
         "NEG-S2-DUPLICATE-PARTICIPANT-SLOT-ID",
@@ -1027,9 +1160,9 @@ def main() -> None:
         "gate_id": "p9b1q-ajv-draft2020-strict",
         "ajv_version": "8.17.1",
         "strict": True,
-        "compiled_schema_count": 12,
-        "fixture_pair_count": 36,
-        "valid_fixture_count": 36,
+        "compiled_schema_count": 13,
+        "fixture_pair_count": 37,
+        "valid_fixture_count": 37,
         "result": "PASS",
         "runner_sha256": raw_sha(HERE / "strict-schema-gate.mjs"),
         "lockfile_sha256": raw_sha(HERE / "package-lock.json"),
@@ -1049,9 +1182,9 @@ def main() -> None:
     schema_result = json.loads(schema_run.stdout)
     if (
         schema_result.get("result") != "PASS"
-        or schema_result.get("compiled_schema_count") != 12
-        or schema_result.get("fixture_pair_count") != 36
-        or schema_result.get("valid_fixture_count") != 36
+        or schema_result.get("compiled_schema_count") != 13
+        or schema_result.get("fixture_pair_count") != 37
+        or schema_result.get("valid_fixture_count") != 37
     ):
         raise RuntimeError(
             f"bootstrap strict schema gate count/result mismatch: {schema_result}"

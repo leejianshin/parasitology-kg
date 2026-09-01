@@ -45,6 +45,8 @@ R3B_NEGATIVE = FIXTURES / "r3b-negation-scope-negative-fixtures.yml"
 R3B_POSITIVE = FIXTURES / "r3b-negation-scope-positive.json"
 NEGATIVE_MUTATION_MODEL = HERE / "negative-fixture-semantic-mutation-model.yml"
 QUERY_INTERPRETER_CONFIG = REPO / "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT = HERE / "diagnostic-predicate-argument-binding-contract.yml"
+DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE = FIXTURES / "diagnostic-predicate-argument-binding-positive.json"
 _SCHEMA_VALID_CACHE: dict[tuple[str, str], bool] = {}
 _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
@@ -590,6 +592,7 @@ def validate_s2(
     query_interpreter_config: dict[str, Any] | None = None,
     entity_ontology: dict[str, Any] | None = None,
     event_mapping: dict[str, Any] | None = None,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("event-frame-schema-candidate.yml", frame):
@@ -600,6 +603,9 @@ def validate_s2(
     )
     entity_ontology = entity_ontology or load_yaml(REPO / "schema/entity-types.yml")
     event_mapping = event_mapping or load_json(FIXTURES / "authority-event-relation-mapping.json")
+    diagnostic_argument_binding = diagnostic_argument_binding or load_json(
+        DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE
+    )
     raw_frame_ids = [item["frame_id"] for item in frame["frames"]]
     raw_specimen_ids = [item["specimen_slot_id"] for item in frame["specimen_slots"]]
     raw_slot_ids = [
@@ -781,6 +787,7 @@ def validate_s2(
             ast,
             query_interpreter_config,
             event_mapping,
+            diagnostic_argument_binding,
         )
     )
     return ordered(errors)
@@ -878,16 +885,24 @@ def validate_diagnostic_role_derivation(
     ast: dict[str, Any],
     query_interpreter_config: dict[str, Any],
     event_mapping: dict[str, Any],
+    diagnostic_argument_binding: dict[str, Any],
 ) -> list[dict[str, str]]:
-    """Recompute formal diagnostic participant roles without compiler logic.
+    """Validate exact diagnostic-role provenance from independent S2 authority.
 
-    Predicate expression comes only from exact configured cues inside actual
-    proposition scope.  Direction comes only from the event relation mapping,
-    while participant roles come only from its dedicated diagnostic catalog.
-    The pre-existing method and target roles are derived from diagnostic
-    binding field positions, never from declared slot roles or type defaults.
+    The binding object is outside the candidate Event Frame. Candidate slot
+    source_ids are therefore only the actual claim being compared and can
+    never define or enlarge the expected occurrence set.
     """
     errors: list[dict[str, str]] = []
+    def fail(pointer: str) -> None:
+        errors.append(
+            error(
+                "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
+                "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
+                pointer,
+            )
+        )
+
     mapping = event_mapping.get("event_mapping", {}).get("DIAGNOSTIC_FINDING", {})
     catalog = mapping.get("diagnostic_participant_role_catalog")
     predicates = mapping.get("predicates", {})
@@ -896,13 +911,8 @@ def validate_diagnostic_role_derivation(
         != "FORMAL_DIAGNOSTIC_ROLE_CATALOG_ONLY"
         or not isinstance(catalog, dict)
     ):
-        return [
-            error(
-                "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
-                "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
-                "/event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog",
-            )
-        ]
+        fail("/event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog")
+        return errors
 
     direction_invalid = False
     for predicate, sides in catalog.items():
@@ -927,15 +937,98 @@ def validate_diagnostic_role_derivation(
             ):
                 direction_invalid = True
     if set(catalog) != set(predicates) or direction_invalid:
-        errors.append(
-            error(
-                "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
-                "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
-                "/event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog",
-            )
-        )
+        fail("/event_mapping/DIAGNOSTIC_FINDING/diagnostic_participant_role_catalog")
 
+    if not schema_valid(
+        "diagnostic-predicate-argument-binding-schema-candidate.yml",
+        diagnostic_argument_binding,
+    ):
+        fail("/diagnostic_predicate_argument_binding")
+        return errors
+
+    default_query_config = load_yaml(QUERY_INTERPRETER_CONFIG)
+    query_config_hash = (
+        sha_bytes(QUERY_INTERPRETER_CONFIG.read_bytes())
+        if query_interpreter_config == default_query_config
+        else canonical_sha(query_interpreter_config)
+    )
+    identity_invalid = (
+        diagnostic_argument_binding.get("binding_scope") != "DIAGNOSTIC_ONLY"
+        or diagnostic_argument_binding.get("binding_contract_sha256")
+        != sha_bytes(DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT.read_bytes())
+        or diagnostic_argument_binding.get("query_interpreter_config_sha256")
+        != query_config_hash
+        or diagnostic_argument_binding.get("event_relation_mapping_sha256")
+        != canonical_sha(event_mapping)
+    )
+    request_bindings = [
+        item
+        for item in diagnostic_argument_binding.get("request_bindings", [])
+        if item.get("request_id") == normalized.get("request_id")
+    ]
+    if len(request_bindings) > 1:
+        identity_invalid = True
+    request_binding = request_bindings[0] if len(request_bindings) == 1 else None
+    if request_binding is not None and (
+        request_binding.get("normalized_request_sha256") != canonical_sha(normalized)
+        or request_binding.get("clause_ast_sha256") != canonical_sha(ast)
+    ):
+        identity_invalid = True
+    if identity_invalid:
+        fail("/diagnostic_predicate_argument_binding")
+        return errors
+
+    mentions_by_id = {
+        mention["surface_mention_id"]: mention
+        for mention in ast.get("surface_mentions", [])
+    }
+    ast_node_ids = {node["node_id"] for node in ast.get("nodes", [])}
     predicate_cues = query_interpreter_config.get("predicate_cues", {})
+
+    def domain_key(
+        source_ids: list[str], expected_type: str
+    ) -> tuple[tuple[str, ...], tuple[str, ...]] | None:
+        mentions = [mentions_by_id.get(source_id) for source_id in source_ids]
+        if not source_ids or any(mention is None for mention in mentions):
+            return None
+        keys = {
+            (
+                tuple(sorted(mention.get("candidate_entity_ids", []))),
+                tuple(sorted(mention.get("candidate_entity_types", []))),
+            )
+            for mention in mentions
+            if mention is not None
+        }
+        if len(keys) != 1:
+            return None
+        entity_ids, entity_types = next(iter(keys))
+        if expected_type not in entity_types or not entity_ids:
+            return None
+        return entity_ids, entity_types
+
+    all_contexts = (
+        request_binding.get("diagnostic_contexts", [])
+        if request_binding is not None
+        else []
+    )
+    raw_context_ids = [item.get("diagnostic_context_id") for item in all_contexts]
+    raw_occurrence_ids = [
+        occurrence.get("predicate_occurrence_id")
+        for context in all_contexts
+        for occurrence in context.get("predicate_occurrences", [])
+    ]
+    raw_method_binding_ids = [
+        method.get("method_entity_binding_id")
+        for context in all_contexts
+        for method in context.get("method_entity_bindings", [])
+    ]
+    if any(
+        len(values) != len(set(values))
+        for values in (raw_context_ids, raw_occurrence_ids, raw_method_binding_ids)
+    ):
+        fail("/diagnostic_predicate_argument_binding/request_bindings")
+        return errors
+
     for frame_index, item in enumerate(frame.get("frames", [])):
         if item.get("event_type_domain") != ["DIAGNOSTIC_FINDING"]:
             continue
@@ -944,12 +1037,44 @@ def validate_diagnostic_role_derivation(
         if not isinstance(binding, dict):
             continue
         slots = item.get("participant_slots", [])
-        slots_by_id = {slot["slot_id"]: slot for slot in slots}
-        scope_node_ids, scope_nodes, scope_mentions = _diagnostic_scope(item, ast)
-        mentions_by_id = {
-            mention["surface_mention_id"]: mention
-            for mention in scope_mentions
+        scope_node_ids, _, _ = _diagnostic_scope(item, ast)
+        expressed_pairs = {
+            (predicate, node_id)
+            for predicate in catalog
+            for node_id in _minimal_cue_node_ids(
+                ast,
+                scope_node_ids,
+                predicate_cues.get(predicate, [])
+                if isinstance(predicate_cues.get(predicate, []), list)
+                else [],
+            )
         }
+        matching_contexts = [
+            context
+            for context in all_contexts
+            if set(context.get("governing_ast_node_ids", [])) <= scope_node_ids
+            and {
+                (
+                    occurrence.get("canonical_predicate"),
+                    occurrence.get("proposition_node_id"),
+                )
+                for occurrence in context.get("predicate_occurrences", [])
+            }
+            == expressed_pairs
+        ]
+        if not expressed_pairs:
+            continue
+        if len(matching_contexts) != 1:
+            fail(pointer)
+            continue
+        context = matching_contexts[0]
+        if any(
+            node_id not in ast_node_ids
+            for node_id in context.get("governing_ast_node_ids", [])
+        ):
+            fail(pointer)
+            continue
+
         expected: dict[
             tuple[str, tuple[str, ...], tuple[str, ...]], set[str]
         ] = {}
@@ -960,68 +1085,73 @@ def validate_diagnostic_role_derivation(
         ) -> None:
             expected.setdefault(key, set()).update(source_ids)
 
-        method_slot = slots_by_id.get(binding.get("method_slot_id"))
-        if method_slot is not None:
-            method_entities = set(method_slot["domain"]["entity_ids"])
-            formal_method_sources = {
-                source_id
-                for source_id in method_slot["source_ids"]
-                if method_entities
-                <= set(
-                    mentions_by_id.get(source_id, {}).get(
-                        "candidate_entity_ids", []
-                    )
-                )
+        method_bindings = {
+            method["method_entity_binding_id"]: method
+            for method in context.get("method_entity_bindings", [])
+        }
+        binding_invalid = False
+        for method in method_bindings.values():
+            source_ids = method.get("surface_mention_ids", [])
+            key = domain_key(source_ids, "diagnostic_method")
+            if (
+                method.get("binding_state") != "BOUND"
+                or key is None
+                or tuple([method.get("method_entity_id")]) != key[0]
+            ):
+                binding_invalid = True
+            elif key is not None:
+                add_expected(("METHOD", key[0], key[1]), set(source_ids))
+
+        for occurrence in context.get("predicate_occurrences", []):
+            predicate = occurrence.get("canonical_predicate")
+            predicate_node_id = occurrence.get("proposition_node_id")
+            if (predicate, predicate_node_id) not in expressed_pairs:
+                binding_invalid = True
+                continue
+            sides = {
+                side.get("argument_side"): side
+                for side in occurrence.get("argument_bindings", [])
             }
-            add_expected(
-                _slot_key(method_slot, "METHOD"),
-                formal_method_sources,
-            )
-        for target_id in binding.get("target_slot_ids", []):
-            target_slot = slots_by_id.get(target_id)
-            if target_slot is not None:
-                add_expected(_slot_key(target_slot, "TARGET"), set(target_slot["source_ids"]))
-
-        expressed: dict[str, set[str]] = {}
-        for predicate in catalog:
-            cues = predicate_cues.get(predicate, [])
-            if isinstance(cues, list):
-                cue_node_ids = _minimal_cue_node_ids(
-                    ast,
-                    scope_node_ids,
-                    cues,
-                )
-                if cue_node_ids:
-                    expressed[predicate] = cue_node_ids
-
-        ambiguous_binding = False
-        for predicate in sorted(expressed):
-            for side in ("subject", "object"):
-                rule = catalog[predicate][side]
-                if rule["source_token"] == "method_entity_id":
+            if set(sides) != {"SUBJECT", "OBJECT"}:
+                binding_invalid = True
+                continue
+            proposition_scope = _ast_scope_node_ids(ast, [predicate_node_id])
+            for side_name, catalog_side in (("SUBJECT", "subject"), ("OBJECT", "object")):
+                side = sides[side_name]
+                rule = catalog[predicate][catalog_side]
+                source_ids = side.get("surface_mention_ids", [])
+                if side.get("binding_state") != "BOUND":
+                    binding_invalid = True
                     continue
-                for predicate_node_id in sorted(expressed[predicate]):
-                    argument_node_ids = _ast_scope_node_ids(
-                        ast, [predicate_node_id]
-                    )
-                    argument_mentions = [
-                        mention
-                        for mention in scope_mentions
-                        if mention.get("containing_node_id")
-                        in argument_node_ids
-                    ]
-                    groups = _mention_groups_for_token(
-                        rule["source_token"], argument_mentions
-                    )
-                    if len(groups) != 1:
-                        ambiguous_binding = True
+                expected_type = (
+                    "diagnostic_method"
+                    if rule["source_token"] == "method_entity_id"
+                    else rule["source_token"]
+                )
+                key = domain_key(source_ids, expected_type)
+                method_binding_id = side.get("method_entity_binding_id")
+                if rule["source_token"] == "method_entity_id":
+                    method_authority = method_bindings.get(method_binding_id)
+                    if (
+                        key is None
+                        or method_authority is None
+                        or key[0] != (method_authority.get("method_entity_id"),)
+                    ):
+                        binding_invalid = True
                         continue
-                    (entity_ids, entity_types), source_ids = next(
-                        iter(groups.items())
-                    )
-                    add_expected(
-                        (rule["semantic_role"], entity_ids, entity_types), source_ids
-                    )
+                else:
+                    if method_binding_id is not None or key is None:
+                        binding_invalid = True
+                        continue
+                    if any(
+                        mentions_by_id[source_id].get("containing_node_id")
+                        not in proposition_scope
+                        for source_id in source_ids
+                    ):
+                        binding_invalid = True
+                        continue
+                assert key is not None
+                add_expected((rule["semantic_role"], key[0], key[1]), set(source_ids))
 
         actual: dict[
             tuple[str, tuple[str, ...], tuple[str, ...]], tuple[str, set[str]]
@@ -1040,18 +1170,12 @@ def validate_diagnostic_role_derivation(
         actual_sources = {key: sources for key, (_, sources) in actual.items()}
         same_mention_conflict = any(len(roles) > 1 for roles in source_roles.values())
         if (
-            ambiguous_binding
+            binding_invalid
             or duplicate_key
             or same_mention_conflict
             or expected != actual_sources
         ):
-            errors.append(
-                error(
-                    "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
-                    "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
-                    pointer,
-                )
-            )
+            fail(pointer)
             continue
 
         identity = item["normalized_identity"]
@@ -1073,13 +1197,7 @@ def validate_diagnostic_role_derivation(
             or set(binding["target_slot_ids"]) != expected_target_ids
         )
         if identity_invalid:
-            errors.append(
-                error(
-                    "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION",
-                    "DIAGNOSTIC_ROLE_DERIVATION_INVALID",
-                    f"/frames/{frame_index}/normalized_identity",
-                )
-            )
+            fail(f"/frames/{frame_index}/normalized_identity")
     return errors
 
 
@@ -1546,9 +1664,9 @@ def run_schema_gate() -> dict[str, Any]:
     result = json.loads(completed.stdout)
     if (
         result.get("result") != "PASS"
-        or result.get("compiled_schema_count") != 12
-        or result.get("fixture_pair_count") != 36
-        or result.get("valid_fixture_count") != 36
+        or result.get("compiled_schema_count") != 13
+        or result.get("fixture_pair_count") != 37
+        or result.get("valid_fixture_count") != 37
     ):
         raise RuntimeError("AJV strict schema gate count/result mismatch")
     _SCHEMA_GATE_CACHE = copy.deepcopy(result)
@@ -3030,6 +3148,7 @@ def run_positive() -> list[dict[str, Any]]:
                 s2_inputs.get("QUERY_INTERPRETER_CONFIG"),
                 s2_inputs.get("ENTITY_ONTOLOGY"),
                 s2_inputs.get("EVENT_RELATION_MAPPING"),
+                s2_inputs.get("DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING"),
             )
             s2_errors = stage_record_errors(s2_record, s2_errors)
         results.extend([
@@ -3153,6 +3272,7 @@ def run_negative() -> list[dict[str, Any]]:
         mutated_s3_hashes: dict[str, str] | None = None
         mutated_s2_event_mapping: dict[str, Any] | None = None
         mutated_s2_query_config: dict[str, Any] | None = None
+        mutated_s2_diagnostic_argument_binding: dict[str, Any] | None = None
         mutated_s5_index: dict[str, Any] | None = None
         s5_actual_overrides: dict[str, dict[str, Any]] = {}
         derived_source_objects: dict[str, Any] | None = None
@@ -3167,6 +3287,11 @@ def run_negative() -> list[dict[str, Any]]:
             elif object_kind == "QUERY_INTERPRETER_CONFIG":
                 mutated_s2_query_config = apply_patch(
                     load_yaml(QUERY_INTERPRETER_CONFIG), input_mutation["patch"]
+                )
+            elif object_kind == "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING":
+                mutated_s2_diagnostic_argument_binding = apply_patch(
+                    load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE),
+                    input_mutation["patch"],
                 )
             else:
                 raise RuntimeError(
@@ -3234,6 +3359,7 @@ def run_negative() -> list[dict[str, Any]]:
                 mutated_s2_query_config,
                 None,
                 mutated_s2_event_mapping,
+                mutated_s2_diagnostic_argument_binding,
             )
         elif stage == "S3_TYPED_SOLVER":
             assert mutated_s3_inputs is not None and mutated_s3_hashes is not None

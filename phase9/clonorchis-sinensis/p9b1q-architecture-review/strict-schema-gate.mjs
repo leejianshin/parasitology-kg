@@ -25,6 +25,7 @@ const localSchemas = [
   "stage-semantic-validation-result-schema-candidate.yml",
   "execution-binding-sidecar-architecture-schema-candidate.yml",
   "reference-validator-execution-summary-schema-candidate.yml",
+  "diagnostic-predicate-argument-binding-schema-candidate.yml",
 ];
 const externalSchemas = [
   path.join(repo, "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml"),
@@ -83,6 +84,7 @@ const pairs = [
   ["constraint-id-registry-schema-candidate.yml", "../constraint-id-registry.yml", "yaml"],
   ["constraint-set-schema-candidate.yml", "../constraint-set-v0.1.yml", "yaml"],
   ["reference-validator-execution-summary-schema-candidate.yml", "reference-validator-execution-summary.json"],
+  ["diagnostic-predicate-argument-binding-schema-candidate.yml", "diagnostic-predicate-argument-binding-positive.json"],
 ];
 
 const results = [];
