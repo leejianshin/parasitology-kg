@@ -1,0 +1,394 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C2-DIAGNOSTIC-ROLE-AUTHORITY-EXECUTABILITY-CORRECTION-AUTH-001"
+authorization_kind: "POST_FREEZE_C2_DIAGNOSTIC_ROLE_AUTHORITY_EXECUTABILITY_CORRECTION"
+authorization_status: "ACTIVE_AFTER_FAST_FORWARD_REMOTE_PUBLICATION_AND_EXPLICIT_BUILD_START"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+authorization_base: "4f45733d9b0677efb3d371e6df64a40235d8ac05"
+prior_authorization_commit: "b8cd0d118cd01af3f1525ddc64cd846b00e77dce"
+authority_correction_v1: "c08f46d4b8a4bcce28bd0b85099446d2611c262f"
+authority_correction_audit_correction_1: "4f45733d9b0677efb3d371e6df64a40235d8ac05"
+authority_finding_id: "P9B2-C2-DIAGNOSTIC-ROLE-AUTHORITY-GAP-HIGH-004"
+executability_finding_id: "P9B2-C2-DIAGNOSTIC-ROLE-VALIDATOR-BOUND-SOURCE-HIGH-005"
+closed_evidence_finding_id: "P9B2-C2-DIAGNOSTIC-ROLE-NEGATIVE-FIXTURE-ISOLATION-MEDIUM-006"
+blocked_implementation_finding: "P9B2-C2-DIAGNOSTIC-PARTICIPANT-ROLE-HIGH-003"
+
+authorization_atom:
+  purpose: "AUTHORIZE_FUTURE_DIAGNOSTIC_ROLE_AUTHORITY_EXECUTABILITY_CORRECTION_ONLY"
+  authorized_gap: "DIAGNOSTIC_PREDICATE_ARGUMENT_OCCURRENCE_BINDING_AUTHORITY"
+  authorization_file_only_commit: true
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-executability-correction-authorization.yml"
+  authority_correction_performed_this_turn: false
+  executable_validator_modified_this_turn: false
+  executable_schema_modified_this_turn: false
+  fixture_modified_this_turn: false
+  occurrence_binding_object_implemented_this_turn: false
+  binding_producer_implemented_this_turn: false
+  c2_implementation_modified_this_turn: false
+  r11_execution_this_turn: false
+  c3_work_this_turn: false
+
+historical_preservation:
+  additive_authorization: true
+  immutable_predecessors:
+    - "ORIGINAL_R3_FREEZE"
+    - "OLD_R11_COMMITMENT"
+    - "PRIOR_POST_FREEZE_SHARED_LEFT_CORRECTION"
+    - "R11_V2_COMMITMENT"
+    - "C1_IMPLEMENTATION_AND_REAUTHORIZATION"
+    - "C2_AUTHORIZATION_AND_IMPLEMENTATION_HISTORY"
+    - "P9B2_C2_DIAGNOSTIC_ROLE_AUTHORITY_CORRECTION_AUTH_001"
+    - "AUTHORITY_CORRECTION_V1"
+    - "AUTHORITY_CORRECTION_AUDIT_CORRECTION_1"
+  prohibited_history_operations:
+    - "AMEND"
+    - "REBASE"
+    - "SQUASH"
+    - "REPLACE"
+    - "REWRITE"
+
+confirmed_executability_gap:
+  current_public_s2_model_has_independent_occurrence_binding: false
+  missing_formal_relation:
+    input:
+      - "PREDICATE_OCCURRENCE_IDENTITY"
+      - "CANONICAL_PREDICATE_IDENTITY"
+      - "PREDICATE_ARGUMENT_SIDE"
+    output: "EXACT_BOUND_SURFACE_MENTION_ID_SET"
+  candidate_event_frame_is_independent_authority: false
+  entity_level_identity_is_occurrence_binding: false
+  same_entity_not_equal_same_bound_occurrence: "MANDATORY"
+  mandatory_reproducer:
+    base_object: "fixtures/event-frame-diagnostic-role-catalog-positive.json"
+    frame_id: "EF001"
+    method_slot_id: "V001"
+    sole_mutation: "APPEND_U010_TO_SOURCE_IDS"
+    u010_properties:
+      same_method_entity: true
+      same_entity_type: true
+      same_clause: true
+      same_proposition: true
+      predicate_side_bound_occurrence: false
+    defective_schema_valid: true
+    defective_s2_errors: []
+    defective_unbound_same_entity_source_accepted: true
+
+authorized_semantic_capability:
+  object_scope: "DIAGNOSTIC_ONLY"
+  capability: >-
+    Introduce one independent public content-addressed S2 actual input that
+    records exact occurrence-level bindings for already-authorized diagnostic
+    predicate argument sides before candidate Event Frame semantic validation.
+  minimum_information:
+    - "PREDICATE_OCCURRENCE_IDENTITY"
+    - "CANONICAL_PREDICATE_IDENTITY"
+    - "PREDICATE_ARGUMENT_SIDE"
+    - "EXACT_BOUND_SURFACE_MENTION_ID_SET"
+    - "EXPLICIT_BINDING_STATE"
+  minimum_binding_states:
+    - "BOUND"
+    - "AMBIGUOUS"
+    - "UNRESOLVED"
+  field_names_frozen_by_this_authorization: false
+  field_naming_rule: "FOLLOW_EXISTING_REPOSITORY_SCHEMA_AND_NAMING_CONVENTIONS"
+  generalized_predicate_framework: "PROHIBITED"
+  shared_container_exception: "ONLY_IF_EXISTING_REPOSITORY_MECHANICAL_CONTRACT_REQUIRES_IT"
+  shared_container_semantic_scope: "DIAGNOSTIC_ONLY"
+
+independence_requirements:
+  outside_candidate_event_frame: true
+  exists_before_event_frame_semantic_validation: true
+  public: true
+  content_addressed: true
+  identity_bound: true
+  independently_inspectable: true
+  independently_schema_and_semantic_validated: true
+  exact_request_and_clause_ast_binding_required: true
+  surface_mention_ids_must_resolve_in_bound_clause_ast: true
+  expected_binding_must_not_be_derived_from:
+    - "CANDIDATE_EVENT_FRAME_PARTICIPANT_SOURCE_IDS"
+    - "CANDIDATE_EVENT_FRAME_METHOD_SOURCE_IDS"
+    - "CANDIDATE_EVENT_FRAME_DIAGNOSTIC_BINDING"
+    - "CANDIDATE_EVENT_FRAME_ACTOR_TARGET_METHOD_SLOTS"
+  candidate_event_frame_provenance_role: "ACTUAL_CLAIM_TO_VALIDATE_ONLY"
+
+argument_side_boundary:
+  predicate_identity_authority: "EXISTING_FORMAL_PREDICATE_AUTHORITY"
+  predicate_expression_authority:
+    - "ACTUAL_CLAUSE_AST_PROPOSITION_SCOPE"
+    - "CONTENT_ADDRESSED_QUERY_INTERPRETER_CONFIG_FORMAL_CUES"
+  predicate_direction_authority: "EXISTING_SUBJECT_FROM_AND_OBJECT_FROM_MAPPING"
+  role_mapping_authority: "EXISTING_DIAGNOSTIC_PARTICIPANT_ROLE_CATALOG"
+  new_structure_sole_semantic_function: "IDENTIFY_EXACT_OCCURRENCES_BOUND_TO_ALREADY_AUTHORIZED_PREDICATE_SIDES"
+  prohibited_functions:
+    - "DISCOVER_NEW_PREDICATE"
+    - "INFER_PREDICATE_FROM_METHOD_ENTITY_PRESENCE"
+    - "INFER_PREDICATE_FROM_ENTITY_TYPE"
+    - "CHANGE_SUBJECT_FROM_OR_OBJECT_FROM"
+    - "CHANGE_DIAGNOSTIC_PARTICIPANT_ROLE_CATALOG"
+
+no_heuristic_authority:
+  prohibited_occurrence_binding_inputs:
+    - "ENTITY_EQUALITY"
+    - "ENTITY_TYPE_EQUALITY"
+    - "SAME_CLAUSE"
+    - "SAME_PROPOSITION"
+    - "TOKEN_ORDER"
+    - "WORD_ORDER"
+    - "NEAREST_OCCURRENCE"
+    - "FIRST_OCCURRENCE"
+    - "LAST_OCCURRENCE"
+    - "LEXICAL_PROXIMITY"
+    - "CANDIDATE_EVENT_FRAME_SOURCE_IDS"
+    - "CANDIDATE_SLOT_DECLARATIONS"
+  guessing_ambiguous_or_unresolved_occurrence: "PROHIBITED"
+
+frozen_option_b_semantics:
+  option: "OPTION_B"
+  design_name: "DEDICATED_DIAGNOSTIC_EVENT_FRAME_ROLE_CATALOG_WITHIN_EXISTING_EVENT_MAPPING"
+  catalog_location: "event_mapping.DIAGNOSTIC_FINDING.diagnostic_participant_role_catalog"
+  catalog_mapping:
+    diagnosed_by:
+      subject: "DISEASE_TO_ACTOR"
+      object: "METHOD_ENTITY_ID_TO_METHOD"
+    diagnostic_stage_for:
+      subject: "LIFE_CYCLE_STAGE_TO_TARGET"
+      object: "HOST_TO_ACTOR"
+    has_diagnostic_clue:
+      subject: "DISEASE_TO_ACTOR"
+      object: "DIAGNOSTIC_METHOD_TO_METHOD"
+  materialization: "REQUIRED_WHEN_EXPLICITLY_BOUND"
+  allowed_actor_target_types: "TYPE_COMPATIBILITY_ONLY_NOT_MATERIALIZATION_AUTHORITY"
+  method: "ADDITIVE_NOT_PREDICATE_DISCOVERY_SHORTCUT"
+  option_b_redesign: "PROHIBITED"
+
+constraint_governance:
+  domain: "1..48"
+  registry_change_authorized: false
+  new_constraint_authorized: false
+  constraint_49: "PROHIBITED"
+  governing_constraint:
+    order: 48
+    id: "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION"
+    stage: "S2_EVENT_FRAME"
+    operator: "DIAGNOSTIC_PREDICATE_ROLE_MATERIALIZATION_EXACT"
+    failure_code: "DIAGNOSTIC_ROLE_DERIVATION_INVALID"
+    witness: "DIAGNOSTIC_ROLE_BINDINGS"
+  constraints_1_through_47: "IMMUTABLE"
+  gap_classification: "CONSTRAINT_48_EXECUTABLE_AUTHORITY_INPUT_INSUFFICIENT"
+
+future_correction_behavior:
+  expected_provenance_source: "INDEPENDENT_DIAGNOSTIC_PREDICATE_ARGUMENT_OCCURRENCE_BINDING_INPUT"
+  candidate_source_ids_are_expected_authority: false
+  candidate_source_ids_may_expand_expected_set: false
+  comparison: "EXACT_OCCURRENCE_PROVENANCE_EQUALITY"
+  bound_state_behavior: "VALIDATE_EXACT_BOUND_SURFACE_MENTION_ID_SET"
+  ambiguous_state_behavior: "FAIL_CLOSED"
+  unresolved_state_behavior: "FAIL_CLOSED"
+  circular_self_validation: "PROHIBITED"
+
+future_direct_authority_scope:
+  allowed_new_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/diagnostic-predicate-argument-binding-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/diagnostic-predicate-argument-binding-schema-candidate.yml"
+  allowed_modified_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validation-result-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/object-canonicalization-and-hash-chain.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+  permitted_purposes:
+    - "DEFINE_DIAGNOSTIC_ONLY_OCCURRENCE_BINDING_CONTRACT"
+    - "DEFINE_DIAGNOSTIC_ONLY_OCCURRENCE_BINDING_SCHEMA"
+    - "WIRE_CONTENT_ADDRESSED_S2_ACTUAL_INPUT"
+    - "REGISTER_THE_NEW_OBJECT_KIND_IN_STAGE_VALIDATION_RESULT_REFERENCES"
+    - "VALIDATE_BINDING_INPUT_INDEPENDENTLY"
+    - "DERIVE_CONSTRAINT_48_EXPECTED_PROVENANCE_FROM_BINDING_INPUT"
+    - "COMPARE_CANDIDATE_EVENT_FRAME_PROVENANCE_EXACTLY"
+  unlisted_direct_semantic_path: "PROHIBITED"
+  insufficient_scope_behavior: "FAIL_CLOSED_SCOPE_INSUFFICIENT"
+  event_predicate_type_role_mapping_mutation: "PROHIBITED"
+  event_frame_schema_mutation: "PROHIBITED"
+  constraint_registry_or_set_mutation: "PROHIBITED"
+
+future_public_evidence_scope:
+  allowed_new_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json"
+  allowed_modified_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/request-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-validator-execution-summary-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/build-design-manifest.py"
+  permitted_purposes:
+    - "CONTENT_ADDRESSED_BINDING_INPUT_EVIDENCE"
+    - "MANDATORY_U010_REGRESSION"
+    - "AMBIGUOUS_BINDING_FAIL_CLOSED_EVIDENCE"
+    - "UNRESOLVED_BINDING_FAIL_CLOSED_EVIDENCE"
+    - "SCHEMA_DISCOVERY_AND_DETERMINISTIC_REBUILD"
+    - "REFERENCE_EXECUTION_BINDING"
+  additional_new_fixture_path: "PROHIBITED"
+  production_binding_producer_implementation: "PROHIBITED"
+
+mandatory_regression_coverage:
+  positive:
+    exact_bound_occurrence_remains_valid: true
+    committed_diagnostic_role_positive_remains_pass: true
+  negatives:
+    - case: "UNBOUND_SAME_ENTITY_OCCURRENCE_ADDED_TO_METHOD_PROVENANCE"
+      sole_mutation: "APPEND_U010_TO_EF001_V001_SOURCE_IDS"
+      same_entity: true
+      same_clause_and_proposition: true
+      predicate_side_bound: false
+      expected_first_constraint: "CNS-EF-DIAGNOSTIC-ROLE-DERIVATION"
+      expected_failure_code: "DIAGNOSTIC_ROLE_DERIVATION_INVALID"
+    - case: "AMBIGUOUS_OCCURRENCE_BINDING"
+      expected_behavior: "FAIL_CLOSED"
+    - case: "UNRESOLVED_OCCURRENCE_BINDING"
+      expected_behavior: "FAIL_CLOSED"
+  single_semantic_mutation_governance: true
+  candidate_side_provenance_used_as_expected_authority: false
+
+conditional_mechanical_refresh:
+  policy: "ONLY_IF_ACTUAL_ACTIVE_CONTENT_ADDRESSED_DEPENDENCY_CHANGED"
+  inherited_allowlist_authority:
+    commit: "b8cd0d118cd01af3f1525ddc64cd846b00e77dce"
+    file: "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-correction-authorization.yml"
+    section: "conditional_mechanical_refresh.exact_paths"
+  additional_allowed_path:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json"
+  historical_manifest_refresh: "PROHIBITED"
+  stale_hash_string_alone_is_dependency: false
+  full_repository_hash_refresh: "PROHIBITED"
+
+non_regression_boundary:
+  assertion_parity: "CLOSED_UNCHANGED"
+  reference_domain_completeness: "CLOSED_UNCHANGED"
+  c1: "UNCHANGED"
+  option_b: "UNCHANGED"
+  diagnostic_predicate_catalog: "UNCHANGED"
+  constraints_1_through_47: "UNCHANGED"
+  non_diagnostic_event_frame_semantics: "UNCHANGED"
+  medium_006: "CLOSED"
+  c2_implementation: "BLOCKED"
+  r11: "BLOCKED"
+
+explicitly_protected_paths:
+  exact_paths:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+    - "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-frame-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-suite-commitment.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/r11-v2-suite-commitment.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-correction-authorization.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-executability-correction-authorization.yml"
+  protected_groups:
+    - "ALL_EXISTING_AUTHORIZATION_FILES"
+    - "P9_A_AND_P9_B1"
+    - "RUNTIME"
+    - "KNOWLEDGE"
+    - "PCMS_AND_SOURCE_AUTHORITY"
+    - "schema/**"
+    - "sources/**"
+    - ".github/workflows/**"
+    - "EVERY_PATH_NOT_EXPLICITLY_AUTHORIZED"
+  authorization_creation_exception: >-
+    This turn may add only this authorization file. After publication this
+    file is protected during the future authority-correction build.
+
+future_build_gates:
+  required:
+    - "NEW_BINDING_CONTRACT_AND_SCHEMA_STRICT_VALIDATION"
+    - "CONTENT_ADDRESS_AND_IDENTITY_BINDING_VALIDATION"
+    - "INDEPENDENCE_FROM_CANDIDATE_EVENT_FRAME_PROVENANCE"
+    - "MANDATORY_U010_REGRESSION_FAILS_AT_CONSTRAINT_48"
+    - "AMBIGUOUS_AND_UNRESOLVED_BINDINGS_FAIL_CLOSED"
+    - "COMMITTED_DIAGNOSTIC_ROLE_POSITIVE_PASS"
+    - "MEDIUM_006_REMAINS_CLOSED"
+    - "CONSTRAINT_DOMAIN_1_THROUGH_48_UNCHANGED"
+    - "OPTION_B_MAPPING_BYTE_SEMANTICS_UNCHANGED"
+    - "NON_DIAGNOSTIC_EVENT_FRAMES_UNAFFECTED"
+    - "STRICT_SCHEMA_GATE"
+    - "REFERENCE_STAGE_SEMANTIC_VALIDATOR_MODE_ALL"
+    - "COMPLETE_REPOSITORY_UNITTEST_DISCOVERY"
+    - "THREE_RUN_DETERMINISTIC_EVIDENCE_REBUILD"
+    - "GIT_DIFF_CHECK"
+    - "PROTECTED_AND_UNAUTHORIZED_PATH_AUDIT"
+  hardcoded_fixture_or_test_counts: "PROHIBITED"
+  actual_counts_required: true
+
+later_stage_block:
+  high_005_status: "OPEN"
+  high_004_status: "OPEN"
+  medium_006_status: "CLOSED"
+  r11_secret_body_accessed: false
+  r11_executed: false
+  r11_post_correction_holder_governance_eligible: false
+  c2_implementation_reauthorization_eligible: false
+  c2_correction_2_may_resume: false
+  c3_authorization_eligible: false
+  independent_reaudit_required_after_future_build: true
+
+future_correction_activation:
+  correction_eligible: "YES_AFTER_FAST_FORWARD_REMOTE_PUBLICATION_AND_EXPLICIT_BUILD_START"
+  remote_publication_required: true
+  explicit_build_start_required: true
+  publication_ref: "refs/heads/agent/p9-b2"
+  publication_must_be_fast_forward: true
+  same_turn_correction_implementation: "PROHIBITED"
+
+authorization_commit_policy:
+  required_parent: "4f45733d9b0677efb3d371e6df64a40235d8ac05"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-executability-correction-authorization.yml"
+  required_commit_message: "governance(p9b2): authorize diagnostic role authority executability correction"
+  amend: "PROHIBITED"
+  rebase: "PROHIBITED"
+  squash: "PROHIBITED"
+
+remote_policy:
+  allowed_destination: "refs/heads/agent/p9-b2"
+  publication_must_be_fast_forward: true
+  main_write: "PROHIBITED"
+  force_push: "PROHIBITED"
+  pull_request: "PROHIBITED"
+  fallback_if_credentials_unavailable: "PUBLIC_GIT_BUNDLE"
+  fallback_bundle_requirements:
+    ref: "refs/heads/agent/p9-b2"
+    complete_ancestry: true
+    secret_content: false
+    preserve_commit_identity: true
+
+secret_isolation_self_check:
+  r11_secret_body_in_authorization: false
+  secret_query_or_body_fragment_in_authorization: false
+  secret_case_request_or_probe_id_in_authorization: false
+  secret_expected_claim_or_queryir_in_authorization: false
+  recovery_key_or_private_storage_path_in_authorization: false
+
+authorization_exit:
+  authorization_scope: "AUTHORITY_CORRECTION_ONLY"
+  executable_correction_performed: false
+  validator_modified: false
+  fixtures_modified: false
+  c2_implementation_modified: false
+  high_005_status: "OPEN"
+  high_004_status: "OPEN"
+  medium_006_status: "CLOSED"
+  r11_secret_body_accessed: false
+  r11_executed: false
+  next_state_after_remote_publication: "DIAGNOSTIC_ROLE_AUTHORITY_EXECUTABILITY_CORRECTION_AUTHORIZED_PENDING_EXPLICIT_BUILD_START"
