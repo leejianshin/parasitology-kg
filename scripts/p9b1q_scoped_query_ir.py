@@ -56,6 +56,12 @@ EVENT_IDENTITY_CONTRACT_PATH = ARCH_REVIEW / "event-identity-contract.yml"
 EVENT_RELATION_AUTHORITY_PATH = (
     ARCH_REVIEW / "fixtures/authority-event-relation-mapping.json"
 )
+DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH = (
+    ARCH_REVIEW / "diagnostic-predicate-argument-binding-contract.yml"
+)
+DIAGNOSTIC_ARGUMENT_BINDING_SCHEMA_PATH = (
+    ARCH_REVIEW / "diagnostic-predicate-argument-binding-schema-candidate.yml"
+)
 
 C1_TERMINAL_STAGE = "S1_CLAUSE_AST"
 C1_IMPLEMENTED_STAGES = ("S0_REQUEST_NORMALIZATION", C1_TERMINAL_STAGE)
@@ -1447,6 +1453,326 @@ def _node_ancestors(
     return result
 
 
+def _ast_scope_node_ids(ast: dict[str, Any], roots: Iterable[str]) -> set[str]:
+    children = {
+        node["node_id"]: node.get("child_node_ids", []) for node in ast["nodes"]
+    }
+    result: set[str] = set()
+    pending = list(roots)
+    while pending:
+        node_id = pending.pop()
+        if node_id in result:
+            continue
+        result.add(node_id)
+        pending.extend(children.get(node_id, []))
+    return result
+
+
+def _minimal_cue_node_ids(
+    ast: dict[str, Any], scope_node_ids: set[str], cues: Iterable[str]
+) -> set[str]:
+    candidates = {
+        node["node_id"]
+        for node in ast["nodes"]
+        if node["node_id"] in scope_node_ids
+        and any(cue in node["source_span"]["text"] for cue in cues if cue)
+    }
+    return {
+        node_id
+        for node_id in candidates
+        if not ((_ast_scope_node_ids(ast, [node_id]) - {node_id}) & candidates)
+    }
+
+
+def _diagnostic_catalog(mapping: dict[str, Any]) -> dict[str, Any]:
+    authority = mapping["event_mapping"]["DIAGNOSTIC_FINDING"]
+    catalog = authority.get("diagnostic_participant_role_catalog")
+    predicates = authority.get("predicates", {})
+    if (
+        authority.get("required_role_derivation")
+        != "FORMAL_DIAGNOSTIC_ROLE_CATALOG_ONLY"
+        or not isinstance(catalog, dict)
+        or set(catalog) != set(predicates)
+    ):
+        _c2_fail("S2_EVENT_FRAME", "diagnostic role catalog authority is invalid")
+    for predicate, sides in catalog.items():
+        formal = predicates[predicate]
+        for side, direction in (("subject", "subject_from"), ("object", "object_from")):
+            rule = sides.get(side, {})
+            if (
+                formal.get(direction) != [rule.get("source_token")]
+                or rule.get("materialization")
+                != "REQUIRED_WHEN_EXPLICITLY_BOUND"
+                or rule.get("semantic_role") not in {"ACTOR", "METHOD", "TARGET"}
+            ):
+                _c2_fail(
+                    "S2_EVENT_FRAME",
+                    "diagnostic role catalog direction differs from predicate authority",
+                )
+    return catalog
+
+
+def _diagnostic_domain_key(
+    source_ids: list[str],
+    expected_type: str,
+    mentions_by_id: dict[str, dict[str, Any]],
+) -> tuple[tuple[str, ...], tuple[str, ...]] | None:
+    if not source_ids or any(source_id not in mentions_by_id for source_id in source_ids):
+        return None
+    domains = {
+        (
+            tuple(sorted(mentions_by_id[source_id]["candidate_entity_ids"])),
+            tuple(sorted(mentions_by_id[source_id]["candidate_entity_types"])),
+        )
+        for source_id in source_ids
+    }
+    if len(domains) != 1:
+        return None
+    entity_ids, entity_types = next(iter(domains))
+    if expected_type not in entity_types or not entity_ids:
+        return None
+    return entity_ids, entity_types
+
+
+def _validate_diagnostic_argument_binding(
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    binding: dict[str, Any],
+    config: dict[str, Any],
+    mapping: dict[str, Any],
+    root: Path,
+) -> list[dict[str, Any]]:
+    """Validate the complete independent occurrence authority before frame use."""
+    try:
+        validate_schema(binding, DIAGNOSTIC_ARGUMENT_BINDING_SCHEMA_PATH, root)
+    except SchemaValidationError as exc:
+        _c2_fail("S2_EVENT_FRAME", f"diagnostic occurrence binding schema failure: {exc}")
+    if (
+        binding.get("binding_scope") != "DIAGNOSTIC_ONLY"
+        or binding.get("binding_contract_sha256")
+        != file_sha256(root / DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH)
+        or binding.get("query_interpreter_config_sha256")
+        != file_sha256(root / CONFIG_PATH)
+        or binding.get("event_relation_mapping_sha256")
+        != file_sha256(root / EVENT_RELATION_AUTHORITY_PATH)
+    ):
+        _c2_fail("S2_EVENT_FRAME", "diagnostic occurrence binding hash mismatch")
+    request_bindings = binding.get("request_bindings", [])
+    if len(request_bindings) != 1:
+        _c2_fail("S2_EVENT_FRAME", "diagnostic occurrence request binding is not unique")
+    request_binding = request_bindings[0]
+    if (
+        request_binding.get("request_id") != normalized["request_id"]
+        or request_binding.get("normalized_request_sha256")
+        != canonical_sha256(normalized)
+        or request_binding.get("clause_ast_sha256") != canonical_sha256(ast)
+    ):
+        _c2_fail("S2_EVENT_FRAME", "diagnostic occurrence input identity mismatch")
+
+    catalog = _diagnostic_catalog(mapping)
+    mentions_by_id = {
+        mention["surface_mention_id"]: mention for mention in ast["surface_mentions"]
+    }
+    ast_node_ids = {node["node_id"] for node in ast["nodes"]}
+    contexts = request_binding.get("diagnostic_contexts", [])
+    identifier_groups = (
+        [context.get("diagnostic_context_id") for context in contexts],
+        [
+            occurrence.get("predicate_occurrence_id")
+            for context in contexts
+            for occurrence in context.get("predicate_occurrences", [])
+        ],
+        [
+            method.get("method_entity_binding_id")
+            for context in contexts
+            for method in context.get("method_entity_bindings", [])
+        ],
+    )
+    if any(len(items) != len(set(items)) for items in identifier_groups):
+        _c2_fail("S2_EVENT_FRAME", "diagnostic occurrence IDs are not unique")
+
+    predicate_cues = config["predicate_cues"]
+    for context in contexts:
+        governing = set(context.get("governing_ast_node_ids", []))
+        if not governing or not governing <= ast_node_ids:
+            _c2_fail("S2_EVENT_FRAME", "diagnostic context has dangling AST scope")
+        declared_pairs = {
+            (item.get("canonical_predicate"), item.get("proposition_node_id"))
+            for item in context.get("predicate_occurrences", [])
+        }
+        expressed_pairs = {
+            (predicate, node_id)
+            for predicate in catalog
+            for node_id in _minimal_cue_node_ids(
+                ast, governing, predicate_cues.get(predicate, [])
+            )
+        }
+        if declared_pairs != expressed_pairs or {
+            node_id for _, node_id in declared_pairs
+        } != governing:
+            _c2_fail(
+                "S2_EVENT_FRAME",
+                "diagnostic occurrence set differs from formal cues",
+            )
+
+        method_bindings = {
+            item["method_entity_binding_id"]: item
+            for item in context.get("method_entity_bindings", [])
+        }
+        referenced_method_ids: set[str] = set()
+        for method in method_bindings.values():
+            key = _diagnostic_domain_key(
+                method.get("surface_mention_ids", []),
+                "diagnostic_method",
+                mentions_by_id,
+            )
+            if (
+                method.get("binding_state") != "BOUND"
+                or key is None
+                or key[0] != (method.get("method_entity_id"),)
+            ):
+                _c2_fail("S2_EVENT_FRAME", "invalid diagnostic method occurrence binding")
+
+        for occurrence in context.get("predicate_occurrences", []):
+            predicate = occurrence.get("canonical_predicate")
+            node_id = occurrence.get("proposition_node_id")
+            if predicate not in catalog or node_id not in governing:
+                _c2_fail("S2_EVENT_FRAME", "invalid diagnostic predicate occurrence")
+            sides = {
+                side.get("argument_side"): side
+                for side in occurrence.get("argument_bindings", [])
+            }
+            if set(sides) != {"SUBJECT", "OBJECT"}:
+                _c2_fail("S2_EVENT_FRAME", "diagnostic predicate sides are incomplete")
+            proposition_scope = _ast_scope_node_ids(ast, [node_id])
+            for side_name, catalog_side in (("SUBJECT", "subject"), ("OBJECT", "object")):
+                side = sides[side_name]
+                rule = catalog[predicate][catalog_side]
+                expected_type = (
+                    "diagnostic_method"
+                    if rule["source_token"] == "method_entity_id"
+                    else rule["source_token"]
+                )
+                source_ids = side.get("surface_mention_ids", [])
+                key = _diagnostic_domain_key(source_ids, expected_type, mentions_by_id)
+                method_id = side.get("method_entity_binding_id")
+                if (
+                    side.get("binding_state") != "BOUND"
+                    or key is None
+                    or any(
+                        mentions_by_id[source_id]["containing_node_id"]
+                        not in proposition_scope
+                        for source_id in source_ids
+                    )
+                ):
+                    _c2_fail("S2_EVENT_FRAME", "diagnostic predicate side is not exactly bound")
+                if rule["source_token"] == "method_entity_id":
+                    method = method_bindings.get(method_id)
+                    if method is None or key[0] != (method.get("method_entity_id"),):
+                        _c2_fail(
+                            "S2_EVENT_FRAME", "diagnostic method reference is inconsistent"
+                        )
+                    referenced_method_ids.add(method_id)
+                elif method_id is not None:
+                    _c2_fail("S2_EVENT_FRAME", "non-method side references a method binding")
+        if set(method_bindings) != referenced_method_ids:
+            _c2_fail("S2_EVENT_FRAME", "unreferenced diagnostic method binding")
+    return contexts
+
+
+def _diagnostic_expressed_pairs(
+    proposition: dict[str, Any],
+    ast: dict[str, Any],
+    config: dict[str, Any],
+    catalog: dict[str, Any],
+) -> set[tuple[str, str]]:
+    scope = _ast_scope_node_ids(ast, [proposition["node_id"]])
+    return {
+        (predicate, node_id)
+        for predicate in catalog
+        for node_id in _minimal_cue_node_ids(
+            ast, scope, config["predicate_cues"].get(predicate, [])
+        )
+    }
+
+
+def _diagnostic_bound_participants(
+    proposition: dict[str, Any],
+    mentions: list[dict[str, Any]],
+    ast: dict[str, Any],
+    config: dict[str, Any],
+    mapping: dict[str, Any],
+    contexts: list[dict[str, Any]] | None,
+) -> list[tuple[str, list[str], list[str], list[str]]] | None:
+    """Return exact catalog-derived participants, or None for base diagnostics."""
+    catalog = _diagnostic_catalog(mapping)
+    expressed_pairs = _diagnostic_expressed_pairs(proposition, ast, config, catalog)
+    if not expressed_pairs:
+        return None
+    if contexts is None:
+        _c2_fail("S2_EVENT_FRAME", "expressed diagnostic predicate lacks occurrence authority")
+    frame_scope = _ast_scope_node_ids(ast, [proposition["node_id"]])
+    matching = [
+        context
+        for context in contexts
+        if set(context["governing_ast_node_ids"]) <= frame_scope
+        and {
+            (item["canonical_predicate"], item["proposition_node_id"])
+            for item in context["predicate_occurrences"]
+        }
+        == expressed_pairs
+    ]
+    if len(matching) != 1:
+        _c2_fail("S2_EVENT_FRAME", "diagnostic frame lacks one exact occurrence context")
+    context = matching[0]
+    mentions_by_id = {
+        mention["surface_mention_id"]: mention for mention in ast["surface_mentions"]
+    }
+    expected: dict[
+        tuple[str, tuple[str, ...], tuple[str, ...]], set[str]
+    ] = {}
+
+    def add(role: str, source_ids: list[str], expected_type: str) -> None:
+        key = _diagnostic_domain_key(source_ids, expected_type, mentions_by_id)
+        if key is None:
+            _c2_fail("S2_EVENT_FRAME", "diagnostic participant domain is invalid")
+        expected.setdefault((role, key[0], key[1]), set()).update(source_ids)
+
+    # METHOD is additive and independently rederived from exact S1 mentions;
+    # it never discovers, clears, or redirects a formal predicate.
+    for mention in mentions:
+        if "diagnostic_method" in mention["candidate_entity_types"]:
+            add("METHOD", [mention["surface_mention_id"]], "diagnostic_method")
+
+    method_bindings = {
+        item["method_entity_binding_id"]: item
+        for item in context["method_entity_bindings"]
+    }
+    for occurrence in context["predicate_occurrences"]:
+        predicate = occurrence["canonical_predicate"]
+        sides = {
+            side["argument_side"]: side for side in occurrence["argument_bindings"]
+        }
+        for side_name, catalog_side in (("SUBJECT", "subject"), ("OBJECT", "object")):
+            side = sides[side_name]
+            rule = catalog[predicate][catalog_side]
+            expected_type = (
+                "diagnostic_method"
+                if rule["source_token"] == "method_entity_id"
+                else rule["source_token"]
+            )
+            if rule["source_token"] == "method_entity_id":
+                method = method_bindings[side["method_entity_binding_id"]]
+                source_ids = method["surface_mention_ids"]
+            else:
+                source_ids = side["surface_mention_ids"]
+            add(rule["semantic_role"], source_ids, expected_type)
+    return [
+        (role, sorted(source_ids), list(entity_ids), list(entity_types))
+        for (role, entity_ids, entity_types), source_ids in sorted(expected.items())
+    ]
+
+
 def _event_domain_for_proposition(
     proposition: dict[str, Any],
     mentions: list[dict[str, Any]],
@@ -1460,14 +1786,20 @@ def _event_domain_for_proposition(
         for mention in mentions
         for entity_type in mention["candidate_entity_types"]
     }
-    if "diagnostic_method" in present_types:
-        return ["DIAGNOSTIC_FINDING"], {"DIAGNOSTIC_FINDING": set()}
-
     expressed_predicates = {
         predicate
         for predicate, cues in config["predicate_cues"].items()
         if _contains_any(text, cues)
     }
+    if "diagnostic_method" in present_types:
+        diagnostic_predicates = set(
+            mapping["event_mapping"]["DIAGNOSTIC_FINDING"].get("predicates", {})
+        )
+        return ["DIAGNOSTIC_FINDING"], {
+            "DIAGNOSTIC_FINDING": expressed_predicates.intersection(
+                diagnostic_predicates
+            )
+        }
     candidates: dict[str, set[str]] = {}
     for event_type, authority in mapping["event_mapping"].items():
         matched = expressed_predicates.intersection(authority.get("predicates", {}))
@@ -2037,12 +2369,27 @@ def _build_override_hypotheses(
 
 
 def _build_event_frame(
-    normalized: dict[str, Any], ast: dict[str, Any], root: Path
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    root: Path,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     ontology = _read_yaml(root / ENTITY_ONTOLOGY_PATH)
     prefix_types = _entity_type_map(ontology)
     mapping, _ = _load_event_authority(root)
     config = _load_configuration(root)
+    diagnostic_contexts = (
+        _validate_diagnostic_argument_binding(
+            normalized,
+            ast,
+            diagnostic_argument_binding,
+            config,
+            mapping,
+            root,
+        )
+        if diagnostic_argument_binding is not None
+        else None
+    )
     negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
     nodes_by_id = {node["node_id"]: node for node in ast["nodes"]}
     propositions = sorted(
@@ -2081,13 +2428,24 @@ def _build_event_frame(
         if not event_types:
             continue
         diagnostic = event_types == ["DIAGNOSTIC_FINDING"]
+        bound_diagnostic_participants = (
+            _diagnostic_bound_participants(
+                proposition,
+                mentions,
+                ast,
+                config,
+                mapping,
+                diagnostic_contexts,
+            )
+            if diagnostic
+            else None
+        )
         actor_types, target_types = _role_type_domains(event_types, expressed, mapping)
-        if diagnostic:
-            # The formal diagnostic catalog assigns disease/host context to
-            # ACTOR and finding objects to TARGET.  Broad allowed_* type sets
-            # are legality bounds, not permission to duplicate one mention
-            # across every compatible identity role.
-            actor_types = actor_types.intersection({"disease", "host"})
+        if diagnostic and bound_diagnostic_participants is None:
+            # The legacy METHOD/TARGET diagnostic core remains available when
+            # no formal diagnostic predicate is expressed.  allowed_* sets are
+            # legality boundaries only: they never license an ACTOR here.
+            actor_types = set()
             target_types = target_types.intersection(
                 {"life_cycle_stage", "pathological_process"}
             )
@@ -2095,7 +2453,7 @@ def _build_event_frame(
             str, list[tuple[dict[str, Any], list[str], list[str]]]
         ] = {"ACTOR": [], "METHOD": [], "TARGET": [], "LOCATION": []}
         for mention in mentions:
-            if diagnostic:
+            if diagnostic and bound_diagnostic_participants is None:
                 ids, types = _candidate_domain(
                     mention, {"diagnostic_method"}, prefix_types
                 )
@@ -2124,14 +2482,16 @@ def _build_event_frame(
             "ACTOR": [], "METHOD": [], "TARGET": [], "LOCATION": []
         }
 
-        def add_slot(
+        def add_slot_values(
             role: str,
-            group: list[tuple[dict[str, Any], list[str], list[str]]],
+            source_ids: list[str],
+            entity_ids: list[str],
+            entity_types: list[str],
         ) -> str:
             nonlocal next_slot
-            source_ids = sorted({item[0]["surface_mention_id"] for item in group})
-            entity_ids = sorted({entity_id for item in group for entity_id in item[1]})
-            entity_types = sorted({entity_type for item in group for entity_type in item[2]})
+            source_ids = sorted(set(source_ids))
+            entity_ids = sorted(set(entity_ids))
+            entity_types = sorted(set(entity_types))
             if not source_ids or not entity_ids or not entity_types:
                 _c2_fail("S2_EVENT_FRAME", f"empty {role} participant domain")
             slot_id = f"V{next_slot:03d}"
@@ -2149,30 +2509,52 @@ def _build_event_frame(
             slots_by_role[role].append(slot_id)
             return slot_id
 
-        for role in ("ACTOR", "METHOD"):
-            candidates = role_candidates[role]
-            if role == "METHOD" and len(candidates) > 1:
-                add_slot(role, candidates)
-            else:
-                for candidate in candidates:
-                    add_slot(role, [candidate])
+        def add_slot(
+            role: str,
+            group: list[tuple[dict[str, Any], list[str], list[str]]],
+        ) -> str:
+            return add_slot_values(
+                role,
+                [item[0]["surface_mention_id"] for item in group],
+                [entity_id for item in group for entity_id in item[1]],
+                [entity_type for item in group for entity_type in item[2]],
+            )
 
-        target_candidates = role_candidates["TARGET"]
-        consumed: set[str] = set()
-        for unresolved in unresolved_target_groups:
-            group = [
-                candidate
-                for candidate in target_candidates
-                if candidate[0]["surface_mention_id"] in unresolved
-            ]
-            if len(group) >= 2:
-                add_slot("TARGET", group)
-                consumed.update(item[0]["surface_mention_id"] for item in group)
-        for candidate in target_candidates:
-            if candidate[0]["surface_mention_id"] not in consumed:
-                add_slot("TARGET", [candidate])
-        for candidate in role_candidates["LOCATION"]:
-            add_slot("LOCATION", [candidate])
+        if bound_diagnostic_participants is not None:
+            for role, source_ids, entity_ids, entity_types in sorted(
+                bound_diagnostic_participants,
+                key=lambda item: (
+                    ("ACTOR", "METHOD", "TARGET", "LOCATION").index(item[0]),
+                    item[2],
+                    item[1],
+                ),
+            ):
+                add_slot_values(role, source_ids, entity_ids, entity_types)
+        else:
+            for role in ("ACTOR", "METHOD"):
+                candidates = role_candidates[role]
+                if role == "METHOD" and len(candidates) > 1:
+                    add_slot(role, candidates)
+                else:
+                    for candidate in candidates:
+                        add_slot(role, [candidate])
+
+            target_candidates = role_candidates["TARGET"]
+            consumed: set[str] = set()
+            for unresolved in unresolved_target_groups:
+                group = [
+                    candidate
+                    for candidate in target_candidates
+                    if candidate[0]["surface_mention_id"] in unresolved
+                ]
+                if len(group) >= 2:
+                    add_slot("TARGET", group)
+                    consumed.update(item[0]["surface_mention_id"] for item in group)
+            for candidate in target_candidates:
+                if candidate[0]["surface_mention_id"] not in consumed:
+                    add_slot("TARGET", [candidate])
+            for candidate in role_candidates["LOCATION"]:
+                add_slot("LOCATION", [candidate])
 
         if not participant_slots:
             continue
@@ -2332,6 +2714,7 @@ def validate_c2_event_frame(
     event_frame: dict[str, Any],
     root: Path = ROOT,
     *,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
     require_compiler_projection: bool = True,
 ) -> None:
     """Validate S2 schema, content bindings, domains, identity, and completeness."""
@@ -2375,6 +2758,21 @@ def validate_c2_event_frame(
     }
     marker_ids = {marker["marker_id"] for marker in ast["assertion_markers"]}
     config = _load_configuration(root)
+    mapping, _ = _load_event_authority(root)
+    ontology = _read_yaml(root / ENTITY_ONTOLOGY_PATH)
+    prefix_types = _entity_type_map(ontology)
+    diagnostic_contexts = (
+        _validate_diagnostic_argument_binding(
+            normalized,
+            ast,
+            diagnostic_argument_binding,
+            config,
+            mapping,
+            root,
+        )
+        if diagnostic_argument_binding is not None
+        else None
+    )
     negation_authority = _read_yaml(root / NEGATION_SURFACE_SCOPE_PATH)
     specimen_slots = {
         specimen["specimen_slot_id"]: specimen
@@ -2476,27 +2874,219 @@ def validate_c2_event_frame(
             ):
                 _c2_fail("S2_EVENT_FRAME", "diagnostic components do not share one frame")
         if diagnostic:
-            diagnostic_role_types = {
-                "ACTOR": {"disease", "host"},
-                "METHOD": {"diagnostic_method"},
-                "TARGET": {"life_cycle_stage", "pathological_process"},
-            }
-            source_roles: dict[str, set[str]] = {}
-            for slot in frame["participant_slots"]:
-                role = slot["semantic_role"]
-                if role not in diagnostic_role_types or not set(
-                    slot["domain"]["entity_types"]
-                ).issubset(diagnostic_role_types[role]):
+            proposition = ast_nodes[frame["source_ast_node_ids"][0]]
+            frame_scope = _ast_scope_node_ids(ast, frame["source_ast_node_ids"])
+            frame_mentions = [
+                mention
+                for mention in mentions.values()
+                if mention["containing_node_id"] in frame_scope
+            ]
+            catalog = _diagnostic_catalog(mapping)
+            expressed_pairs = _diagnostic_expressed_pairs(
+                proposition, ast, config, catalog
+            )
+            expected: dict[
+                tuple[str, tuple[str, ...], tuple[str, ...]], set[str]
+            ] = {}
+
+            def add_expected(
+                role: str, source_ids: list[str], expected_type: str
+            ) -> None:
+                key = _diagnostic_domain_key(source_ids, expected_type, mentions)
+                if key is None:
+                    _c2_fail(
+                        "S2_EVENT_FRAME", "diagnostic expected participant is invalid"
+                    )
+                expected.setdefault((role, key[0], key[1]), set()).update(
+                    source_ids
+                )
+
+            if expressed_pairs:
+                if diagnostic_contexts is None:
                     _c2_fail(
                         "S2_EVENT_FRAME",
-                        "diagnostic participant role lacks formal catalog authority",
+                        "candidate diagnostic roles cannot self-authorize occurrences",
                     )
+                matching = [
+                    context
+                    for context in diagnostic_contexts
+                    if set(context["governing_ast_node_ids"]) <= frame_scope
+                    and {
+                        (
+                            occurrence["canonical_predicate"],
+                            occurrence["proposition_node_id"],
+                        )
+                        for occurrence in context["predicate_occurrences"]
+                    }
+                    == expressed_pairs
+                ]
+                if len(matching) != 1:
+                    _c2_fail(
+                        "S2_EVENT_FRAME",
+                        "diagnostic frame lacks one validated occurrence context",
+                    )
+                context = matching[0]
+
+                # Independently rederive additive METHOD claims from the actual
+                # Clause AST, never from candidate participant source_ids.
+                for mention in frame_mentions:
+                    if "diagnostic_method" in mention["candidate_entity_types"]:
+                        add_expected(
+                            "METHOD",
+                            [mention["surface_mention_id"]],
+                            "diagnostic_method",
+                        )
+
+                method_bindings = {
+                    item["method_entity_binding_id"]: item
+                    for item in context["method_entity_bindings"]
+                }
+                for occurrence in context["predicate_occurrences"]:
+                    predicate = occurrence["canonical_predicate"]
+                    sides = {
+                        side["argument_side"]: side
+                        for side in occurrence["argument_bindings"]
+                    }
+                    for side_name, catalog_side in (
+                        ("SUBJECT", "subject"),
+                        ("OBJECT", "object"),
+                    ):
+                        side = sides[side_name]
+                        rule = catalog[predicate][catalog_side]
+                        expected_type = (
+                            "diagnostic_method"
+                            if rule["source_token"] == "method_entity_id"
+                            else rule["source_token"]
+                        )
+                        if rule["source_token"] == "method_entity_id":
+                            method = method_bindings[
+                                side["method_entity_binding_id"]
+                            ]
+                            source_ids = method["surface_mention_ids"]
+                        else:
+                            source_ids = side["surface_mention_ids"]
+                        add_expected(
+                            rule["semantic_role"], source_ids, expected_type
+                        )
+            else:
+                # Independently rederive the pre-predicate diagnostic core.
+                method_candidates = _maximal_role_candidates(
+                    [
+                        (mention, ids, types)
+                        for mention in frame_mentions
+                        if (domain := _candidate_domain(
+                            mention, {"diagnostic_method"}, prefix_types
+                        ))
+                        for ids, types in [domain]
+                        if ids
+                    ]
+                )
+                if method_candidates:
+                    method_sources = sorted(
+                        item[0]["surface_mention_id"] for item in method_candidates
+                    )
+                    method_ids = sorted(
+                        {entity_id for item in method_candidates for entity_id in item[1]}
+                    )
+                    method_types = sorted(
+                        {entity_type for item in method_candidates for entity_type in item[2]}
+                    )
+                    expected[
+                        ("METHOD", tuple(method_ids), tuple(method_types))
+                    ] = set(method_sources)
+
+                target_candidates = _maximal_role_candidates(
+                    [
+                        (mention, ids, types)
+                        for mention in frame_mentions
+                        if (domain := _candidate_domain(
+                            mention,
+                            {"life_cycle_stage", "pathological_process"},
+                            prefix_types,
+                        ))
+                        for ids, types in [domain]
+                        if ids
+                    ]
+                )
+                consumed_sources: set[str] = set()
+                unresolved_groups = [
+                    set(attachment["candidate_governor_ids"])
+                    for attachment in ast["attachment_sets"]
+                    if attachment["status"] == "UNRESOLVED"
+                ]
+                for unresolved in unresolved_groups:
+                    group = [
+                        item
+                        for item in target_candidates
+                        if item[0]["surface_mention_id"] in unresolved
+                    ]
+                    if len(group) < 2:
+                        continue
+                    source_ids = sorted(
+                        item[0]["surface_mention_id"] for item in group
+                    )
+                    entity_ids = tuple(
+                        sorted({entity_id for item in group for entity_id in item[1]})
+                    )
+                    entity_types = tuple(
+                        sorted({entity_type for item in group for entity_type in item[2]})
+                    )
+                    expected[("TARGET", entity_ids, entity_types)] = set(source_ids)
+                    consumed_sources.update(source_ids)
+                for mention, entity_ids, entity_types in target_candidates:
+                    source_id = mention["surface_mention_id"]
+                    if source_id not in consumed_sources:
+                        expected[
+                            ("TARGET", tuple(entity_ids), tuple(entity_types))
+                        ] = {source_id}
+
+            actual: dict[
+                tuple[str, tuple[str, ...], tuple[str, ...]], tuple[str, set[str]]
+            ] = {}
+            source_roles: dict[str, set[str]] = {}
+            for slot in frame["participant_slots"]:
+                key = (
+                    slot["semantic_role"],
+                    tuple(sorted(slot["domain"]["entity_ids"])),
+                    tuple(sorted(slot["domain"]["entity_types"])),
+                )
+                if key in actual:
+                    _c2_fail("S2_EVENT_FRAME", "duplicate diagnostic participant")
+                actual[key] = (slot["slot_id"], set(slot["source_ids"]))
                 for source_id in slot["source_ids"]:
-                    source_roles.setdefault(source_id, set()).add(role)
+                    source_roles.setdefault(source_id, set()).add(
+                        slot["semantic_role"]
+                    )
             if any(len(roles) != 1 for roles in source_roles.values()):
                 _c2_fail(
                     "S2_EVENT_FRAME",
                     "diagnostic mention is duplicated across identity roles",
+                )
+            if expected != {key: value[1] for key, value in actual.items()}:
+                _c2_fail(
+                    "S2_EVENT_FRAME",
+                    "diagnostic participant set differs from independent authority",
+                )
+            expected_actor_ids = {
+                actual[key][0] for key in expected if key[0] == "ACTOR"
+            }
+            expected_method_ids = {
+                actual[key][0] for key in expected if key[0] == "METHOD"
+            }
+            expected_target_ids = {
+                actual[key][0] for key in expected if key[0] == "TARGET"
+            }
+            if (
+                set(identity["actor_slot_ids"]) != expected_actor_ids
+                or set(identity["target_slot_ids"]) != expected_target_ids
+                or len(expected_method_ids) != 1
+                or identity["method_slot_id"] not in expected_method_ids
+                or binding["method_slot_id"] not in expected_method_ids
+                or set(binding["target_slot_ids"]) != expected_target_ids
+            ):
+                _c2_fail(
+                    "S2_EVENT_FRAME",
+                    "diagnostic identity differs from predicate-derived participants",
                 )
         if (
             len(frame["source_ast_node_ids"]) != 1
@@ -2570,13 +3160,19 @@ def validate_c2_event_frame(
         )
 
     if require_compiler_projection:
-        expected = _build_event_frame(normalized, ast, root)
+        expected = _build_event_frame(
+            normalized, ast, root, diagnostic_argument_binding
+        )
         if canonical_bytes(event_frame) != canonical_bytes(expected):
             _c2_fail("S2_EVENT_FRAME", "output differs from complete deterministic projection")
 
 
 def compile_event_frame(
-    normalized: dict[str, Any], ast: dict[str, Any], root: Path = ROOT
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    root: Path = ROOT,
+    *,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compile validated S1 authority into S2 and stop before constraint solving."""
     try:
@@ -2584,8 +3180,16 @@ def compile_event_frame(
         validate_c1_clause_ast(normalized, ast, root)
     except (SchemaValidationError, C1ValidationError, KeyError, TypeError) as exc:
         _c2_fail("S2_EVENT_FRAME", f"invalid S1 input: {exc}")
-    event_frame = _build_event_frame(normalized, ast, root)
-    validate_c2_event_frame(normalized, ast, event_frame, root)
+    event_frame = _build_event_frame(
+        normalized, ast, root, diagnostic_argument_binding
+    )
+    validate_c2_event_frame(
+        normalized,
+        ast,
+        event_frame,
+        root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
     validate_c2_stop_boundary(event_frame)
     return event_frame
 
@@ -2614,11 +3218,21 @@ def validate_c2_stop_boundary(value: dict[str, Any]) -> None:
             pending.extend(item)
 
 
-def compile_c2(request: dict[str, Any], root: Path = ROOT) -> dict[str, Any]:
+def compile_c2(
+    request: dict[str, Any],
+    root: Path = ROOT,
+    *,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Run the authorized C2 atom and stop at a validated Event Frame object."""
     normalized = normalize_request(request, root)
     ast = compile_clause_ast(normalized, root)
-    event_frame = compile_event_frame(normalized, ast, root)
+    event_frame = compile_event_frame(
+        normalized,
+        ast,
+        root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
     result = {
         "implemented_stages": list(C2_IMPLEMENTED_STAGES),
         "terminal_stage": C2_TERMINAL_STAGE,

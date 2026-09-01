@@ -10,7 +10,10 @@ from scripts.p9b1q_scoped_query_ir import (
     C1ValidationError,
     C2ValidationError,
     CLAUSE_AST_SCHEMA_PATH,
+    CONFIG_PATH,
+    DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH,
     EVENT_FRAME_SCHEMA_PATH,
+    EVENT_RELATION_AUTHORITY_PATH,
     NORMALIZED_REQUEST_SCHEMA_PATH,
     QUERY_IR_SCHEMA_PATH,
     ROOT,
@@ -22,6 +25,7 @@ from scripts.p9b1q_scoped_query_ir import (
     compile_clause_ast,
     compile_event_frame,
     execute_query_ir,
+    file_sha256,
     interpret_request,
     normalize_request,
     normalized_event_identity,
@@ -44,6 +48,93 @@ def request(case: str, text: str) -> dict[str, str]:
         "knowledge_version": "clonorchis_pcms_v1",
         "locale": "zh-CN",
         "query_text": text,
+    }
+
+
+def diagnostic_argument_binding(normalized, ast, occurrences):
+    """Build public test input; this is not a production binding producer."""
+    mentions = ast["surface_mentions"]
+
+    def resolve(reference):
+        surface, ordinal = (reference, 0) if isinstance(reference, str) else reference
+        matches = [
+            mention
+            for mention in mentions
+            if mention["normalized_surface"] == surface
+            or mention["source_span"]["text"] == surface
+        ]
+        return matches[ordinal]
+
+    method_binding_by_key = {}
+    method_bindings = []
+    predicate_occurrences = []
+    method_side = {
+        "diagnosed_by": "OBJECT",
+        "diagnostic_stage_for": None,
+        "has_diagnostic_clue": None,
+    }
+    for index, (predicate, subject_reference, object_reference) in enumerate(
+        occurrences, start=1
+    ):
+        subject = resolve(subject_reference)
+        object_ = resolve(object_reference)
+        if subject["containing_node_id"] != object_["containing_node_id"]:
+            raise AssertionError("test binding arguments must share one proposition")
+        bindings = []
+        for side, mention in (("SUBJECT", subject), ("OBJECT", object_)):
+            method_binding_id = None
+            if method_side[predicate] == side:
+                key = (
+                    tuple(mention["candidate_entity_ids"]),
+                    mention["surface_mention_id"],
+                )
+                if key not in method_binding_by_key:
+                    method_binding_id = f"DMB{len(method_bindings) + 1:03d}"
+                    method_binding_by_key[key] = method_binding_id
+                    method_bindings.append({
+                        "method_entity_binding_id": method_binding_id,
+                        "method_entity_id": mention["candidate_entity_ids"][0],
+                        "binding_state": "BOUND",
+                        "surface_mention_ids": [mention["surface_mention_id"]],
+                    })
+                else:
+                    method_binding_id = method_binding_by_key[key]
+            bindings.append({
+                "argument_side": side,
+                "binding_state": "BOUND",
+                "surface_mention_ids": [mention["surface_mention_id"]],
+                "method_entity_binding_id": method_binding_id,
+            })
+        predicate_occurrences.append({
+            "predicate_occurrence_id": f"DPO{index:03d}",
+            "canonical_predicate": predicate,
+            "proposition_node_id": subject["containing_node_id"],
+            "argument_bindings": bindings,
+        })
+    governing = sorted(
+        {item["proposition_node_id"] for item in predicate_occurrences}
+    )
+    return {
+        "binding_object_version": "0.1-candidate",
+        "binding_scope": "DIAGNOSTIC_ONLY",
+        "binding_contract_sha256": file_sha256(
+            ROOT / DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH
+        ),
+        "query_interpreter_config_sha256": file_sha256(ROOT / CONFIG_PATH),
+        "event_relation_mapping_sha256": file_sha256(
+            ROOT / EVENT_RELATION_AUTHORITY_PATH
+        ),
+        "request_bindings": [{
+            "request_id": normalized["request_id"],
+            "normalized_request_sha256": canonical_sha256(normalized),
+            "clause_ast_sha256": canonical_sha256(ast),
+            "diagnostic_contexts": [{
+                "diagnostic_context_id": "DC001",
+                "governing_ast_node_ids": governing,
+                "method_entity_bindings": method_bindings,
+                "predicate_occurrences": predicate_occurrences,
+            }],
+        }],
     }
 
 
@@ -637,6 +728,28 @@ class C2EventFrameTests(unittest.TestCase):
         )
         return result
 
+    def compile_bound(self, case: str, text: str, occurrences):
+        normalized = normalize_request(request(case, text))
+        ast = compile_clause_ast(normalized)
+        authority = diagnostic_argument_binding(normalized, ast, occurrences)
+        event_frame = compile_event_frame(
+            normalized,
+            ast,
+            diagnostic_argument_binding=authority,
+        )
+        validate_c2_event_frame(
+            normalized,
+            ast,
+            event_frame,
+            diagnostic_argument_binding=authority,
+        )
+        return {
+            "normalized_request": normalized,
+            "clause_ast": ast,
+            "event_frame": event_frame,
+            "diagnostic_argument_binding": authority,
+        }
+
     def assert_invalid_projection(self, result, mutate):
         changed = copy.deepcopy(result["event_frame"])
         mutate(changed)
@@ -645,7 +758,7 @@ class C2EventFrameTests(unittest.TestCase):
                 result["normalized_request"], result["clause_ast"], changed
             )
 
-    def assert_invalid_semantics(self, result, mutate):
+    def assert_invalid_semantics(self, result, mutate, authority=None):
         changed = copy.deepcopy(result["event_frame"])
         mutate(changed)
         with self.assertRaises(C2ValidationError):
@@ -653,6 +766,11 @@ class C2EventFrameTests(unittest.TestCase):
                 result["normalized_request"],
                 result["clause_ast"],
                 changed,
+                diagnostic_argument_binding=(
+                    authority
+                    if authority is not None
+                    else result.get("diagnostic_argument_binding")
+                ),
                 require_compiler_projection=False,
             )
 
@@ -744,22 +862,231 @@ class C2EventFrameTests(unittest.TestCase):
                 ]
                 self.assertEqual(len(sources), len(set(sources)))
 
-    def test_diagnostic_disease_context_is_the_only_formally_licensed_actor(self):
+    def test_type_compatible_disease_without_predicate_is_not_materialized(self):
         result = self.compile(
             "C2-DIAG-DISEASE-ACTOR", "华支睾吸虫病粪便检查检出虫卵。"
         )
         frame = result["event_frame"]["frames"][0]
-        actor = next(
-            slot for slot in frame["participant_slots"]
-            if slot["semantic_role"] == "ACTOR"
-        )
-        self.assertEqual(["disease.clonorchiasis"], actor["domain"]["entity_ids"])
+        self.assertEqual([], frame["normalized_identity"]["actor_slot_ids"])
         target = next(
             slot for slot in frame["participant_slots"]
             if slot["semantic_role"] == "TARGET"
         )
         self.assertEqual(["stage.clonorchis_egg"], target["domain"]["entity_ids"])
-        self.assertTrue(set(actor["source_ids"]).isdisjoint(target["source_ids"]))
+
+    def test_high003_all_option_b_predicate_sides_materialize_exact_roles(self):
+        cases = (
+            (
+                "DIAGNOSED-BY",
+                "华支睾吸虫病的确诊方法是粪便检查。",
+                [("diagnosed_by", "华支睾吸虫病", "粪便检查")],
+                {
+                    "ACTOR": ["disease.clonorchiasis"],
+                    "METHOD": ["diagnostic.stool_egg_microscopy"],
+                },
+            ),
+            (
+                "DIAGNOSTIC-STAGE",
+                "粪便检查显示虫卵是人的诊断阶段。",
+                [("diagnostic_stage_for", "虫卵", "人")],
+                {
+                    "ACTOR": ["host.human"],
+                    "METHOD": ["diagnostic.stool_egg_microscopy"],
+                    "TARGET": ["stage.clonorchis_egg"],
+                },
+            ),
+            (
+                "DIAGNOSTIC-CLUE",
+                "华支睾吸虫病的诊断线索包括粪便检查。",
+                [("has_diagnostic_clue", "华支睾吸虫病", "粪便检查")],
+                {
+                    "ACTOR": ["disease.clonorchiasis"],
+                    "METHOD": ["diagnostic.stool_egg_microscopy"],
+                },
+            ),
+        )
+        for case, text, occurrences, expected in cases:
+            with self.subTest(case=case):
+                result = self.compile_bound(case, text, occurrences)
+                frame = result["event_frame"]["frames"][0]
+                observed = {
+                    slot["semantic_role"]: slot["domain"]["entity_ids"]
+                    for slot in frame["participant_slots"]
+                }
+                self.assertEqual(expected, observed)
+
+    def test_high003_method_is_additive_and_multiple_predicates_are_complete(self):
+        occurrences = [
+            ("diagnosed_by", "华支睾吸虫病", "粪便检查"),
+            ("has_diagnostic_clue", "华支睾吸虫病", "粪便检查"),
+        ]
+        result = self.compile_bound(
+            "C2-HIGH003-MULTI",
+            "华支睾吸虫病的确诊方法和诊断线索都是粪便检查。",
+            occurrences,
+        )
+        frame = result["event_frame"]["frames"][0]
+        self.assertEqual(
+            ["ACTOR", "METHOD"],
+            [slot["semantic_role"] for slot in frame["participant_slots"]],
+        )
+        authority = result["diagnostic_argument_binding"]
+        self.assertEqual(
+            {"diagnosed_by", "has_diagnostic_clue"},
+            {
+                item["canonical_predicate"]
+                for item in authority["request_bindings"][0]["diagnostic_contexts"][0]["predicate_occurrences"]
+            },
+        )
+        replay = compile_c2(
+            request(
+                "C2-HIGH003-MULTI",
+                "华支睾吸虫病的确诊方法和诊断线索都是粪便检查。",
+            ),
+            diagnostic_argument_binding=result["diagnostic_argument_binding"],
+        )
+        self.assertEqual(
+            canonical_bytes(result["event_frame"]),
+            canonical_bytes(replay["event_frame"]),
+        )
+        missing = copy.deepcopy(authority)
+        missing["request_bindings"][0]["diagnostic_contexts"][0]["predicate_occurrences"].pop()
+        with self.assertRaises(C2ValidationError):
+            validate_c2_event_frame(
+                result["normalized_request"],
+                result["clause_ast"],
+                result["event_frame"],
+                diagnostic_argument_binding=missing,
+                require_compiler_projection=False,
+            )
+
+    def test_high003_validator_rejects_missing_reversed_and_unlicensed_roles(self):
+        result = self.compile_bound(
+            "C2-HIGH003-NEG-ROLE",
+            "粪便检查显示虫卵是人的诊断阶段。",
+            [("diagnostic_stage_for", "虫卵", "人")],
+        )
+
+        def omit_target(value):
+            frame = value["frames"][0]
+            target_id = frame["normalized_identity"]["target_slot_ids"][0]
+            frame["participant_slots"] = [
+                slot for slot in frame["participant_slots"] if slot["slot_id"] != target_id
+            ]
+            frame["normalized_identity"]["target_slot_ids"] = []
+            frame["diagnostic_binding"]["target_slot_ids"] = []
+
+        self.assert_invalid_semantics(result, omit_target)
+
+        def reverse_actor_target(value):
+            frame = value["frames"][0]
+            actor = next(slot for slot in frame["participant_slots"] if slot["semantic_role"] == "ACTOR")
+            target = next(slot for slot in frame["participant_slots"] if slot["semantic_role"] == "TARGET")
+            actor["semantic_role"], target["semantic_role"] = "TARGET", "ACTOR"
+            frame["normalized_identity"]["actor_slot_ids"] = [target["slot_id"]]
+            frame["normalized_identity"]["target_slot_ids"] = [actor["slot_id"]]
+            frame["diagnostic_binding"]["target_slot_ids"] = [actor["slot_id"]]
+
+        self.assert_invalid_semantics(result, reverse_actor_target)
+
+        def add_type_only_actor(value):
+            frame = value["frames"][0]
+            target = next(slot for slot in frame["participant_slots"] if slot["semantic_role"] == "TARGET")
+            extra = copy.deepcopy(target)
+            extra["slot_id"] = "V999"
+            extra["semantic_role"] = "ACTOR"
+            frame["participant_slots"].append(extra)
+            frame["normalized_identity"]["actor_slot_ids"].append("V999")
+
+        self.assert_invalid_semantics(result, add_type_only_actor)
+
+    def test_high003_exact_occurrence_and_candidate_self_authorization_fail_closed(self):
+        result = self.compile_bound(
+            "C2-HIGH003-OCCURRENCE",
+            "粪便检查显示虫卵和虫卵是人的诊断阶段。",
+            [("diagnostic_stage_for", ("虫卵", 0), "人")],
+        )
+        egg_mentions = [
+            mention
+            for mention in result["clause_ast"]["surface_mentions"]
+            if mention["normalized_surface"] == "虫卵"
+        ]
+        self.assertEqual(2, len(egg_mentions))
+
+        def forge_same_entity_occurrence(value):
+            target = next(
+                slot
+                for slot in value["frames"][0]["participant_slots"]
+                if slot["semantic_role"] == "TARGET"
+            )
+            target["source_ids"] = [egg_mentions[1]["surface_mention_id"]]
+
+        self.assert_invalid_semantics(result, forge_same_entity_occurrence)
+        with self.assertRaises(C2ValidationError):
+            validate_c2_event_frame(
+                result["normalized_request"],
+                result["clause_ast"],
+                result["event_frame"],
+                diagnostic_argument_binding=None,
+                require_compiler_projection=False,
+            )
+
+    def test_high003_binding_ambiguity_and_forged_provenance_fail_closed(self):
+        result = self.compile_bound(
+            "C2-HIGH003-BINDING-NEG",
+            "粪便检查显示虫卵是人的诊断阶段。",
+            [("diagnostic_stage_for", "虫卵", "人")],
+        )
+        authority = copy.deepcopy(result["diagnostic_argument_binding"])
+        subject = authority["request_bindings"][0]["diagnostic_contexts"][0]["predicate_occurrences"][0]["argument_bindings"][0]
+        subject["binding_state"] = "AMBIGUOUS"
+        subject["surface_mention_ids"].append("U999")
+        with self.assertRaises(C2ValidationError):
+            validate_c2_event_frame(
+                result["normalized_request"],
+                result["clause_ast"],
+                result["event_frame"],
+                diagnostic_argument_binding=authority,
+                require_compiler_projection=False,
+            )
+
+        def forged_provenance(value):
+            actor = next(
+                slot
+                for slot in value["frames"][0]["participant_slots"]
+                if slot["semantic_role"] == "ACTOR"
+            )
+            actor["source_ids"] = ["U001"]
+
+        self.assert_invalid_semantics(result, forged_provenance)
+
+    def test_high003_metamorphic_method_surface_preserves_predicate_roles(self):
+        cases = (
+            ("粪便检查显示虫卵是人的诊断阶段。", "粪便检查"),
+            ("十二指肠液检查显示成虫是人的诊断期。", "十二指肠液检查"),
+        )
+        for index, (text, method_surface) in enumerate(cases):
+            with self.subTest(text=text):
+                stage_surface = "虫卵" if index == 0 else "成虫"
+                result = self.compile_bound(
+                    f"C2-HIGH003-META-{index}",
+                    text,
+                    [("diagnostic_stage_for", stage_surface, "人")],
+                )
+                roles = {
+                    slot["semantic_role"]: slot["domain"]["entity_types"]
+                    for slot in result["event_frame"]["frames"][0]["participant_slots"]
+                }
+                self.assertEqual(["host"], roles["ACTOR"])
+                self.assertEqual(["diagnostic_method"], roles["METHOD"])
+                self.assertEqual(["life_cycle_stage"], roles["TARGET"])
+                self.assertIn(
+                    method_surface,
+                    [
+                        mention["normalized_surface"]
+                        for mention in result["clause_ast"]["surface_mentions"]
+                    ],
+                )
 
     def test_diagnostic_role_validator_rejects_duplicate_actor_target_mention(self):
         result = self.compile("C2-DIAG-ROLE-ADV", "粪便检卵阳性。")
