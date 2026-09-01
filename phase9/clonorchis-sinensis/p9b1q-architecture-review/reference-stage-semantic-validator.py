@@ -786,10 +786,7 @@ def validate_s2(
                 "/diagnostic_predicate_argument_binding",
             )
         )
-    elif any(
-        item.get("event_type_domain") == ["DIAGNOSTIC_FINDING"]
-        for item in frame.get("frames", [])
-    ):
+    else:
         errors.extend(
             validate_diagnostic_role_derivation(
                 frame,
@@ -957,21 +954,6 @@ def validate_diagnostic_role_derivation(
         return errors
 
     predicate_cues = query_interpreter_config.get("predicate_cues", {})
-    has_expressed_diagnostic_predicate = any(
-        _minimal_cue_node_ids(
-            ast,
-            _diagnostic_scope(item, ast)[0],
-            predicate_cues.get(predicate, [])
-            if isinstance(predicate_cues.get(predicate, []), list)
-            else [],
-        )
-        for item in frame.get("frames", [])
-        if item.get("event_type_domain") == ["DIAGNOSTIC_FINDING"]
-        for predicate in catalog
-    )
-    if not has_expressed_diagnostic_predicate:
-        return errors
-
     default_query_config = load_yaml(QUERY_INTERPRETER_CONFIG)
     query_config_hash = (
         sha_bytes(QUERY_INTERPRETER_CONFIG.read_bytes())
@@ -1158,6 +1140,24 @@ def validate_diagnostic_role_derivation(
 
     if authority_invalid:
         fail("/diagnostic_predicate_argument_binding/request_bindings")
+        return errors
+
+    # Authority identity, complete referential integrity, and every binding
+    # state are validated before candidate-frame dispatch.  Frame presence may
+    # gate role derivation only; it can never gate supplied-input validation.
+    has_expressed_diagnostic_predicate = any(
+        _minimal_cue_node_ids(
+            ast,
+            _diagnostic_scope(item, ast)[0],
+            predicate_cues.get(predicate, [])
+            if isinstance(predicate_cues.get(predicate, []), list)
+            else [],
+        )
+        for item in frame.get("frames", [])
+        if item.get("event_type_domain") == ["DIAGNOSTIC_FINDING"]
+        for predicate in catalog
+    )
+    if not has_expressed_diagnostic_predicate:
         return errors
 
     for frame_index, item in enumerate(frame.get("frames", [])):
@@ -3276,12 +3276,42 @@ def normalized_by_request_id() -> dict[str, dict[str, Any]]:
     return result
 
 
+def _diagnostic_binding_evidence(name: str) -> dict[str, Any]:
+    """Load one explicitly identified binding object from the public set."""
+    evidence = load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE)
+    return copy.deepcopy(evidence["bindings"][name])
+
+
+def _empty_diagnostic_binding_for_evidence(
+    normalized: dict[str, Any], ast: dict[str, Any]
+) -> dict[str, Any]:
+    """Create exact no-context test input without discovering predicates."""
+    return {
+        "binding_object_version": "0.1-candidate",
+        "binding_scope": "DIAGNOSTIC_ONLY",
+        "binding_contract_sha256": sha_bytes(
+            DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT.read_bytes()
+        ),
+        "query_interpreter_config_sha256": sha_bytes(
+            QUERY_INTERPRETER_CONFIG.read_bytes()
+        ),
+        "event_relation_mapping_sha256": canonical_sha(
+            load_json(FIXTURES / "authority-event-relation-mapping.json")
+        ),
+        "request_bindings": [{
+            "request_id": normalized["request_id"],
+            "normalized_request_sha256": canonical_sha(normalized),
+            "clause_ast_sha256": canonical_sha(ast),
+            "diagnostic_contexts": [],
+        }],
+    }
+
+
 def run_positive() -> list[dict[str, Any]]:
     require_failure_code_governance()
     schema_gate = run_schema_gate()
     results: list[dict[str, Any]] = []
     normalized = normalized_by_request_id()
-    explicit_diagnostic_binding = load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE)
     for suffix in ("exposure", "diagnostic", "diagnostic-role-catalog"):
         request = load_json(FIXTURES / f"request-{suffix}-positive.json")
         norm = load_json(FIXTURES / f"normalized-request-{suffix}-positive.json")
@@ -3304,7 +3334,7 @@ def run_positive() -> list[dict[str, Any]]:
             frame,
             norm,
             ast,
-            diagnostic_argument_binding=explicit_diagnostic_binding,
+            diagnostic_argument_binding=_diagnostic_binding_evidence(suffix),
         )
         if suffix == "exposure":
             s0_record, _, _ = load_stage_result("S0")
@@ -3396,7 +3426,14 @@ def run_negative() -> list[dict[str, Any]]:
     if manifest.get("mutation_model_path") != "../negative-fixture-semantic-mutation-model.yml":
         raise RuntimeError("stage negative fixture manifest is not bound to the R3-D2 mutation model")
     normalized = normalized_by_request_id()
-    explicit_diagnostic_binding = load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE)
+    explicit_diagnostic_bindings = {
+        name: _diagnostic_binding_evidence(name)
+        for name in ("exposure", "diagnostic", "diagnostic-role-catalog")
+    }
+    binding_by_request_id = {
+        binding["request_bindings"][0]["request_id"]: binding
+        for binding in explicit_diagnostic_bindings.values()
+    }
     results = []
     for case in manifest["cases"]:
         mutation = validate_mutation_isolation(case)
@@ -3416,11 +3453,14 @@ def run_negative() -> list[dict[str, Any]]:
                 and "clause-ast" in case["paired_actual_object_paths"][0]
                 else None
             )
+            base_diagnostic_binding = copy.deepcopy(
+                binding_by_request_id[base["request_id"]]
+            )
             base_errors = validate_s2(
                 base,
                 normalized[base["request_id"]],
                 base_ast,
-                diagnostic_argument_binding=explicit_diagnostic_binding,
+                diagnostic_argument_binding=base_diagnostic_binding,
             )
         elif stage == "S3_TYPED_SOLVER":
             s3_record, s3_inputs, _ = load_stage_result("S3")
@@ -3452,7 +3492,7 @@ def run_negative() -> list[dict[str, Any]]:
         mutated_s2_event_mapping: dict[str, Any] | None = None
         mutated_s2_query_config: dict[str, Any] | None = None
         mutated_s2_diagnostic_argument_binding: dict[str, Any] | None = (
-            copy.deepcopy(explicit_diagnostic_binding)
+            copy.deepcopy(base_diagnostic_binding)
             if stage == "S2_EVENT_FRAME"
             else None
         )
@@ -3472,8 +3512,9 @@ def run_negative() -> list[dict[str, Any]]:
                     load_yaml(QUERY_INTERPRETER_CONFIG), input_mutation["patch"]
                 )
             elif object_kind == "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING":
+                assert mutated_s2_diagnostic_argument_binding is not None
                 mutated_s2_diagnostic_argument_binding = apply_patch(
-                    load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE),
+                    mutated_s2_diagnostic_argument_binding,
                     input_mutation["patch"],
                 )
             else:
@@ -3608,7 +3649,9 @@ def r3b_authoritative_case_errors(case: dict[str, Any]) -> list[dict[str, str]]:
         case["event_frame"],
         case["normalized_request"],
         case["clause_ast"],
-        diagnostic_argument_binding=load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE),
+        diagnostic_argument_binding=_empty_diagnostic_binding_for_evidence(
+            case["normalized_request"], case["clause_ast"]
+        ),
     )
     if s2_errors:
         return s2_errors
@@ -3710,7 +3753,9 @@ def r3a_positive_checks(bundle: dict[str, Any]) -> list[dict[str, Any]]:
         objects["event_frame"],
         objects["normalized_request"],
         objects["clause_ast"],
-        diagnostic_argument_binding=load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE),
+        diagnostic_argument_binding=_empty_diagnostic_binding_for_evidence(
+            objects["normalized_request"], objects["clause_ast"]
+        ),
     )
     semantic_errors = validate_semantic_authority(core, inputs, require_complete=True)
     projection_errors = validate_queryir_projection(core, query_ir, inputs)

@@ -473,11 +473,6 @@ def main() -> None:
             }],
         }],
     }
-    write(
-        "diagnostic-predicate-argument-binding-positive.json",
-        diagnostic_argument_binding,
-    )
-
     role_mentions = {
         item["surface_mention_id"]: item
         for item in role_ast["surface_mentions"]
@@ -634,6 +629,35 @@ def main() -> None:
         frame["producer"]["configuration_sha256"] = raw_sha(FIX / "authority-event-relation-mapping.json")
         write(f"event-frame-{suffix}-positive.json", frame)
         frames[suffix] = frame
+
+    def empty_diagnostic_binding(
+        norm: dict[str, Any], ast: dict[str, Any]
+    ) -> dict[str, Any]:
+        binding = copy.deepcopy(diagnostic_argument_binding)
+        binding["request_bindings"] = [{
+            "request_id": norm["request_id"],
+            "normalized_request_sha256": csha(norm),
+            "clause_ast_sha256": csha(ast),
+            "diagnostic_contexts": [],
+        }]
+        return binding
+
+    diagnostic_binding_evidence = {
+        "evidence_set_version": "0.1-candidate",
+        "bindings": {
+            "exposure": empty_diagnostic_binding(
+                normalized["exposure"], asts["exposure"]
+            ),
+            "diagnostic": empty_diagnostic_binding(
+                normalized["diagnostic"], asts["diagnostic"]
+            ),
+            "diagnostic-role-catalog": diagnostic_argument_binding,
+        },
+    }
+    write(
+        "diagnostic-predicate-argument-binding-positive.json",
+        diagnostic_binding_evidence,
+    )
 
     core = load("typed-solution-exposure-positive.json")
     registry = yaml.safe_load((HERE / "constraint-id-registry.yml").read_text(encoding="utf-8"))
@@ -816,6 +840,10 @@ def main() -> None:
                 "canonical_sha256": raw_sha(binding_path),
                 "byte_length": len(binding_path.read_bytes()),
             })
+        if name == "stage-validation-s2-positive.json":
+            for item in result["actual_input_objects"]:
+                if item["object_kind"] == "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING":
+                    item["content_json_pointer"] = "/bindings/exposure"
         for item in result["actual_input_objects"] + [result["actual_output_object"]]:
             absolute = resolve(item["content_path"])
             item["canonical_sha256"] = raw_sha(absolute)
@@ -849,6 +877,8 @@ def main() -> None:
             item["content_path"] = "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-role-catalog-positive.json"
         elif item["object_kind"] == "CLAUSE_AST":
             item["content_path"] = "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-role-catalog-positive.json"
+        elif item["object_kind"] == "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING":
+            item["content_json_pointer"] = "/bindings/diagnostic-role-catalog"
         absolute = resolve(item["content_path"])
         item["canonical_sha256"] = raw_sha(absolute)
         item["byte_length"] = len(absolute.read_bytes())
@@ -967,14 +997,17 @@ def main() -> None:
         object_kind: str,
         path: str,
         value: Any,
+        *,
+        operation: str = "replace",
+        case_base: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return copy.deepcopy(base_case) | {
+        return copy.deepcopy(case_base or base_case) | {
             "fixture_id": fixture_id,
             "fault_class": fault_class,
             "patch": [],
             "actual_input_mutation": {
                 "object_kind": object_kind,
-                "patch": [{"op": "replace", "path": path, "value": value}],
+                "patch": [{"op": operation, "path": path, "value": value}],
             },
             "semantic_mutation": {
                 "target_object": object_kind,
@@ -1038,6 +1071,39 @@ def main() -> None:
         "slot_id": "V001",
         "source_ids": ["U004"],
     }
+    exposure_base_case = copy.deepcopy(base_case)
+    exposure_base_case["valid_base_object_path"] = (
+        "fixtures/event-frame-exposure-positive.json"
+    )
+    exposure_base_case["paired_actual_object_paths"] = [
+        "fixtures/clause-ast-exposure-positive.json"
+    ]
+    dangling_exposure_context = {
+        "diagnostic_context_id": "DC999",
+        "governing_ast_node_ids": ["S999"],
+        "method_entity_bindings": [{
+            "binding_state": "BOUND",
+            "method_entity_binding_id": "DMB999",
+            "method_entity_id": "diagnostic.stool_egg_microscopy",
+            "surface_mention_ids": ["U999"],
+        }],
+        "predicate_occurrences": [{
+            "argument_bindings": [{
+                "argument_side": "SUBJECT",
+                "binding_state": "BOUND",
+                "method_entity_binding_id": None,
+                "surface_mention_ids": ["U998"],
+            }, {
+                "argument_side": "OBJECT",
+                "binding_state": "BOUND",
+                "method_entity_binding_id": "DMB999",
+                "surface_mention_ids": ["U999"],
+            }],
+            "canonical_predicate": "diagnosed_by",
+            "predicate_occurrence_id": "DPO999",
+            "proposition_node_id": "S999",
+        }],
+    }
 
     role_cases = [
         output_case("NEG-S2-DIAGNOSTIC-ROLE-MISSING-REQUIRED-PARTICIPANT", "MISSING_REQUIRED_PREDICATE_PARTICIPANT", "/frames/0/participant_slots/3/source_ids", "replace", ["U004"]),
@@ -1075,6 +1141,39 @@ def main() -> None:
                 "surface_mention_ids": [],
                 "method_entity_binding_id": "DMB001",
             },
+        ),
+        input_case(
+            "NEG-S2-DIAGNOSTIC-AUTHORITY-NONDIAGNOSTIC-WRONG-REQUEST",
+            "SUPPLIED_AUTHORITY_WRONG_REQUEST_ID",
+            "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+            "/request_bindings/0/request_id",
+            "P9B1Q-WRONG-REQUEST",
+            case_base=exposure_base_case,
+        ),
+        input_case(
+            "NEG-S2-DIAGNOSTIC-AUTHORITY-NONDIAGNOSTIC-WRONG-NORMALIZED-HASH",
+            "SUPPLIED_AUTHORITY_WRONG_NORMALIZED_REQUEST_HASH",
+            "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+            "/request_bindings/0/normalized_request_sha256",
+            "0" * 64,
+            case_base=exposure_base_case,
+        ),
+        input_case(
+            "NEG-S2-DIAGNOSTIC-AUTHORITY-NONDIAGNOSTIC-WRONG-AST-HASH",
+            "SUPPLIED_AUTHORITY_WRONG_CLAUSE_AST_HASH",
+            "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+            "/request_bindings/0/clause_ast_sha256",
+            "0" * 64,
+            case_base=exposure_base_case,
+        ),
+        input_case(
+            "NEG-S2-DIAGNOSTIC-AUTHORITY-NONDIAGNOSTIC-DANGLING-CONTEXT",
+            "SUPPLIED_AUTHORITY_UNSELECTED_DANGLING_CONTEXT",
+            "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING",
+            "/request_bindings/0/diagnostic_contexts/0",
+            dangling_exposure_context,
+            operation="add",
+            case_base=exposure_base_case,
         ),
     ]
     duplicate_id_case = output_case(

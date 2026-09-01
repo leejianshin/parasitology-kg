@@ -42,7 +42,7 @@ design_files:
   design-manifest-v0.6.yml: 4d99b717678eecf0dc1c20e629ace8a3b8a88d2a314ca84f1b3e1dd64ebc16ee
   design-manifest-v0.7.yml: 17b279ace3dbfa318018d90ce820cc84e0cd2d63023560631e49e926b57c3aed
   diagnostic-predicate-argument-binding-contract.yml: ab50a7533b853e5bf592c4403e69da050c24594f596471de1a9d25adc42a54ae
-  diagnostic-predicate-argument-binding-schema-candidate.yml: 4cf4342e8537d737d846f45a1542e592aa6bbf0b7c0e564c09f74247e104446d
+  diagnostic-predicate-argument-binding-schema-candidate.yml: 11a6cc01030da9d9e27174fbded7dba015def9a73bc1580787d86eb62326f6b5
   event-frame-schema-candidate.yml: 55b5687f8c53e733ef6108f4905105a38180e16037a8d85a6aa8af50a5ae3060
   event-identity-contract.yml: 1ccd2d10025b91cf6215a03aa8880d3974ecce78f7905d713b95c46aa48fd335
   execution-binding-sidecar-architecture-schema-candidate.yml: 61297b606964b61fe4d07995a038177e4297956b99c5a5ca1024570ce1a06e8c
@@ -60,9 +60,9 @@ design_files:
   queryir-emission-record-schema-candidate.yml: 301ab46076bb1598ad842c4cdfb31de55d565d402a2f5ef5904c4cb0d7c2d117
   queryir-projection-rule-set.yml: 483ae8da92f0e33b2196eb0ebb938895a1966b5880ea8ffb24f4140491b88f7b
   r3b-strict-schema-gate.mjs: 1679280ade5a6ae3e335d0cde73acc94beadbfec7b6994ae005867f4efa70a86
-  rebuild-reference-evidence.py: 05b8b12662c6d71a74716c94c6086c8fab8286fcad8fb99cd76dc6cb61d75231
-  reference-stage-semantic-validator.py: b6524572d44ff57c159e30d9996e1f7faf25aba77b8c464cbb6673c039a9a4a7
-  reference-validator-execution-summary-schema-candidate.yml: 626a10a047e98c6df099b2ebde22bd5e3dff701c6dca4067106907c9112e17a8
+  rebuild-reference-evidence.py: ca329167f4cbfb4de1180b780746dfb17b8351f40e041b1726c409a5d10dbec9
+  reference-stage-semantic-validator.py: fcbed924c4ce14c8ccb16480ea7b27887a2f2bbb4d62ad45d920f97ad4691bd9
+  reference-validator-execution-summary-schema-candidate.yml: e8a2744d9c3836f945469ac25414cbb8ffa546be191afe3c9c24967dc56d88b4
   stage-semantic-validation-result-schema-candidate.yml: 79efdd92d232cd7e5b8f525c3926af0765b10961c8ee492dc5a2ed6ee97875de
   stage-semantic-validator-contract.yml: 5e2e262145ed1933f11dd4d5b60d150c706aab94272af32183a893295d7f78a1
   strict-schema-gate.mjs: bced85574c5842d038593ebdb89e552671f6e037c901e3a1fe54394e71d19874
@@ -74,35 +74,35 @@ fixture_files:
   fixtures/authority-event-relation-mapping.json: 7bb747c590abd2952df3d5fa3fe31231429961b918ff933a9aa61a7b19764a6c
   fixtures/authority-predicate-type-mapping.json: ec463903f5eb37921ef4393e903814a71ef7a3ee50a28c5bd673db8fe8186961
   fixtures/authority-semantic-role-mapping.json: f70292f4c772ecf75c3d35643da3d1e764907cb35b05255b603293a0fd986166
-  fixtures/clause-ast-diagnostic-positive.json: bf4c511f74b86b482e3dbeaf003efb153b885e3bfcbf059f75cde027158b3670
-  fixtures/clause-ast-diagnostic-role-catalog-positive.json: 0650988dd2301625b2c6b7c5e355f68bdc7da07150568a622cdd68ffea399a8b
-  fixtures/clause-ast-exposure-positive.json: 8959e2cd26cd26fcb155d1accb9d345b05f0e1ebd59d6606ec4552c9f3f0f5cc
-  fixtures/clause-ast-shared-argument-positive.json: 5cb64fa1f365a400f1bee6711ef63142541dd8fb852200e5fe0843dba8e3b63a
-  fixtures/diagnostic-predicate-argument-binding-positive.json: eb66d65bee0d7fa7920ba534c7bda07a71fcf695ebf7c759b1aa500547a62045
-  fixtures/event-frame-diagnostic-positive.json: af5e25849f5825250587b742dd8bd0f3be7901c5ebff742e3eeaec76e81eb1dc
-  fixtures/event-frame-diagnostic-role-catalog-positive.json: ee419ef2df180c63748070d78e16eb8cc173d39977f4e5656cd0865172eb5e8f
-  fixtures/event-frame-exposure-positive.json: d1bee1413030aa3a32563360aaaf5efca19b25516dbafbc371ba8e9b8b21dd85
-  fixtures/execution-binding-sidecar-positive.json: 7984e44620416474d81756ed6c29cc41ca4cc5169c9900305734e05aec370edc
-  fixtures/minimality-removal-probe-E01.json: 46d69a1d57a20cab8e35bf698de4e3b07ec44c947aa17fb41ce9225080b52dfc
-  fixtures/minimality-removal-probe-M01.json: 254e3450b8224b792983bd522052df64dab491e3a1a52bc48333de968411a937
-  fixtures/minimality-removal-probe-M02.json: 0e648280019f9937719751a5b1eca7aedc35d7b1f86254b8a0707b3fce0b7b3f
-  fixtures/minimality-removal-probe-N01.json: 922fe75777d73040f5425b4e152edf32688ae57007beeb37e4d09e0490016f41
-  fixtures/minimality-removal-probe-N02.json: 3a133067ba32019319eaafdcc4101843835ca2d3ed43eb74432ab861e0509a4c
-  fixtures/minimality-removal-probe-Q01.json: f72dfb19919ca42ff720d5dad762c5abf1fbe065325c1427e15c908144c1b9ec
-  fixtures/minimality-removal-probe-Q02.json: 1292ce56aac7898951dc852cbe84838a77c478c94f8c250859d5bf4e753ba86b
-  fixtures/minimality-removal-probe-R01.json: 603134418cc09cd5416e1dd6f02526b3b34151fb8f4f0aad75b2acc5e2ebe974
-  fixtures/normalized-request-diagnostic-positive.json: 62692842fc3b12fd3fb838554120b73ff053ca0214d59719d8b1b391207789f7
-  fixtures/normalized-request-diagnostic-role-catalog-positive.json: 78ca045d82084a93057c12ce1d7718fd1e08e395624a50134dc2c23a94643312
-  fixtures/normalized-request-exposure-positive.json: 9f6e669481c50a670f54e4c1c8a6027679789d2c2b0cda75a1940c86adeba0da
-  fixtures/normalized-request-shared-argument-positive.json: eb3f2d44f14423d309ef010c464bd36088de4640beb3785f5a9d165c2f4129a7
-  fixtures/object-store-index-positive.json: ca0a6a5dc018c4d5674c1737eff5cbf181bd133dfe2982a991a2b166a87acfb3
-  fixtures/queryir-emission-record-exposure-positive.json: 41af4701f4e87142d0d19ea2be36a079afd7aa21b1f6a7f30d99b5f724b037cb
+  fixtures/clause-ast-diagnostic-positive.json: 69762b5e512951e379d0b8adced7ab4ec6356ba9c0f69d1d257e32f3ef4248ed
+  fixtures/clause-ast-diagnostic-role-catalog-positive.json: fa75b71f79dbdd1f3012bd759060db49e93b5217bf50069b1116276d44836d0c
+  fixtures/clause-ast-exposure-positive.json: 476864920a5036b92f18bb1bf62e2ef1b1c315c4112f475c017ed7b6beea5aaf
+  fixtures/clause-ast-shared-argument-positive.json: 0e23ff822dd32cb64e72199eb64e9cd9cd9ea3979f34493340a993494bb79934
+  fixtures/diagnostic-predicate-argument-binding-positive.json: 570439ca96d302d6f7b221857d6e7bc5f3fb0acad488fc4848a62f0b7e8c0db2
+  fixtures/event-frame-diagnostic-positive.json: 3c416c5ba4ab63507a50c6813e152d021df186f40be4ac19f1ea420e1aa5f506
+  fixtures/event-frame-diagnostic-role-catalog-positive.json: 37ce54814350113a52ed3bcf4f067764e8bb7eeb1276ea7573cd94b5c13cb392
+  fixtures/event-frame-exposure-positive.json: 2542b072c847f73689efe9fb2aba9a6ee686a5c4dd8e4f4d470b5561cd9fab6b
+  fixtures/execution-binding-sidecar-positive.json: ffe45732d7da789f8e73c590cc6b8df115aa037b4ba7857e7d9a83954257bb88
+  fixtures/minimality-removal-probe-E01.json: e2e64b40b90d6b84dadc71bde123cc0002018a4d51af9756d211ba0b868a486a
+  fixtures/minimality-removal-probe-M01.json: 996f8a2264bd09443d81da0fa42bd013206b4a6977e0664b9e88da4757444d86
+  fixtures/minimality-removal-probe-M02.json: 7249635bbf34b68395ab69afbd8a86eab85ece90849315b24ad054ad88cc7f02
+  fixtures/minimality-removal-probe-N01.json: 78047083596b98ee1b226d55a6b42261ddb0f74b11c3ba320e4291948c7390c0
+  fixtures/minimality-removal-probe-N02.json: 43159278f87899713e78e6179e9f9213f1ffb705b3c91a38bb6ae0fd58afc0ab
+  fixtures/minimality-removal-probe-Q01.json: cd971fe2cc8a3338a3b818793aab8f41c0b42841d260443412b760b7521ec21f
+  fixtures/minimality-removal-probe-Q02.json: 1a70b62be951a72a1777319acd6731cf315b10da3508a4c8d81addb96eab6ed5
+  fixtures/minimality-removal-probe-R01.json: 5ba127fe72c9e7d8fa6ed56bdee80b0d14062b7d457d7a6df2450225d315d6d7
+  fixtures/normalized-request-diagnostic-positive.json: 81ad88df728babbf5d0b53b25b5d400b0eaaccea14ce88060cb2b1c439b6a581
+  fixtures/normalized-request-diagnostic-role-catalog-positive.json: 0bd205120a1815919c4f0f9e4dba1575b90d4a72b70c012b47d7c28dc90bd9c8
+  fixtures/normalized-request-exposure-positive.json: d63cc144a71dc50b98fcdd97e26c9f34c36e30320ead2dea8fbc535ac9958274
+  fixtures/normalized-request-shared-argument-positive.json: df4b94f5d3d77996bf71bc62dbd1d664b5d550559d9ae3f368245e635e9a96d6
+  fixtures/object-store-index-positive.json: 6bd21612115458e30cf60c75e762133d72fc3272eaffa67da61250b17247452c
+  fixtures/queryir-emission-record-exposure-positive.json: d664b9ad326c58ee15dcd74810f52e0acb4a1f1b68d1e7ff80afe0b3015489e5
   fixtures/queryir-exposure-positive.json: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
   fixtures/r3a-reference-override-negative-fixtures.yml: ad4d6686d1c270fc1679ec83465ecfc32e517c9c1f0f86553e41ce83cdd2c488
-  fixtures/r3a-reference-override-positive.json: 0e9bf3eb74c78a85c971e359382fbe2e1fde3d0bb13fe1c03f8bc415c36519af
+  fixtures/r3a-reference-override-positive.json: 0393c41f07ace3fa21ec690c7aaf980e9aef8b4c25adfa979638b54fe534507b
   fixtures/r3b-negation-scope-negative-fixtures.yml: 06dcc1de9b5b2b6498f7c56cf7faa679575e366d83d4d11ceb1aa4368f36c65e
   fixtures/r3b-negation-scope-positive.json: 64ba5c7378efc5b7de02dfe335e282e03f599d77efaa0dfbc7394321e7da8413
-  fixtures/reference-validator-execution-summary.json: 0576136e31e8e5cd34660e33989e6e85db62f0576a0b89cc5d8306b2980b9688
+  fixtures/reference-validator-execution-summary.json: 788e7cac003b19ffe13afbd1209272594be509b0d24316648ecac506b702cca9
   fixtures/request-diagnostic-positive.json: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
   fixtures/request-diagnostic-role-catalog-positive.json: c632d4eb18c1e93340c1c342c1d5424f4aca393535f3d4dcb8eea72b4de34394
   fixtures/request-exposure-positive.json: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
@@ -111,28 +111,28 @@ fixture_files:
   fixtures/retrieval-result-exposure-positive.json: cf7c50f58ef35e311f849feebfdb29ebb50418d3769d9ba2de715fcc8befba05
   fixtures/semantic-universe-exposure-positive.json: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
   fixtures/semantic-validation-exposure-positive.json: 9f45abfbc151863f659ee8c966c3b51d4ab7798025767c92af4c805a361045ce
-  fixtures/stage-validation-s0-positive.json: dbfa8362bad931276b385154298f9723f57e3f87c602be3e4501783c01c6a619
-  fixtures/stage-validation-s1-positive.json: d4b22505a2662c6a32d0c35bf2de1db342546006d74a0df55527a9a9312b84e1
-  fixtures/stage-validation-s1-shared-argument-positive.json: 2d9a2315bfb65dd2da63333e1673875e708804d11bbe6a6ae40d2bf1957b5dda
-  fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json: 41b8d7dcef7dc4888b41cbd598c38fcfb51887a039684c2f11f589c3293fe435
-  fixtures/stage-validation-s2-positive.json: 5cf57036f74c5bc6ce787c8c683f580ad6641d5a632ff6445d7b750b94a670d3
-  fixtures/stage-validation-s3-positive.json: d5210d0490da3566a1ae4c166926afc0ba907de5c4e6a8cf045f51fae39b633d
-  fixtures/stage-validation-s4-positive.json: ddc551406e43932665be58d0f32c6d04a72b4f20888217477f29cf539f5d0471
-  fixtures/stage-validator-negative-fixtures.yml: 06a8f65a2daaa3dea350644a1ff153145b8d55c030b752be89de63d54b8dc19e
-  fixtures/typed-result-exposure-positive.json: 23b658dbc3fd432a04ffc722dd07cb31f7a8c0ec926e331b96bd3ff0b18d22af
+  fixtures/stage-validation-s0-positive.json: 7e390ad4e02dfc2a536dc649d20ed2b2a21aa8d0d8c8add5c756a0bd2e5014f2
+  fixtures/stage-validation-s1-positive.json: 01a2f204714e6560aee789446ed7d6ae6dd4d0f30f814d6f2cd23a0f88503813
+  fixtures/stage-validation-s1-shared-argument-positive.json: b32a1342a433e86f78fb68bcdaa10d03635b84dfd09e7123d6551a2182cccb82
+  fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json: d962a02d5b76f939ce25c49b5a60f801c3615ded695b9caa3ef5eaca6abd1abd
+  fixtures/stage-validation-s2-positive.json: 5d04d08b1149c3b4a2054faa69fcf4a5bf383842fdeec19610e03fd45ff988dd
+  fixtures/stage-validation-s3-positive.json: bcfd1919ed2c6b9471f1c85ea7ce0109a2eff88204f10ae9d7302e74fc35076b
+  fixtures/stage-validation-s4-positive.json: 314c0408741097df9a287707b661fa5124dd585980726eb603ecbf3dc06939f8
+  fixtures/stage-validator-negative-fixtures.yml: cabde3377067f6f148abc587aac2c5893d5c9a18f54ec28f647969221e240f69
+  fixtures/typed-result-exposure-positive.json: e26655c4308d5deab386ca6086a78caa94ef39aadb9ce49e413a084a525ffcb8
   fixtures/typed-solution-exposure-positive.json: c782fa4fad2220d422f897886ca0c26f549aeccc092613aae1548bbc44c1dae5
 executable_evidence:
   path: reference-stage-semantic-validator.py
-  sha256: b6524572d44ff57c159e30d9996e1f7faf25aba77b8c464cbb6673c039a9a4a7
+  sha256: fcbed924c4ce14c8ccb16480ea7b27887a2f2bbb4d62ad45d920f97ad4691bd9
   configuration_path: stage-semantic-validator-contract.yml
   configuration_sha256: 5e2e262145ed1933f11dd4d5b60d150c706aab94272af32183a893295d7f78a1
   summary_path: fixtures/reference-validator-execution-summary.json
-  summary_sha256: 0576136e31e8e5cd34660e33989e6e85db62f0576a0b89cc5d8306b2980b9688
+  summary_sha256: 788e7cac003b19ffe13afbd1209272594be509b0d24316648ecac506b702cca9
   required_result: PASS
   positive_cases: 18
   integrated_r3b_positive_cases: 4
   minimality_cases: 8
-  negative_cases: 80
+  negative_cases: 84
   repeat_runs: 3
 shared_negation_semantic_authority:
   data_path: negation-surface-scope-authority.yml
@@ -172,8 +172,8 @@ failure_code_governance:
   registry_mapping_count: 48
   validator_constraint_mapping_count: 48
   executable_constraint_count: 48
-  formal_fixture_count: 96
-  explicit_fixture_failure_code_count: 96
+  formal_fixture_count: 100
+  explicit_fixture_failure_code_count: 100
   required_missing_executable_constraint_count: 0
   required_mismatch_count: 0
   wrong_fixture_code_gate: REJECT
@@ -186,10 +186,10 @@ failure_code_governance:
 negative_fixture_mutation_isolation:
   model_path: negative-fixture-semantic-mutation-model.yml
   semantic_mutation_target_cardinality: 1
-  stage_fixture_count: 66
+  stage_fixture_count: 70
   r3a_fixture_count: 16
   r3b_fixture_count: 14
-  total_fixture_count: 96
+  total_fixture_count: 100
   derived_updates_runner_owned: true
   legacy_cases:
   - NEG-S3-EMPTY-UNIQUE
