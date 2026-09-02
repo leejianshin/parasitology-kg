@@ -6,47 +6,47 @@ base_objects:
 - path: fixtures/request-exposure-positive.json
   canonical_sha256: f4736096fe0ebfdd4407cd644f150bb7305c4e5ea3545b17bbe3d6f07336039f
 - path: fixtures/normalized-request-exposure-positive.json
-  canonical_sha256: d63cc144a71dc50b98fcdd97e26c9f34c36e30320ead2dea8fbc535ac9958274
+  canonical_sha256: a50fb17d57eafe2cb30894b63672eb58b7bb0fb5031fecf3bf4387ca295ab0f6
 - path: fixtures/clause-ast-exposure-positive.json
-  canonical_sha256: 476864920a5036b92f18bb1bf62e2ef1b1c315c4112f475c017ed7b6beea5aaf
+  canonical_sha256: a88af3166157a331bd2ecc07af844f946b27fddcb435011c66a2e412f9851e81
 - path: fixtures/event-frame-exposure-positive.json
-  canonical_sha256: 2542b072c847f73689efe9fb2aba9a6ee686a5c4dd8e4f4d470b5561cd9fab6b
+  canonical_sha256: c6c25f27b7731b982acf7eb2844d72c709e220bf481f0525cd1ca90a473ca670
 - path: fixtures/request-diagnostic-positive.json
   canonical_sha256: 150eb40b23da189b2ea2a3486f091c2a46215dc5b52680adfabec92209c72bc5
 - path: fixtures/normalized-request-diagnostic-positive.json
-  canonical_sha256: 81ad88df728babbf5d0b53b25b5d400b0eaaccea14ce88060cb2b1c439b6a581
+  canonical_sha256: 355c9fda827e5d8853aff30941897593be98e0cfc67b961830fa2afe2c25970a
 - path: fixtures/clause-ast-diagnostic-positive.json
-  canonical_sha256: 69762b5e512951e379d0b8adced7ab4ec6356ba9c0f69d1d257e32f3ef4248ed
+  canonical_sha256: 3e2042c26b70f589f367bfa506c5feca84d4d4988e20da7cd633d26189224c9d
 - path: fixtures/event-frame-diagnostic-positive.json
-  canonical_sha256: 3c416c5ba4ab63507a50c6813e152d021df186f40be4ac19f1ea420e1aa5f506
+  canonical_sha256: 2235ae28c483dbecc3ba28e64237a05c593247979c8c1057f12d415fbb9929a9
 - path: fixtures/typed-result-exposure-positive.json
-  canonical_sha256: e26655c4308d5deab386ca6086a78caa94ef39aadb9ce49e413a084a525ffcb8
+  canonical_sha256: 82af3a2c424a2b90668bceddd6a73a04b5e4a58dfc0f702729b235badf9c227d
 - path: fixtures/queryir-exposure-positive.json
   canonical_sha256: 88eb16ed9406332983193449b23f7bb8a99caf282f10242a8dc514f15eceaf65
 - path: fixtures/object-store-index-positive.json
-  canonical_sha256: 6bd21612115458e30cf60c75e762133d72fc3272eaffa67da61250b17247452c
+  canonical_sha256: c420f7da879c5e32890cc11591e573d97647f25eb4e9fa63324302ebef863663
 - path: fixtures/typed-solution-exposure-positive.json
   canonical_sha256: c782fa4fad2220d422f897886ca0c26f549aeccc092613aae1548bbc44c1dae5
 - path: fixtures/queryir-emission-record-exposure-positive.json
-  canonical_sha256: d664b9ad326c58ee15dcd74810f52e0acb4a1f1b68d1e7ff80afe0b3015489e5
+  canonical_sha256: f4633b50e76b898d07277a78c036525c7d3cc0eae7875437729455b96f5613cd
 - path: fixtures/semantic-universe-exposure-positive.json
-  canonical_sha256: fc77573976431196de63dd9796df7cf04d30ad381d556653427cad31f32d5eaf
+  canonical_sha256: 4ab3063fc2fc4b322dc0168d2cbec8daecd08da42e6db2de526fe9731e238042
 - path: fixtures/execution-binding-sidecar-positive.json
-  canonical_sha256: ffe45732d7da789f8e73c590cc6b8df115aa037b4ba7857e7d9a83954257bb88
+  canonical_sha256: ddaef8d37a35c4524ec7a7fe7319cdc2adf7059b536d06ee8303da675d6808dd
 - path: fixtures/request-shared-argument-positive.json
   canonical_sha256: 95cf7ef66a4734cade42ddec49422b1f99c4b75381d5c2c58d7a9fb4923d304b
 - path: fixtures/normalized-request-shared-argument-positive.json
-  canonical_sha256: df4b94f5d3d77996bf71bc62dbd1d664b5d550559d9ae3f368245e635e9a96d6
+  canonical_sha256: b00c1653d6ec22b053868b4a4cb8bf9125a3ef6c1115cc2fde0303d8df3f2cc0
 - path: fixtures/clause-ast-shared-argument-positive.json
-  canonical_sha256: 0e23ff822dd32cb64e72199eb64e9cd9cd9ea3979f34493340a993494bb79934
+  canonical_sha256: 6f2e80d852c899cdaa8cac7450517b2203e190c86ffd71c460c928baf8b88b4e
 - path: fixtures/request-diagnostic-role-catalog-positive.json
   canonical_sha256: c632d4eb18c1e93340c1c342c1d5424f4aca393535f3d4dcb8eea72b4de34394
 - path: fixtures/normalized-request-diagnostic-role-catalog-positive.json
-  canonical_sha256: 0bd205120a1815919c4f0f9e4dba1575b90d4a72b70c012b47d7c28dc90bd9c8
+  canonical_sha256: d31a8b60192603213de2e09deb0bb0d29a8fb9517d03170f49f68cf49c5316b7
 - path: fixtures/clause-ast-diagnostic-role-catalog-positive.json
-  canonical_sha256: fa75b71f79dbdd1f3012bd759060db49e93b5217bf50069b1116276d44836d0c
+  canonical_sha256: 5a228b9bce63525afc05dd35368386e128584b0308fbd7d952aa80bd1c640b56
 - path: fixtures/event-frame-diagnostic-role-catalog-positive.json
-  canonical_sha256: 37ce54814350113a52ed3bcf4f067764e8bb7eeb1276ea7573cd94b5c13cb392
+  canonical_sha256: ebf7ee4deed2c8150b5757c3eca0876ef83af524d4e8a5a2b4255e07ef90ed9d
 cases:
 - fixture_id: NEG-S0-NONLOSSLESS-SPAN-MAP
   stage: S0_NORMALIZED_REQUEST
@@ -476,7 +476,7 @@ cases:
   expected_result: FAIL_CLOSED
   expected_constraint_id: CNS-BIND-ACTUAL_OBJECT_HASH
   expected_failure_code: ACTUAL_OBJECT_BINDING_MISMATCH
-  base_object_canonical_sha256: ffe45732d7da789f8e73c590cc6b8df115aa037b4ba7857e7d9a83954257bb88
+  base_object_canonical_sha256: ddaef8d37a35c4524ec7a7fe7319cdc2adf7059b536d06ee8303da675d6808dd
   semantic_mutation_target_count: 1
   semantic_mutation:
     target_object: STAGE_BASE_OBJECT

@@ -16,7 +16,9 @@ import hashlib
 import importlib.util
 import itertools
 import json
+import re
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -52,6 +54,7 @@ _SCHEMA_GATE_CACHE: dict[str, Any] | None = None
 _REGISTRY_ORDER_CACHE: dict[str, int] | None = None
 _REGISTRY_FAILURE_CACHE: dict[str, str] | None = None
 _NEGATIVE_MUTATION_MODEL_CACHE: dict[str, Any] | None = None
+_PROOF_CHAIN_CACHE: dict[tuple[str, str, str], list[str]] = {}
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -79,6 +82,105 @@ def load_yaml(path: Path) -> Any:
 def resolve_review_path(relative: str) -> Path:
     candidate = HERE / relative
     return candidate if candidate.exists() else REPO / relative
+
+
+_PROOF_REFERENCE_PATHS = {
+    "SEMANTIC_UNIVERSE": re.compile(
+        r"^fixtures/semantic-universe-exposure-positive\.json$"
+    ),
+    "TYPED_SOLUTION": re.compile(
+        r"^fixtures/typed-solution-exposure-positive\.json$"
+    ),
+    "REMOVAL_PROBE": re.compile(
+        r"^fixtures/minimality-removal-probe-(?:M|E|R|N|Q|F|REF|OVR)[0-9]{2,3}\.json$"
+    ),
+}
+_PROOF_PRODUCTION_PATHS = {
+    "SEMANTIC_UNIVERSE": re.compile(
+        r"^proof-objects/semantic-universe/([0-9a-f]{64})\.json$"
+    ),
+    "TYPED_SOLUTION": re.compile(
+        r"^proof-objects/typed-solution-core/([0-9a-f]{64})\.json$"
+    ),
+    "REMOVAL_PROBE": re.compile(
+        r"^proof-objects/removal-probe/([0-9a-f]{64})\.json$"
+    ),
+}
+
+
+def _proof_path_match(relative: str, expected_kind: str) -> tuple[bool, str | None]:
+    """Return whether a canonical, narrowly licensed proof path is used."""
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or relative.startswith("/")
+        or re.match(r"^[A-Za-z]:", relative)
+        or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*://", relative)
+        or "//" in relative
+    ):
+        return False, None
+    parts = relative.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        return False, None
+    reference = _PROOF_REFERENCE_PATHS[expected_kind].fullmatch(relative)
+    if reference:
+        return True, None
+    production = _PROOF_PRODUCTION_PATHS[expected_kind].fullmatch(relative)
+    return (True, production.group(1)) if production else (False, None)
+
+
+def resolve_proof_object(
+    relative: str,
+    expected_kind: str,
+    *,
+    proof_root: Path = HERE,
+    request_id: str | None = None,
+) -> tuple[dict[str, Any], Path, str] | None:
+    """Safely resolve and independently type/hash-check one proof object."""
+    allowed, content_address = _proof_path_match(relative, expected_kind)
+    if not allowed:
+        return None
+    if relative.startswith("fixtures/") and request_id not in (
+        None,
+        "P9B1Q-ARCH-FIXTURE-001",
+    ):
+        return None
+    root = proof_root.resolve()
+    candidate = proof_root.joinpath(*relative.split("/"))
+    try:
+        if any(part.is_symlink() for part in (candidate, *candidate.parents) if part != root):
+            return None
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(root)
+    except (FileNotFoundError, OSError, RuntimeError, ValueError):
+        return None
+    if not resolved.is_file():
+        return None
+    try:
+        raw = resolved.read_bytes()
+        value = json.loads(raw)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    canonical = canonical_bytes(value)
+    if raw != canonical:
+        return None
+    actual_sha = sha_bytes(raw)
+    if content_address is not None and content_address != actual_sha:
+        return None
+    if expected_kind == "SEMANTIC_UNIVERSE":
+        valid = (
+            value.get("proof_object_kind") == "SEMANTIC_UNIVERSE"
+            and schema_valid("minimality-proof-schema-candidate.yml", value)
+        )
+    elif expected_kind == "REMOVAL_PROBE":
+        valid = (
+            value.get("proof_object_kind") == "REMOVAL_PROBE"
+            and schema_valid("minimality-proof-schema-candidate.yml", value)
+        )
+    else:
+        valid = schema_valid("typed-solution-core-schema-candidate.yml", value)
+    return (value, resolved, actual_sha) if valid else None
 
 
 def pointer_get(value: Any, pointer: str) -> Any:
@@ -1663,6 +1765,8 @@ def validate_s3(
     enumerated = 0 if semantic_errors else finite_solution_count(core, emission, inputs)
     if (not semantic_errors or empty_unique) and typed["solution_cardinality"] != ("ONE" if enumerated == 1 else "ZERO" if enumerated == 0 else "MULTIPLE"):
         errors.append(error("CNS-SOLVER-SOLUTION_CARDINALITY", "SOLUTION_CARDINALITY_MISMATCH", "/solution_cardinality"))
+    if not errors and proof_artifact_chain_errors(typed, inputs):
+        errors.append(error("CNS-SOLVER-MINIMALITY", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     return ordered(errors)
 
 
@@ -1746,13 +1850,17 @@ def validate_s4(
     )
     registered_constraints = set(registry_failure_map())
     for witness in minimality["retained_object_witnesses"]:
-        probe_path = resolve_review_path(witness["removal_probe_path"])
-        if not probe_path.exists():
+        probe_result = resolve_proof_object(
+            witness["removal_probe_path"],
+            "REMOVAL_PROBE",
+            request_id=typed["request_id"],
+        )
+        if probe_result is None:
             minimality_witness_valid = False
             continue
-        probe = load_json(probe_path)
+        probe, _, probe_sha = probe_result
         minimality_witness_valid &= (
-            resolved_object_hash(probe_path)[0] == witness["removal_probe_sha256"]
+            probe_sha == witness["removal_probe_sha256"]
             and probe["removed_semantic_object_id"] == witness["semantic_object_id"]
             and probe["removed_query_ir_json_pointer"]
             == witness["query_ir_json_pointer"]
@@ -1765,6 +1873,9 @@ def validate_s4(
         errors.append(error("CNS-EMIT-MINIMALITY_WITNESS", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     if not rooted_witness_paths_valid(emission) or material_ids(core) != set(emission["minimality_witness"]["retained_semantic_object_ids"]):
         errors.append(error("CNS-EMIT-LICENSE_COVERAGE", "LICENSE_DAG_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
+    s3_proof_inputs = load_stage_result("S3")[1]
+    if not errors and proof_artifact_chain_errors(typed, s3_proof_inputs):
+        errors.append(error("CNS-EMIT-MINIMALITY_WITNESS", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     return ordered(errors)
 
 
@@ -1777,6 +1888,158 @@ def resolved_object_hash(path: Path) -> tuple[str, int]:
             return "NONCANONICAL", len(raw)
         return sha_bytes(raw), len(raw)
     return sha_bytes(raw), len(raw)
+
+
+def proof_artifact_chain_errors(
+    typed: dict[str, Any],
+    inputs: dict[str, Any],
+    *,
+    proof_root: Path = HERE,
+) -> list[str]:
+    """Validate persisted S3 proof bytes without trusting candidate declarations."""
+    cache_key = (
+        canonical_sha(typed),
+        canonical_sha(inputs),
+        str(proof_root.resolve()),
+    )
+    if cache_key in _PROOF_CHAIN_CACHE:
+        return list(_PROOF_CHAIN_CACHE[cache_key])
+    failures: list[str] = []
+    try:
+        if typed.get("status") != "UNIQUE" or typed.get("solution_cardinality") != "ONE":
+            return ["typed_result_not_unique"]
+        request_id = typed["request_id"]
+        core = solution_core(typed)
+        emission = typed["selected_solution"]["queryir_emission_record"]
+        minimality = emission["minimality_witness"]
+        query_ir = emission["query_ir"]
+    except (KeyError, TypeError):
+        return ["typed_result_shape"]
+
+    if emission.get("query_ir_sha256") != canonical_sha(query_ir):
+        failures.append("query_ir_hash")
+    if emission.get("semantic_solution_core_sha256") != canonical_sha(core):
+        failures.append("semantic_solution_core_hash")
+
+    universe_result = resolve_proof_object(
+        minimality.get("semantic_universe_path", ""),
+        "SEMANTIC_UNIVERSE",
+        proof_root=proof_root,
+        request_id=request_id,
+    )
+    if universe_result is None:
+        failures.append("semantic_universe_resolution")
+        universe = None
+    else:
+        universe, _, universe_sha = universe_result
+        if universe_sha != minimality.get("semantic_universe_sha256"):
+            failures.append("semantic_universe_declared_hash")
+        if universe.get("request_id") != request_id:
+            failures.append("semantic_universe_request")
+        if universe.get("query_ir_sha256") != canonical_sha(query_ir):
+            failures.append("semantic_universe_query_ir")
+        semantic_objects = universe.get("semantic_objects", [])
+        universe_ids = [item.get("semantic_object_id") for item in semantic_objects]
+        if (
+            len(universe_ids) != len(set(universe_ids))
+            or set(universe_ids) != material_ids(core)
+            or set(universe_ids)
+            != set(minimality.get("retained_semantic_object_ids", []))
+        ):
+            failures.append("semantic_universe_completeness")
+        for item in semantic_objects:
+            try:
+                actual = canonical_sha(
+                    pointer_get(query_ir, item["query_ir_json_pointer"])
+                )
+            except (KeyError, IndexError, TypeError, ValueError):
+                failures.append("semantic_universe_pointer")
+                continue
+            if item.get("canonical_sha256") != actual:
+                failures.append("semantic_universe_object_hash")
+
+    witness_body = {
+        key: value for key, value in minimality.items() if key != "witness_sha256"
+    }
+    if minimality.get("witness_sha256") != canonical_sha(witness_body):
+        failures.append("minimality_witness_hash")
+    witnesses = minimality.get("retained_object_witnesses", [])
+    if {item.get("semantic_object_id") for item in witnesses} != material_ids(core):
+        failures.append("minimality_witness_completeness")
+
+    expected_executable_sha = sha_bytes(Path(__file__).read_bytes())
+    expected_contract_sha = sha_bytes(CONTRACT.read_bytes())
+    expected_constraint_set_sha = sha_bytes(CONSTRAINT_SET.read_bytes())
+    for witness in witnesses:
+        probe_result = resolve_proof_object(
+            witness.get("removal_probe_path", ""),
+            "REMOVAL_PROBE",
+            proof_root=proof_root,
+            request_id=request_id,
+        )
+        if probe_result is None:
+            failures.append("removal_probe_resolution")
+            continue
+        probe, _, probe_sha = probe_result
+        if probe_sha != witness.get("removal_probe_sha256"):
+            failures.append("removal_probe_declared_hash")
+        if (
+            probe.get("request_id") != request_id
+            or probe.get("removed_semantic_object_id")
+            != witness.get("semantic_object_id")
+            or probe.get("removed_query_ir_json_pointer")
+            != witness.get("query_ir_json_pointer")
+        ):
+            failures.append("removal_probe_identity")
+        if (
+            probe.get("validator_executable_sha256") != expected_executable_sha
+            or probe.get("validator_configuration_sha256") != expected_contract_sha
+            or probe.get("validator_contract_sha256") != expected_contract_sha
+            or probe.get("constraint_set_sha256") != expected_constraint_set_sha
+        ):
+            failures.append("removal_probe_authority_binding")
+        base_result = resolve_proof_object(
+            probe.get("base_typed_solution_path", ""),
+            "TYPED_SOLUTION",
+            proof_root=proof_root,
+            request_id=request_id,
+        )
+        if base_result is None:
+            failures.append("typed_solution_resolution")
+            continue
+        base_core, _, base_sha = base_result
+        if (
+            base_sha != probe.get("base_typed_solution_sha256")
+            or base_core != core
+            or base_sha != emission.get("semantic_solution_core_sha256")
+        ):
+            failures.append("typed_solution_binding")
+            continue
+        try:
+            candidate = apply_patch(base_core, probe["mutation"])
+            refresh_core_hashes(candidate)
+        except (KeyError, IndexError, TypeError, ValueError):
+            failures.append("removal_probe_mutation")
+            continue
+        semantic_errors = validate_semantic_authority(
+            candidate, inputs, require_complete=True
+        )
+        observed = [semantic_errors[0]["constraint_id"]] if semantic_errors else []
+        enumerated = finite_solution_count(candidate, emission, inputs)
+        if (
+            canonical_sha(candidate) != probe.get("candidate_typed_solution_sha256")
+            or candidate.get("semantic_object_set_sha256")
+            != probe.get("candidate_semantic_object_set_sha256")
+            or probe.get("recomputed_derived_hashes")
+            != ["semantic_object_set_sha256"]
+            or enumerated != probe.get("enumerated_solution_count_after_removal")
+            or observed != probe.get("expected_unsatisfied_constraint_ids")
+            or probe.get("expected_result") != "FAIL_CLOSED"
+        ):
+            failures.append("removal_probe_replay")
+    result = sorted(set(failures))
+    _PROOF_CHAIN_CACHE[cache_key] = list(result)
+    return result
 
 
 def run_schema_gate() -> dict[str, Any]:
@@ -3276,6 +3539,259 @@ def normalized_by_request_id() -> dict[str, dict[str, Any]]:
     return result
 
 
+def run_proof_path_probes() -> dict[str, bool]:
+    """Exercise production proof paths and their fail-closed security boundary."""
+    base_typed = load_json(FIXTURES / "typed-result-exposure-positive.json")
+    base_core = load_json(FIXTURES / "typed-solution-exposure-positive.json")
+    base_emission = load_json(
+        FIXTURES / "queryir-emission-record-exposure-positive.json"
+    )
+    base_universe = load_json(FIXTURES / "semantic-universe-exposure-positive.json")
+    stage = load_json(FIXTURES / "stage-validation-s3-positive.json")
+    inputs = {
+        reference["object_kind"]: pointer_get(
+            load_json(resolve_review_path(reference["content_path"]))
+            if resolve_review_path(reference["content_path"]).suffix == ".json"
+            else load_yaml(resolve_review_path(reference["content_path"])),
+            reference["content_json_pointer"],
+        )
+        for reference in stage["actual_input_objects"]
+        if resolve_review_path(reference["content_path"]).suffix
+        in (".json", ".yml", ".yaml")
+    }
+    request_id = "P9B1Q-PRODUCTION-PROOF-PROBE-001"
+
+    def write_proof(root: Path, kind: str, value: dict[str, Any]) -> tuple[str, str]:
+        digest = canonical_sha(value)
+        directory = {
+            "SEMANTIC_UNIVERSE": "semantic-universe",
+            "TYPED_SOLUTION": "typed-solution-core",
+            "REMOVAL_PROBE": "removal-probe",
+        }[kind]
+        relative = f"proof-objects/{directory}/{digest}.json"
+        destination = root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(canonical_bytes(value))
+        return relative, digest
+
+    def with_universe(
+        typed: dict[str, Any], path: str, digest: str
+    ) -> dict[str, Any]:
+        output = copy.deepcopy(typed)
+        minimality = output["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]
+        minimality["semantic_universe_path"] = path
+        minimality["semantic_universe_sha256"] = digest
+        body = dict(minimality)
+        body.pop("witness_sha256", None)
+        minimality["witness_sha256"] = canonical_sha(body)
+        return output
+
+    def replace_probe(
+        typed: dict[str, Any], semantic_object_id: str, path: str, digest: str
+    ) -> dict[str, Any]:
+        output = copy.deepcopy(typed)
+        witnesses = output["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["retained_object_witnesses"]
+        target = next(
+            item
+            for item in witnesses
+            if item["semantic_object_id"] == semantic_object_id
+        )
+        target["removal_probe_path"] = path
+        target["removal_probe_sha256"] = digest
+        minimality = output["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]
+        body = dict(minimality)
+        body.pop("witness_sha256", None)
+        minimality["witness_sha256"] = canonical_sha(body)
+        return output
+
+    with tempfile.TemporaryDirectory(prefix="p9b1q-proof-path-") as temporary:
+        root = Path(temporary)
+        core_path, core_sha = write_proof(root, "TYPED_SOLUTION", base_core)
+
+        query_ir = copy.deepcopy(base_emission["query_ir"])
+        query_ir["request_id"] = request_id
+        emission = copy.deepcopy(base_emission)
+        emission["request_id"] = request_id
+        emission["query_ir"] = query_ir
+        emission["query_ir_sha256"] = canonical_sha(query_ir)
+        emission["semantic_solution_core_sha256"] = core_sha
+        for trace in emission["field_traces"]:
+            trace["emitted_value_sha256"] = canonical_sha(
+                pointer_get(query_ir, trace["query_ir_json_pointer"])
+            )
+
+        universe = copy.deepcopy(base_universe)
+        universe["request_id"] = request_id
+        universe["query_ir_sha256"] = canonical_sha(query_ir)
+        for item in universe["semantic_objects"]:
+            item["canonical_sha256"] = canonical_sha(
+                pointer_get(query_ir, item["query_ir_json_pointer"])
+            )
+        universe_path, universe_sha = write_proof(
+            root, "SEMANTIC_UNIVERSE", universe
+        )
+        emission["minimality_witness"]["semantic_universe_path"] = universe_path
+        emission["minimality_witness"]["semantic_universe_sha256"] = universe_sha
+
+        probe_values: dict[str, tuple[dict[str, Any], str, str]] = {}
+        for fixture_path in sorted(FIXTURES.glob("minimality-removal-probe-*.json")):
+            probe = load_json(fixture_path)
+            probe["request_id"] = request_id
+            probe["base_typed_solution_path"] = core_path
+            probe["base_typed_solution_sha256"] = core_sha
+            probe["validator_executable_sha256"] = sha_bytes(Path(__file__).read_bytes())
+            probe["validator_configuration_sha256"] = sha_bytes(CONTRACT.read_bytes())
+            probe["validator_contract_sha256"] = sha_bytes(CONTRACT.read_bytes())
+            probe["constraint_set_sha256"] = sha_bytes(CONSTRAINT_SET.read_bytes())
+            probe_path, probe_sha = write_proof(root, "REMOVAL_PROBE", probe)
+            probe_values[probe["removed_semantic_object_id"]] = (
+                probe,
+                probe_path,
+                probe_sha,
+            )
+        for witness in emission["minimality_witness"]["retained_object_witnesses"]:
+            _, probe_path, probe_sha = probe_values[witness["semantic_object_id"]]
+            witness["removal_probe_path"] = probe_path
+            witness["removal_probe_sha256"] = probe_sha
+        witness_body = dict(emission["minimality_witness"])
+        witness_body.pop("witness_sha256", None)
+        emission["minimality_witness"]["witness_sha256"] = canonical_sha(witness_body)
+
+        typed = copy.deepcopy(base_typed)
+        typed["request_id"] = request_id
+        typed["selected_solution"] = copy.deepcopy(base_core)
+        typed["selected_solution"]["queryir_emission_record"] = emission
+
+        results: dict[str, bool] = {}
+        results["production_generic_path_resolution"] = not proof_artifact_chain_errors(
+            typed, inputs, proof_root=root
+        )
+        results["wrong_object_kind_rejection"] = (
+            resolve_proof_object(
+                core_path,
+                "SEMANTIC_UNIVERSE",
+                proof_root=root,
+                request_id=request_id,
+            )
+            is None
+        )
+        wrong_name = (
+            "proof-objects/semantic-universe/"
+            + ("0" * 64)
+            + ".json"
+        )
+        wrong_name_path = root / wrong_name
+        wrong_name_path.parent.mkdir(parents=True, exist_ok=True)
+        wrong_name_path.write_bytes(canonical_bytes(universe))
+        results["hash_mismatch_rejection"] = (
+            resolve_proof_object(
+                wrong_name,
+                "SEMANTIC_UNIVERSE",
+                proof_root=root,
+                request_id=request_id,
+            )
+            is None
+        )
+
+        request_mismatch = copy.deepcopy(universe)
+        request_mismatch["request_id"] = "P9B1Q-DIFFERENT-REQUEST"
+        mismatch_path, mismatch_sha = write_proof(
+            root, "SEMANTIC_UNIVERSE", request_mismatch
+        )
+        results["request_mismatch_rejection"] = bool(
+            proof_artifact_chain_errors(
+                with_universe(typed, mismatch_path, mismatch_sha),
+                inputs,
+                proof_root=root,
+            )
+        )
+
+        alternate_core = copy.deepcopy(base_core)
+        alternate_core["resolved_mentions"] = alternate_core["resolved_mentions"][:-1]
+        refresh_core_hashes(alternate_core)
+        alternate_path, alternate_sha = write_proof(
+            root, "TYPED_SOLUTION", alternate_core
+        )
+        first_probe_id = sorted(probe_values)[0]
+        first_probe = copy.deepcopy(probe_values[first_probe_id][0])
+        first_probe["base_typed_solution_path"] = alternate_path
+        first_probe["base_typed_solution_sha256"] = alternate_sha
+        alternate_probe_path, alternate_probe_sha = write_proof(
+            root, "REMOVAL_PROBE", first_probe
+        )
+        results["solution_mismatch_rejection"] = bool(
+            proof_artifact_chain_errors(
+                replace_probe(
+                    typed,
+                    first_probe_id,
+                    alternate_probe_path,
+                    alternate_probe_sha,
+                ),
+                inputs,
+                proof_root=root,
+            )
+        )
+
+        universe_mismatch = copy.deepcopy(universe)
+        universe_mismatch["semantic_objects"][0]["canonical_sha256"] = "0" * 64
+        universe_mismatch_path, universe_mismatch_sha = write_proof(
+            root, "SEMANTIC_UNIVERSE", universe_mismatch
+        )
+        results["semantic_universe_mismatch_rejection"] = bool(
+            proof_artifact_chain_errors(
+                with_universe(
+                    typed, universe_mismatch_path, universe_mismatch_sha
+                ),
+                inputs,
+                proof_root=root,
+            )
+        )
+        missing_path = "proof-objects/semantic-universe/" + ("1" * 64) + ".json"
+        results["missing_object_rejection"] = bool(
+            proof_artifact_chain_errors(
+                with_universe(typed, missing_path, "1" * 64),
+                inputs,
+                proof_root=root,
+            )
+        )
+        results["path_traversal_rejection"] = not _proof_path_match(
+            "../proof-objects/semantic-universe/" + ("2" * 64) + ".json",
+            "SEMANTIC_UNIVERSE",
+        )[0] and not _proof_path_match(
+            "..\\proof-objects\\semantic-universe\\" + ("2" * 64) + ".json",
+            "SEMANTIC_UNIVERSE",
+        )[0]
+        results["absolute_path_rejection"] = not _proof_path_match(
+            "/tmp/" + ("2" * 64) + ".json", "SEMANTIC_UNIVERSE"
+        )[0] and not _proof_path_match(
+            "C:/tmp/" + ("2" * 64) + ".json", "SEMANTIC_UNIVERSE"
+        )[0]
+        results["external_escape_rejection"] = all(
+            not _proof_path_match(value, "SEMANTIC_UNIVERSE")[0]
+            for value in (
+                "file:///tmp/proof.json",
+                "http://example.invalid/proof.json",
+                "https://example.invalid/proof.json",
+                "\\\\server\\share\\proof.json",
+            )
+        )
+        impersonation = copy.deepcopy(base_typed)
+        impersonation["request_id"] = request_id
+        impersonation["selected_solution"]["queryir_emission_record"][
+            "request_id"
+        ] = request_id
+        results["fixture_impersonation_rejection"] = bool(
+            proof_artifact_chain_errors(impersonation, inputs, proof_root=HERE)
+        )
+        return results
+
+
 def _diagnostic_binding_evidence(name: str) -> dict[str, Any]:
     """Load one explicitly identified binding object from the public set."""
     evidence = load_json(DIAGNOSTIC_ARGUMENT_BINDING_FIXTURE)
@@ -3955,7 +4471,7 @@ def build_summary() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=("all", "positive", "minimality", "negative", "r3a", "r3b"), default="all")
+    parser.add_argument("--mode", choices=("all", "positive", "minimality", "negative", "r3a", "r3b", "proof-paths"), default="all")
     args = parser.parse_args()
     if args.mode == "all":
         result: Any = build_summary()
@@ -3967,6 +4483,8 @@ def main() -> int:
         result = run_r3a()
     elif args.mode == "r3b":
         result = run_r3b_authoritative()
+    elif args.mode == "proof-paths":
+        result = run_proof_path_probes()
     else:
         result = run_negative()
     print(canonical_bytes(result).decode("utf-8"), end="")
@@ -3977,6 +4495,8 @@ def main() -> int:
         return 0 if complete else 1
     if args.mode in ("all", "r3a"):
         return 0 if result["result"] == "PASS" else 1
+    if args.mode == "proof-paths":
+        return 0 if all(result.values()) else 1
     return 0
 
 
