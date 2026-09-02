@@ -1,0 +1,251 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C3-S3-REFRESH-SCOPE-HIGH-002-CORRECTION-AUTH-001"
+authorization_kind: "C3_S3_REFRESH_SCOPE_HIGH_002_NARROW_CORRECTION_AUTHORIZATION"
+authorization_status: "ACTIVE_AFTER_FAST_FORWARD_REMOTE_PUBLICATION_AND_SEPARATE_EXPLICIT_BUILD_START"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+authorization_base: "039e6dbbd99da13155abb12f56975d133fff6055"
+current_public_tip_at_authorization: "039e6dbbd99da13155abb12f56975d133fff6055"
+candidate_parent: "ffdfa4d6737fc24791f0902b1a078dd4679024a9"
+
+finding:
+  finding_id: "P9B2-C3-S3-AUTHORITY-CORRECTION-REFRESH-SCOPE-HIGH-002"
+  severity: "HIGH"
+  status: "OPEN_BLOCKING"
+  independent_audit_result: "CHANGES_REQUIRED"
+  high_001_id: "P9B2-C3-S3-PRODUCTION-EXECUTABILITY-HIGH-001"
+  high_001_semantic_executability: "PASS_FROZEN"
+  high_001_governance_status: "OPEN_ONLY_BECAUSE_HIGH_002_BLOCKS_CLOSURE"
+
+authorization_atom:
+  purpose: "AUTHORIZE_FUTURE_SURGICAL_REMOVAL_OF_TWO_UNAUTHORIZED_CUMULATIVE_MANIFEST_DELTAS"
+  authorization_only: true
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-refresh-scope-high-002-correction-authorization.yml"
+  design_manifest_mutation_this_turn: false
+  high_001_authority_mutation_this_turn: false
+  implementation_or_test_mutation_this_turn: false
+  schema_validator_fixture_or_evidence_mutation_this_turn: false
+  constraint_mutation_this_turn: false
+  c3_implementation_this_turn: false
+  c4_or_c5_work_this_turn: false
+  r11_execution_this_turn: false
+
+audit_scope_finding:
+  audited_range:
+    base: "ffdfa4d6737fc24791f0902b1a078dd4679024a9"
+    candidate: "039e6dbbd99da13155abb12f56975d133fff6055"
+  candidate_summary:
+    direct_authority_changed_path_count: 3
+    authorized_stale_binding_seed_count: 1
+    claimed_mechanical_refresh_path_count: 35
+  independent_classification:
+    fully_justified_mechanical_refresh_path_count: 34
+    partially_justified_path_count: 1
+    partially_justified_path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+    changed_field_count_in_partially_justified_path: 42
+    authorization_compliant_changed_field_count: 40
+    unauthorized_changed_field_count: 2
+    other_semantic_drift_found: false
+
+future_primary_correction:
+  classification: "REFRESH_SCOPE_REPAIR"
+  exact_path_count: 1
+  exact_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  exact_field_count: 2
+  exact_fields:
+    - json_pointer: "/protected_files/scripts~1p9b1q_scoped_query_ir.py"
+      protected_path: "scripts/p9b1q_scoped_query_ir.py"
+      audit_base_value: "a7e8443cf21f8a277dee93f48ccbe30517343ec195ac482441ab32ed4fd3fba5"
+      unauthorized_039e6db_value: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+      required_restore_value: "a7e8443cf21f8a277dee93f48ccbe30517343ec195ac482441ab32ed4fd3fba5"
+    - json_pointer: "/protected_files/tests~1test_p9b1q_scoped_query_ir.py"
+      protected_path: "tests/test_p9b1q_scoped_query_ir.py"
+      audit_base_value: "1c5f48e7178f06ad151b5ab5592d7a39d3635460cd26627d377c0f7c2f018d06"
+      unauthorized_039e6db_value: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+      required_restore_value: "1c5f48e7178f06ad151b5ab5592d7a39d3635460cd26627d377c0f7c2f018d06"
+  all_other_fields_in_primary_path: "PRESERVE_039E6DB_VALUES_BYTE_FOR_BYTE"
+  all_other_paths: "PROHIBITED_UNLESS_EXACTLY_LISTED_AS_A_PROVEN_DOWNSTREAM_DEPENDENT"
+
+authorization_interpretation:
+  retroactive_authorization_of_039e6db_manifest_hash_values: "PROHIBITED"
+  restored_values_asserted_to_equal_current_actual_file_hashes: false
+  purpose: >-
+    Remove exactly the two cumulative deltas introduced by 039e6db that were
+    outside the prior correction authorization; this authorization does not
+    validate either restored historical hash against current protected bytes.
+  protected_file_byte_mutation: "PROHIBITED"
+  manifest_redesign: "PROHIBITED"
+
+latent_baseline_inconsistency_rule:
+  future_check_required: true
+  timing: "AFTER_EXACT_RESTORE_AND_BEFORE_CANDIDATE_COMMIT"
+  check: >-
+    Run existing authoritative gates that independently compare the restored
+    manifest bindings with the actual protected file bytes.
+  mismatch_classification: "PREEXISTING_BASELINE_MANIFEST_BINDING_INCONSISTENCY"
+  mismatch_behavior: "FAIL_CLOSED_AND_RETURN_TO_CONTROL_FOR_SEPARATE_GOVERNANCE"
+  keep_039e6db_values_on_mismatch: "PROHIBITED"
+  expand_into_manifest_redesign_on_mismatch: "PROHIBITED"
+  modify_protected_file_bytes_on_mismatch: "PROHIBITED"
+
+high_001_semantic_freeze:
+  semantic_executability: "PASS_FROZEN"
+  authority_mutation_authorized: false
+  direct_authority_paths_must_remain_byte_identical:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-emission-record-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/minimality-proof-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+  authorized_seed_path_must_remain_byte_identical:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/semantic-universe-exposure-positive.json"
+  preserved_semantics:
+    semantic_universe_path_production_generic: "PASS_FROZEN"
+    base_typed_solution_path_production_generic: "PASS_FROZEN"
+    removal_probe_path_production_generic: "PASS_FROZEN"
+    production_generic_path_resolution: "PASS_FROZEN"
+    proof_requirements_weakened: false
+    queryir_stage_ownership_changed: false
+  high_001_redesign_repair_or_normalization: "PROHIBITED"
+
+accepted_mechanical_refresh_preservation:
+  independently_accepted_non_manifest_refresh_path_count: 34
+  action: "PRESERVE_BYTE_FOR_BYTE"
+  rebuild: "PROHIBITED"
+  renormalization: "PROHIBITED"
+  generator_driven_rewrite: "PROHIBITED"
+  manifest_authorized_field_policy: >-
+    Preserve the 40 authorization-compliant changed fields in design-manifest.yml
+    while restoring only the two exact fields authorized by this artifact.
+
+downstream_content_address_precheck:
+  source_path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  source_raw_sha256_at_authorization_base: "ae7fa426dc4afad14c744169b996d1616f274f9166d5af251a224f21a4366bc8"
+  method:
+    - "COMPUTE_CURRENT_RAW_SHA256_OF_DESIGN_MANIFEST"
+    - "SEARCH_CURRENT_TRACKED_PUBLIC_TREE_FOR_THE_EXACT_RAW_SHA256"
+    - "INSPECT_DESIGN_MANIFEST_PATH_REFERENCES_AND_DISTINGUISH_PATH_MENTIONS_FROM_HASH_BINDINGS"
+    - "EXCLUDE_HISTORICAL_MANIFEST_HASHES_AS_ACTIVE_CURRENT_DEPENDENCIES"
+  exact_current_hash_embedding_count_outside_source: 0
+  active_content_addressed_dependent_count: 0
+  active_content_addressed_dependents: []
+  path_mentions_are_content_addressed_dependents: false
+  historical_manifest_entries_are_current_active_dependents: false
+  conditional_downstream_refresh_path_count: 0
+  conditional_downstream_refresh_paths: []
+  all_downstream_refresh_paths_have_exact_design_manifest_dependency: "NOT_APPLICABLE"
+  speculative_path_or_wildcard_authorization: "PROHIBITED"
+  future_unlisted_downstream_change: "PROHIBITED"
+  future_newly_observed_dependency_behavior: "FAIL_CLOSED_SCOPE_INSUFFICIENT_AND_RETURN_TO_CONTROL"
+
+cumulative_diff_target:
+  audit_base: "ffdfa4d6737fc24791f0902b1a078dd4679024a9"
+  corrected_candidate_requirement: >-
+    Equal the 039e6db cumulative correction except that the two unauthorized
+    protected_files mappings in design-manifest.yml no longer differ from the
+    audit base.
+  high_001_direct_authority_changes: "PRESERVED"
+  authorized_semantic_universe_seed: "PRESERVED"
+  accepted_mechanical_bindings: "PRESERVED"
+  two_unauthorized_manifest_hash_deltas: "REMOVED_FROM_CUMULATIVE_DELTA"
+  new_cumulative_delta: "PROHIBITED"
+
+protected_actual_files:
+  exact_paths:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+  bytes_differ_between_candidate_parent_and_authorization_base: false
+  future_mutation: "PROHIBITED"
+  implementation_modified: false
+  tests_modified: false
+
+constraint_governance:
+  domain: "1..48"
+  constraints_1_through_48: "UNCHANGED"
+  constraint_49: "ABSENT"
+  new_constraint_authorized: false
+
+future_correction_mutation_method:
+  broad_rebuild: "PROHIBITED"
+  helper_use_for_mutation: >-
+    PROHIBITED unless the helper can restrict output to the two exact manifest
+    fields and the exactly enumerated downstream paths, of which there are none.
+  read_only_verification_helpers: "PERMITTED"
+  direct_edit_boundary: "TWO_EXACT_FIELDS_IN_ONE_EXACT_PATH"
+
+future_build_gates:
+  required:
+    - "ONLY_THE_TWO_AUTHORIZED_DESIGN_MANIFEST_FIELDS_ARE_RESTORED"
+    - "SCRIPT_AND_TEST_BYTES_UNCHANGED"
+    - "HIGH_001_AUTHORITY_BYTES_UNCHANGED"
+    - "ALL_ACCEPTED_039E6DB_MECHANICAL_REFRESH_SEMANTICS_UNCHANGED"
+    - "NO_DOWNSTREAM_REFRESH_WITHOUT_EXACT_DESIGN_MANIFEST_DEPENDENCY"
+    - "STRICT_SCHEMA_GATE_PASS"
+    - "REFERENCE_STAGE_SEMANTIC_VALIDATOR_MODE_ALL_PASS"
+    - "COMPLETE_REPOSITORY_UNITTEST_DISCOVERY_PASS"
+    - "GIT_DIFF_CHECK_PASS"
+    - "CUMULATIVE_FFDFA4D_TO_CORRECTED_CANDIDATE_AUDIT_REMOVES_EXACTLY_TWO_UNAUTHORIZED_FIELDS"
+    - "NO_NEW_UNAUTHORIZED_CUMULATIVE_DELTA"
+  hardcoded_test_or_fixture_counts: "PROHIBITED"
+  actual_discovery_counts_required: true
+  authoritative_manifest_binding_mismatch_behavior: "PREEXISTING_BASELINE_MANIFEST_BINDING_INCONSISTENCY_FAIL_CLOSED"
+
+post_correction_trust_boundary:
+  required_next_step: "FOCUSED_INDEPENDENT_READ_ONLY_HIGH_002_REAUDIT"
+  complete_high_001_semantic_redesign_audit_required: false
+  complete_high_001_audit_exception: "ONLY_IF_HIGH_002_CORRECTION_UNEXPECTEDLY_CHANGES_HIGH_001_AUTHORITY_BYTES"
+  focused_reaudit_must_verify:
+    - "EXACT_TWO_FIELD_CUMULATIVE_DELTA_REMOVAL"
+    - "NO_UNRELATED_REFRESH"
+    - "NO_UNAUTHORIZED_DOWNSTREAM_CHANGE"
+    - "HIGH_001_SEMANTIC_CORRECTION_UNCHANGED"
+    - "ALL_REQUIRED_GATES_STILL_PASS"
+  closure_effect_after_reaudit_pass:
+    high_002: "CLOSED"
+    high_001: "CLOSED"
+    c3_authority_correction_status: "CLOSED"
+    c3_post_correction_reauthorization_eligible: "YES_PENDING_CONTROL"
+
+stage_and_secret_boundary:
+  c1_status: "CLOSED"
+  c2_status: "CLOSED"
+  high_011_status: "CLOSED"
+  high_002_status: "OPEN_BLOCKING"
+  c3_implementation_may_resume: false
+  c4: "PROHIBITED"
+  c5: "PROHIBITED"
+  retrieval: "PROHIBITED"
+  model_or_network_call: "PROHIBITED"
+  r11_secret_body_access: "PROHIBITED"
+  r11_execution: "PROHIBITED"
+
+authorization_commit_policy:
+  required_parent: "039e6dbbd99da13155abb12f56975d133fff6055"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-refresh-scope-high-002-correction-authorization.yml"
+  required_commit_message: "governance(p9b2): authorize C3 refresh-scope correction"
+  amend: "PROHIBITED"
+  rebase: "PROHIBITED"
+  squash: "PROHIBITED"
+  merge: "PROHIBITED"
+  history_rewrite: "PROHIBITED"
+
+publication_policy:
+  remote: "origin"
+  branch: "agent/p9-b2"
+  mode: "FAST_FORWARD_ONLY"
+  main_write: "PROHIBITED"
+  force_push: "PROHIBITED"
+  pull_rebase_or_merge: "PROHIBITED"
+  pr_creation: "PROHIBITED"
+  credential_unavailable_fallback: "COMPLETE_PUBLIC_GIT_BUNDLE_PRESERVING_EXACT_COMMIT_IDENTITY"
+
+stop_boundary:
+  repair_design_manifest_this_turn: false
+  modify_high_001_bytes_this_turn: false
+  implement_c3_this_turn: false
+  enter_c4_or_c5_this_turn: false
+  execute_r11_this_turn: false
+  return_to_control_after_authorization_creation_or_publication: true
