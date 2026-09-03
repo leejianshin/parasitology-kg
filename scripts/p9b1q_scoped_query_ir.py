@@ -262,8 +262,12 @@ class LocalSchemaValidator:
                 items = [canonical_bytes(item) for item in value]
                 if len(set(items)) != len(items):
                     self._fail(path, "duplicate items")
+            prefix_items = schema.get("prefixItems", [])
+            for index, item_schema in enumerate(prefix_items):
+                if index < len(value):
+                    self._validate(value[index], item_schema, f"{path}[{index}]")
             if "items" in schema:
-                for index, item in enumerate(value):
+                for index, item in enumerate(value[len(prefix_items):], len(prefix_items)):
                     self._validate(item, schema["items"], f"{path}[{index}]")
             if "contains" in schema:
                 count = sum(self.is_valid(item, schema["contains"]) for item in value)
@@ -306,6 +310,58 @@ class LocalSchemaValidator:
 
 def validate_schema(instance: Any, schema_path: Path, root: Path = ROOT) -> None:
     LocalSchemaValidator(_read_yaml(root / schema_path)).validate(instance)
+
+
+_EXPANDED_SCHEMA_CACHE: dict[tuple[Path, Path], dict[str, Any]] = {}
+
+
+def _expanded_local_schema(schema_path: Path, root: Path = ROOT) -> dict[str, Any]:
+    """Resolve repository-local JSON Schema references without network access."""
+    cache_key = (root.resolve(), schema_path)
+    if cache_key in _EXPANDED_SCHEMA_CACHE:
+        return _EXPANDED_SCHEMA_CACHE[cache_key]
+    cache: dict[Path, dict[str, Any]] = {}
+
+    def document(path: Path) -> dict[str, Any]:
+        path = path.resolve()
+        if path not in cache:
+            cache[path] = _read_yaml(path)
+        return cache[path]
+
+    def pointer_get(value: Any, pointer: str) -> Any:
+        current = value
+        for token in pointer.lstrip("/").split("/") if pointer else []:
+            current = current[token.replace("~1", "/").replace("~0", "~")]
+        return current
+
+    def expand(value: Any, doc: dict[str, Any], path: Path) -> Any:
+        if isinstance(value, list):
+            return [expand(item, doc, path) for item in value]
+        if not isinstance(value, dict):
+            return value
+        if "$ref" in value:
+            ref = value["$ref"]
+            location, _, fragment = ref.partition("#")
+            target_path = path if not location else (path.parent / location).resolve()
+            target_doc = doc if target_path == path else document(target_path)
+            target = pointer_get(target_doc, fragment)
+            expanded = expand(copy.deepcopy(target), target_doc, target_path)
+            siblings = {key: item for key, item in value.items() if key != "$ref"}
+            if siblings:
+                expanded = {"allOf": [expanded, expand(siblings, doc, path)]}
+            return expanded
+        return {key: expand(item, doc, path) for key, item in value.items()}
+
+    absolute = (root / schema_path).resolve()
+    expanded = expand(document(absolute), document(absolute), absolute)
+    _EXPANDED_SCHEMA_CACHE[cache_key] = expanded
+    return expanded
+
+
+def _validate_bound_schema(
+    instance: Any, schema_path: Path, root: Path = ROOT
+) -> None:
+    LocalSchemaValidator(_expanded_local_schema(schema_path, root)).validate(instance)
 
 
 class C1ValidationError(ValueError):
@@ -3355,6 +3411,63 @@ def _c3_constraint_ids(inputs: dict[str, Any]) -> list[str]:
     ]
 
 
+C3_PRE_CORRECTION_UNCOVERED_CONSTRAINT_IDS = (
+    "CNS-SOLVER-EVENT_IDENTITY",
+    "CNS-SOLVER-LICENSE_DAG",
+    "CNS-SOLVER-MINIMALITY",
+    "CNS-EMIT-QUERYIR_SCHEMA",
+)
+
+
+def c3_constraint_coverage(root: Path = ROOT) -> list[dict[str, str]]:
+    """Return the executable/discharged enforcement receipt for constraints 1..48."""
+    registry = _read_yaml(root / CONSTRAINT_REGISTRY_PATH)["entries"]
+    stage_sites = {
+        "S0_NORMALIZED_REQUEST": "validate_c1_normalized_request",
+        "S1_CLAUSE_AST": "validate_c1_clause_ast",
+        "S2_EVENT_FRAME": "validate_c2_event_frame",
+        "S5_RUNTIME_BINDING": "validate_c3_stop_boundary:S5_NOT_APPLICABLE",
+    }
+    exact_sites = {
+        "CNS-SOLVER-REGISTRY_MEMBERSHIP": "_c3_constraint_ids",
+        "CNS-SOLVER-HASH_BINDING": "solve_typed_constraints:actual_hash_recompute",
+        "CNS-SOLVER-SOLUTION_CARDINALITY": "_c3_recomputed_solution_space",
+        "CNS-SOLVER-NONEMPTY_UNIQUE": "_c3_subset_satisfies",
+        "CNS-SOLVER-ENTITY_RESOLUTION": "_c3_resolved_mentions",
+        "CNS-SOLVER-ASSERTION_SCOPE": "_c3_mention_assertion",
+        "CNS-SOLVER-ASSERTION-DERIVATION": "_c3_mention_assertion",
+        "CNS-SOLVER-EVENT_IDENTITY": "_c3_event_identity",
+        "CNS-SOLVER-EVENT_RELATION_DERIVATION": "_c3_profile_cores",
+        "CNS-SOLVER-LICENSE_DAG": "_c3_license_dag+_c3_validate_proofs",
+        "CNS-SOLVER-MINIMALITY": "_c3_inclusion_minimal_cores+removal_replay",
+        "CNS-SOLVER-AMBIGUITY_CERTIFICATE": "validate_c3_result",
+        "CNS-EMIT-QUERYIR_SCHEMA": "_validate_bound_schema",
+        "CNS-EMIT-VALID_STATUS": "validate_c3_result",
+        "CNS-EMIT-LEAF_TRACE_COVERAGE": "_c3_field_traces+_c3_validate_proofs",
+        "CNS-EMIT-TRACE_VALUE_HASH": "_c3_field_traces+_c3_validate_proofs",
+        "CNS-EMIT-PROJECTION_ONLY": "_c3_queryir_projection+_c3_validate_proofs",
+        "CNS-EMIT-LICENSE_COVERAGE": "_c3_license_dag+_c3_validate_proofs",
+        "CNS-EMIT-MINIMALITY_WITNESS": "_c3_build_emission+_c3_validate_proofs",
+    }
+    receipt = []
+    for entry in registry:
+        site = exact_sites.get(entry["id"], stage_sites.get(entry["stage"]))
+        if site is None:
+            _c3_fail(f"constraint has no enforcement/discharge site: {entry['id']}")
+        receipt.append({
+            "constraint_id": entry["id"],
+            "applicability": (
+                "DEFERRED_TERMINAL_STAGE" if entry["stage"] == "S5_RUNTIME_BINDING"
+                else "BOUND_PREDECESSOR_EVIDENCE" if entry["stage"] in stage_sites
+                else "EXECUTED_IN_S3"
+            ),
+            "enforcement_or_discharge_site": site,
+            "failure_evidence_site": entry["failure_code"],
+            "witness_or_proof_site": entry["witness"],
+        })
+    return receipt
+
+
 def _c3_entity_types(inputs: dict[str, Any]) -> dict[str, str]:
     prefixes = {
         config["id_prefix"]: name
@@ -3473,7 +3586,7 @@ def _c3_profile_cores(
     mentions: list[dict[str, Any]],
     events: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Build only solutions licensed by the frozen projection closure."""
+    """Build every solution licensed by the event and projection authorities."""
     profiles = inputs["PROJECTION_RULE_SET"].get("semantic_projection_profiles", [])
     relation_mapping = inputs["EVENT_RELATION_MAPPING"]["event_mapping"]
     candidates: list[dict[str, Any]] = []
@@ -3563,18 +3676,113 @@ def _c3_profile_cores(
                 }
                 _c3_refresh_core(core)
                 candidates.append(core)
+    if not candidates:
+        entity_types = _c3_entity_types(inputs)
+        frame_by_id = {
+            item["frame_id"]: item for item in inputs["EVENT_FRAME"]["frames"]
+        }
+
+        def values_for(event: dict[str, Any], tokens: list[str]) -> list[str]:
+            values = set(event["actor_entity_ids"]) | set(event["target_entity_ids"])
+            if event["method_entity_id"] is not None:
+                values.add(event["method_entity_id"])
+            for slot in frame_by_id[event["frame_id"]]["participant_slots"]:
+                values.update(slot["domain"]["entity_ids"])
+            selected = []
+            for value in sorted(values):
+                value_type = entity_types.get(value)
+                assertions = {
+                    item["assertion_status"]
+                    for item in mentions
+                    if item["entity_id"] == value
+                }
+                if assertions and "AFFIRMED" not in assertions:
+                    continue
+                if value == event["method_entity_id"] and "method_entity_id" in tokens:
+                    selected.append(value)
+                elif value_type in tokens:
+                    selected.append(value)
+            return selected
+
+        for event in events:
+            predicates = relation_mapping.get(event["event_type"], {}).get(
+                "predicates", {}
+            )
+            for predicate, mapping in sorted(predicates.items()):
+                subjects = values_for(event, mapping["subject_from"])
+                objects = values_for(event, mapping["object_from"])
+                for subject, object_ in product(subjects, objects):
+                    if subject == object_:
+                        continue
+                    subject_mentions = [item for item in mentions if item["entity_id"] == subject]
+                    object_mentions = [item for item in mentions if item["entity_id"] == object_]
+                    mention_pairs = product(subject_mentions or [None], object_mentions or [None])
+                    for subject_mention, object_mention in mention_pairs:
+                        selected_mentions = {
+                            item["mention_key"]: copy.deepcopy(item)
+                            for item in (subject_mention, object_mention)
+                            if item is not None
+                        }
+                        relation = {
+                            "relation_key": "RR001",
+                            "predicate": predicate,
+                            "subject_selector": _c3_selector([subject]),
+                            "object_selector": _c3_selector([object_]),
+                            "activation_policy": "REQUIRED",
+                            "derivation_mode": "EVENT_DERIVED",
+                            "root_keys": sorted(
+                                [event["event_key"], *selected_mentions]
+                            ),
+                        }
+                        forbidden = []
+                        for mention in mentions:
+                            if (
+                                mention["assertion_status"] in {"NEGATED", "EXCLUDED", "HYPOTHETICAL"}
+                                and mention["entity_type"] in mapping["object_from"]
+                            ):
+                                selected_mentions[mention["mention_key"]] = copy.deepcopy(mention)
+                                forbidden.append({
+                                    "forbidden_key": f"RF{len(forbidden) + 1:03d}",
+                                    "predicate": predicate,
+                                    "subject_selector": _c3_selector([subject]),
+                                    "object_selector": _c3_selector([mention["entity_id"]]),
+                                    "reason": {
+                                        "NEGATED": "EXPLICIT_NEGATION",
+                                        "EXCLUDED": "EXPLICIT_EXCLUSION",
+                                        "HYPOTHETICAL": "HYPOTHETICAL_ONLY",
+                                    }[mention["assertion_status"]],
+                                    "root_keys": [mention["mention_key"]],
+                                })
+                        core = {
+                        "solution_id": "SOL-" + "0" * 24,
+                        "resolved_mentions": copy.deepcopy(mentions),
+                        "resolved_events": copy.deepcopy(events),
+                        "resolved_relations": [relation],
+                        "semantic_roles": [],
+                        "narrative_intents": [],
+                        "forbidden_relations": forbidden,
+                        "resolved_references": [],
+                        "resolved_overrides": [],
+                        "satisfied_constraint_ids": _c3_constraint_ids(inputs),
+                        "semantic_object_set_sha256": "0" * 64,
+                        }
+                        _c3_refresh_core(core)
+                        candidates.append(core)
     unique = {canonical_sha256(item): item for item in candidates}
     return [unique[key] for key in sorted(unique)]
 
 
-def _c3_event_identity(event: dict[str, Any]) -> tuple[Any, ...]:
-    return (
+def _c3_event_identity(
+    event: dict[str, Any], exclude_override_dimension: str | None = None
+) -> tuple[Any, ...]:
+    identity = (
         event["event_type"],
         tuple(event["actor_entity_ids"]),
         event["method_entity_id"],
         event["specimen_code"],
         tuple(event["target_entity_ids"]),
     )
+    return identity + (() if exclude_override_dimension == "TEMPORAL_SCOPE" else (event["temporal_scope"],))
 
 
 def _c3_apply_structural_assignment(
@@ -3630,7 +3838,12 @@ def _c3_apply_structural_assignment(
             hypothesis["override_hypothesis_id"]
         ].split(":", 2)
         earlier, later = event_by_frame.get(earlier_id), event_by_frame.get(later_id)
-        if earlier is None or later is None or _c3_event_identity(earlier) != _c3_event_identity(later):
+        if (
+            earlier is None
+            or later is None
+            or _c3_event_identity(earlier, dimension)
+            != _c3_event_identity(later, dimension)
+        ):
             return None
         state_fields = {
             "ASSERTION_STATUS": "assertion_status",
@@ -3668,8 +3881,108 @@ def _c3_semantic_object_set(core: dict[str, Any]) -> dict[str, Any]:
             "resolved_relations",
             "semantic_roles",
             "narrative_intents",
+            "forbidden_relations",
             "resolved_references",
             "resolved_overrides",
+        )
+    }
+
+
+def _c3_required_material_keys(core: dict[str, Any]) -> set[str]:
+    """Return the material objects required by formal roots and dependencies."""
+    required = {
+        item[key]
+        for collection, key in (
+            ("resolved_events", "event_key"),
+            ("resolved_relations", "relation_key"),
+            ("semantic_roles", "role_key"),
+            ("narrative_intents", "narrative_key"),
+            ("forbidden_relations", "forbidden_key"),
+            ("resolved_references", "reference_key"),
+            ("resolved_overrides", "override_key"),
+        )
+        for item in core[collection]
+    }
+    for collection in (
+        "resolved_relations",
+        "semantic_roles",
+        "narrative_intents",
+        "forbidden_relations",
+    ):
+        for item in core[collection]:
+            required.update(item["root_keys"])
+    for item in core["resolved_references"]:
+        required.update((item["anaphor_key"], item["referent_key"]))
+    for item in core["resolved_overrides"]:
+        required.update((item["earlier_event_key"], item["later_event_key"]))
+    if not core["resolved_relations"]:
+        required.update(item["mention_key"] for item in core["resolved_mentions"])
+    return required
+
+
+def _c3_subset_satisfies(base: dict[str, Any], candidate: dict[str, Any]) -> bool:
+    """Execute the frozen non-minimal constraints on one material subset."""
+    required = _c3_required_material_keys(base)
+    present = {item[-1] for item in _c3_material_objects(candidate)}
+    if not required <= present:
+        return False
+    if not candidate["resolved_events"]:
+        return False
+    available = present
+    return all(
+        set(item.get("root_keys", ())) <= available
+        for collection in (
+            "resolved_relations",
+            "semantic_roles",
+            "narrative_intents",
+            "forbidden_relations",
+        )
+        for item in candidate[collection]
+    )
+
+
+def _c3_inclusion_minimal_cores(core: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return the exact minimum of the monotone 2^N material-subset domain."""
+    required = _c3_required_material_keys(core)
+    candidate = copy.deepcopy(core)
+    key_fields = {
+        "resolved_mentions": "mention_key",
+        "resolved_events": "event_key",
+        "resolved_relations": "relation_key",
+        "narrative_intents": "narrative_key",
+        "semantic_roles": "role_key",
+        "forbidden_relations": "forbidden_key",
+        "resolved_references": "reference_key",
+        "resolved_overrides": "override_key",
+    }
+    for collection, key in key_fields.items():
+        candidate[collection] = [
+            copy.deepcopy(item)
+            for item in core[collection]
+            if item[key] in required
+        ]
+    _c3_refresh_core(candidate)
+    return [candidate] if _c3_subset_satisfies(core, candidate) else []
+
+
+def _c3_remove_strict_supersets(
+    cores: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Eliminate B exactly when another valid A is a strict material subset."""
+    material_sets = {
+        fingerprint: frozenset(
+            (collection, canonical_sha256(core[collection][index]))
+            for _, collection, index, _, _ in _c3_material_objects(core)
+        )
+        for fingerprint, core in cores.items()
+    }
+    return {
+        fingerprint: core
+        for fingerprint, core in cores.items()
+        if not any(
+            other_set < material_sets[fingerprint]
+            for other, other_set in material_sets.items()
+            if other != fingerprint
         )
     }
 
@@ -3974,6 +4287,39 @@ def _c3_queryir_projection(
                 "resolution_status": "RESOLVED",
             }
         )
+    forbidden = []
+    for item in core["forbidden_relations"]:
+        roots = [
+            mention_by_key[value] if value in mention_by_key else event_by_key[value]
+            for value in item["root_keys"]
+        ]
+        basis = [_c3_queryir_id(value) for value in item["root_keys"]]
+        clause_ids = sorted(
+            {
+                next(
+                    value["clause_id"]
+                    for value in mentions
+                    if value["mention_id"] == _c3_queryir_id(root["mention_key"])
+                )
+                if "mention_key" in root
+                else event_clause_by_key[root["event_key"]]
+                for root in roots
+            },
+            key=clause_order.get,
+        )
+        forbidden.append({
+            "prohibition_id": f"F{int(item['forbidden_key'][2:]):02d}",
+            "clause_ids": clause_ids,
+            "source_spans": [
+                copy.deepcopy(clauses[clause_order[value] - 1]["source_span"])
+                for value in clause_ids
+            ],
+            "predicate": item["predicate"],
+            "subject_selector": copy.deepcopy(item["subject_selector"]),
+            "object_selector": copy.deepcopy(item["object_selector"]),
+            "reason": item["reason"],
+            "basis_ids": basis,
+        })
     return {
         "query_ir_version": "0.3-candidate",
         "request_id": normalized["request_id"],
@@ -3993,7 +4339,7 @@ def _c3_queryir_projection(
         "relation_intents": relations,
         "narrative_intents": narratives,
         "required_roles": roles,
-        "forbidden_relation_intents": [],
+        "forbidden_relation_intents": forbidden,
         "resolved_references": resolved_references,
         "resolved_overrides": resolved_overrides,
         "ambiguities": [],
@@ -4105,6 +4451,7 @@ def _c3_field_traces(
     query_ir: dict[str, Any],
     core: dict[str, Any],
     inputs: dict[str, Any],
+    hashes: dict[str, str],
 ) -> list[dict[str, Any]]:
     whole_span = {
         "start_char": 0,
@@ -4112,10 +4459,25 @@ def _c3_field_traces(
         "text": inputs["NORMALIZED_REQUEST"]["normalized_query_text"],
     }
     core_sha = canonical_sha256(core)
-    ast_sha = canonical_sha256(inputs["CLAUSE_AST"])
     traces = []
     for index, pointer in enumerate(_c3_json_pointers(query_ir), 1):
-        ast_bound = pointer == "/clauses" or pointer.startswith("/clauses/")
+        if pointer == "/clauses" or pointer.startswith("/clauses/"):
+            kinds = ("CLAUSE_AST",)
+        elif pointer == "/mentions" or pointer.startswith("/mentions/"):
+            kinds = ("CLAUSE_AST", "TYPED_SOLUTION")
+        elif pointer == "/events" or pointer.startswith("/events/"):
+            kinds = ("EVENT_FRAME", "TYPED_SOLUTION")
+        elif any(
+            pointer == prefix or pointer.startswith(prefix + "/")
+            for prefix in (
+                "/relation_intents", "/narrative_intents", "/required_roles",
+                "/forbidden_relation_intents", "/resolved_references",
+                "/resolved_overrides",
+            )
+        ):
+            kinds = ("TYPED_SOLUTION", "EVENT_RELATION_MAPPING")
+        else:
+            kinds = ("NORMALIZED_REQUEST",)
         traces.append(
             {
                 "trace_id": f"TR{index:04d}",
@@ -4125,11 +4487,14 @@ def _c3_field_traces(
                 ),
                 "source_bindings": [
                     {
-                        "object_kind": "CLAUSE_AST" if ast_bound else "TYPED_SOLUTION",
-                        "object_sha256": ast_sha if ast_bound else core_sha,
+                        "object_kind": kind,
+                        "object_sha256": (
+                            core_sha if kind == "TYPED_SOLUTION" else hashes[kind]
+                        ),
                         "source_ids": [],
                         "source_spans": [whole_span],
                     }
+                    for kind in kinds
                 ],
                 "constraint_ids": [
                     "CNS-EMIT-LEAF_TRACE_COVERAGE",
@@ -4149,14 +4514,32 @@ def _c3_license_dag(
         item["query_ir_json_pointer"]: item["trace_id"] for item in traces
     }
     node_by_material: dict[str, str] = {}
+    material_by_key: dict[str, str] = {}
     nodes: list[dict[str, Any]] = []
     for index, (material_id, collection, _, pointer, _) in enumerate(materials, 1):
         node_id = f"LN{index:04d}"
         node_by_material[material_id] = node_id
+        material_by_key[materials[index - 1][4]] = material_id
         if collection == "resolved_mentions":
-            kind = "EXPLICIT_RELATION_ROOT"
+            mention = core[collection][materials[index - 1][2]]
+            if mention["assertion_status"] in {"NEGATED", "EXCLUDED", "HYPOTHETICAL"}:
+                kind = "NEGATED_OR_EXCLUDED_ROOT"
+            elif any(
+                mention["mention_key"] in relation["root_keys"]
+                for relation in core["resolved_relations"]
+            ):
+                kind = "EXPLICIT_RELATION_ROOT"
+            elif not core["resolved_relations"]:
+                kind = "EXPLICIT_QUESTION_SLOT_ROOT"
+            else:
+                _c3_fail("mention has no authoritative root kind")
         elif collection == "resolved_events":
-            kind = "AFFIRMED_EVENT_ROOT"
+            event = core[collection][materials[index - 1][2]]
+            kind = (
+                "AFFIRMED_EVENT_ROOT"
+                if event["assertion_status"] == "AFFIRMED"
+                else "NEGATED_OR_EXCLUDED_ROOT"
+            )
         else:
             kind = {
                 "resolved_relations": "RELATION",
@@ -4176,10 +4559,6 @@ def _c3_license_dag(
         )
     edges: list[dict[str, Any]] = []
     paths: dict[str, list[str]] = {}
-    mention_roots = [value for value, collection, *_ in materials if collection == "resolved_mentions"]
-    event_roots = [value for value, collection, *_ in materials if collection == "resolved_events"]
-    primary_root = (mention_roots or event_roots)[0]
-
     def add_edge(source: str, target: str, kind: str) -> None:
         edges.append(
             {
@@ -4191,16 +4570,21 @@ def _c3_license_dag(
             }
         )
 
-    for material_id, collection, _, _, _ in materials:
+    for material_id, collection, item_index, _, _ in materials:
         if collection in {"resolved_mentions", "resolved_events"}:
             paths[material_id] = [node_by_material[material_id]]
         elif collection == "resolved_relations":
-            add_edge(primary_root, material_id, "ROOTS_EVENT_OR_RELATION")
-            paths[material_id] = [node_by_material[primary_root], node_by_material[material_id]]
+            roots = [material_by_key[value] for value in core[collection][item_index]["root_keys"]]
+            for root_id in roots:
+                add_edge(
+                    root_id,
+                    material_id,
+                    "EVENT_DERIVES_RELATION"
+                    if root_id.startswith("E") else "ROOTS_EVENT_OR_RELATION",
+                )
+            paths[material_id] = paths[roots[0]] + [node_by_material[material_id]]
         elif collection in {"semantic_roles", "narrative_intents"}:
-            relation_id = next(
-                value for value, group, *_ in materials if group == "resolved_relations"
-            )
+            relation_id = material_by_key[core[collection][item_index]["root_keys"][0]]
             edge_kind = (
                 "RELATION_LICENSES_ROLE"
                 if collection == "semantic_roles"
@@ -4209,15 +4593,19 @@ def _c3_license_dag(
             add_edge(relation_id, material_id, edge_kind)
             paths[material_id] = paths[relation_id] + [node_by_material[material_id]]
         elif collection == "forbidden_relations":
-            add_edge(primary_root, material_id, "NEGATED_BASIS_LICENSES_PROHIBITION")
-            paths[material_id] = [node_by_material[primary_root], node_by_material[material_id]]
+            root_id = material_by_key[core[collection][item_index]["root_keys"][0]]
+            add_edge(root_id, material_id, "NEGATED_BASIS_LICENSES_PROHIBITION")
+            paths[material_id] = paths[root_id] + [node_by_material[material_id]]
         elif collection == "resolved_references":
-            add_edge(primary_root, material_id, "REFERENCE_BINDS_OBJECT")
-            paths[material_id] = [node_by_material[primary_root], node_by_material[material_id]]
+            item = core[collection][item_index]
+            root_id = material_by_key[item["anaphor_key"]]
+            add_edge(root_id, material_id, "REFERENCE_BINDS_OBJECT")
+            paths[material_id] = paths[root_id] + [node_by_material[material_id]]
         else:
-            root = (event_roots or mention_roots)[0]
-            add_edge(root, material_id, "OVERRIDE_BINDS_EVENTS")
-            paths[material_id] = [node_by_material[root], node_by_material[material_id]]
+            item = core[collection][item_index]
+            root_id = material_by_key[item["later_event_key"]]
+            add_edge(root_id, material_id, "OVERRIDE_BINDS_EVENTS")
+            paths[material_id] = paths[root_id] + [node_by_material[material_id]]
     dag = {
         "nodes": nodes,
         "edges": edges,
@@ -4251,8 +4639,9 @@ def _c3_build_emission(
     proof_root: Path,
 ) -> dict[str, Any]:
     query_ir = _c3_queryir_projection(core, inputs, hashes)
-    traces = _c3_field_traces(query_ir, core, inputs)
+    traces = _c3_field_traces(query_ir, core, inputs, hashes)
     dag, paths = _c3_license_dag(core, traces)
+    _validate_bound_schema(core, TYPED_SOLUTION_CORE_SCHEMA_PATH, root)
     core_path, core_sha = _c3_persist_proof(proof_root, "TYPED_SOLUTION", core)
     semantic_objects = [
         {
@@ -4279,6 +4668,7 @@ def _c3_build_emission(
         "query_ir_sha256": canonical_sha256(query_ir),
         "semantic_objects": semantic_objects,
     }
+    validate_schema(universe, MINIMALITY_PROOF_SCHEMA_PATH, root)
     universe_path, universe_sha = _c3_persist_proof(
         proof_root, "SEMANTIC_UNIVERSE", universe
     )
@@ -4288,6 +4678,9 @@ def _c3_build_emission(
         candidate[collection].pop(index)
         _c3_refresh_core(candidate)
         constraint = _c3_removal_constraint(collection)
+        post_removal_count = int(_c3_subset_satisfies(core, candidate))
+        if post_removal_count != 0:
+            _c3_fail(f"retained material object is removable: {material_id}")
         probe = {
             "proof_object_version": "0.1-candidate",
             "proof_object_kind": "REMOVAL_PROBE",
@@ -4303,7 +4696,7 @@ def _c3_build_emission(
                 "semantic_object_set_sha256"
             ],
             "recomputed_derived_hashes": ["semantic_object_set_sha256"],
-            "enumerated_solution_count_after_removal": 0,
+            "enumerated_solution_count_after_removal": post_removal_count,
             "validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
             "validator_executable_path": "reference-stage-semantic-validator.py",
             "validator_executable_sha256": file_sha256(
@@ -4315,6 +4708,7 @@ def _c3_build_emission(
             "expected_result": "FAIL_CLOSED",
             "expected_unsatisfied_constraint_ids": [constraint],
         }
+        validate_schema(probe, MINIMALITY_PROOF_SCHEMA_PATH, root)
         probe_path, probe_sha = _c3_persist_proof(
             proof_root, "REMOVAL_PROBE", probe
         )
@@ -4341,7 +4735,7 @@ def _c3_build_emission(
     body = copy.deepcopy(minimality)
     body.pop("witness_sha256")
     minimality["witness_sha256"] = canonical_sha256(body)
-    return {
+    emission = {
         "emission_record_version": "0.1-candidate",
         "request_id": inputs["NORMALIZED_REQUEST"]["request_id"],
         "request_sha256": inputs["NORMALIZED_REQUEST"]["request_sha256"],
@@ -4357,6 +4751,9 @@ def _c3_build_emission(
         "license_dag": dag,
         "minimality_witness": minimality,
     }
+    validate_schema(query_ir, QUERY_IR_SCHEMA_PATH, root)
+    _validate_bound_schema(emission, QUERYIR_EMISSION_RECORD_SCHEMA_PATH, root)
+    return emission
 
 
 def _c3_result_header(
@@ -4460,17 +4857,12 @@ def _c3_recomputed_solution_space(inputs: dict[str, Any]) -> dict[str, Any]:
                 )
                 if bound is None:
                     continue
-                fingerprint = canonical_sha256(
-                    {
-                        "mentions": mention_values,
-                        "events": event_values,
-                        "structure": structure_values,
-                        "core": bound["semantic_object_set_sha256"],
-                    }
-                )
-                fingerprints.append(fingerprint)
-                cores[fingerprint] = bound
-    fingerprints = sorted(set(fingerprints))
+                for minimal in _c3_inclusion_minimal_cores(bound):
+                    fingerprint = canonical_sha256(_c3_semantic_object_set(minimal))
+                    fingerprints.append(fingerprint)
+                    cores[fingerprint] = minimal
+    cores = _c3_remove_strict_supersets(cores)
+    fingerprints = sorted(cores)
     return {
         "mention_domains": mention_domains,
         "event_domains": event_domains,
@@ -4494,6 +4886,7 @@ def _c3_invalid_result(
             {"status": "INVALID", "reason": reason}
         ),
     }
+    _validate_bound_schema(result, TYPED_CONSTRAINT_RESULT_SCHEMA_PATH, root)
     return result
 
 
@@ -4584,16 +4977,12 @@ def solve_typed_constraints(
                 )
                 if core is None:
                     continue
-                assignment = {
-                    "mentions": mention_values,
-                    "events": event_values,
-                    "structure": structure_values,
-                    "core": core["semantic_object_set_sha256"],
-                }
-                fingerprint = canonical_sha256(assignment)
-                assignment_fingerprints.append(fingerprint)
-                valid_cores[fingerprint] = core
-        assignment_fingerprints = sorted(set(assignment_fingerprints))
+                for minimal in _c3_inclusion_minimal_cores(core):
+                    fingerprint = canonical_sha256(_c3_semantic_object_set(minimal))
+                    assignment_fingerprints.append(fingerprint)
+                    valid_cores[fingerprint] = minimal
+        valid_cores = _c3_remove_strict_supersets(valid_cores)
+        assignment_fingerprints = sorted(valid_cores)
         header = _c3_result_header(inputs, hashes, root)
         trace_basis = {
             "variable_domains": {
@@ -4690,6 +5079,7 @@ def solve_typed_constraints(
             "unsatisfied_constraints": [],
             "solver_trace_sha256": canonical_sha256(trace_basis),
         }
+        _validate_bound_schema(result, TYPED_CONSTRAINT_RESULT_SCHEMA_PATH, root)
         validate_c3_result(
             result,
             normalized,
@@ -4731,6 +5121,8 @@ def _c3_validate_proofs(
         for item in traces
     ):
         _c3_fail("field trace value hash mismatch")
+    if traces != _c3_field_traces(query_ir, core, inputs, hashes):
+        _c3_fail("field trace source authority mismatch")
     dag = emission["license_dag"]
     dag_body = copy.deepcopy(dag)
     dag_body.pop("dag_sha256")
@@ -4750,6 +5142,9 @@ def _c3_validate_proofs(
     material_ids = {item[0] for item in _c3_material_objects(core)}
     if {item["semantic_object_id"] for item in dag["nodes"]} != material_ids:
         _c3_fail("license DAG material coverage mismatch")
+    expected_dag, expected_paths = _c3_license_dag(core, traces)
+    if dag != expected_dag:
+        _c3_fail("license DAG differs from recomputed root authority")
     minimality = emission["minimality_witness"]
     body = copy.deepcopy(minimality)
     body.pop("witness_sha256")
@@ -4793,6 +5188,8 @@ def _c3_validate_proofs(
             or node_by_id[path[-1]]["semantic_object_id"] != witness["semantic_object_id"]
         ):
             _c3_fail("unrooted material object witness")
+        if path != expected_paths[witness["semantic_object_id"]]:
+            _c3_fail("candidate license path differs from recomputed authority")
         probe_result = _c3_resolve_proof(
             proof_root,
             witness["removal_probe_path"],
@@ -4814,6 +5211,18 @@ def _c3_validate_proofs(
             _c3_fail("removal probe base solution mismatch")
         if core_result[1] != probe["base_typed_solution_sha256"]:
             _c3_fail("removal probe base hash mismatch")
+        external_bindings = {
+            "validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+            "validator_executable_path": "reference-stage-semantic-validator.py",
+            "validator_executable_sha256": file_sha256(
+                root / REFERENCE_STAGE_VALIDATOR_PATH
+            ),
+            "validator_configuration_path": "stage-semantic-validator-contract.yml",
+            "validator_configuration_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+            "constraint_set_sha256": hashes["CONSTRAINT_SET"],
+        }
+        if any(probe.get(key) != value for key, value in external_bindings.items()):
+            _c3_fail("removal probe external authority binding mismatch")
         operation = probe["mutation"][0]
         match = re.fullmatch(r"/([a-z_]+)/([0-9]+)", operation["path"])
         if operation.get("op") != "remove" or match is None:
@@ -4830,6 +5239,8 @@ def _c3_validate_proofs(
             or candidate["semantic_object_set_sha256"]
             != probe["candidate_semantic_object_set_sha256"]
             or probe["expected_unsatisfied_constraint_ids"] != [expected_constraint]
+            or probe["enumerated_solution_count_after_removal"]
+            != int(_c3_subset_satisfies(core, candidate))
             or probe["enumerated_solution_count_after_removal"] != 0
         ):
             _c3_fail("removal probe replay mismatch")
@@ -4847,6 +5258,10 @@ def validate_c3_result(
 ) -> None:
     """Independently recompute S3 cardinality, projection, and proof bindings."""
     inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    try:
+        _validate_bound_schema(result, TYPED_CONSTRAINT_RESULT_SCHEMA_PATH, root)
+    except SchemaValidationError as exc:
+        _c3_fail(str(exc))
     hashes = _c3_hash_bindings(inputs, root)
     validate_c2_event_frame(
         normalized,
@@ -4939,6 +5354,10 @@ def validate_c3_solution_core(
 ) -> None:
     """Validate a candidate core against recomputed upstream solution domains."""
     inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    try:
+        _validate_bound_schema(core, TYPED_SOLUTION_CORE_SCHEMA_PATH, root)
+    except SchemaValidationError as exc:
+        _c3_fail(str(exc))
     validate_c2_event_frame(
         normalized,
         ast,
@@ -4973,7 +5392,10 @@ def validate_c3_solution_core(
                 tuple(structure_values),
             )
             if bound is not None:
-                expected.add(canonical_bytes(bound))
+                expected.update(
+                    canonical_bytes(value)
+                    for value in _c3_inclusion_minimal_cores(bound)
+                )
     if canonical_bytes(core) not in expected:
         _c3_fail(
             "candidate core is not an exact authority-derived inclusion-minimal solution"
@@ -7242,9 +7664,10 @@ def main() -> int:
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--top-k", type=int, default=12)
+    parser.add_argument("--proof-root", type=Path, default=Path.cwd())
     args = parser.parse_args()
     request = _read_yaml(args.request)
-    execution = run_scoped_query(request, top_k=args.top_k)
+    execution = compile_c3(request, proof_root=args.proof_root)
     output = json.dumps(execution, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     if args.output:
         args.output.write_text(output, encoding="utf-8")

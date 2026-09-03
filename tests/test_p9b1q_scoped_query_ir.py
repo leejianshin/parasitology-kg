@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +15,7 @@ from scripts.p9b1q_scoped_query_ir import (
     C1ValidationError,
     C2ValidationError,
     C3ValidationError,
+    C3_PRE_CORRECTION_UNCOVERED_CONSTRAINT_IDS,
     CLAUSE_AST_SCHEMA_PATH,
     CONFIG_PATH,
     DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH,
@@ -21,6 +25,7 @@ from scripts.p9b1q_scoped_query_ir import (
     QUERY_IR_SCHEMA_PATH,
     ROOT,
     build_bound_execution,
+    c3_constraint_coverage,
     canonical_bytes,
     canonical_sha256,
     compile_c1,
@@ -1921,6 +1926,7 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
                 "resolved_relations",
                 "semantic_roles",
                 "narrative_intents",
+                "forbidden_relations",
                 "resolved_references",
                 "resolved_overrides",
             )
@@ -2218,6 +2224,32 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
                         proof_root=self.proof_root,
                     )
 
+        for mutation in ("DETACH", "CYCLE"):
+            with self.subTest(mutation=mutation):
+                changed = copy.deepcopy(self.typed)
+                dag = changed["selected_solution"]["queryir_emission_record"]["license_dag"]
+                if mutation == "DETACH":
+                    dag["edges"].pop()
+                else:
+                    dag["edges"].append({
+                        "edge_id": f"LE{len(dag['edges']) + 1:04d}",
+                        "from_node_id": dag["topological_order"][-1],
+                        "to_node_id": dag["topological_order"][0],
+                        "edge_kind": "ROOTS_EVENT_OR_RELATION",
+                        "constraint_ids": ["CNS-SOLVER-LICENSE_DAG"],
+                    })
+                body = copy.deepcopy(dag)
+                body.pop("dag_sha256")
+                dag["dag_sha256"] = canonical_sha256(body)
+                with self.assertRaises(C3ValidationError):
+                    validate_c3_result(
+                        changed,
+                        self.compiled["normalized_request"],
+                        self.compiled["clause_ast"],
+                        self.compiled["event_frame"],
+                        proof_root=self.proof_root,
+                    )
+
         wrong_kind = copy.deepcopy(self.typed)
         first_probe = witness["retained_object_witnesses"][0]["removal_probe_path"]
         wrong_kind["selected_solution"]["queryir_emission_record"][
@@ -2391,6 +2423,251 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
                     ],
                 }))
         self.assertEqual([hashes[0]] * 3, hashes)
+
+    def test_production_cli_reaches_c3_and_stops_before_downstream_stages(self):
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c3-cli-") as directory:
+            work = Path(directory)
+            request_path = work / "request.json"
+            request_path.write_text(
+                json.dumps(request("C3-CLI", self.UNIQUE_TEXT), ensure_ascii=False),
+                encoding="utf-8",
+            )
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/p9b1q_scoped_query_ir.py"),
+                    "--request", str(request_path),
+                    "--proof-root", str(work),
+                ],
+                cwd=work,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            output = json.loads(completed.stdout)
+            self.assertEqual("S3_TYPED_CONSTRAINT_SOLVER", output["terminal_stage"])
+            self.assertEqual("UNIQUE", output["typed_constraint_result"]["status"])
+            self.assertNotIn("query_ir", output)
+            self.assertNotIn("retrieval_result", output)
+            self.assertNotIn("runtime_binding", output)
+            self.assertGreater(len(list((work / "proof-objects").rglob("*.json"))), 2)
+
+    def test_exposure_solution_is_the_strict_inclusion_minimum(self):
+        core = self.core()
+        self.assertEqual(8, sum(len(core[key]) for key in (
+            "resolved_mentions", "resolved_events", "resolved_relations",
+            "semantic_roles", "narrative_intents", "forbidden_relations",
+            "resolved_references", "resolved_overrides",
+        )))
+        self.assertEqual(
+            {"U001", "U005"},
+            {item["surface_mention_id"] for item in core["resolved_mentions"]},
+        )
+        ast_mention = next(
+            item for item in self.compiled["clause_ast"]["surface_mentions"]
+            if item["surface_mention_id"] == "U002"
+        )
+        strict_superset = copy.deepcopy(core)
+        strict_superset["resolved_mentions"].append({
+            "mention_key": "RM002",
+            "surface_mention_id": "U002",
+            "entity_id": ast_mention["candidate_entity_ids"][0],
+            "entity_type": ast_mention["candidate_entity_types"][0],
+            "assertion_status": "AFFIRMED",
+            "temporal_scope": "GENERAL",
+        })
+        self.refresh_core(strict_superset)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                strict_superset,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+    def test_strict_supersets_drop_but_incomparable_minima_and_order_survive(self):
+        from scripts.p9b1q_scoped_query_ir import _c3_remove_strict_supersets
+
+        first = self.core()
+        superset = copy.deepcopy(first)
+        extra = next(
+            item for item in self.compiled["clause_ast"]["surface_mentions"]
+            if item["surface_mention_id"] == "U002"
+        )
+        superset["resolved_mentions"].append({
+            "mention_key": "RM002",
+            "surface_mention_id": "U002",
+            "entity_id": extra["candidate_entity_ids"][0],
+            "entity_type": extra["candidate_entity_types"][0],
+            "assertion_status": "AFFIRMED",
+            "temporal_scope": "GENERAL",
+        })
+        self.refresh_core(superset)
+        incomparable = copy.deepcopy(first)
+        incomparable["resolved_relations"][0]["predicate"] = "risk_increased_by"
+        self.refresh_core(incomparable)
+        values = {
+            canonical_sha256(value): value
+            for value in (superset, incomparable, first)
+        }
+        forward = _c3_remove_strict_supersets(values)
+        reverse = _c3_remove_strict_supersets(dict(reversed(list(values.items()))))
+        self.assertEqual(set(forward), set(reverse))
+        self.assertEqual(2, len(forward))
+        self.assertNotIn(canonical_sha256(superset), forward)
+
+    def test_removal_probes_replay_and_external_binding_tamper_fails(self):
+        core = self.core()
+        witnesses = self.typed["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["retained_object_witnesses"]
+        self.assertEqual(8, len(witnesses))
+        for witness in witnesses:
+            probe = json.loads(
+                (self.proof_root / witness["removal_probe_path"]).read_text()
+            )
+            changed = copy.deepcopy(core)
+            collection, index = probe["mutation"][0]["path"].strip("/").split("/")
+            changed[collection].pop(int(index))
+            self.refresh_core(changed)
+            self.assertEqual(canonical_sha256(changed), probe["candidate_typed_solution_sha256"])
+            self.assertEqual(0, probe["enumerated_solution_count_after_removal"])
+            with self.assertRaises(C3ValidationError):
+                validate_c3_solution_core(
+                    changed,
+                    self.compiled["normalized_request"],
+                    self.compiled["clause_ast"],
+                    self.compiled["event_frame"],
+                )
+
+        changed = copy.deepcopy(self.typed)
+        witness = changed["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["retained_object_witnesses"][0]
+        probe = json.loads((self.proof_root / witness["removal_probe_path"]).read_text())
+        for field in (
+            "validator_contract_sha256", "validator_executable_sha256",
+            "validator_configuration_sha256", "constraint_set_sha256",
+        ):
+            probe[field] = "0" * 64
+        witness["removal_probe_path"], witness["removal_probe_sha256"] = self.persist_proof(
+            "removal-probe", probe
+        )
+        self.refresh_minimality(changed)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_result(
+                changed,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+                proof_root=self.proof_root,
+            )
+
+    def test_trace_and_license_candidate_self_authorization_fail_closed(self):
+        trace_tamper = copy.deepcopy(self.typed)
+        trace_tamper["selected_solution"]["queryir_emission_record"]["field_traces"][0][
+            "source_bindings"
+        ][0]["object_sha256"] = "0" * 64
+        with self.assertRaises(C3ValidationError):
+            validate_c3_result(
+                trace_tamper,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+                proof_root=self.proof_root,
+            )
+
+        for semantic_kind in ("SEMANTIC_ROLE", "NARRATIVE"):
+            with self.subTest(semantic_kind=semantic_kind):
+                changed = copy.deepcopy(self.typed)
+                emission = changed["selected_solution"]["queryir_emission_record"]
+                dag = emission["license_dag"]
+                node = next(item for item in dag["nodes"] if item["node_kind"] == semantic_kind)
+                dag["edges"] = [item for item in dag["edges"] if item["to_node_id"] != node["node_id"]]
+                node["node_kind"] = "EXPLICIT_QUESTION_SLOT_ROOT"
+                body = copy.deepcopy(dag)
+                body.pop("dag_sha256")
+                dag["dag_sha256"] = canonical_sha256(body)
+                witness = next(
+                    item for item in emission["minimality_witness"]["retained_object_witnesses"]
+                    if item["semantic_object_id"] == node["semantic_object_id"]
+                )
+                witness["license_path_node_ids"] = [node["node_id"]]
+                self.refresh_minimality(changed)
+                with self.assertRaises(C3ValidationError):
+                    validate_c3_result(
+                        changed,
+                        self.compiled["normalized_request"],
+                        self.compiled["clause_ast"],
+                        self.compiled["event_frame"],
+                        proof_root=self.proof_root,
+                    )
+
+    def test_authority_domains_cover_non_exposure_event_classes(self):
+        cases = (
+            ("PARASITISM", "成虫寄生于肝内胆管。"),
+            ("TREATMENT", "吡喹酮治疗华支睾吸虫病。"),
+            (
+                "DEVELOPMENT",
+                "华支睾吸虫虫卵如何经过毛蚴、胞蚴、雷蚴和尾蚴发育为囊蚴，再成为成虫？",
+            ),
+        )
+        for name, text in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                typed = compile_c3(
+                    request(f"C3-DOMAIN-{name}", text),
+                    proof_root=Path(directory),
+                )["typed_constraint_result"]
+                self.assertNotEqual("UNSUPPORTED", typed["status"])
+                self.assertNotEqual("INVALID", typed["status"])
+
+    def test_formal_control_prohibition_is_materialized_and_eliminates_activation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            typed = compile_c3(
+                request(
+                    "C3-CONTROL-PROHIBITION",
+                    "综合防控华支睾吸虫病，但不采用减少动物粪便污染。",
+                ),
+                proof_root=Path(directory),
+            )["typed_constraint_result"]
+        self.assertEqual("UNIQUE", typed["status"])
+        query_ir = typed["selected_solution"]["queryir_emission_record"]["query_ir"]
+        forbidden = query_ir["forbidden_relation_intents"]
+        self.assertEqual(["EXPLICIT_EXCLUSION"], [item["reason"] for item in forbidden])
+        excluded = forbidden[0]["object_selector"]["entity_ids"][0]
+        self.assertNotIn(
+            excluded,
+            {
+                entity_id
+                for relation in query_ir["relation_intents"]
+                for entity_id in relation["object_selector"]["entity_ids"]
+            },
+        )
+
+    def test_temporal_scope_is_part_of_normalized_event_identity(self):
+        from scripts.p9b1q_scoped_query_ir import _c3_event_identity
+
+        current = copy.deepcopy(self.core()["resolved_events"][0])
+        historical = copy.deepcopy(current)
+        current["temporal_scope"] = "CURRENT"
+        historical["temporal_scope"] = "HISTORICAL"
+        self.assertNotEqual(_c3_event_identity(current), _c3_event_identity(historical))
+        self.assertEqual(_c3_event_identity(current), _c3_event_identity(copy.deepcopy(current)))
+
+    def test_all_48_constraints_have_executable_or_bound_discharge_sites(self):
+        receipt = c3_constraint_coverage()
+        self.assertEqual(48, len(receipt))
+        self.assertEqual(48, len({item["constraint_id"] for item in receipt}))
+        self.assertEqual(
+            {
+                "CNS-SOLVER-EVENT_IDENTITY",
+                "CNS-SOLVER-LICENSE_DAG",
+                "CNS-SOLVER-MINIMALITY",
+                "CNS-EMIT-QUERYIR_SCHEMA",
+            },
+            set(C3_PRE_CORRECTION_UNCOVERED_CONSTRAINT_IDS),
+        )
+        self.assertTrue(all(item["enforcement_or_discharge_site"] for item in receipt))
 
     def test_s3_stop_boundary_rejects_later_stage_objects(self):
         validate_c3_stop_boundary(self.compiled)
