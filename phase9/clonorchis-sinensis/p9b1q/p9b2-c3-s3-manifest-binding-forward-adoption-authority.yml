@@ -1,0 +1,227 @@
+authority_version: "1.0"
+authority_id: "P9B2-C3-S3-MANIFEST-BINDING-FORWARD-ADOPTION-AUTHORITY-001"
+authority_kind: "C3_S3_MANIFEST_BINDING_FORWARD_PRESENT_STATE_ADOPTION"
+authority_status: "ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION"
+effective_time_rule: "PROSPECTIVE_FROM_THIS_AUTHORITY_COMMIT_PUBLICATION_ONLY"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+adoption_base: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+current_public_tip_at_creation: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+
+frozen_predecessor_state:
+  c1_status: "CLOSED"
+  c2_status: "CLOSED"
+  high_011_status: "CLOSED"
+  high_001:
+    finding_id: "P9B2-C3-S3-PRODUCTION-EXECUTABILITY-HIGH-001"
+    semantic_executability: "PASS_FROZEN"
+    redesign_or_repair: "PROHIBITED"
+
+open_findings:
+  high_002:
+    finding_id: "P9B2-C3-S3-AUTHORITY-CORRECTION-REFRESH-SCOPE-HIGH-002"
+    status: "OPEN_BLOCKING"
+    finding_meaning: >-
+      Commit 039e6db introduced two manifest binding changes without the
+      authorization that existed at the time of introduction.
+  high_003:
+    finding_id: "P9B2-C3-S3-PREEXISTING-MANIFEST-BINDING-HIGH-003"
+    status: "OPEN"
+    finding_meaning: >-
+      The earlier ffdfa4d manifest values were already stale relative to the
+      protected-file bytes, which remained unchanged through the adoption base.
+  high_002_and_high_003_distinct: true
+
+governance_decision:
+  baseline_manifest_binding_governance_audit: "FORWARD_ADOPTION_RECOMMENDED"
+  method: "C_FORWARD_PRESENT_STATE_AUTHORITY_ADOPTION"
+  prospective_authority_adoption: true
+  retroactive_authorization: false
+  history_rewrite: "PROHIBITED"
+  factual_correctness_distinct_from_historical_authorization_provenance: true
+
+historical_truth:
+  chronology:
+    - commit: "ffdfa4d6737fc24791f0902b1a078dd4679024a9"
+      state: "MANIFEST_BINDINGS_STALE_RELATIVE_TO_UNCHANGED_ACTUAL_PROTECTED_FILE_BYTES"
+    - commit: "039e6dbbd99da13155abb12f56975d133fff6055"
+      state: "BINDINGS_FACTUALLY_CORRECTED_WITHOUT_THEN_EXISTING_SCOPE_AUTHORIZATION"
+    - commit: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+      state: "CONTROL_CHECKPOINT_BEFORE_FORWARD_ADOPTION"
+    - commit: "THIS_AUTHORITY_COMMIT_AFTER_PUBLICATION"
+      state: "FIRST_PUBLIC_TRUST_BOUNDARY_PROSPECTIVELY_ADOPTING_CURRENT_BINDINGS"
+  refresh_039e6db_authorized_when_introduced: false
+  high_002_original_scope_finding_was_valid: true
+  preexisting_baseline_manifest_binding_inconsistency: "CONFIRMED"
+  ffdfa4d_script_manifest_binding: "STALE"
+  ffdfa4d_test_manifest_binding: "STALE"
+  protected_file_bytes_changed_since_ffdfa4d: false
+  restoring_ffdfa4d_values_as_present_state: "PROHIBITED_AS_KNOWN_FALSE_PRESENT_STATE"
+  no_backward_effect: true
+
+adopted_present_state:
+  exact_data_path_count: 1
+  exact_data_path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  data_path_mutation_required: false
+  exact_field_count: 2
+  fields:
+    - json_pointer: "/protected_files/scripts~1p9b1q_scoped_query_ir.py"
+      protected_file_path: "scripts/p9b1q_scoped_query_ir.py"
+      authority_derivation: "SHA256_RAW_FILE_BYTES_OF_ACTUAL_CURRENT_PROTECTED_FILE"
+      independently_observed_value_at_adoption_base: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+      current_manifest_value_at_adoption_base: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+      binding_matches_actual: true
+    - json_pointer: "/protected_files/tests~1test_p9b1q_scoped_query_ir.py"
+      protected_file_path: "tests/test_p9b1q_scoped_query_ir.py"
+      authority_derivation: "SHA256_RAW_FILE_BYTES_OF_ACTUAL_CURRENT_PROTECTED_FILE"
+      independently_observed_value_at_adoption_base: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+      current_manifest_value_at_adoption_base: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+      binding_matches_actual: true
+  protected_file_hash_semantics: "SHA256_RAW_FILE_BYTES"
+  authority_rule: "MANIFEST_VALUE_MUST_EQUAL_INDEPENDENTLY_RECOMPUTED_SHA256_RAW_FILE_BYTES"
+  literal_hash_is_evidence_not_authority: true
+  any_other_data_path_adopted: false
+
+present_state_only_boundary:
+  standing_automatic_manifest_refresh_authority: false
+  future_protected_file_change_automatically_authorizes_manifest_update: false
+  future_manifest_update_requires_applicable_stage_or_governance_authorization: true
+  current_adoption_creates_future_mutation_authority: false
+
+pre_creation_verification:
+  required_head: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+  required_remote_tip: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+  worktree_clean: true
+  index_clean: true
+  actual_script_raw_sha256: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+  actual_test_raw_sha256: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+  current_manifest_script_binding: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+  current_manifest_test_binding: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+  script_binding_matches_actual: true
+  test_binding_matches_actual: true
+  mismatch_behavior: "FAIL_CLOSED_PRESENT_STATE_CHANGED"
+
+history_byte_identity_verification:
+  earlier_commit: "ffdfa4d6737fc24791f0902b1a078dd4679024a9"
+  current_commit: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+  script_path: "scripts/p9b1q_scoped_query_ir.py"
+  script_raw_sha256_at_earlier_commit: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+  script_raw_sha256_at_current_commit: "2b07aee87b2ae147754e47d691d32ffc914463d3141b023165b483c50f145ad3"
+  script_bytes_changed_since_ffdfa4d: false
+  test_path: "tests/test_p9b1q_scoped_query_ir.py"
+  test_raw_sha256_at_earlier_commit: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+  test_raw_sha256_at_current_commit: "6bad9e5286b1f5144dfb51610550b1b3c7d0d65c7e775508dde2102dc259f149"
+  test_bytes_changed_since_ffdfa4d: false
+
+data_mutation_boundary:
+  post_authorization_data_mutation_required: false
+  design_manifest_mutation: "PROHIBITED"
+  no_op_data_commit: "PROHIBITED"
+  protected_script_mutation: "PROHIBITED"
+  protected_test_mutation: "PROHIBITED"
+  fixture_evidence_or_schema_mutation: "PROHIBITED"
+  downstream_data_refresh_required: false
+  downstream_data_refresh_path_count: 0
+  downstream_data_refresh_paths: []
+  manifest_rebuild: "PROHIBITED"
+  content_address_refresh: "PROHIBITED"
+
+high_001_freeze:
+  semantic_status: "FROZEN_PASS"
+  exact_paths_must_remain_byte_identical:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-emission-record-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/minimality-proof-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/semantic-universe-exposure-positive.json"
+  authority_mutation: "PROHIBITED"
+
+constraint_governance:
+  domain: "1..48"
+  constraints_1_through_48: "UNCHANGED"
+  constraint_49: "ABSENT"
+  new_constraint_required: false
+  new_constraint_authorized: false
+
+implementation_and_stage_boundary:
+  c3_implementation_permission_created: false
+  c3_implementation_may_resume: false
+  c3_post_correction_reauthorization_eligible: "NO_PENDING_ADOPTION_AUDIT"
+  c4: "PROHIBITED"
+  c5: "PROHIBITED"
+  retrieval: "PROHIBITED"
+  model_or_network_call: "PROHIBITED"
+  r11_secret_body_access: "PROHIBITED"
+  r11_execution: "PROHIBITED"
+
+post_publication_status:
+  forward_adoption_authority: "ACTIVE"
+  high_002_status: "OPEN_PENDING_FOCUSED_ADOPTION_AUDIT"
+  high_003_status: "OPEN_PENDING_FOCUSED_ADOPTION_AUDIT"
+  high_001_governance_status: "OPEN_PENDING_COUPLED_CLOSURE"
+  c3_implementation_may_resume: false
+  c3_post_correction_reauthorization_eligible: "NO_PENDING_ADOPTION_AUDIT"
+
+post_publication_independent_audit:
+  required: true
+  audit_kind: "FOCUSED_INDEPENDENT_READ_ONLY_FORWARD_ADOPTION_AUDIT"
+  required_checks:
+    - "AUTHORITY_CHRONOLOGY"
+    - "NO_RETROACTIVE_WORDING_OR_EFFECT"
+    - "ACTUAL_RAW_SCRIPT_SHA256"
+    - "ACTUAL_RAW_TEST_SHA256"
+    - "CURRENT_MANIFEST_FIELD_EQUALITY"
+    - "PROTECTED_FILE_BYTE_IDENTITY_SINCE_FFDFA4D"
+    - "NO_DATA_MUTATION_IN_ADOPTION_COMMIT"
+    - "NO_DOWNSTREAM_REFRESH"
+    - "HIGH_001_FROZEN_BYTES_UNCHANGED"
+  closure_only_after_audit_pass:
+    high_002: "CLOSED"
+    high_003: "CLOSED"
+    high_001: "CLOSED"
+    c3_authority_correction_status: "CLOSED"
+  self_closure_by_this_authority_atom: "PROHIBITED"
+
+this_turn_atom:
+  authority_only: true
+  exact_changed_path_count: 1
+  exact_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-manifest-binding-forward-adoption-authority.yml"
+  all_other_repository_paths: "UNCHANGED"
+  design_manifest_modified: false
+  script_modified: false
+  test_modified: false
+  downstream_refresh_performed: false
+  c3_implementation_performed: false
+  high_002_or_high_003_closed_by_this_turn: false
+
+commit_policy:
+  required_parent: "107c6b42bfd5708d59cc263ba05a9b3cbc0a7ce8"
+  required_commit_message: "governance(p9b2): adopt current manifest bindings prospectively"
+  required_changed_path_count: 1
+  required_changed_path: "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-manifest-binding-forward-adoption-authority.yml"
+  amend: "PROHIBITED"
+  rebase: "PROHIBITED"
+  squash: "PROHIBITED"
+  merge: "PROHIBITED"
+  history_rewrite: "PROHIBITED"
+
+publication_policy:
+  effective_only_after_publication: true
+  remote: "origin"
+  branch: "agent/p9-b2"
+  mode: "FAST_FORWARD_ONLY"
+  main_write: "PROHIBITED"
+  force_push: "PROHIBITED"
+  pr_creation: "PROHIBITED"
+  credential_unavailable_fallback: "COMPLETE_PUBLIC_GIT_BUNDLE_PRESERVING_EXACT_COMMIT_IDENTITY"
+
+stop_boundary:
+  modify_design_manifest: false
+  create_no_op_data_commit: false
+  implement_c3: false
+  close_findings_without_independent_audit: false
+  create_c3_post_correction_reauthorization: false
+  enter_c4_or_c5: false
+  execute_r11: false
+  return_to_control_after_creation_or_publication: true
