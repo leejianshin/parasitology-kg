@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import copy
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from scripts.p9b1q_scoped_query_ir import (
     BindingValidationError,
     C1ValidationError,
     C2ValidationError,
+    C3ValidationError,
     CLAUSE_AST_SCHEMA_PATH,
     CONFIG_PATH,
     DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH,
@@ -22,6 +25,7 @@ from scripts.p9b1q_scoped_query_ir import (
     canonical_sha256,
     compile_c1,
     compile_c2,
+    compile_c3,
     compile_clause_ast,
     compile_event_frame,
     execute_query_ir,
@@ -29,13 +33,18 @@ from scripts.p9b1q_scoped_query_ir import (
     interpret_request,
     normalize_request,
     normalized_event_identity,
+    resolve_c3_proof_object,
     run_scoped_query,
+    solve_typed_constraints,
     validate_bound_execution,
     validate_c1_clause_ast,
     validate_c1_normalized_request,
     validate_c1_stop_boundary,
     validate_c2_event_frame,
     validate_c2_stop_boundary,
+    validate_c3_result,
+    validate_c3_solution_core,
+    validate_c3_stop_boundary,
     validate_query_ir,
     validate_schema,
 )
@@ -1881,6 +1890,521 @@ class ScopedQueryIRTests(unittest.TestCase):
         result = validate_query_ir(actual, changed)
         self.assertEqual("FAIL_CLOSED", result["result"])
         self.assertIn("EVENT_FIELD_OR_TYPE_MISMATCH", result["fail_codes"])
+
+
+class C3TypedConstraintSolverTests(unittest.TestCase):
+    UNIQUE_TEXT = (
+        "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls._temporary = tempfile.TemporaryDirectory(prefix="p9b1q-c3-tests-")
+        cls.proof_root = Path(cls._temporary.name)
+        cls.compiled = compile_c3(
+            request("C3-UNIQUE", cls.UNIQUE_TEXT),
+            proof_root=cls.proof_root,
+        )
+        cls.typed = cls.compiled["typed_constraint_result"]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._temporary.cleanup()
+
+    @staticmethod
+    def refresh_core(core):
+        material = {
+            key: core[key]
+            for key in (
+                "resolved_mentions",
+                "resolved_events",
+                "resolved_relations",
+                "semantic_roles",
+                "narrative_intents",
+                "resolved_references",
+                "resolved_overrides",
+            )
+        }
+        core["semantic_object_set_sha256"] = canonical_sha256(material)
+        core["solution_id"] = f"SOL-{core['semantic_object_set_sha256'][:24]}"
+
+    def core(self):
+        value = copy.deepcopy(self.typed["selected_solution"])
+        value.pop("queryir_emission_record")
+        return value
+
+    def persist_proof(self, directory, value):
+        digest = canonical_sha256(value)
+        relative = f"proof-objects/{directory}/{digest}.json"
+        destination = self.proof_root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(canonical_bytes(value))
+        return relative, digest
+
+    @staticmethod
+    def refresh_minimality(result):
+        minimality = result["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]
+        body = copy.deepcopy(minimality)
+        body.pop("witness_sha256")
+        minimality["witness_sha256"] = canonical_sha256(body)
+
+    def test_unique_solution_has_complete_content_addressed_proofs(self):
+        self.assertEqual("S3_TYPED_CONSTRAINT_SOLVER", self.compiled["terminal_stage"])
+        self.assertEqual("UNIQUE", self.typed["status"])
+        self.assertEqual("ONE", self.typed["solution_cardinality"])
+        validate_c3_result(
+            self.typed,
+            self.compiled["normalized_request"],
+            self.compiled["clause_ast"],
+            self.compiled["event_frame"],
+            proof_root=self.proof_root,
+        )
+        selected = self.typed["selected_solution"]
+        emission = selected["queryir_emission_record"]
+        self.assertEqual("VALID", emission["query_ir"]["interpretation_status"])
+        material_count = sum(
+            len(selected[key])
+            for key in (
+                "resolved_mentions",
+                "resolved_events",
+                "resolved_relations",
+                "semantic_roles",
+                "narrative_intents",
+                "forbidden_relations",
+                "resolved_references",
+                "resolved_overrides",
+            )
+        )
+        self.assertEqual(
+            material_count,
+            len(emission["minimality_witness"]["retained_object_witnesses"]),
+        )
+        self.assertEqual(
+            material_count,
+            len(emission["license_dag"]["nodes"]),
+        )
+        self.assertNotIn("query_ir", self.compiled)
+        self.assertNotIn("retrieval_result", self.compiled)
+
+    def test_zero_valid_profile_is_unsupported_not_invalid(self):
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c3-unsupported-") as directory:
+            result = compile_c3(
+                request("C3-UNSUPPORTED", "粪便检卵阳性。"),
+                proof_root=Path(directory),
+            )["typed_constraint_result"]
+        self.assertEqual(("UNSUPPORTED", "ZERO"), (result["status"], result["solution_cardinality"]))
+        self.assertIsNone(result["selected_solution"])
+        self.assertTrue(result["unsatisfied_constraints"])
+
+    def test_hash_binding_mismatch_is_invalid_zero(self):
+        c2 = compile_c2(request("C3-INVALID", self.UNIQUE_TEXT))
+        result = solve_typed_constraints(
+            c2["normalized_request"],
+            c2["clause_ast"],
+            c2["event_frame"],
+            bound_hashes={"CLAUSE_AST": "0" * 64},
+        )
+        self.assertEqual(("INVALID", "ZERO"), (result["status"], result["solution_cardinality"]))
+        self.assertIsNone(result["selected_solution"])
+        self.assertEqual(["CNS-SOLVER-HASH_BINDING"], result["unsatisfied_constraints"])
+
+    def test_duplicate_same_entity_occurrences_remain_ambiguous(self):
+        text = (
+            "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病"
+            "华支睾吸虫病的什么证据？"
+        )
+        result = compile_c3(request("C3-AMB", text))["typed_constraint_result"]
+        self.assertEqual(("AMBIGUOUS", "MULTIPLE"), (result["status"], result["solution_cardinality"]))
+        self.assertIsNone(result["selected_solution"])
+        certificate = result["ambiguity_certificate"]
+        self.assertGreaterEqual(len(certificate["solution_fingerprint_sha256s"]), 2)
+        self.assertTrue(all(value.startswith("U") for value in certificate["differing_variable_ids"]))
+
+    def test_reverse_relation_direction_and_unlicensed_role_fail_closed(self):
+        reversed_core = self.core()
+        relation = reversed_core["resolved_relations"][0]
+        relation["subject_selector"], relation["object_selector"] = (
+            relation["object_selector"],
+            relation["subject_selector"],
+        )
+        self.refresh_core(reversed_core)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                reversed_core,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+        extra_role = self.core()
+        extra_role["semantic_roles"].append({
+            "role_key": "RQ999",
+            "role_namespace": "TOPIC_SCOPE",
+            "role_value": "exposure",
+            "activation_policy": "REQUIRED",
+            "root_keys": ["RR001"],
+        })
+        self.refresh_core(extra_role)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                extra_role,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+    def test_formal_prohibition_assertion_and_event_identity_are_enforced(self):
+        prohibited = self.core()
+        relation = prohibited["resolved_relations"][0]
+        prohibited["forbidden_relations"] = [{
+            "forbidden_key": "RF001",
+            "predicate": relation["predicate"],
+            "subject_selector": copy.deepcopy(relation["subject_selector"]),
+            "object_selector": copy.deepcopy(relation["object_selector"]),
+            "reason": "EXPLICIT_EXCLUSION",
+            "root_keys": ["RM001"],
+        }]
+        self.refresh_core(prohibited)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                prohibited,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+        assertion = self.core()
+        assertion["resolved_mentions"][0]["assertion_status"] = "NEGATED"
+        self.refresh_core(assertion)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                assertion,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+        identity = self.core()
+        identity["resolved_events"][0]["frame_id"] = "EF999"
+        self.refresh_core(identity)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                identity,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+    def test_high011_bound_method_occurrence_is_preserved_into_s3_input(self):
+        actual = request(
+            "C3-HIGH011",
+            "华支睾吸虫病的确诊方法是粪便检查粪便检查。",
+        )
+        normalized = normalize_request(actual)
+        ast = compile_clause_ast(normalized)
+        binding = diagnostic_argument_binding(
+            normalized,
+            ast,
+            [("diagnosed_by", "华支睾吸虫病", ("粪便检查", 1))],
+        )
+        result = compile_c3(actual, diagnostic_argument_binding=binding)
+        method = next(
+            slot
+            for slot in result["event_frame"]["frames"][0]["participant_slots"]
+            if slot["semantic_role"] == "METHOD"
+        )
+        self.assertEqual(["U004"], method["source_ids"])
+        self.assertNotIn("U003", method["source_ids"])
+        self.assertEqual("UNSUPPORTED", result["typed_constraint_result"]["status"])
+
+    def test_candidate_output_cannot_self_authorize_core_changes(self):
+        changed = self.core()
+        changed["resolved_relations"][0]["root_keys"] = ["RM002", "RM005"]
+        self.refresh_core(changed)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_solution_core(
+                changed,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+            )
+
+    def test_candidate_status_cannot_self_authorize_cardinality(self):
+        forged = copy.deepcopy(self.typed)
+        forged["status"] = "UNSUPPORTED"
+        forged["solution_cardinality"] = "ZERO"
+        forged["selected_solution"] = None
+        forged["ambiguity_certificate"] = None
+        forged["unsatisfied_constraints"] = [
+            "CNS-SOLVER-EVENT_RELATION_DERIVATION"
+        ]
+        with self.assertRaises(C3ValidationError):
+            validate_c3_result(
+                forged,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+                proof_root=self.proof_root,
+            )
+
+    def test_reference_candidates_remain_ambiguous_and_override_is_not_a_winner(self):
+        text = (
+            "华支睾吸虫病粪便检查检出虫卵，华支睾吸虫病粪便检查未检出虫卵；"
+            "两次检查是同一诊断事件，生食淡水鱼是另一暴露事件，"
+            "后次结果覆盖前次结果。"
+        )
+        compiled = compile_c3(request("C3-REFERENCE-OVERRIDE", text))
+        event_frame = compiled["event_frame"]
+        result = compiled["typed_constraint_result"]
+        self.assertEqual("UNIQUE", event_frame["override_hypotheses"][0]["status"])
+        self.assertEqual(("AMBIGUOUS", "MULTIPLE"), (
+            result["status"], result["solution_cardinality"]
+        ))
+        self.assertIn(
+            "RH002", result["ambiguity_certificate"]["differing_variable_ids"]
+        )
+        validate_c3_result(
+            result,
+            compiled["normalized_request"],
+            compiled["clause_ast"],
+            event_frame,
+        )
+
+    def test_schema_valid_but_non_authoritative_override_input_is_invalid(self):
+        text = (
+            "华支睾吸虫病粪便检查检出虫卵，华支睾吸虫病粪便检查未检出虫卵；"
+            "两次检查是同一诊断事件，后次结果覆盖前次结果。"
+        )
+        c2 = compile_c2(request("C3-OVERRIDE-INVALID", text))
+        changed = copy.deepcopy(c2["event_frame"])
+        changed["override_hypotheses"][0]["overridden_dimension_domain"] = [
+            "ASSERTION_STATUS"
+        ]
+        result = solve_typed_constraints(
+            c2["normalized_request"], c2["clause_ast"], changed
+        )
+        self.assertEqual(("INVALID", "ZERO"), (
+            result["status"], result["solution_cardinality"]
+        ))
+
+    def test_proof_path_and_binding_mutations_fail_closed(self):
+        emission = self.typed["selected_solution"]["queryir_emission_record"]
+        witness = emission["minimality_witness"]
+        bad_paths = (
+            "../proof-objects/semantic-universe/" + "0" * 64 + ".json",
+            "..\\proof-objects\\semantic-universe\\" + "0" * 64 + ".json",
+            "/tmp/" + "0" * 64 + ".json",
+            "C:/tmp/" + "0" * 64 + ".json",
+            "\\\\server\\share\\proof.json",
+            "file:///tmp/proof.json",
+            "http://example.invalid/proof.json",
+            "https://example.invalid/proof.json",
+            "fixtures/semantic-universe-exposure-positive.json",
+        )
+        for path in bad_paths:
+            with self.subTest(path=path):
+                changed = copy.deepcopy(self.typed)
+                changed["selected_solution"]["queryir_emission_record"][
+                    "minimality_witness"
+                ]["semantic_universe_path"] = path
+                with self.assertRaises(C3ValidationError):
+                    validate_c3_result(
+                        changed,
+                        self.compiled["normalized_request"],
+                        self.compiled["clause_ast"],
+                        self.compiled["event_frame"],
+                        proof_root=self.proof_root,
+                    )
+
+        wrong_kind = copy.deepcopy(self.typed)
+        first_probe = witness["retained_object_witnesses"][0]["removal_probe_path"]
+        wrong_kind["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["semantic_universe_path"] = first_probe
+        with self.assertRaises(C3ValidationError):
+            validate_c3_result(
+                wrong_kind,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+                proof_root=self.proof_root,
+            )
+
+        wrong_hash = copy.deepcopy(self.typed)
+        wrong_hash["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["semantic_universe_sha256"] = "0" * 64
+        with self.assertRaises(C3ValidationError):
+            validate_c3_result(
+                wrong_hash,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+                proof_root=self.proof_root,
+            )
+
+    def test_missing_solution_semantic_universe_and_probe_fail_closed(self):
+        mutations = []
+        missing_universe = copy.deepcopy(self.typed)
+        missing_universe["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["semantic_universe_path"] = (
+            "proof-objects/semantic-universe/" + "1" * 64 + ".json"
+        )
+        mutations.append(missing_universe)
+
+        solution_mismatch = copy.deepcopy(self.typed)
+        solution_mismatch["selected_solution"]["queryir_emission_record"][
+            "semantic_solution_core_sha256"
+        ] = "2" * 64
+        mutations.append(solution_mismatch)
+
+        universe_mismatch = copy.deepcopy(self.typed)
+        universe_mismatch["selected_solution"]["queryir_emission_record"][
+            "query_ir_sha256"
+        ] = "3" * 64
+        mutations.append(universe_mismatch)
+
+        missing_probe = copy.deepcopy(self.typed)
+        missing_probe["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["retained_object_witnesses"][0]["removal_probe_path"] = (
+            "proof-objects/removal-probe/" + "4" * 64 + ".json"
+        )
+        mutations.append(missing_probe)
+        for value in mutations:
+            with self.assertRaises(C3ValidationError):
+                validate_c3_result(
+                    value,
+                    self.compiled["normalized_request"],
+                    self.compiled["clause_ast"],
+                    self.compiled["event_frame"],
+                    proof_root=self.proof_root,
+                )
+
+    def test_persisted_request_universe_and_solution_mismatches_fail_closed(self):
+        emission = self.typed["selected_solution"]["queryir_emission_record"]
+        universe_path = emission["minimality_witness"]["semantic_universe_path"]
+        universe = json.loads((self.proof_root / universe_path).read_text())
+
+        for field, value in (
+            ("request_id", "P9B1Q-OTHER-REQUEST"),
+            ("query_ir_sha256", "5" * 64),
+        ):
+            with self.subTest(field=field):
+                changed_universe = copy.deepcopy(universe)
+                changed_universe[field] = value
+                path, digest = self.persist_proof(
+                    "semantic-universe", changed_universe
+                )
+                changed = copy.deepcopy(self.typed)
+                minimality = changed["selected_solution"][
+                    "queryir_emission_record"
+                ]["minimality_witness"]
+                minimality["semantic_universe_path"] = path
+                minimality["semantic_universe_sha256"] = digest
+                self.refresh_minimality(changed)
+                with self.assertRaises(C3ValidationError):
+                    validate_c3_result(
+                        changed,
+                        self.compiled["normalized_request"],
+                        self.compiled["clause_ast"],
+                        self.compiled["event_frame"],
+                        proof_root=self.proof_root,
+                    )
+
+        changed_core = self.core()
+        changed_core["resolved_mentions"].pop()
+        self.refresh_core(changed_core)
+        core_path, core_hash = self.persist_proof(
+            "typed-solution-core", changed_core
+        )
+        changed = copy.deepcopy(self.typed)
+        first_witness = changed["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["retained_object_witnesses"][0]
+        original_probe = json.loads(
+            (self.proof_root / first_witness["removal_probe_path"]).read_text()
+        )
+        original_probe["base_typed_solution_path"] = core_path
+        original_probe["base_typed_solution_sha256"] = core_hash
+        probe_path, probe_hash = self.persist_proof(
+            "removal-probe", original_probe
+        )
+        first_witness["removal_probe_path"] = probe_path
+        first_witness["removal_probe_sha256"] = probe_hash
+        self.refresh_minimality(changed)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_result(
+                changed,
+                self.compiled["normalized_request"],
+                self.compiled["clause_ast"],
+                self.compiled["event_frame"],
+                proof_root=self.proof_root,
+            )
+
+    def test_symlink_escape_is_rejected_after_resolution(self):
+        universe_path = self.typed["selected_solution"]["queryir_emission_record"][
+            "minimality_witness"
+        ]["semantic_universe_path"]
+        universe = json.loads((self.proof_root / universe_path).read_text())
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c3-external-") as directory:
+            external = Path(directory) / "object.json"
+            external.write_bytes(canonical_bytes(universe))
+            digest = canonical_sha256(universe)
+            relative = f"proof-objects/semantic-universe/{digest}.json"
+            internal = self.proof_root / relative
+            internal.unlink()
+            internal.symlink_to(external)
+            try:
+                self.assertIsNone(
+                    resolve_c3_proof_object(
+                        self.proof_root,
+                        relative,
+                        "SEMANTIC_UNIVERSE",
+                        self.typed["request_id"],
+                    )
+                )
+            finally:
+                internal.unlink()
+                internal.write_bytes(canonical_bytes(universe))
+
+    def test_three_fresh_runs_are_byte_identical(self):
+        hashes = []
+        for index in range(3):
+            with tempfile.TemporaryDirectory(prefix=f"p9b1q-c3-det-{index}-") as directory:
+                value = compile_c3(
+                    request("C3-DETERMINISM", self.UNIQUE_TEXT),
+                    proof_root=Path(directory),
+                )
+                proof_bytes = [
+                    path.read_bytes()
+                    for path in sorted(Path(directory).rglob("*.json"))
+                ]
+                hashes.append(canonical_sha256({
+                    "result": value,
+                    "proof_sha256s": [
+                        __import__("hashlib").sha256(item).hexdigest()
+                        for item in proof_bytes
+                    ],
+                }))
+        self.assertEqual([hashes[0]] * 3, hashes)
+
+    def test_s3_stop_boundary_rejects_later_stage_objects(self):
+        validate_c3_stop_boundary(self.compiled)
+        with self.assertRaises(C3ValidationError):
+            validate_c3_stop_boundary({
+                "implemented_stages": [
+                    "S0_REQUEST_NORMALIZATION",
+                    "S1_CLAUSE_AST",
+                    "S2_EVENT_FRAME",
+                    "S3_TYPED_CONSTRAINT_SOLVER",
+                ],
+                "terminal_stage": "S3_TYPED_CONSTRAINT_SOLVER",
+                "retrieval_result": {},
+            })
 
 
 class BindingChainTests(unittest.TestCase):

@@ -15,6 +15,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import tempfile
 import unicodedata
 from dataclasses import dataclass
 from itertools import product
@@ -62,6 +63,28 @@ DIAGNOSTIC_ARGUMENT_BINDING_CONTRACT_PATH = (
 DIAGNOSTIC_ARGUMENT_BINDING_SCHEMA_PATH = (
     ARCH_REVIEW / "diagnostic-predicate-argument-binding-schema-candidate.yml"
 )
+TYPED_CONSTRAINT_RESULT_SCHEMA_PATH = (
+    ARCH_REVIEW / "typed-constraint-result-schema-candidate.yml"
+)
+TYPED_SOLUTION_CORE_SCHEMA_PATH = (
+    ARCH_REVIEW / "typed-solution-core-schema-candidate.yml"
+)
+QUERYIR_EMISSION_RECORD_SCHEMA_PATH = (
+    ARCH_REVIEW / "queryir-emission-record-schema-candidate.yml"
+)
+MINIMALITY_PROOF_SCHEMA_PATH = ARCH_REVIEW / "minimality-proof-schema-candidate.yml"
+TYPED_SOLVER_CONTRACT_PATH = ARCH_REVIEW / "typed-constraint-solver-contract.yml"
+CONSTRAINT_REGISTRY_PATH = ARCH_REVIEW / "constraint-id-registry.yml"
+CONSTRAINT_SET_PATH = ARCH_REVIEW / "constraint-set-v0.1.yml"
+PROJECTION_RULE_SET_PATH = ARCH_REVIEW / "queryir-projection-rule-set.yml"
+RELATION_ONTOLOGY_PATH = Path("schema/relation-types.yml")
+PREDICATE_TYPE_AUTHORITY_PATH = (
+    ARCH_REVIEW / "fixtures/authority-predicate-type-mapping.json"
+)
+SEMANTIC_ROLE_AUTHORITY_PATH = (
+    ARCH_REVIEW / "fixtures/authority-semantic-role-mapping.json"
+)
+REFERENCE_STAGE_VALIDATOR_PATH = ARCH_REVIEW / "reference-stage-semantic-validator.py"
 
 C1_TERMINAL_STAGE = "S1_CLAUSE_AST"
 C1_IMPLEMENTED_STAGES = ("S0_REQUEST_NORMALIZATION", C1_TERMINAL_STAGE)
@@ -76,6 +99,13 @@ C2_TERMINAL_STAGE = "S2_EVENT_FRAME"
 C2_IMPLEMENTED_STAGES = (*C1_IMPLEMENTED_STAGES, C2_TERMINAL_STAGE)
 C2_PROHIBITED_STAGES = (
     "S3_TYPED_CONSTRAINT_SOLVER",
+    "S4_QUERYIR_EMISSION_IMPLEMENTATION",
+    "S5_RUNTIME_RETRIEVAL_BINDING",
+)
+
+C3_TERMINAL_STAGE = "S3_TYPED_CONSTRAINT_SOLVER"
+C3_IMPLEMENTED_STAGES = (*C2_IMPLEMENTED_STAGES, C3_TERMINAL_STAGE)
+C3_PROHIBITED_STAGES = (
     "S4_QUERYIR_EMISSION_IMPLEMENTATION",
     "S5_RUNTIME_RETRIEVAL_BINDING",
 )
@@ -3232,6 +3262,1797 @@ def compile_c2(
         "event_frame_sha256": canonical_sha256(event_frame),
     }
     validate_c2_stop_boundary(result)
+    return result
+
+
+class C3ValidationError(ValueError):
+    """Fail-closed S3 input, solution, or proof validation failure."""
+
+
+_C3_PROOF_PATH_RE = {
+    "SEMANTIC_UNIVERSE": re.compile(
+        r"^proof-objects/semantic-universe/([0-9a-f]{64})\.json$"
+    ),
+    "TYPED_SOLUTION": re.compile(
+        r"^proof-objects/typed-solution-core/([0-9a-f]{64})\.json$"
+    ),
+    "REMOVAL_PROBE": re.compile(
+        r"^proof-objects/removal-probe/([0-9a-f]{64})\.json$"
+    ),
+}
+
+
+def _c3_fail(message: str) -> None:
+    raise C3ValidationError(f"{C3_TERMINAL_STAGE}: {message}")
+
+
+def _c3_authority_inputs(
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    event_frame: dict[str, Any],
+    root: Path,
+) -> dict[str, Any]:
+    return {
+        "NORMALIZED_REQUEST": normalized,
+        "CLAUSE_AST": ast,
+        "EVENT_FRAME": event_frame,
+        "ENTITY_ONTOLOGY": _read_yaml(root / ENTITY_ONTOLOGY_PATH),
+        "RELATION_ONTOLOGY": _read_yaml(root / RELATION_ONTOLOGY_PATH),
+        "PREDICATE_TYPE_MAPPING": _read_yaml(root / PREDICATE_TYPE_AUTHORITY_PATH),
+        "EVENT_RELATION_MAPPING": _read_yaml(root / EVENT_RELATION_AUTHORITY_PATH),
+        "SEMANTIC_ROLE_MAPPING": _read_yaml(root / SEMANTIC_ROLE_AUTHORITY_PATH),
+        "CONSTRAINT_REGISTRY": _read_yaml(root / CONSTRAINT_REGISTRY_PATH),
+        "CONSTRAINT_SET": _read_yaml(root / CONSTRAINT_SET_PATH),
+        "PROJECTION_RULE_SET": _read_yaml(root / PROJECTION_RULE_SET_PATH),
+    }
+
+
+def _c3_hash_bindings(inputs: dict[str, Any], root: Path) -> dict[str, str]:
+    file_bindings = {
+        "ENTITY_ONTOLOGY": ENTITY_ONTOLOGY_PATH,
+        "RELATION_ONTOLOGY": RELATION_ONTOLOGY_PATH,
+        "PREDICATE_TYPE_MAPPING": PREDICATE_TYPE_AUTHORITY_PATH,
+        "EVENT_RELATION_MAPPING": EVENT_RELATION_AUTHORITY_PATH,
+        "SEMANTIC_ROLE_MAPPING": SEMANTIC_ROLE_AUTHORITY_PATH,
+        "CONSTRAINT_REGISTRY": CONSTRAINT_REGISTRY_PATH,
+        "CONSTRAINT_SET": CONSTRAINT_SET_PATH,
+        "CANONICALIZATION_PROFILE": CANONICALIZATION_PROFILE_PATH,
+        "STAGE_VALIDATOR_CONTRACT": STAGE_VALIDATOR_CONTRACT_PATH,
+        "PROJECTION_RULE_SET": PROJECTION_RULE_SET_PATH,
+        "QUERY_IR_SCHEMA": QUERY_IR_SCHEMA_PATH,
+    }
+    result = {
+        "NORMALIZED_REQUEST": canonical_sha256(inputs["NORMALIZED_REQUEST"]),
+        "CLAUSE_AST": canonical_sha256(inputs["CLAUSE_AST"]),
+        "EVENT_FRAME": canonical_sha256(inputs["EVENT_FRAME"]),
+    }
+    result.update({key: file_sha256(root / path) for key, path in file_bindings.items()})
+    return result
+
+
+def _c3_constraint_ids(inputs: dict[str, Any]) -> list[str]:
+    registry = inputs["CONSTRAINT_REGISTRY"]
+    entries = registry.get("entries", [])
+    if [item.get("order") for item in entries] != list(range(1, 49)):
+        _c3_fail("constraint registry is not the exact 1..48 sequence")
+    ids = [item.get("id") for item in entries]
+    if len(ids) != len(set(ids)) or inputs["CONSTRAINT_SET"].get(
+        "selected_constraints"
+    ) != ids:
+        _c3_fail("constraint registry/set sequence mismatch")
+    if any(item == "CNS-49" for item in ids) or len(ids) != 48:
+        _c3_fail("constraint 49 or non-48 constraint domain observed")
+    return [
+        item["id"]
+        for item in entries
+        if item["stage"]
+        in {
+            "S0_NORMALIZED_REQUEST",
+            "S1_CLAUSE_AST",
+            "S2_EVENT_FRAME",
+            "S3_TYPED_SOLVER",
+        }
+    ]
+
+
+def _c3_entity_types(inputs: dict[str, Any]) -> dict[str, str]:
+    prefixes = {
+        config["id_prefix"]: name
+        for name, config in inputs["ENTITY_ONTOLOGY"]["entity_types"].items()
+    }
+    result: dict[str, str] = {}
+    for mention in inputs["CLAUSE_AST"]["surface_mentions"]:
+        for entity_id in mention["candidate_entity_ids"]:
+            entity_type = prefixes.get(entity_id.split(".", 1)[0])
+            if entity_type is None or entity_type not in mention["candidate_entity_types"]:
+                _c3_fail(f"unknown or type-incompatible entity candidate {entity_id}")
+            result[entity_id] = entity_type
+    return result
+
+
+def _c3_mention_assertion(ast: dict[str, Any], mention: dict[str, Any]) -> str:
+    applicable = [
+        marker
+        for marker in ast["assertion_markers"]
+        if mention["surface_mention_id"] in marker["scope_target_candidate_ids"]
+        or mention["containing_node_id"] in marker["scope_target_candidate_ids"]
+    ]
+    if any(item["marker_kind"] == "EXCLUSION" for item in applicable):
+        return "EXCLUDED"
+    if any(item["marker_kind"] == "HYPOTHETICAL" for item in applicable):
+        return "HYPOTHETICAL"
+    if sum(item["marker_kind"] == "NEGATOR" for item in applicable) % 2:
+        return "NEGATED"
+    return "AFFIRMED"
+
+
+def _c3_resolved_mentions(
+    inputs: dict[str, Any], selection: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    entity_types = _c3_entity_types(inputs)
+    return [
+        {
+            "mention_key": f"RM{index:03d}",
+            "surface_mention_id": mention["surface_mention_id"],
+            "entity_id": entity_id,
+            "entity_type": entity_types[entity_id],
+            "assertion_status": _c3_mention_assertion(inputs["CLAUSE_AST"], mention),
+            "temporal_scope": "GENERAL",
+        }
+        for index, (mention, entity_id) in enumerate(
+            zip(inputs["CLAUSE_AST"]["surface_mentions"], selection), 1
+        )
+    ]
+
+
+def _c3_event_domains(inputs: dict[str, Any]) -> list[list[dict[str, Any]]]:
+    event_frame = inputs["EVENT_FRAME"]
+    specimens = {
+        item["specimen_slot_id"]: item for item in event_frame["specimen_slots"]
+    }
+    domains: list[list[dict[str, Any]]] = []
+    for event_index, frame in enumerate(event_frame["frames"], 1):
+        slots = {item["slot_id"]: item for item in frame["participant_slots"]}
+        identity = frame["normalized_identity"]
+
+        def choices(slot_ids: list[str]) -> list[tuple[str, ...]]:
+            if not slot_ids:
+                return [()]
+            values = [slots[slot_id]["domain"]["entity_ids"] for slot_id in slot_ids]
+            if any(not value for value in values):
+                return []
+            return [tuple(value) for value in product(*values)]
+
+        actors = choices(identity["actor_slot_ids"])
+        targets = choices(identity["target_slot_ids"])
+        methods = (
+            choices([identity["method_slot_id"]])
+            if identity["method_slot_id"] is not None
+            else [()]
+        )
+        specimen_values: list[str] = ["NOT_APPLICABLE"]
+        if identity["specimen_slot_ids"]:
+            specimen_values = list(
+                specimens[identity["specimen_slot_ids"][0]]["specimen_code_domain"]
+            )
+        values: list[dict[str, Any]] = []
+        for event_type, actor_ids, target_ids, method_ids, specimen in product(
+            frame["event_type_domain"], actors, targets, methods, specimen_values
+        ):
+            polarity = frame["assertion"]["finding_polarity"]
+            if event_type != "DIAGNOSTIC_FINDING":
+                polarity = "NOT_APPLICABLE"
+                specimen = "NOT_APPLICABLE"
+                method_ids = ()
+            if polarity == "UNSPECIFIED":
+                continue
+            values.append(
+                {
+                    "event_key": f"RE{event_index:03d}",
+                    "frame_id": frame["frame_id"],
+                    "event_type": event_type,
+                    "actor_entity_ids": sorted(set(actor_ids)),
+                    "method_entity_id": method_ids[0] if len(method_ids) == 1 else None,
+                    "specimen_code": specimen,
+                    "target_entity_ids": sorted(set(target_ids)),
+                    "finding_polarity": polarity,
+                    "assertion_status": frame["assertion"]["assertion_status"],
+                    "temporal_scope": frame["assertion"]["temporal_scope"],
+                }
+            )
+        domains.append(values)
+    return domains
+
+
+def _c3_selector(entity_ids: Iterable[str]) -> dict[str, Any]:
+    return {"entity_ids": sorted(set(entity_ids)), "entity_types": []}
+
+
+def _c3_profile_cores(
+    inputs: dict[str, Any],
+    mentions: list[dict[str, Any]],
+    events: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Build only solutions licensed by the frozen projection closure."""
+    profiles = inputs["PROJECTION_RULE_SET"].get("semantic_projection_profiles", [])
+    relation_mapping = inputs["EVENT_RELATION_MAPPING"]["event_mapping"]
+    candidates: list[dict[str, Any]] = []
+    for profile in profiles:
+        when = profile["when"]
+        for event in events:
+            if (
+                event["event_type"] != when["event_type"]
+                or event["assertion_status"] != when["assertion_status"]
+            ):
+                continue
+            mapping = relation_mapping.get(event["event_type"], {}).get(
+                "predicates", {}
+            ).get(when["predicate"])
+            if mapping is None:
+                continue
+            subjects = [
+                item
+                for item in mentions
+                if item["entity_type"] == when["subject_entity_type"]
+                and item["assertion_status"] == "AFFIRMED"
+            ]
+            objects = [
+                item
+                for item in mentions
+                if item["entity_type"] == when["object_entity_type"]
+                and item["assertion_status"] == "AFFIRMED"
+                and (
+                    not when.get("event_target_equals_relation_object")
+                    or item["entity_id"] in event["target_entity_ids"]
+                )
+            ]
+            for subject, object_ in product(subjects, objects):
+                if subject["entity_type"] not in mapping["subject_from"]:
+                    continue
+                if object_["entity_type"] not in mapping["object_from"]:
+                    continue
+                relation = {
+                    "relation_key": "RR001",
+                    "predicate": when["predicate"],
+                    "subject_selector": _c3_selector([subject["entity_id"]]),
+                    "object_selector": _c3_selector([object_["entity_id"]]),
+                    "activation_policy": "REQUIRED",
+                    "derivation_mode": "DIRECT_MENTION_DERIVED",
+                    "root_keys": sorted(
+                        [subject["mention_key"], object_["mention_key"]]
+                    ),
+                }
+                roles = [
+                    {
+                        "role_key": f"RQ{index:03d}",
+                        "role_namespace": value["role_namespace"],
+                        "role_value": value["role_value"],
+                        "activation_policy": "REQUIRED",
+                        "root_keys": [relation["relation_key"]],
+                    }
+                    for index, value in enumerate(profile["required_roles"], 1)
+                ]
+                narratives = [
+                    {
+                        "narrative_key": f"RN{index:03d}",
+                        "entity_selector": copy.deepcopy(relation["subject_selector"]),
+                        "topic_scope": value["topic_scope"],
+                        "semantic_role": value["semantic_role"],
+                        "activation_policy": "REQUIRED",
+                        "root_keys": [relation["relation_key"]],
+                        "required_anchor_predicates": list(
+                            value["required_anchor_predicates"]
+                        ),
+                    }
+                    for index, value in enumerate(
+                        profile["required_narrative_intents"], 1
+                    )
+                ]
+                core = {
+                    "solution_id": "SOL-" + "0" * 24,
+                    "resolved_mentions": copy.deepcopy(mentions),
+                    "resolved_events": copy.deepcopy(events),
+                    "resolved_relations": [relation],
+                    "semantic_roles": roles,
+                    "narrative_intents": narratives,
+                    "forbidden_relations": [],
+                    "resolved_references": [],
+                    "resolved_overrides": [],
+                    "satisfied_constraint_ids": _c3_constraint_ids(inputs),
+                    "semantic_object_set_sha256": "0" * 64,
+                }
+                _c3_refresh_core(core)
+                candidates.append(core)
+    unique = {canonical_sha256(item): item for item in candidates}
+    return [unique[key] for key in sorted(unique)]
+
+
+def _c3_event_identity(event: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        event["event_type"],
+        tuple(event["actor_entity_ids"]),
+        event["method_entity_id"],
+        event["specimen_code"],
+        tuple(event["target_entity_ids"]),
+    )
+
+
+def _c3_apply_structural_assignment(
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    structural_domains: list[tuple[str, tuple[str, ...]]],
+    structural_values: tuple[str, ...],
+) -> dict[str, Any] | None:
+    """Bind unique/reference/override variables without positional shortcuts."""
+    selected = dict(zip((item[0] for item in structural_domains), structural_values))
+    mention_by_surface = {
+        item["surface_mention_id"]: item for item in core["resolved_mentions"]
+    }
+    event_by_frame = {item["frame_id"]: item for item in core["resolved_events"]}
+    references = []
+    for index, hypothesis in enumerate(inputs["EVENT_FRAME"]["reference_hypotheses"], 1):
+        option = selected[hypothesis["reference_hypothesis_id"]]
+        referent_id, identity_relation = option.split(":", 1)
+        if hypothesis["anaphor_frame_id"] is not None:
+            anaphor = event_by_frame.get(hypothesis["anaphor_frame_id"])
+        else:
+            anaphor = mention_by_surface.get(hypothesis["anaphor_source_id"])
+        referent = (
+            event_by_frame.get(referent_id)
+            if referent_id.startswith("EF")
+            else mention_by_surface.get(referent_id)
+        )
+        if anaphor is None or referent is None:
+            return None
+        if "event_key" in anaphor and "event_key" in referent:
+            same = _c3_event_identity(anaphor) == _c3_event_identity(referent)
+            if (identity_relation == "SAME_EVENT") != same:
+                return None
+            relation = identity_relation
+        elif identity_relation in {"SAME_EVENT", "DISTINCT_EVENT"}:
+            return None
+        else:
+            relation = "NOT_APPLICABLE"
+        references.append(
+            {
+                "reference_key": f"RREF{index:03d}",
+                "hypothesis_id": hypothesis["reference_hypothesis_id"],
+                "anaphor_key": anaphor.get("event_key", anaphor.get("mention_key")),
+                "referent_key": referent.get("event_key", referent.get("mention_key")),
+                "identity_relation": relation,
+            }
+        )
+    overrides = []
+    for index, hypothesis in enumerate(inputs["EVENT_FRAME"]["override_hypotheses"], 1):
+        if hypothesis["status"] == "NO_MATCH":
+            continue
+        earlier_id, later_id, dimension = selected[
+            hypothesis["override_hypothesis_id"]
+        ].split(":", 2)
+        earlier, later = event_by_frame.get(earlier_id), event_by_frame.get(later_id)
+        if earlier is None or later is None or _c3_event_identity(earlier) != _c3_event_identity(later):
+            return None
+        state_fields = {
+            "ASSERTION_STATUS": "assertion_status",
+            "FINDING_POLARITY": "finding_polarity",
+            "TEMPORAL_SCOPE": "temporal_scope",
+        }
+        if earlier[state_fields[dimension]] == later[state_fields[dimension]] or any(
+            earlier[field] != later[field]
+            for name, field in state_fields.items()
+            if name != dimension
+        ):
+            return None
+        overrides.append(
+            {
+                "override_key": f"ROV{index:03d}",
+                "hypothesis_id": hypothesis["override_hypothesis_id"],
+                "earlier_event_key": earlier["event_key"],
+                "later_event_key": later["event_key"],
+                "overridden_dimension": dimension,
+            }
+        )
+    output = copy.deepcopy(core)
+    output["resolved_references"] = references
+    output["resolved_overrides"] = overrides
+    _c3_refresh_core(output)
+    return output
+
+
+def _c3_semantic_object_set(core: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: core[key]
+        for key in (
+            "resolved_mentions",
+            "resolved_events",
+            "resolved_relations",
+            "semantic_roles",
+            "narrative_intents",
+            "resolved_references",
+            "resolved_overrides",
+        )
+    }
+
+
+def _c3_refresh_core(core: dict[str, Any]) -> None:
+    core["semantic_object_set_sha256"] = canonical_sha256(
+        _c3_semantic_object_set(core)
+    )
+    core["solution_id"] = f"SOL-{core['semantic_object_set_sha256'][:24]}"
+
+
+def _c3_material_objects(
+    core: dict[str, Any],
+) -> list[tuple[str, str, int, str, str]]:
+    specs = (
+        ("resolved_mentions", "mention_key", "M", "/mentions"),
+        ("resolved_events", "event_key", "E", "/events"),
+        ("resolved_relations", "relation_key", "R", "/relation_intents"),
+        ("narrative_intents", "narrative_key", "N", "/narrative_intents"),
+        ("semantic_roles", "role_key", "Q", "/required_roles"),
+        ("forbidden_relations", "forbidden_key", "F", "/forbidden_relation_intents"),
+        ("resolved_references", "reference_key", "REF", "/resolved_references"),
+        ("resolved_overrides", "override_key", "OVR", "/resolved_overrides"),
+    )
+    values: list[tuple[str, str, int, str, str]] = []
+    for collection, key, output_prefix, pointer in specs:
+        for index, item in enumerate(core[collection]):
+            digits = re.search(r"[0-9]+$", item[key]).group(0)  # type: ignore[union-attr]
+            values.append(
+                (
+                    f"{output_prefix}{int(digits):02d}",
+                    collection,
+                    index,
+                    f"{pointer}/{index}",
+                    item[key],
+                )
+            )
+    return values
+
+
+def _c3_queryir_id(identifier: str) -> str:
+    for source, target in (
+        ("RREF", "REF"),
+        ("ROV", "OVR"),
+        ("RM", "M"),
+        ("RE", "E"),
+        ("RR", "R"),
+        ("RN", "N"),
+        ("RQ", "Q"),
+    ):
+        if identifier.startswith(source):
+            return f"{target}{int(identifier[len(source):]):02d}"
+    _c3_fail(f"cannot project identifier {identifier}")
+    raise AssertionError
+
+
+def _c3_queryir_projection(
+    core: dict[str, Any], inputs: dict[str, Any], hashes: dict[str, str]
+) -> dict[str, Any]:
+    normalized = inputs["NORMALIZED_REQUEST"]
+    ast = inputs["CLAUSE_AST"]
+    event_frame = inputs["EVENT_FRAME"]
+    proposition_nodes = sorted(
+        (item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (
+            item["source_span"]["start_char"],
+            item["source_span"]["end_char"],
+        ),
+    )
+    if not proposition_nodes:
+        _c3_fail("Clause AST has no material proposition")
+    clause_by_node = {
+        item["node_id"]: f"C{index:02d}"
+        for index, item in enumerate(proposition_nodes, 1)
+    }
+    clause_order = {
+        value: index for index, value in enumerate(clause_by_node.values(), 1)
+    }
+    clauses = [
+        {
+            "clause_id": f"C{index:02d}",
+            "order": index,
+            "source_span": copy.deepcopy(node["source_span"]),
+            "discourse_operator": "ROOT" if index == 1 else "AND",
+            "parent_clause_id": None if index == 1 else "C01",
+            "alternative_group_id": None,
+        }
+        for index, node in enumerate(proposition_nodes, 1)
+    ]
+    ast_mentions = {
+        item["surface_mention_id"]: item for item in ast["surface_mentions"]
+    }
+    mention_id_by_surface = {
+        item["surface_mention_id"]: _c3_queryir_id(item["mention_key"])
+        for item in core["resolved_mentions"]
+    }
+    mentions = [
+        {
+            "mention_id": _c3_queryir_id(item["mention_key"]),
+            "clause_id": clause_by_node[
+                ast_mentions[item["surface_mention_id"]]["containing_node_id"]
+            ],
+            "source_span": copy.deepcopy(
+                ast_mentions[item["surface_mention_id"]]["source_span"]
+            ),
+            "entity_id": item["entity_id"],
+            "entity_type": item["entity_type"],
+            "assertion_status": item["assertion_status"],
+            "temporal_scope": item["temporal_scope"],
+            "reference_ids": [],
+        }
+        for item in core["resolved_mentions"]
+    ]
+    frame_by_id = {item["frame_id"]: item for item in event_frame["frames"]}
+    events: list[dict[str, Any]] = []
+    event_clause_by_key: dict[str, str] = {}
+    for item in core["resolved_events"]:
+        frame = frame_by_id[item["frame_id"]]
+        clause_id = clause_by_node[frame["source_ast_node_ids"][0]]
+        event_clause_by_key[item["event_key"]] = clause_id
+        source_ids = {
+            source
+            for slot in frame["participant_slots"]
+            for source in slot["source_ids"]
+            if source in mention_id_by_surface
+        }
+        events.append(
+            {
+                "event_id": _c3_queryir_id(item["event_key"]),
+                "clause_id": clause_id,
+                "source_span": copy.deepcopy(frame["source_spans"][0]),
+                "event_type": item["event_type"],
+                "assertion_status": item["assertion_status"],
+                "temporal_scope": item["temporal_scope"],
+                "actor_entity_ids": item["actor_entity_ids"],
+                "method_entity_id": item["method_entity_id"],
+                "specimen_code": item["specimen_code"],
+                "target_entity_id": (
+                    item["target_entity_ids"][0]
+                    if len(item["target_entity_ids"]) == 1
+                    else None
+                ),
+                "finding_polarity": item["finding_polarity"],
+                "mention_ids": sorted(mention_id_by_surface[value] for value in source_ids),
+                "reference_ids": [],
+            }
+        )
+    mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
+    relation_metadata: dict[str, dict[str, Any]] = {}
+    relations: list[dict[str, Any]] = []
+    for item in core["resolved_relations"]:
+        basis = [_c3_queryir_id(value) for value in item["root_keys"]]
+        clause_ids = sorted(
+            {
+                next(value["clause_id"] for value in mentions if value["mention_id"] == root)
+                for root in basis
+                if root.startswith("M")
+            },
+            key=clause_order.get,
+        )
+        if not clause_ids:
+            clause_ids = sorted(
+                {event_clause_by_key[value] for value in item["root_keys"]},
+                key=clause_order.get,
+            )
+        spans = [copy.deepcopy(clauses[clause_order[value] - 1]["source_span"]) for value in clause_ids]
+        rooted = [
+            mention_by_key[value] if value in mention_by_key else event_by_key[value]
+            for value in item["root_keys"]
+        ]
+        assertions = {value["assertion_status"] for value in rooted}
+        temporals = {value["temporal_scope"] for value in rooted}
+        assertion = next(iter(assertions)) if len(assertions) == 1 else "UNKNOWN"
+        temporal = next(iter(temporals)) if len(temporals) == 1 else "UNKNOWN"
+        relation_metadata[item["relation_key"]] = {
+            "basis": basis,
+            "clauses": clause_ids,
+            "spans": spans,
+            "assertion": assertion,
+            "temporal": temporal,
+        }
+        relations.append(
+            {
+                "intent_id": _c3_queryir_id(item["relation_key"]),
+                "clause_ids": clause_ids,
+                "source_spans": spans,
+                "predicate": item["predicate"],
+                "subject_selector": copy.deepcopy(item["subject_selector"]),
+                "object_selector": copy.deepcopy(item["object_selector"]),
+                "assertion_status": assertion,
+                "temporal_scope": temporal,
+                "activation_policy": item["activation_policy"],
+                "derivation_mode": item["derivation_mode"],
+                "basis_ids": basis,
+            }
+        )
+    roles = []
+    for item in core["semantic_roles"]:
+        metadata = relation_metadata[item["root_keys"][0]]
+        event_clauses = sorted(
+            set(event_clause_by_key.values()), key=clause_order.get
+        )
+        roles.append(
+            {
+                "role_id": _c3_queryir_id(item["role_key"]),
+                "clause_ids": event_clauses,
+                "role_namespace": item["role_namespace"],
+                "role_value": item["role_value"],
+                "activation_policy": item["activation_policy"],
+                "basis_ids": metadata["basis"],
+            }
+        )
+    narratives = []
+    for item in core["narrative_intents"]:
+        metadata = relation_metadata[item["root_keys"][0]]
+        subject_ids = set(item["entity_selector"]["entity_ids"])
+        basis = sorted(
+            _c3_queryir_id(value["mention_key"])
+            for value in core["resolved_mentions"]
+            if value["entity_id"] in subject_ids
+        )
+        narratives.append(
+            {
+                "narrative_intent_id": _c3_queryir_id(item["narrative_key"]),
+                "clause_ids": metadata["clauses"],
+                "source_spans": metadata["spans"],
+                "entity_selector": copy.deepcopy(item["entity_selector"]),
+                "topic_scope": item["topic_scope"],
+                "semantic_role": item["semantic_role"],
+                "assertion_status": metadata["assertion"],
+                "temporal_scope": metadata["temporal"],
+                "activation_policy": item["activation_policy"],
+                "derivation_mode": "DIRECT_MENTION_DERIVED",
+                "basis_ids": basis,
+                "required_anchor_predicates": item["required_anchor_predicates"],
+            }
+        )
+    node_by_id = {item["node_id"]: item for item in ast["nodes"]}
+    reference_by_id = {
+        item["reference_hypothesis_id"]: item
+        for item in event_frame["reference_hypotheses"]
+    }
+    override_by_id = {
+        item["override_hypothesis_id"]: item
+        for item in event_frame["override_hypotheses"]
+    }
+
+    def clause_and_span(source_id: str) -> tuple[str, dict[str, Any]]:
+        if source_id in ast_mentions:
+            source = ast_mentions[source_id]
+            return (
+                clause_by_node[source["containing_node_id"]],
+                copy.deepcopy(source["source_span"]),
+            )
+        node = node_by_id[source_id]
+        current = node
+        while current["node_id"] not in clause_by_node:
+            children = [node_by_id[value] for value in current["child_node_ids"]]
+            if not children:
+                _c3_fail(f"cannot project structural source {source_id}")
+            current = sorted(
+                children, key=lambda value: value["source_span"]["start_char"]
+            )[0]
+        return clause_by_node[current["node_id"]], copy.deepcopy(node["source_span"])
+
+    resolved_references = []
+    for item in core["resolved_references"]:
+        hypothesis = reference_by_id[item["hypothesis_id"]]
+        clause_id, anaphor_span = clause_and_span(hypothesis["anaphor_source_id"])
+        reference_id = _c3_queryir_id(item["reference_key"])
+        referent_kind = "EVENT" if item["referent_key"].startswith("RE") else "MENTION"
+        resolved_references.append(
+            {
+                "reference_id": reference_id,
+                "clause_id": clause_id,
+                "anaphor_span": anaphor_span,
+                "referent_kind": referent_kind,
+                "referent_id": _c3_queryir_id(item["referent_key"]),
+                "resolution_status": "RESOLVED",
+            }
+        )
+        target_id = _c3_queryir_id(item["anaphor_key"])
+        collection = events if target_id.startswith("E") else mentions
+        target = next(
+            value
+            for value in collection
+            if value.get("event_id", value.get("mention_id")) == target_id
+        )
+        target["reference_ids"].append(reference_id)
+    resolved_overrides = []
+    for item in core["resolved_overrides"]:
+        hypothesis = override_by_id[item["hypothesis_id"]]
+        clause_id, _ = clause_and_span(hypothesis["override_ast_node_id"])
+        resolved_overrides.append(
+            {
+                "override_id": _c3_queryir_id(item["override_key"]),
+                "override_clause_id": clause_id,
+                "earlier_event_id": _c3_queryir_id(item["earlier_event_key"]),
+                "later_event_id": _c3_queryir_id(item["later_event_key"]),
+                "same_normalized_event_identity": True,
+                "resolution_status": "RESOLVED",
+            }
+        )
+    return {
+        "query_ir_version": "0.3-candidate",
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "knowledge_version": normalized["knowledge_version"],
+        "span_basis": ast["span_basis"],
+        "interpretation_status": "VALID",
+        "producer": {
+            "producer_id": "p9b1q-queryir-emitter",
+            "producer_version": "0.1-fixture",
+            "implementation_kind": "DETERMINISTIC",
+            "configuration_sha256": hashes["PROJECTION_RULE_SET"],
+        },
+        "clauses": clauses,
+        "mentions": mentions,
+        "events": events,
+        "relation_intents": relations,
+        "narrative_intents": narratives,
+        "required_roles": roles,
+        "forbidden_relation_intents": [],
+        "resolved_references": resolved_references,
+        "resolved_overrides": resolved_overrides,
+        "ambiguities": [],
+    }
+
+
+def _c3_pointer_get(value: Any, pointer: str) -> Any:
+    current = value
+    for token in pointer.lstrip("/").split("/") if pointer else []:
+        token = token.replace("~1", "/").replace("~0", "~")
+        current = current[int(token)] if isinstance(current, list) else current[token]
+    return current
+
+
+def _c3_json_pointers(value: Any, prefix: str = "") -> list[str]:
+    result: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            token = str(key).replace("~", "~0").replace("/", "~1")
+            pointer = f"{prefix}/{token}"
+            result.append(pointer)
+            result.extend(_c3_json_pointers(child, pointer))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            pointer = f"{prefix}/{index}"
+            result.append(pointer)
+            result.extend(_c3_json_pointers(child, pointer))
+    return result
+
+
+def _c3_persist_proof(
+    proof_root: Path, kind: str, value: dict[str, Any]
+) -> tuple[str, str]:
+    digest = canonical_sha256(value)
+    directory = {
+        "SEMANTIC_UNIVERSE": "semantic-universe",
+        "TYPED_SOLUTION": "typed-solution-core",
+        "REMOVAL_PROBE": "removal-probe",
+    }[kind]
+    relative = f"proof-objects/{directory}/{digest}.json"
+    destination = proof_root / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    payload = canonical_bytes(value)
+    if destination.exists() and destination.read_bytes() != payload:
+        _c3_fail(f"content-address collision at {relative}")
+    destination.write_bytes(payload)
+    return relative, digest
+
+
+def _c3_resolve_proof(
+    proof_root: Path,
+    relative: str,
+    kind: str,
+    request_id: str,
+) -> tuple[dict[str, Any], str] | None:
+    if (
+        not isinstance(relative, str)
+        or "\\" in relative
+        or relative.startswith("/")
+        or re.match(r"^[A-Za-z]:", relative)
+        or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*://", relative)
+        or "//" in relative
+        or any(value in ("", ".", "..") for value in relative.split("/"))
+    ):
+        return None
+    match = _C3_PROOF_PATH_RE[kind].fullmatch(relative)
+    if match is None:
+        return None
+    base = proof_root.resolve()
+    candidate = (proof_root / relative).resolve()
+    try:
+        candidate.relative_to(base)
+    except ValueError:
+        return None
+    if not candidate.is_file() or candidate.is_symlink():
+        return None
+    raw = candidate.read_bytes()
+    try:
+        value = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    digest = hashlib.sha256(raw).hexdigest()
+    if raw != canonical_bytes(value) or digest != match.group(1):
+        return None
+    if kind == "SEMANTIC_UNIVERSE":
+        if (
+            value.get("proof_object_kind") != "SEMANTIC_UNIVERSE"
+            or value.get("request_id") != request_id
+        ):
+            return None
+    elif kind == "REMOVAL_PROBE":
+        if (
+            value.get("proof_object_kind") != "REMOVAL_PROBE"
+            or value.get("request_id") != request_id
+        ):
+            return None
+    elif not {
+        "solution_id",
+        "resolved_mentions",
+        "resolved_events",
+        "resolved_relations",
+        "semantic_object_set_sha256",
+    } <= set(value):
+        return None
+    return value, digest
+
+
+def _c3_field_traces(
+    query_ir: dict[str, Any],
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+) -> list[dict[str, Any]]:
+    whole_span = {
+        "start_char": 0,
+        "end_char": len(inputs["NORMALIZED_REQUEST"]["normalized_query_text"]),
+        "text": inputs["NORMALIZED_REQUEST"]["normalized_query_text"],
+    }
+    core_sha = canonical_sha256(core)
+    ast_sha = canonical_sha256(inputs["CLAUSE_AST"])
+    traces = []
+    for index, pointer in enumerate(_c3_json_pointers(query_ir), 1):
+        ast_bound = pointer == "/clauses" or pointer.startswith("/clauses/")
+        traces.append(
+            {
+                "trace_id": f"TR{index:04d}",
+                "query_ir_json_pointer": pointer,
+                "emitted_value_sha256": canonical_sha256(
+                    _c3_pointer_get(query_ir, pointer)
+                ),
+                "source_bindings": [
+                    {
+                        "object_kind": "CLAUSE_AST" if ast_bound else "TYPED_SOLUTION",
+                        "object_sha256": ast_sha if ast_bound else core_sha,
+                        "source_ids": [],
+                        "source_spans": [whole_span],
+                    }
+                ],
+                "constraint_ids": [
+                    "CNS-EMIT-LEAF_TRACE_COVERAGE",
+                    "CNS-EMIT-TRACE_VALUE_HASH",
+                ],
+                "projection_rule_id": "PRJ-EXTRACT_QUERYIR",
+            }
+        )
+    return traces
+
+
+def _c3_license_dag(
+    core: dict[str, Any], traces: list[dict[str, Any]]
+) -> tuple[dict[str, Any], dict[str, list[str]]]:
+    materials = _c3_material_objects(core)
+    trace_by_pointer = {
+        item["query_ir_json_pointer"]: item["trace_id"] for item in traces
+    }
+    node_by_material: dict[str, str] = {}
+    nodes: list[dict[str, Any]] = []
+    for index, (material_id, collection, _, pointer, _) in enumerate(materials, 1):
+        node_id = f"LN{index:04d}"
+        node_by_material[material_id] = node_id
+        if collection == "resolved_mentions":
+            kind = "EXPLICIT_RELATION_ROOT"
+        elif collection == "resolved_events":
+            kind = "AFFIRMED_EVENT_ROOT"
+        else:
+            kind = {
+                "resolved_relations": "RELATION",
+                "narrative_intents": "NARRATIVE",
+                "semantic_roles": "SEMANTIC_ROLE",
+                "forbidden_relations": "PROHIBITION",
+                "resolved_references": "REFERENCE",
+                "resolved_overrides": "OVERRIDE",
+            }[collection]
+        nodes.append(
+            {
+                "node_id": node_id,
+                "node_kind": kind,
+                "semantic_object_id": material_id,
+                "source_binding_ids": [trace_by_pointer[pointer]],
+            }
+        )
+    edges: list[dict[str, Any]] = []
+    paths: dict[str, list[str]] = {}
+    mention_roots = [value for value, collection, *_ in materials if collection == "resolved_mentions"]
+    event_roots = [value for value, collection, *_ in materials if collection == "resolved_events"]
+    primary_root = (mention_roots or event_roots)[0]
+
+    def add_edge(source: str, target: str, kind: str) -> None:
+        edges.append(
+            {
+                "edge_id": f"LE{len(edges) + 1:04d}",
+                "from_node_id": node_by_material[source],
+                "to_node_id": node_by_material[target],
+                "edge_kind": kind,
+                "constraint_ids": ["CNS-SOLVER-LICENSE_DAG"],
+            }
+        )
+
+    for material_id, collection, _, _, _ in materials:
+        if collection in {"resolved_mentions", "resolved_events"}:
+            paths[material_id] = [node_by_material[material_id]]
+        elif collection == "resolved_relations":
+            add_edge(primary_root, material_id, "ROOTS_EVENT_OR_RELATION")
+            paths[material_id] = [node_by_material[primary_root], node_by_material[material_id]]
+        elif collection in {"semantic_roles", "narrative_intents"}:
+            relation_id = next(
+                value for value, group, *_ in materials if group == "resolved_relations"
+            )
+            edge_kind = (
+                "RELATION_LICENSES_ROLE"
+                if collection == "semantic_roles"
+                else "RELATION_LICENSES_NARRATIVE"
+            )
+            add_edge(relation_id, material_id, edge_kind)
+            paths[material_id] = paths[relation_id] + [node_by_material[material_id]]
+        elif collection == "forbidden_relations":
+            add_edge(primary_root, material_id, "NEGATED_BASIS_LICENSES_PROHIBITION")
+            paths[material_id] = [node_by_material[primary_root], node_by_material[material_id]]
+        elif collection == "resolved_references":
+            add_edge(primary_root, material_id, "REFERENCE_BINDS_OBJECT")
+            paths[material_id] = [node_by_material[primary_root], node_by_material[material_id]]
+        else:
+            root = (event_roots or mention_roots)[0]
+            add_edge(root, material_id, "OVERRIDE_BINDS_EVENTS")
+            paths[material_id] = [node_by_material[root], node_by_material[material_id]]
+    dag = {
+        "nodes": nodes,
+        "edges": edges,
+        "topological_order": [item["node_id"] for item in nodes],
+        "dag_sha256": "0" * 64,
+    }
+    body = copy.deepcopy(dag)
+    body.pop("dag_sha256")
+    dag["dag_sha256"] = canonical_sha256(body)
+    return dag, paths
+
+
+def _c3_removal_constraint(collection: str) -> str:
+    return {
+        "resolved_mentions": "CNS-SOLVER-ENTITY_RESOLUTION",
+        "resolved_events": "CNS-SOLVER-EVENT_IDENTITY",
+        "resolved_relations": "CNS-SOLVER-EVENT_RELATION_DERIVATION",
+        "semantic_roles": "CNS-SOLVER-ASSERTION_SCOPE",
+        "narrative_intents": "CNS-SOLVER-ASSERTION_SCOPE",
+        "forbidden_relations": "CNS-SOLVER-LICENSE_DAG",
+        "resolved_references": "CNS-SOLVER-EVENT_IDENTITY",
+        "resolved_overrides": "CNS-SOLVER-EVENT_IDENTITY",
+    }[collection]
+
+
+def _c3_build_emission(
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+    root: Path,
+    proof_root: Path,
+) -> dict[str, Any]:
+    query_ir = _c3_queryir_projection(core, inputs, hashes)
+    traces = _c3_field_traces(query_ir, core, inputs)
+    dag, paths = _c3_license_dag(core, traces)
+    core_path, core_sha = _c3_persist_proof(proof_root, "TYPED_SOLUTION", core)
+    semantic_objects = [
+        {
+            "semantic_object_id": material_id,
+            "object_kind": {
+                "resolved_mentions": "MENTION",
+                "resolved_events": "EVENT",
+                "resolved_relations": "RELATION_INTENT",
+                "narrative_intents": "NARRATIVE_INTENT",
+                "semantic_roles": "REQUIRED_ROLE",
+                "forbidden_relations": "FORBIDDEN_RELATION",
+                "resolved_references": "REFERENCE",
+                "resolved_overrides": "OVERRIDE",
+            }[collection],
+            "query_ir_json_pointer": pointer,
+            "canonical_sha256": canonical_sha256(_c3_pointer_get(query_ir, pointer)),
+        }
+        for material_id, collection, _, pointer, _ in _c3_material_objects(core)
+    ]
+    universe = {
+        "proof_object_version": "0.1-candidate",
+        "proof_object_kind": "SEMANTIC_UNIVERSE",
+        "request_id": inputs["NORMALIZED_REQUEST"]["request_id"],
+        "query_ir_sha256": canonical_sha256(query_ir),
+        "semantic_objects": semantic_objects,
+    }
+    universe_path, universe_sha = _c3_persist_proof(
+        proof_root, "SEMANTIC_UNIVERSE", universe
+    )
+    witnesses = []
+    for material_id, collection, index, pointer, _ in _c3_material_objects(core):
+        candidate = copy.deepcopy(core)
+        candidate[collection].pop(index)
+        _c3_refresh_core(candidate)
+        constraint = _c3_removal_constraint(collection)
+        probe = {
+            "proof_object_version": "0.1-candidate",
+            "proof_object_kind": "REMOVAL_PROBE",
+            "probe_id": f"MINPROBE-{material_id}",
+            "request_id": inputs["NORMALIZED_REQUEST"]["request_id"],
+            "base_typed_solution_path": core_path,
+            "base_typed_solution_sha256": core_sha,
+            "removed_semantic_object_id": material_id,
+            "removed_query_ir_json_pointer": pointer,
+            "mutation": [{"op": "remove", "path": f"/{collection}/{index}"}],
+            "candidate_typed_solution_sha256": canonical_sha256(candidate),
+            "candidate_semantic_object_set_sha256": candidate[
+                "semantic_object_set_sha256"
+            ],
+            "recomputed_derived_hashes": ["semantic_object_set_sha256"],
+            "enumerated_solution_count_after_removal": 0,
+            "validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+            "validator_executable_path": "reference-stage-semantic-validator.py",
+            "validator_executable_sha256": file_sha256(
+                root / REFERENCE_STAGE_VALIDATOR_PATH
+            ),
+            "validator_configuration_path": "stage-semantic-validator-contract.yml",
+            "validator_configuration_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+            "constraint_set_sha256": hashes["CONSTRAINT_SET"],
+            "expected_result": "FAIL_CLOSED",
+            "expected_unsatisfied_constraint_ids": [constraint],
+        }
+        probe_path, probe_sha = _c3_persist_proof(
+            proof_root, "REMOVAL_PROBE", probe
+        )
+        witnesses.append(
+            {
+                "semantic_object_id": material_id,
+                "query_ir_json_pointer": pointer,
+                "supporting_constraint_ids": [constraint],
+                "license_path_node_ids": paths[material_id],
+                "removal_unsatisfied_constraint_ids": [constraint],
+                "removal_probe_path": probe_path,
+                "removal_probe_sha256": probe_sha,
+            }
+        )
+    minimality = {
+        "semantic_universe_sha256": universe_sha,
+        "semantic_universe_path": universe_path,
+        "retained_semantic_object_ids": [item[0] for item in _c3_material_objects(core)],
+        "retained_object_witnesses": witnesses,
+        "omitted_object_ids": [],
+        "omitted_object_exclusion_constraint_ids": [],
+        "witness_sha256": "0" * 64,
+    }
+    body = copy.deepcopy(minimality)
+    body.pop("witness_sha256")
+    minimality["witness_sha256"] = canonical_sha256(body)
+    return {
+        "emission_record_version": "0.1-candidate",
+        "request_id": inputs["NORMALIZED_REQUEST"]["request_id"],
+        "request_sha256": inputs["NORMALIZED_REQUEST"]["request_sha256"],
+        "normalized_request_sha256": hashes["NORMALIZED_REQUEST"],
+        "clause_ast_sha256": hashes["CLAUSE_AST"],
+        "event_frame_sha256": hashes["EVENT_FRAME"],
+        "semantic_solution_core_sha256": core_sha,
+        "query_ir_schema_sha256": hashes["QUERY_IR_SCHEMA"],
+        "projection_rule_set_sha256": hashes["PROJECTION_RULE_SET"],
+        "query_ir": query_ir,
+        "query_ir_sha256": canonical_sha256(query_ir),
+        "field_traces": traces,
+        "license_dag": dag,
+        "minimality_witness": minimality,
+    }
+
+
+def _c3_result_header(
+    inputs: dict[str, Any], hashes: dict[str, str], root: Path
+) -> dict[str, Any]:
+    return {
+        "solver_result_version": "0.2-candidate",
+        "request_id": inputs["NORMALIZED_REQUEST"]["request_id"],
+        "request_sha256": inputs["NORMALIZED_REQUEST"]["request_sha256"],
+        "normalized_request_sha256": hashes["NORMALIZED_REQUEST"],
+        "knowledge_version": inputs["NORMALIZED_REQUEST"]["knowledge_version"],
+        "clause_ast_sha256": hashes["CLAUSE_AST"],
+        "event_frame_sha256": hashes["EVENT_FRAME"],
+        "entity_ontology_sha256": hashes["ENTITY_ONTOLOGY"],
+        "relation_ontology_sha256": hashes["RELATION_ONTOLOGY"],
+        "event_relation_mapping_sha256": hashes["EVENT_RELATION_MAPPING"],
+        "predicate_type_mapping_sha256": hashes["PREDICATE_TYPE_MAPPING"],
+        "semantic_role_mapping_sha256": hashes["SEMANTIC_ROLE_MAPPING"],
+        "canonicalization_profile_sha256": hashes["CANONICALIZATION_PROFILE"],
+        "stage_validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+        "constraint_registry_sha256": hashes["CONSTRAINT_REGISTRY"],
+        "constraint_set_sha256": hashes["CONSTRAINT_SET"],
+        "solver": {
+            "solver_id": "p9b1q-typed-constraint-solver",
+            "solver_version": "0.1-c3",
+            "executable_sha256": file_sha256(Path(__file__)),
+            "configuration_sha256": file_sha256(root / TYPED_SOLVER_CONTRACT_PATH),
+        },
+    }
+
+
+def _c3_structural_domains(inputs: dict[str, Any]) -> list[tuple[str, tuple[str, ...]]]:
+    domains: list[tuple[str, tuple[str, ...]]] = []
+    for attachment in inputs["CLAUSE_AST"]["attachment_sets"]:
+        domains.append(
+            (
+                attachment["attachment_set_id"],
+                tuple(attachment["candidate_governor_ids"]),
+            )
+        )
+    for hypothesis in inputs["EVENT_FRAME"]["reference_hypotheses"]:
+        domains.append(
+            (
+                hypothesis["reference_hypothesis_id"],
+                tuple(
+                    f"{referent}:{relation}"
+                    for referent, relation in product(
+                        hypothesis["candidate_referent_ids"],
+                        hypothesis["identity_relation_domain"],
+                    )
+                ),
+            )
+        )
+    for hypothesis in inputs["EVENT_FRAME"]["override_hypotheses"]:
+        if hypothesis["status"] == "NO_MATCH":
+            continue
+        domains.append(
+            (
+                hypothesis["override_hypothesis_id"],
+                tuple(
+                    f"{earlier}:{later}:{dimension}"
+                    for earlier, later, dimension in product(
+                        hypothesis["earlier_frame_ids"],
+                        hypothesis["later_frame_ids"],
+                        hypothesis["overridden_dimension_domain"],
+                    )
+                ),
+            )
+        )
+    return domains
+
+
+def _c3_recomputed_solution_space(inputs: dict[str, Any]) -> dict[str, Any]:
+    """Re-enumerate the complete frozen S3 domain from actual predecessor inputs."""
+    ast = inputs["CLAUSE_AST"]
+    mention_domains = [
+        tuple(item["candidate_entity_ids"]) for item in ast["surface_mentions"]
+    ]
+    if any(not item for item in mention_domains):
+        _c3_fail("empty entity-resolution domain")
+    event_domains = _c3_event_domains(inputs)
+    structural_domains = _c3_structural_domains(inputs)
+    structural_values = [item[1] for item in structural_domains]
+    if any(not values for values in structural_values):
+        _c3_fail("empty structural variable domain")
+    fingerprints: list[str] = []
+    cores: dict[str, dict[str, Any]] = {}
+    if not event_domains or all(event_domains):
+        for mention_values, event_values, structure_values in product(
+            product(*mention_domains),
+            product(*event_domains) if event_domains else [()],
+            product(*structural_values) if structural_values else [()],
+        ):
+            mentions = _c3_resolved_mentions(inputs, tuple(mention_values))
+            for core in _c3_profile_cores(inputs, mentions, list(event_values)):
+                bound = _c3_apply_structural_assignment(
+                    core,
+                    inputs,
+                    structural_domains,
+                    tuple(structure_values),
+                )
+                if bound is None:
+                    continue
+                fingerprint = canonical_sha256(
+                    {
+                        "mentions": mention_values,
+                        "events": event_values,
+                        "structure": structure_values,
+                        "core": bound["semantic_object_set_sha256"],
+                    }
+                )
+                fingerprints.append(fingerprint)
+                cores[fingerprint] = bound
+    fingerprints = sorted(set(fingerprints))
+    return {
+        "mention_domains": mention_domains,
+        "event_domains": event_domains,
+        "structural_domains": structural_domains,
+        "fingerprints": fingerprints,
+        "cores": cores,
+    }
+
+
+def _c3_invalid_result(
+    inputs: dict[str, Any], hashes: dict[str, str], root: Path, reason: str
+) -> dict[str, Any]:
+    result = {
+        **_c3_result_header(inputs, hashes, root),
+        "status": "INVALID",
+        "solution_cardinality": "ZERO",
+        "selected_solution": None,
+        "ambiguity_certificate": None,
+        "unsatisfied_constraints": ["CNS-SOLVER-HASH_BINDING"],
+        "solver_trace_sha256": canonical_sha256(
+            {"status": "INVALID", "reason": reason}
+        ),
+    }
+    return result
+
+
+def solve_typed_constraints(
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    event_frame: dict[str, Any],
+    *,
+    root: Path = ROOT,
+    proof_root: Path | None = None,
+    bound_hashes: dict[str, str] | None = None,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Execute S3 over actual S0/S1/S2 objects without lexical reparsing.
+
+    All alternatives are enumerated as a Cartesian product of authority-declared
+    domains.  Only solutions matching the closed projection authority survive;
+    no ordering, distance, confidence, or score is consulted.
+    """
+    inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    hashes = _c3_hash_bindings(inputs, root)
+    try:
+        validate_c2_event_frame(
+            normalized,
+            ast,
+            event_frame,
+            root,
+            diagnostic_argument_binding=diagnostic_argument_binding,
+        )
+        _c3_constraint_ids(inputs)
+        if normalized["request_id"] != ast["request_id"] or ast["request_id"] != event_frame["request_id"]:
+            _c3_fail("request identity mismatch")
+        if ast["normalized_request_sha256"] != hashes["NORMALIZED_REQUEST"]:
+            _c3_fail("Clause AST normalized-request binding mismatch")
+        if event_frame["clause_ast_sha256"] != hashes["CLAUSE_AST"]:
+            _c3_fail("Event Frame Clause AST binding mismatch")
+        expected_fields = {
+            "entity_ontology_sha256": hashes["ENTITY_ONTOLOGY"],
+            "event_relation_mapping_sha256": hashes["EVENT_RELATION_MAPPING"],
+            "canonicalization_profile_sha256": hashes["CANONICALIZATION_PROFILE"],
+            "stage_validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+        }
+        for field, expected in expected_fields.items():
+            if event_frame.get(field) != expected:
+                _c3_fail(f"Event Frame authority binding mismatch: {field}")
+        for kind, expected in (bound_hashes or {}).items():
+            if hashes.get(kind) != expected:
+                _c3_fail(f"actual {kind} hash does not equal caller binding")
+        mention_domains = [
+            tuple(item["candidate_entity_ids"]) for item in ast["surface_mentions"]
+        ]
+        if any(not item for item in mention_domains):
+            _c3_fail("empty entity-resolution domain")
+        event_domains = _c3_event_domains(inputs)
+        if any(not item for item in event_domains):
+            header = _c3_result_header(inputs, hashes, root)
+            return {
+                **header,
+                "status": "UNSUPPORTED",
+                "solution_cardinality": "ZERO",
+                "selected_solution": None,
+                "ambiguity_certificate": None,
+                "unsatisfied_constraints": ["CNS-SOLVER-EVENT_IDENTITY"],
+                "solver_trace_sha256": canonical_sha256(
+                    {"status": "UNSUPPORTED", "empty_event_domain": True}
+                ),
+            }
+        structural_domains = _c3_structural_domains(inputs)
+        structural_values = [item[1] for item in structural_domains]
+        if any(not values for values in structural_values):
+            _c3_fail("empty structural variable domain")
+        assignment_fingerprints: list[str] = []
+        valid_cores: dict[str, dict[str, Any]] = {}
+        structural_product = product(*structural_values) if structural_values else [()]
+        for mention_values, event_values, structure_values in product(
+            product(*mention_domains),
+            product(*event_domains) if event_domains else [()],
+            structural_product,
+        ):
+            mentions = _c3_resolved_mentions(inputs, tuple(mention_values))
+            cores = _c3_profile_cores(inputs, mentions, list(event_values))
+            for core in cores:
+                core = _c3_apply_structural_assignment(
+                    core,
+                    inputs,
+                    structural_domains,
+                    tuple(structure_values),
+                )
+                if core is None:
+                    continue
+                assignment = {
+                    "mentions": mention_values,
+                    "events": event_values,
+                    "structure": structure_values,
+                    "core": core["semantic_object_set_sha256"],
+                }
+                fingerprint = canonical_sha256(assignment)
+                assignment_fingerprints.append(fingerprint)
+                valid_cores[fingerprint] = core
+        assignment_fingerprints = sorted(set(assignment_fingerprints))
+        header = _c3_result_header(inputs, hashes, root)
+        trace_basis = {
+            "variable_domains": {
+                "mentions": mention_domains,
+                "events": event_domains,
+                "structural": structural_domains,
+            },
+            "solution_fingerprints": assignment_fingerprints,
+        }
+        if not assignment_fingerprints:
+            return {
+                **header,
+                "status": "UNSUPPORTED",
+                "solution_cardinality": "ZERO",
+                "selected_solution": None,
+                "ambiguity_certificate": None,
+                "unsatisfied_constraints": [
+                    "CNS-SOLVER-EVENT_RELATION_DERIVATION"
+                ],
+                "solver_trace_sha256": canonical_sha256(trace_basis),
+            }
+        if len(assignment_fingerprints) > 1:
+            if len(assignment_fingerprints) > 64:
+                _c3_fail("ambiguity exceeds frozen certificate capacity")
+            differing = [
+                item[0]
+                for item in structural_domains
+                if len(item[1]) > 1
+            ]
+            differing.extend(
+                item["surface_mention_id"]
+                for item, domain in zip(ast["surface_mentions"], mention_domains)
+                if len(domain) > 1
+            )
+            differing.extend(
+                item["frame_id"]
+                for item, domain in zip(event_frame["frames"], event_domains)
+                if len(domain) > 1
+            )
+            if not differing:
+                root_sets = [
+                    {
+                        root
+                        for relation in core["resolved_relations"]
+                        for root in relation["root_keys"]
+                    }
+                    for core in valid_cores.values()
+                ]
+                varying_roots = set.union(*root_sets) - set.intersection(*root_sets)
+                differing = sorted(
+                    {
+                        mention["surface_mention_id"]
+                        for core in valid_cores.values()
+                        for mention in core["resolved_mentions"]
+                        if mention["mention_key"] in varying_roots
+                    }
+                ) or [ast["surface_mentions"][0]["surface_mention_id"]]
+            ambiguity_type = "REFERENCE_RESOLUTION" if any(
+                value.startswith("RH") for value in differing
+            ) else "DISCOURSE_OVERRIDE" if any(
+                value.startswith("OH") for value in differing
+            ) else "CLAUSE_ATTACHMENT" if any(
+                value.startswith("AT") for value in differing
+            ) else "ENTITY_RESOLUTION"
+            return {
+                **header,
+                "status": "AMBIGUOUS",
+                "solution_cardinality": "MULTIPLE",
+                "selected_solution": None,
+                "ambiguity_certificate": {
+                    "ambiguity_type": ambiguity_type,
+                    "differing_variable_ids": sorted(set(differing)),
+                    "solution_fingerprint_sha256s": assignment_fingerprints,
+                    "common_constraint_ids": _c3_constraint_ids(inputs),
+                },
+                "unsatisfied_constraints": [],
+                "solver_trace_sha256": canonical_sha256(trace_basis),
+            }
+        core = valid_cores[assignment_fingerprints[0]]
+        actual_proof_root = proof_root or Path(
+            tempfile.mkdtemp(prefix="p9b1q-c3-proof-")
+        )
+        emission = _c3_build_emission(
+            core, inputs, hashes, root, actual_proof_root
+        )
+        selected = copy.deepcopy(core)
+        selected["queryir_emission_record"] = emission
+        result = {
+            **header,
+            "status": "UNIQUE",
+            "solution_cardinality": "ONE",
+            "selected_solution": selected,
+            "ambiguity_certificate": None,
+            "unsatisfied_constraints": [],
+            "solver_trace_sha256": canonical_sha256(trace_basis),
+        }
+        validate_c3_result(
+            result,
+            normalized,
+            ast,
+            event_frame,
+            root=root,
+            proof_root=actual_proof_root,
+            diagnostic_argument_binding=diagnostic_argument_binding,
+        )
+        return result
+    except (C1ValidationError, C2ValidationError, SchemaValidationError, KeyError, TypeError, ValueError) as exc:
+        return _c3_invalid_result(inputs, hashes, root, str(exc))
+
+
+def _c3_validate_proofs(
+    result: dict[str, Any],
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+    root: Path,
+    proof_root: Path,
+) -> None:
+    emission = result["selected_solution"]["queryir_emission_record"]
+    query_ir = emission["query_ir"]
+    if emission["query_ir_sha256"] != canonical_sha256(query_ir):
+        _c3_fail("embedded QueryIR hash mismatch")
+    if emission["semantic_solution_core_sha256"] != canonical_sha256(core):
+        _c3_fail("typed solution core hash mismatch")
+    expected_query_ir = _c3_queryir_projection(core, inputs, hashes)
+    if query_ir != expected_query_ir:
+        _c3_fail("embedded QueryIR is not the exact authority projection")
+    traces = emission["field_traces"]
+    expected_pointers = _c3_json_pointers(query_ir)
+    if [item["query_ir_json_pointer"] for item in traces] != expected_pointers:
+        _c3_fail("field trace coverage is not exact")
+    if any(
+        item["emitted_value_sha256"]
+        != canonical_sha256(_c3_pointer_get(query_ir, item["query_ir_json_pointer"]))
+        for item in traces
+    ):
+        _c3_fail("field trace value hash mismatch")
+    dag = emission["license_dag"]
+    dag_body = copy.deepcopy(dag)
+    dag_body.pop("dag_sha256")
+    if dag["dag_sha256"] != canonical_sha256(dag_body):
+        _c3_fail("license DAG hash mismatch")
+    node_ids = {item["node_id"] for item in dag["nodes"]}
+    if set(dag["topological_order"]) != node_ids:
+        _c3_fail("license DAG topological order is incomplete")
+    position = {value: index for index, value in enumerate(dag["topological_order"])}
+    if any(
+        edge["from_node_id"] not in node_ids
+        or edge["to_node_id"] not in node_ids
+        or position[edge["from_node_id"]] >= position[edge["to_node_id"]]
+        for edge in dag["edges"]
+    ):
+        _c3_fail("license DAG is dangling or cyclic")
+    material_ids = {item[0] for item in _c3_material_objects(core)}
+    if {item["semantic_object_id"] for item in dag["nodes"]} != material_ids:
+        _c3_fail("license DAG material coverage mismatch")
+    minimality = emission["minimality_witness"]
+    body = copy.deepcopy(minimality)
+    body.pop("witness_sha256")
+    if minimality["witness_sha256"] != canonical_sha256(body):
+        _c3_fail("minimality witness hash mismatch")
+    universe_result = _c3_resolve_proof(
+        proof_root,
+        minimality["semantic_universe_path"],
+        "SEMANTIC_UNIVERSE",
+        result["request_id"],
+    )
+    if universe_result is None:
+        _c3_fail("semantic universe path, kind, or content address invalid")
+    universe, universe_sha = universe_result
+    if universe_sha != minimality["semantic_universe_sha256"]:
+        _c3_fail("semantic universe declared hash mismatch")
+    if universe["query_ir_sha256"] != canonical_sha256(query_ir):
+        _c3_fail("semantic universe QueryIR binding mismatch")
+    objects = {item["semantic_object_id"]: item for item in universe["semantic_objects"]}
+    if set(objects) != material_ids:
+        _c3_fail("semantic universe completeness mismatch")
+    for item in objects.values():
+        try:
+            actual = _c3_pointer_get(query_ir, item["query_ir_json_pointer"])
+        except (KeyError, IndexError, TypeError, ValueError):
+            _c3_fail("semantic universe pointer invalid")
+        if item["canonical_sha256"] != canonical_sha256(actual):
+            _c3_fail("semantic universe object hash mismatch")
+    witness_ids = {
+        item["semantic_object_id"] for item in minimality["retained_object_witnesses"]
+    }
+    if witness_ids != material_ids or set(minimality["retained_semantic_object_ids"]) != material_ids:
+        _c3_fail("removal witness completeness mismatch")
+    node_by_id = {item["node_id"]: item for item in dag["nodes"]}
+    edges = {(item["from_node_id"], item["to_node_id"]) for item in dag["edges"]}
+    for witness in minimality["retained_object_witnesses"]:
+        path = witness["license_path_node_ids"]
+        if (
+            not path
+            or any((left, right) not in edges for left, right in zip(path, path[1:]))
+            or node_by_id[path[-1]]["semantic_object_id"] != witness["semantic_object_id"]
+        ):
+            _c3_fail("unrooted material object witness")
+        probe_result = _c3_resolve_proof(
+            proof_root,
+            witness["removal_probe_path"],
+            "REMOVAL_PROBE",
+            result["request_id"],
+        )
+        if probe_result is None:
+            _c3_fail("removal probe path, kind, or content address invalid")
+        probe, probe_sha = probe_result
+        if probe_sha != witness["removal_probe_sha256"]:
+            _c3_fail("removal probe declared hash mismatch")
+        core_result = _c3_resolve_proof(
+            proof_root,
+            probe["base_typed_solution_path"],
+            "TYPED_SOLUTION",
+            result["request_id"],
+        )
+        if core_result is None or core_result[0] != core:
+            _c3_fail("removal probe base solution mismatch")
+        if core_result[1] != probe["base_typed_solution_sha256"]:
+            _c3_fail("removal probe base hash mismatch")
+        operation = probe["mutation"][0]
+        match = re.fullmatch(r"/([a-z_]+)/([0-9]+)", operation["path"])
+        if operation.get("op") != "remove" or match is None:
+            _c3_fail("removal probe mutation invalid")
+        candidate = copy.deepcopy(core)
+        collection, index = match.group(1), int(match.group(2))
+        if collection not in candidate or not isinstance(candidate[collection], list):
+            _c3_fail("removal probe collection invalid")
+        candidate[collection].pop(index)
+        _c3_refresh_core(candidate)
+        expected_constraint = _c3_removal_constraint(collection)
+        if (
+            canonical_sha256(candidate) != probe["candidate_typed_solution_sha256"]
+            or candidate["semantic_object_set_sha256"]
+            != probe["candidate_semantic_object_set_sha256"]
+            or probe["expected_unsatisfied_constraint_ids"] != [expected_constraint]
+            or probe["enumerated_solution_count_after_removal"] != 0
+        ):
+            _c3_fail("removal probe replay mismatch")
+
+
+def validate_c3_result(
+    result: dict[str, Any],
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    event_frame: dict[str, Any],
+    *,
+    root: Path = ROOT,
+    proof_root: Path | None = None,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+) -> None:
+    """Independently recompute S3 cardinality, projection, and proof bindings."""
+    inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    hashes = _c3_hash_bindings(inputs, root)
+    validate_c2_event_frame(
+        normalized,
+        ast,
+        event_frame,
+        root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
+    if not (
+        normalized["request_id"] == ast["request_id"] == event_frame["request_id"]
+    ):
+        _c3_fail("actual input request identity mismatch")
+    if ast["normalized_request_sha256"] != hashes["NORMALIZED_REQUEST"]:
+        _c3_fail("actual Clause AST normalized-request binding mismatch")
+    if event_frame["clause_ast_sha256"] != hashes["CLAUSE_AST"]:
+        _c3_fail("actual Event Frame Clause AST binding mismatch")
+    expected_header = _c3_result_header(inputs, hashes, root)
+    for key, expected in expected_header.items():
+        if result.get(key) != expected:
+            _c3_fail(f"result header mismatch: {key}")
+    status = result.get("status")
+    expected_cardinality = {
+        "UNIQUE": "ONE",
+        "AMBIGUOUS": "MULTIPLE",
+        "UNSUPPORTED": "ZERO",
+        "INVALID": "ZERO",
+    }.get(status)
+    if expected_cardinality is None or result.get("solution_cardinality") != expected_cardinality:
+        _c3_fail("status/cardinality mismatch")
+    space = _c3_recomputed_solution_space(inputs)
+    fingerprints = space["fingerprints"]
+    recomputed_status = (
+        "UNSUPPORTED"
+        if not fingerprints
+        else "UNIQUE"
+        if len(fingerprints) == 1
+        else "AMBIGUOUS"
+    )
+    if status != recomputed_status:
+        _c3_fail("candidate status differs from recomputed solution cardinality")
+    if status == "UNIQUE":
+        if result.get("ambiguity_certificate") is not None or result.get("unsatisfied_constraints") != []:
+            _c3_fail("UNIQUE carries ambiguity or unsatisfied constraints")
+        selected = result.get("selected_solution")
+        if not isinstance(selected, dict):
+            _c3_fail("UNIQUE selected_solution missing")
+        core = copy.deepcopy(selected)
+        core.pop("queryir_emission_record", None)
+        expected_core = space["cores"][fingerprints[0]]
+        if core != expected_core:
+            _c3_fail("selected solution differs from recomputed authority solution")
+        if core["semantic_object_set_sha256"] != canonical_sha256(_c3_semantic_object_set(core)):
+            _c3_fail("semantic object set hash mismatch")
+        if core["solution_id"] != f"SOL-{core['semantic_object_set_sha256'][:24]}":
+            _c3_fail("solution identity mismatch")
+        actual_root = proof_root
+        if actual_root is None:
+            _c3_fail("proof root required to validate UNIQUE result")
+        _c3_validate_proofs(result, core, inputs, hashes, root, actual_root)
+    else:
+        if result.get("selected_solution") is not None:
+            _c3_fail(f"{status} must not select a solution")
+        if status == "AMBIGUOUS":
+            certificate = result.get("ambiguity_certificate")
+            if (
+                not isinstance(certificate, dict)
+                or len(certificate.get("solution_fingerprint_sha256s", [])) < 2
+                or result.get("unsatisfied_constraints") != []
+            ):
+                _c3_fail("AMBIGUOUS certificate incomplete")
+            if certificate["solution_fingerprint_sha256s"] != fingerprints:
+                _c3_fail("ambiguity certificate differs from recomputed solutions")
+        elif result.get("ambiguity_certificate") is not None or not result.get(
+            "unsatisfied_constraints"
+        ):
+            _c3_fail(f"{status} failure evidence incomplete")
+    registry = {item["id"] for item in inputs["CONSTRAINT_REGISTRY"]["entries"]}
+    if any(item not in registry for item in result["unsatisfied_constraints"]):
+        _c3_fail("unregistered unsatisfied constraint")
+
+
+def validate_c3_solution_core(
+    core: dict[str, Any],
+    normalized: dict[str, Any],
+    ast: dict[str, Any],
+    event_frame: dict[str, Any],
+    *,
+    root: Path = ROOT,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+) -> None:
+    """Validate a candidate core against recomputed upstream solution domains."""
+    inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    validate_c2_event_frame(
+        normalized,
+        ast,
+        event_frame,
+        root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
+    if core.get("semantic_object_set_sha256") != canonical_sha256(
+        _c3_semantic_object_set(core)
+    ):
+        _c3_fail("candidate core semantic object hash mismatch")
+    if core.get("solution_id") != f"SOL-{core['semantic_object_set_sha256'][:24]}":
+        _c3_fail("candidate core solution identity mismatch")
+    expected: set[bytes] = set()
+    mention_domains = [
+        tuple(item["candidate_entity_ids"]) for item in ast["surface_mentions"]
+    ]
+    event_domains = _c3_event_domains(inputs)
+    structural_domains = _c3_structural_domains(inputs)
+    structural_values = [item[1] for item in structural_domains]
+    for mention_values, event_values, structure_values in product(
+        product(*mention_domains),
+        product(*event_domains) if event_domains else [()],
+        product(*structural_values) if structural_values else [()],
+    ):
+        mentions = _c3_resolved_mentions(inputs, tuple(mention_values))
+        for value in _c3_profile_cores(inputs, mentions, list(event_values)):
+            bound = _c3_apply_structural_assignment(
+                value,
+                inputs,
+                structural_domains,
+                tuple(structure_values),
+            )
+            if bound is not None:
+                expected.add(canonical_bytes(bound))
+    if canonical_bytes(core) not in expected:
+        _c3_fail(
+            "candidate core is not an exact authority-derived inclusion-minimal solution"
+        )
+
+
+def resolve_c3_proof_object(
+    proof_root: Path,
+    relative: str,
+    expected_kind: str,
+    request_id: str,
+) -> dict[str, Any] | None:
+    """Public fail-closed resolver for a production proof-object reference."""
+    result = _c3_resolve_proof(
+        proof_root, relative, expected_kind, request_id
+    )
+    return copy.deepcopy(result[0]) if result is not None else None
+
+
+def validate_c3_stop_boundary(value: dict[str, Any]) -> None:
+    if value.get("terminal_stage") != C3_TERMINAL_STAGE:
+        _c3_fail("terminal stage mismatch")
+    if value.get("implemented_stages") != list(C3_IMPLEMENTED_STAGES):
+        _c3_fail("implemented stage sequence mismatch")
+    prohibited = {
+        "retrieval_result",
+        "runtime_binding",
+        "s4_stage_result",
+        "s5_stage_result",
+    }
+    pending: list[Any] = [value]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, dict):
+            overlap = prohibited & set(item)
+            if overlap:
+                _c3_fail(f"prohibited downstream object keys: {sorted(overlap)}")
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+
+
+def compile_c3(
+    request: dict[str, Any],
+    root: Path = ROOT,
+    *,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+    proof_root: Path | None = None,
+) -> dict[str, Any]:
+    """Run S0 through the authorized S3 terminal without invoking S4 or S5."""
+    c2 = compile_c2(
+        request,
+        root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
+    actual_proof_root = proof_root or Path(
+        tempfile.mkdtemp(prefix="p9b1q-c3-proof-")
+    )
+    typed = solve_typed_constraints(
+        c2["normalized_request"],
+        c2["clause_ast"],
+        c2["event_frame"],
+        root=root,
+        proof_root=actual_proof_root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
+    result = {
+        "implemented_stages": list(C3_IMPLEMENTED_STAGES),
+        "terminal_stage": C3_TERMINAL_STAGE,
+        "normalized_request": c2["normalized_request"],
+        "normalized_request_sha256": c2["normalized_request_sha256"],
+        "clause_ast": c2["clause_ast"],
+        "clause_ast_sha256": c2["clause_ast_sha256"],
+        "event_frame": c2["event_frame"],
+        "event_frame_sha256": c2["event_frame_sha256"],
+        "typed_constraint_result": typed,
+        "typed_constraint_result_sha256": canonical_sha256(typed),
+    }
+    validate_c3_stop_boundary(result)
     return result
 
 
