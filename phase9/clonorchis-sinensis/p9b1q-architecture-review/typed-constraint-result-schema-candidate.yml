@@ -254,9 +254,20 @@ $defs:
         maxItems: 16
         uniqueItems: true
         items: {type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z0-9][a-z0-9_]*$'}
-      finding_polarity: {enum: [POSITIVE, NEGATIVE, NOT_APPLICABLE]}
+      finding_polarity: {enum: [POSITIVE, NEGATIVE, UNSPECIFIED, NOT_APPLICABLE]}
       assertion_status: {enum: [AFFIRMED, NEGATED, EXCLUDED, HYPOTHETICAL]}
       temporal_scope: {enum: [HISTORICAL, CURRENT, FUTURE, GENERAL]}
+    allOf:
+      - if:
+          required: [event_type]
+          properties:
+            event_type: {const: DIAGNOSTIC_FINDING}
+        then:
+          properties:
+            finding_polarity: {enum: [POSITIVE, NEGATIVE, UNSPECIFIED]}
+        else:
+          properties:
+            finding_polarity: {const: NOT_APPLICABLE}
   resolved_relation:
     type: object
     additionalProperties: false

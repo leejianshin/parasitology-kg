@@ -1738,6 +1738,8 @@ def validate_s3(
         frame = frames.get(event["frame_id"])
         if frame is None or event["event_type"] not in frame["normalized_identity"]["event_type_domain"] or event["assertion_status"] != frame["assertion"]["assertion_status"]:
             errors.append(error("CNS-SOLVER-EVENT_IDENTITY", "EVENT_IDENTITY_MISMATCH", "/selected_solution/resolved_events"))
+        if frame is not None and not _s3_finding_polarity_matches_frame(event, frame):
+            errors.append(error("CNS-SOLVER-ASSERTION-DERIVATION", "ASSERTION_DERIVATION_MISMATCH", "/selected_solution/resolved_events"))
     if typed["status"] == "UNIQUE" and typed["ambiguity_certificate"] is not None:
         errors.append(error("CNS-SOLVER-AMBIGUITY_CERTIFICATE", "AMBIGUITY_CERTIFICATE_INVALID", "/ambiguity_certificate"))
     emission = typed["selected_solution"]["queryir_emission_record"]
@@ -2194,6 +2196,27 @@ def _expected_fixed_events(inputs: dict[str, Any]) -> dict[str, dict[str, Any]]:
             "temporal_scope": frame["assertion"]["temporal_scope"],
         }
     return expected
+
+
+def _s3_finding_polarity_matches_frame(
+    event: dict[str, Any], frame: dict[str, Any]
+) -> bool:
+    """Enforce the lossless, event-type-conditional S2-to-S3 polarity rule.
+
+    The validated Event Frame is the predecessor authority.  Assertion status
+    is deliberately not consulted: AFFIRMED never licenses a POSITIVE default.
+    """
+    event_type = event.get("event_type")
+    polarity = event.get("finding_polarity")
+    allowed = (
+        {"POSITIVE", "NEGATIVE", "UNSPECIFIED"}
+        if event_type == "DIAGNOSTIC_FINDING"
+        else {"NOT_APPLICABLE"}
+    )
+    return (
+        polarity in allowed
+        and polarity == frame.get("assertion", {}).get("finding_polarity")
+    )
 
 
 def normalized_event_identity(event: dict[str, Any]) -> tuple[Any, ...]:
