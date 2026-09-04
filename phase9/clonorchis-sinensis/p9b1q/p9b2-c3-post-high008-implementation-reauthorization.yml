@@ -1,0 +1,246 @@
+reauthorization_version: "1.0"
+reauthorization_id: "P9B2-C3-POST-HIGH008-IMPLEMENTATION-REAUTHORIZATION-001"
+reauthorization_kind: "C3_POST_HIGH_008_PROSPECTIVE_IMPLEMENTATION_REAUTHORIZATION"
+reauthorization_status: "ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION_AND_SEPARATE_EXPLICIT_CONTROL_IMPLEMENTATION_START"
+
+repository: "leejianshin/parasitology-kg"
+branch: "agent/p9-b2"
+reauthorization_base: "d8ab7cded9ebb6f64fd30ee48cdeb9a8f527c5ea"
+current_public_tip_at_creation: "d8ab7cded9ebb6f64fd30ee48cdeb9a8f527c5ea"
+previous_c3_implementation_reauthorization: "44229021343eeb56d7d5bf2f4c85e806bd6f952c"
+prospective_only: true
+authority_snapshot_for_future_implementation: "d8ab7cded9ebb6f64fd30ee48cdeb9a8f527c5ea"
+
+finding_state:
+  high_004:
+    finding_id: "P9B2-C3-PRODUCTION-WIRING-HIGH-004"
+    status: "CLOSED_FROZEN"
+  high_005:
+    finding_id: "P9B2-C3-MINIMALITY-PROOF-NONEXECUTABLE-HIGH-005"
+    status: "CLOSED_FROZEN"
+  high_006:
+    finding_id: "P9B2-C3-LICENSE-TRACE-SELF-AUTHORIZATION-HIGH-006"
+    status: "OPEN_BLOCKING"
+  high_007:
+    finding_id: "P9B2-C3-SOLVER-DOMAIN-CONSTRAINT-INCOMPLETE-HIGH-007"
+    status: "OPEN_BLOCKING"
+  high_008:
+    finding_id: "P9B2-C3-DIAGNOSTIC-POLARITY-REPRESENTABILITY-HIGH-008"
+    status: "CLOSED_FROZEN"
+    closure: "INDEPENDENTLY_ACCEPTED_AND_FROZEN"
+  open_c3_blocking_finding_count: 2
+
+reauthorization_basis:
+  reason: >-
+    The previous C3 implementation reauthorization predates the HIGH-008
+    authority corrections. Future implementation is rebound prospectively to
+    the frozen public authority snapshot at the reauthorization base.
+  previous_authority_reinterpretation: "PROHIBITED"
+  closed_finding_reopening: >-
+    PROHIBITED unless future implementation introduces genuinely contradictory
+    regression evidence.
+
+frozen_high_008_semantics:
+  diagnostic_finding_polarity:
+    allowed_exactly:
+      - "POSITIVE"
+      - "NEGATIVE"
+      - "UNSPECIFIED"
+  non_diagnostic_finding_polarity:
+    allowed_exactly:
+      - "NOT_APPLICABLE"
+  assertion_status_authority: "SOURCE_AST_AND_NEGATION_GOVERNED"
+  finding_polarity_authority: "EXACT_VALIDATED_EVENT_FRAME_PREDECESSOR_PARITY"
+  implementation_substitution_or_reinterpretation: "PROHIBITED"
+
+direct_future_implementation_scope:
+  exact_path_count: 2
+  exact_paths:
+    - path: "scripts/p9b1q_scoped_query_ir.py"
+      classification: "DIRECT_IMPLEMENTATION"
+    - path: "tests/test_p9b1q_scoped_query_ir.py"
+      classification: "DIRECT_TEST"
+  third_direct_implementation_path: "PROHIBITED"
+
+conditional_mechanical_scope:
+  exact_path_count: 1
+  exact_path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  classification: "CONDITIONAL_MECHANICAL_CONTENT_BINDING_REFRESH"
+  semantic_authority_mutation: false
+  exact_authorized_fields:
+    - json_pointer: "/protected_files/scripts~1p9b1q_scoped_query_ir.py"
+      source_path: "scripts/p9b1q_scoped_query_ir.py"
+      derivation: "SHA256_RAW_FILE_BYTES"
+      change_rule: >-
+        Refresh only if the source bytes change from the implementation base;
+        otherwise this field must remain byte-identical.
+    - json_pointer: "/protected_files/tests~1test_p9b1q_scoped_query_ir.py"
+      source_path: "tests/test_p9b1q_scoped_query_ir.py"
+      derivation: "SHA256_RAW_FILE_BYTES"
+      change_rule: >-
+        Refresh only if the source bytes change from the implementation base;
+        otherwise this field must remain byte-identical.
+  exact_authorized_field_count: 2
+  all_other_manifest_fields: "READ_ONLY"
+  broad_manifest_rebuild: "PROHIBITED"
+
+current_implementation_hash_evidence:
+  evidence_only_not_standing_future_authority: true
+  script:
+    path: "scripts/p9b1q_scoped_query_ir.py"
+    raw_sha256: "ebafa5efbc2b2670f67841f0a56220c3401cc8645a02cd7e9fbf44760013d8a3"
+    current_manifest_binding: "MATCHES"
+  test:
+    path: "tests/test_p9b1q_scoped_query_ir.py"
+    raw_sha256: "644d2fd74b3044e2ac4cde760a260a502afdd9b91c83a01c521b54b7e839d418"
+    current_manifest_binding: "MATCHES"
+  future_binding_authority: "INDEPENDENTLY_RECOMPUTED_SHA256_RAW_FILE_BYTES"
+
+maximum_future_changed_path_set:
+  maximum_path_count: 3
+  paths:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  manifest_inclusion_is_conditional: true
+  fourth_path: "PROHIBITED"
+
+authority_schema_and_fixture_freeze:
+  authority_mutation_authorized: false
+  schema_mutation_authorized: false
+  fixture_mutation_authorized: false
+  all_existing_authorization_artifacts: "READ_ONLY"
+  named_read_only_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-result-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-frame-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-solution-core-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-emission-record-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/query-ir-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/query-interpreter-config.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/negation_semantic_authority.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/object-canonicalization-and-hash-chain.yml"
+  public_architecture_review_fixtures: "READ_ONLY"
+  disposable_runtime_and_test_proof_roots: "PERMITTED_BY_FROZEN_CONTRACTS"
+
+constraint_governance:
+  domain: "1..48"
+  no_gaps: true
+  no_duplicates: true
+  constraint_49: "ABSENT"
+  new_constraint_authorized: false
+  registry_and_constraint_set_mutation: "PROHIBITED"
+
+high_006_implementation_target:
+  scope: "TRACE_AND_PROVENANCE_EXECUTABILITY_AND_INDEPENDENT_VALIDATION_ONLY"
+  trace_schema_existing_fields_sufficient: true
+  schema_change: "PROHIBITED"
+  new_source_json_pointer_field: "PROHIBITED"
+  required_behavior:
+    - "MATERIAL_QUERYIR_TRACES_IDENTIFY_REAL_AUTHORITATIVE_PREDECESSOR_OCCURRENCES_OR_SOURCES"
+    - "SOURCE_IDS_RESOLVE_IN_THE_DECLARED_SOURCE_OBJECT_KIND"
+    - "SOURCE_SPANS_EQUAL_EXACT_NORMALIZED_REQUEST_SLICES_WITHOUT_DEFAULT_WHOLE_REQUEST_FALLBACK"
+    - "EMITTED_VALUE_HASH_IS_RECOMPUTED_FROM_THE_ACTUAL_QUERYIR_POINTER_AND_VALUE"
+    - "EXPECTED_VALUES_ARE_INDEPENDENTLY_REPROJECTED_FROM_ACTUAL_TYPED_CORE_AST_EVENT_FRAME_AND_FROZEN_MAPPINGS"
+    - "WRONG_BUT_TYPE_COMPATIBLE_OCCURRENCE_REDIRECTION_FAILS"
+    - "CANDIDATE_OUTPUT_CANNOT_SELF_AUTHORIZE_PROVENANCE"
+  license_dag_freeze:
+    license_root_authority_recomputed: "PASS"
+    rooted_acyclic_license_dag: "PASS"
+    all_material_objects_licensed: "PASS"
+    license_dag_negative_probes: "PASS"
+    candidate_output_self_authorization: "NO"
+    redesign: "PROHIBITED_EXCEPT_MINIMAL_IMPLEMENTATION_ADJUSTMENT_REQUIRED_BY_DIRECT_REGRESSION"
+
+high_007_implementation_target:
+  scope: "SOLVER_DOMAIN_AND_JOINT_ENUMERATION_IMPLEMENTATION_ONLY"
+  required_behavior:
+    - "PROFILE_DERIVED_AND_GENERAL_AUTHORITY_DERIVED_CANDIDATES_ARE_BOTH_GENERATED"
+    - "ALL_LEGAL_CANDIDATES_ARE_COMBINED_BEFORE_CONSTRAINT_ELIMINATION"
+    - "PROFILE_CANDIDATES_DO_NOT_SUPPRESS_OTHER_FORMALLY_LEGAL_EVENT_OR_DOMAIN_FAMILIES"
+    - "NO_IF_NOT_CANDIDATES_GENERIC_FALLBACK_MAY_RESTRICT_THE_FORMAL_DOMAIN"
+    - "MIXED_EXPOSURE_AND_TREATMENT_FAMILIES_COEXIST_IN_THE_PRECONSTRAINT_DOMAIN"
+    - "DIAGNOSED_BY_WITH_UNSPECIFIED_POLARITY_IS_NOT_DISCARDED_WHEN_AUTHORIZED_BY_FROZEN_HIGH_008_SEMANTICS"
+    - "CNS_SOLVER_EVENT_RELATION_DERIVATION_HAS_ACTUAL_EXECUTABLE_SEMANTIC_EFFECT"
+    - "ALL_48_CONSTRAINTS_HAVE_EXECUTABLE_OR_VALIDLY_DISCHARGED_SEMANTIC_BASIS"
+  jointly_enumerated_variable_families:
+    - "ATTACHMENT"
+    - "ENTITY_RESOLUTION"
+    - "EVENT_TYPE_AND_PARTICIPANT_BINDING"
+    - "ASSERTION_AND_TEMPORAL_SCOPE"
+    - "EVENT_IDENTITY_AND_COREFERENCE"
+    - "OVERRIDE_BINDING"
+    - "RELATION_DIRECTION"
+    - "SEMANTIC_REQUIREMENT_AND_PROHIBITION"
+  required_results:
+    variable_domain_completeness: "PASS"
+    joint_assignment_enumeration: "PASS"
+    pre_solver_heuristic_collapse: "NO"
+    mixed_domain_coexistence: "PASS"
+    constraint_implementation_coverage: "48/48"
+    ceremonial_constraint_id_count: 0
+  constraint_receipt_strings_alone_are_evidence: false
+
+closed_finding_regression_freeze:
+  high_004:
+    c3_production_wiring: "PASS"
+    production_entry_reaches_c3: "PASS"
+    test_only_implementation_risk: "NONE"
+    c3_path_stops_before_c4_c5_and_retrieval: true
+  high_005:
+    strict_superset_elimination: "PASS"
+    incomparable_minimal_solutions_preserved: "PASS"
+    zero_extra_material_objects: "PASS"
+    minimality_constraint_actually_evaluated: true
+    removal_probe_executable_replay: "PASS"
+    removal_probe_bindings: "PASS"
+    tampered_removal_probe_rejection: "PASS"
+  high_008:
+    option_b_schema_matrix: "PASS"
+    assertion_status_polarity_separation: "PASS"
+    assertion_status_independent_derivation: "PASS"
+    s2_event_frame_polarity_authority_binding: "PASS"
+    exact_predecessor_polarity_parity: "PASS"
+    unnegated_diagnostic_defaults_to_positive: false
+    lossless_diagnostic_unspecified_chain: "PASS"
+    authority_bytes: "READ_ONLY"
+
+future_design_manifest_dependency_precheck:
+  timing: "BEFORE_ANY_FUTURE_IMPLEMENTATION_MUTATION"
+  expected_active_content_addressed_dependent_count: 0
+  complete_tracked_tree_search: "REQUIRED"
+  new_active_dependency_behavior: "FAIL_CLOSED"
+  exact_failure_mode: "C3_POST_HIGH_008_REAUTHORIZATION_SCOPE_INSUFFICIENT_NEW_DESIGN_MANIFEST_DEPENDENCY"
+  fourth_path_refresh: "PROHIBITED"
+  return_to_control: true
+
+stage_boundary:
+  stage: "S3_TYPED_CONSTRAINT_SOLVER_ONLY"
+  c4_queryir_extraction_invoked: false
+  c4_implementation_authorized: false
+  c5_runtime_binding_invoked: false
+  c5_implementation_authorized: false
+  retrieval_invoked: false
+  model_network_invoked: false
+  r11_secret_body_accessed: false
+  r11_executed: false
+
+activation:
+  fast_forward_publication_required: true
+  publication_ref: "refs/heads/agent/p9-b2"
+  publication_alone_starts_implementation: false
+  separate_control_start_required: true
+  required_control_start_atom: "C3_POST_HIGH_008_IMPLEMENTATION_CORRECTION_START=AUTHORIZED"
+  c3_implementation_may_start_on_publication_alone: false
+  c4_authorization_eligible: false
+
+future_fail_closed_behavior:
+  unlisted_required_path: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  authority_schema_or_fixture_change_required: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  design_manifest_dependency_outside_scope: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  self_expansion_of_scope: "PROHIBITED"
