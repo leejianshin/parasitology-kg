@@ -1594,16 +1594,64 @@ def validate_s3_assertion_authority(
                 "/actual_input_objects",
             )
         ]
-    _, errors = negation_semantic.validate_assertion_derivation(
-        inputs["CLAUSE_AST"],
-        inputs["NORMALIZED_REQUEST"],
-        inputs["EVENT_FRAME"],
-        typed_assertions,
-        inputs.get("NEGATION_SURFACE_SCOPE_AUTHORITY", load_yaml(NEGATION_AUTHORITY)),
-        inputs.get("SCOPE_AUTHORITY_RECORDS"),
-        inputs.get("DECLARED_ASSERTION_DERIVATION"),
+    ast = inputs["CLAUSE_AST"]
+    normalized = inputs["NORMALIZED_REQUEST"]
+    event_frame = inputs["EVENT_FRAME"]
+    authority = inputs.get(
+        "NEGATION_SURFACE_SCOPE_AUTHORITY", load_yaml(NEGATION_AUTHORITY)
     )
-    return errors
+    declared_records = inputs.get("SCOPE_AUTHORITY_RECORDS")
+    authority_errors = negation_semantic.validate_surface_scope_target(
+        ast, normalized, authority, declared_records
+    )
+    if authority_errors:
+        return authority_errors
+
+    derived = negation_semantic.derive_assertion(
+        ast, event_frame, authority, declared_records
+    )
+    errors: list[dict[str, str]] = []
+    declared_derivation = inputs.get("DECLARED_ASSERTION_DERIVATION")
+    if declared_derivation is not None and any(
+        declared_derivation.get(key) != value
+        for key, value in derived.items()
+        if key != "derived_finding_polarity"
+    ):
+        errors.append(
+            error(
+                "CNS-SOLVER-ASSERTION-DERIVATION",
+                "ASSERTION_DERIVATION_MISMATCH",
+                "/assertion_derivation",
+            )
+        )
+
+    frame = event_frame["frames"][0]
+    frame_assertion = frame["assertion"]
+    if frame_assertion["assertion_status"] != derived["derived_event_assertion"]:
+        errors.append(
+            error(
+                "CNS-SOLVER-ASSERTION-DERIVATION",
+                "ASSERTION_DERIVATION_MISMATCH",
+                "/event_frame/frames/0/assertion/assertion_status",
+            )
+        )
+
+    typed = [
+        item for item in typed_assertions if item.get("frame_id") == frame["frame_id"]
+    ]
+    if (
+        len(typed) != 1
+        or typed[0].get("assertion_status") != derived["derived_event_assertion"]
+        or not _s3_finding_polarity_matches_frame(typed[0], frame)
+    ):
+        errors.append(
+            error(
+                "CNS-SOLVER-ASSERTION-DERIVATION",
+                "ASSERTION_DERIVATION_MISMATCH",
+                "/typed_solution/resolved_events",
+            )
+        )
+    return ordered(errors)
 
 
 def validate_s3(
@@ -2207,6 +2255,8 @@ def _s3_finding_polarity_matches_frame(
     is deliberately not consulted: AFFIRMED never licenses a POSITIVE default.
     """
     event_type = event.get("event_type")
+    if event_type is None and len(frame.get("event_type_domain", [])) == 1:
+        event_type = frame["event_type_domain"][0]
     polarity = event.get("finding_polarity")
     allowed = (
         {"POSITIVE", "NEGATIVE", "UNSPECIFIED"}
