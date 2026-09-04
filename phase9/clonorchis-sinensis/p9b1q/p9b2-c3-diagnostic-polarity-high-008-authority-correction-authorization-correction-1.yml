@@ -1,0 +1,265 @@
+authorization_correction_version: "1.0"
+authorization_correction_id: "P9B2-C3-DIAGNOSTIC-POLARITY-HIGH-008-AUTHORITY-CORRECTION-AUTH-CORR-001"
+authorization_correction_kind: "C3_HIGH_008_AUTHORITY_CORRECTION_AUTHORIZATION_CORRECTION"
+authorization_correction_status: "ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION_AND_SEPARATE_EXPLICIT_CONTROL_BUILD_START"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+authorization_correction_base: "96e127d22e7dc6b35fe32a36b0568c3d91affebf"
+current_public_tip_at_creation: "96e127d22e7dc6b35fe32a36b0568c3d91affebf"
+original_authorization_commit: "96e127d22e7dc6b35fe32a36b0568c3d91affebf"
+original_authorization_file: "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-diagnostic-polarity-high-008-authority-correction-authorization.yml"
+authority_composition: "UNION_AFTER_THIS_CORRECTION_IS_FAST_FORWARD_PUBLISHED"
+
+finding:
+  finding_id: "P9B2-C3-DIAGNOSTIC-POLARITY-REPRESENTABILITY-HIGH-008"
+  severity: "HIGH"
+  status_after_publication: "OPEN_BLOCKING_AUTHORIZED_FOR_CORRECTION"
+
+failed_build:
+  failure_mode: "HIGH_008_AUTHORIZED_REFRESH_CLOSURE_INCOMPLETE"
+  failed_check: "DESIGN_MANIFEST_ACTIVE_TRANSITIVE_BINDINGS_OUTSIDE_FIVE_FIELD_AUTHORIZATION"
+  failed_object: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  correction_commit: "NONE"
+  surviving_repository_mutation: false
+  publication: false
+  prospective_authorization_correction_only: true
+  retroactive_semantic_or_data_authorization_required: false
+
+authorization_atom:
+  purpose: "COMPLETE_FIELD_LEVEL_AUTHORITY_INSIDE_THE_EXISTING_HIGH_008_MECHANICAL_PATH_ALLOWLIST"
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-diagnostic-polarity-high-008-authority-correction-authorization-correction-1.yml"
+  authorization_correction_file_only_commit: true
+  semantic_authority_mutation_this_turn: false
+  fixture_refresh_this_turn: false
+  design_manifest_mutation_this_turn: false
+  c3_implementation_mutation_this_turn: false
+  c4_or_c5_work_this_turn: false
+  r11_secret_body_access_this_turn: false
+  r11_execution_this_turn: false
+
+preserved_original_scope:
+  high_008_option_b: "UNCHANGED"
+  option_b_semantics:
+    diagnostic_finding_permitted_values_exactly:
+      - "POSITIVE"
+      - "NEGATIVE"
+      - "UNSPECIFIED"
+    non_diagnostic_permitted_value_exactly: "NOT_APPLICABLE"
+    global_unconditional_enum_widening: "PROHIBITED"
+  direct_semantic_path_count: 3
+  direct_semantic_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-result-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+  fourth_direct_semantic_path: "PROHIBITED"
+  mechanical_refresh_path_allowlist_count: 35
+  mechanical_refresh_path_allowlist_source: "original_authorization.conditional_mechanical_refresh.exact_paths"
+  newly_authorized_path_count: 0
+  maximum_future_changed_path_count: 38
+  thirty_ninth_path: "PROHIBITED"
+
+scope_defect:
+  original_manifest_field_authority_was_incomplete: true
+  reason: >-
+    The original 35-path mechanical allowlist contains design-manifest.yml
+    and 34 fixture or evidence files. Authorized mechanical binding refreshes
+    change the raw bytes of those 34 files, and design-manifest.yml actively
+    binds each final file under fixture_files. The reference validator
+    execution summary is also independently bound by
+    executable_evidence.summary_sha256.
+
+design_manifest_field_authority:
+  path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  original_authorized_field_count: 5
+  additional_authorized_field_count: 35
+  resulting_authorized_field_count: 40
+  original_authorized_json_pointers:
+    - "/design_files/typed-constraint-result-schema-candidate.yml"
+    - "/design_files/stage-semantic-validator-contract.yml"
+    - "/design_files/reference-stage-semantic-validator.py"
+    - "/executable_evidence/configuration_sha256"
+    - "/executable_evidence/sha256"
+  additional_fixture_files_field_count: 34
+  additional_fixture_files_json_pointers:
+    - "/fixture_files/fixtures~1clause-ast-diagnostic-positive.json"
+    - "/fixture_files/fixtures~1clause-ast-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1clause-ast-exposure-positive.json"
+    - "/fixture_files/fixtures~1clause-ast-shared-argument-positive.json"
+    - "/fixture_files/fixtures~1diagnostic-predicate-argument-binding-positive.json"
+    - "/fixture_files/fixtures~1event-frame-diagnostic-positive.json"
+    - "/fixture_files/fixtures~1event-frame-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1event-frame-exposure-positive.json"
+    - "/fixture_files/fixtures~1execution-binding-sidecar-positive.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-E01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-M01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-M02.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-N01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-N02.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-Q01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-Q02.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-R01.json"
+    - "/fixture_files/fixtures~1normalized-request-diagnostic-positive.json"
+    - "/fixture_files/fixtures~1normalized-request-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1normalized-request-exposure-positive.json"
+    - "/fixture_files/fixtures~1normalized-request-shared-argument-positive.json"
+    - "/fixture_files/fixtures~1object-store-index-positive.json"
+    - "/fixture_files/fixtures~1queryir-emission-record-exposure-positive.json"
+    - "/fixture_files/fixtures~1r3a-reference-override-positive.json"
+    - "/fixture_files/fixtures~1reference-validator-execution-summary.json"
+    - "/fixture_files/fixtures~1stage-validation-s0-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s1-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s1-shared-argument-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s2-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s2-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s3-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s4-positive.json"
+    - "/fixture_files/fixtures~1stage-validator-negative-fixtures.yml"
+    - "/fixture_files/fixtures~1typed-result-exposure-positive.json"
+  additional_execution_summary_field_count: 1
+  additional_execution_summary_json_pointer: "/executable_evidence/summary_sha256"
+  execution_summary_bound_source: "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/reference-validator-execution-summary.json"
+  resulting_exact_json_pointers:
+    - "/design_files/typed-constraint-result-schema-candidate.yml"
+    - "/design_files/stage-semantic-validator-contract.yml"
+    - "/design_files/reference-stage-semantic-validator.py"
+    - "/executable_evidence/configuration_sha256"
+    - "/executable_evidence/sha256"
+    - "/fixture_files/fixtures~1clause-ast-diagnostic-positive.json"
+    - "/fixture_files/fixtures~1clause-ast-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1clause-ast-exposure-positive.json"
+    - "/fixture_files/fixtures~1clause-ast-shared-argument-positive.json"
+    - "/fixture_files/fixtures~1diagnostic-predicate-argument-binding-positive.json"
+    - "/fixture_files/fixtures~1event-frame-diagnostic-positive.json"
+    - "/fixture_files/fixtures~1event-frame-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1event-frame-exposure-positive.json"
+    - "/fixture_files/fixtures~1execution-binding-sidecar-positive.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-E01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-M01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-M02.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-N01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-N02.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-Q01.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-Q02.json"
+    - "/fixture_files/fixtures~1minimality-removal-probe-R01.json"
+    - "/fixture_files/fixtures~1normalized-request-diagnostic-positive.json"
+    - "/fixture_files/fixtures~1normalized-request-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1normalized-request-exposure-positive.json"
+    - "/fixture_files/fixtures~1normalized-request-shared-argument-positive.json"
+    - "/fixture_files/fixtures~1object-store-index-positive.json"
+    - "/fixture_files/fixtures~1queryir-emission-record-exposure-positive.json"
+    - "/fixture_files/fixtures~1r3a-reference-override-positive.json"
+    - "/fixture_files/fixtures~1reference-validator-execution-summary.json"
+    - "/fixture_files/fixtures~1stage-validation-s0-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s1-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s1-shared-argument-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s2-diagnostic-role-catalog-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s2-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s3-positive.json"
+    - "/fixture_files/fixtures~1stage-validation-s4-positive.json"
+    - "/fixture_files/fixtures~1stage-validator-negative-fixtures.yml"
+    - "/fixture_files/fixtures~1typed-result-exposure-positive.json"
+    - "/executable_evidence/summary_sha256"
+  every_fixture_files_field_derivation: "SHA256_RAW_FILE_BYTES(CORRESPONDING_FINAL_FIXTURE_OR_EVIDENCE_FILE)"
+  execution_summary_field_derivation: "SHA256_RAW_FILE_BYTES(fixtures/reference-validator-execution-summary.json)"
+  literal_hash_is_authority: false
+  forty_first_field: "PROHIBITED"
+  typed_solution_exposure_inventory_pointer: "/fixture_files/fixtures~1typed-solution-exposure-positive.json"
+  typed_solution_exposure_inventory_pointer_authorized: false
+  new_required_field_outside_resulting_exact_set_behavior: "FAIL_CLOSED"
+  new_required_field_failure_mode: "HIGH_008_DESIGN_MANIFEST_FIELD_AUTHORITY_STILL_INCOMPLETE"
+
+manifest_mutation_prohibitions:
+  broad_manifest_rebuild_authorized: false
+  inventory_counts_change: "PROHIBITED"
+  unrelated_design_files_hash_change: "PROHIBITED"
+  unrelated_fixture_files_hash_change: "PROHIBITED"
+  protected_files_hash_change: "PROHIBITED"
+  schema_gate_field_change: "PROHIBITED"
+  shared_negation_semantic_authority_field_change: "PROHIBITED"
+  object_store_index_binding_metadata_change: "PROHIBITED"
+  failure_code_governance_metadata_change: "PROHIBITED"
+  negative_fixture_mutation_isolation_metadata_change: "PROHIBITED"
+  boundary_metadata_change: "PROHIBITED"
+
+fixture_semantic_boundary:
+  semantic_fixture_authority_expanded: false
+  frozen_semantics:
+    - "REQUEST_TEXT"
+    - "AST_SEMANTICS"
+    - "EVENT_FRAME_SEMANTICS"
+    - "QUERYIR_SEMANTICS"
+    - "TYPED_RESULT_SEMANTIC_PAYLOAD"
+    - "SOLUTION_CARDINALITY"
+    - "EXPECTED_CONSTRAINT_IDENTITY"
+    - "EXPECTED_FAILURE_MEANING"
+    - "FIXTURE_CLASSIFICATION"
+    - "SEMANTIC_OBJECT_SET"
+  only_mechanical_bindings_and_consequent_canonical_hashes_may_change: true
+
+unchanged_semantic_authority_boundaries:
+  event_frame_schema_change_authorized: false
+  queryir_schema_change_authorized: false
+  typed_solution_core_schema_byte_change_authorized: false
+  negation_authority_change_authorized: false
+
+constraint_governance:
+  domain: "1..48"
+  constraint_49: "ABSENT"
+  new_constraint_authorized: false
+  registry_change_authorized: false
+  constraint_set_change_authorized: false
+
+finding_separation:
+  high_004:
+    finding_id: "P9B2-C3-PRODUCTION-WIRING-HIGH-004"
+    status: "CLOSED_FROZEN"
+  high_005:
+    finding_id: "P9B2-C3-MINIMALITY-PROOF-NONEXECUTABLE-HIGH-005"
+    status: "CLOSED_FROZEN"
+  high_006:
+    finding_id: "P9B2-C3-LICENSE-TRACE-SELF-AUTHORIZATION-HIGH-006"
+    status: "OPEN_BLOCKING"
+  high_007:
+    finding_id: "P9B2-C3-SOLVER-DOMAIN-CONSTRAINT-INCOMPLETE-HIGH-007"
+    status: "OPEN_BLOCKING"
+  implementation_may_resume: false
+
+future_dependency_rules:
+  active_design_manifest_hash_dependent_count_expected: 0
+  future_build_must_recheck_before_mutation: true
+  active_design_manifest_hash_dependent_discovered: "FAIL_CLOSED"
+  active_design_manifest_hash_dependent_scope_expansion: "PROHIBITED"
+  unlisted_mechanical_path: "FAIL_CLOSED_SCOPE_INSUFFICIENT"
+  original_35_path_allowlist_remains_exact: true
+
+activation:
+  effective_only_after_fast_forward_publication: true
+  target_ref: "refs/heads/agent/p9-b2"
+  publication_starts_high_008_semantic_correction: false
+  separate_future_control_start_required: "C3_HIGH_008_AUTHORITY_CORRECTION_BUILD_START=AUTHORIZED"
+  original_authorization_remains_immutable: true
+
+stage_stop_boundary:
+  c3_implementation_may_resume: false
+  c4: "BLOCKED"
+  c5: "BLOCKED"
+  retrieval: "PROHIBITED"
+  model_network_call: "PROHIBITED"
+  r11_secret_body_access: "PROHIBITED"
+  r11_execution: "PROHIBITED"
+
+status_after_authorization_correction_publication:
+  high_008: "OPEN_BLOCKING_AUTHORIZED_FOR_CORRECTION"
+  high_008_authority_scope: "ORIGINAL_AUTHORIZATION_PLUS_CORRECTION_1"
+  design_manifest_authorized_changed_field_count: 40
+  mechanical_refresh_allowlist_count: 35
+  maximum_future_changed_path_count: 38
+  high_006: "OPEN_BLOCKING"
+  high_007: "OPEN_BLOCKING"
+  c3_implementation_may_resume: false
+  c4: "BLOCKED"
+  c5: "BLOCKED"
+  r11: "BLOCKED"
