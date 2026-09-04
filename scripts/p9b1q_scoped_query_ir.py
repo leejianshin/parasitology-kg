@@ -3347,6 +3347,7 @@ def _c3_authority_inputs(
     ast: dict[str, Any],
     event_frame: dict[str, Any],
     root: Path,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "NORMALIZED_REQUEST": normalized,
@@ -3360,6 +3361,7 @@ def _c3_authority_inputs(
         "CONSTRAINT_REGISTRY": _read_yaml(root / CONSTRAINT_REGISTRY_PATH),
         "CONSTRAINT_SET": _read_yaml(root / CONSTRAINT_SET_PATH),
         "PROJECTION_RULE_SET": _read_yaml(root / PROJECTION_RULE_SET_PATH),
+        "DIAGNOSTIC_ARGUMENT_BINDING": diagnostic_argument_binding,
     }
 
 
@@ -3412,10 +3414,7 @@ def _c3_constraint_ids(inputs: dict[str, Any]) -> list[str]:
 
 
 C3_PRE_CORRECTION_UNCOVERED_CONSTRAINT_IDS = (
-    "CNS-SOLVER-EVENT_IDENTITY",
-    "CNS-SOLVER-LICENSE_DAG",
-    "CNS-SOLVER-MINIMALITY",
-    "CNS-EMIT-QUERYIR_SCHEMA",
+    "CNS-SOLVER-EVENT_RELATION_DERIVATION",
 )
 
 
@@ -3437,7 +3436,7 @@ def c3_constraint_coverage(root: Path = ROOT) -> list[dict[str, str]]:
         "CNS-SOLVER-ASSERTION_SCOPE": "_c3_mention_assertion",
         "CNS-SOLVER-ASSERTION-DERIVATION": "_c3_mention_assertion",
         "CNS-SOLVER-EVENT_IDENTITY": "_c3_event_identity",
-        "CNS-SOLVER-EVENT_RELATION_DERIVATION": "_c3_profile_cores",
+        "CNS-SOLVER-EVENT_RELATION_DERIVATION": "_c3_event_relation_derivation_matches",
         "CNS-SOLVER-LICENSE_DAG": "_c3_license_dag+_c3_validate_proofs",
         "CNS-SOLVER-MINIMALITY": "_c3_inclusion_minimal_cores+removal_replay",
         "CNS-SOLVER-AMBIGUITY_CERTIFICATE": "validate_c3_result",
@@ -3537,7 +3536,9 @@ def _c3_event_domains(inputs: dict[str, Any]) -> list[list[dict[str, Any]]]:
             return [tuple(value) for value in product(*values)]
 
         actors = choices(identity["actor_slot_ids"])
-        targets = choices(identity["target_slot_ids"])
+        targets = choices(
+            identity["target_slot_ids"] + identity["anatomical_site_slot_ids"]
+        )
         methods = (
             choices([identity["method_slot_id"]])
             if identity["method_slot_id"] is not None
@@ -3557,8 +3558,6 @@ def _c3_event_domains(inputs: dict[str, Any]) -> list[list[dict[str, Any]]]:
                 polarity = "NOT_APPLICABLE"
                 specimen = "NOT_APPLICABLE"
                 method_ids = ()
-            if polarity == "UNSPECIFIED":
-                continue
             values.append(
                 {
                     "event_key": f"RE{event_index:03d}",
@@ -3579,6 +3578,242 @@ def _c3_event_domains(inputs: dict[str, Any]) -> list[list[dict[str, Any]]]:
 
 def _c3_selector(entity_ids: Iterable[str]) -> dict[str, Any]:
     return {"entity_ids": sorted(set(entity_ids)), "entity_types": []}
+
+
+def _c3_event_relation_derivation_matches(
+    relation: dict[str, Any],
+    core_events: list[dict[str, Any]],
+    mentions: list[dict[str, Any]],
+    inputs: dict[str, Any],
+) -> bool:
+    """Execute CNS-SOLVER-EVENT_RELATION_DERIVATION from frozen inputs."""
+    if relation.get("derivation_mode") != "EVENT_DERIVED":
+        return True
+    event_roots = [
+        event for event in core_events if event["event_key"] in relation["root_keys"]
+    ]
+    if len(event_roots) != 1:
+        return False
+    event = event_roots[0]
+    mapping = (
+        inputs["EVENT_RELATION_MAPPING"]
+        .get("event_mapping", {})
+        .get(event["event_type"], {})
+        .get("predicates", {})
+        .get(relation["predicate"])
+    )
+    if mapping is None or relation.get("activation_policy") != "REQUIRED":
+        return False
+    subject_ids = relation.get("subject_selector", {}).get("entity_ids", [])
+    object_ids = relation.get("object_selector", {}).get("entity_ids", [])
+    if len(subject_ids) != 1 or len(object_ids) != 1 or subject_ids == object_ids:
+        return False
+    entity_types = _c3_entity_types(inputs)
+    frame = next(
+        item for item in inputs["EVENT_FRAME"]["frames"]
+        if item["frame_id"] == event["frame_id"]
+    )
+    bound_surfaces = {
+        entity_id: {
+            source_id
+            for slot in frame["participant_slots"]
+            if entity_id in slot["domain"]["entity_ids"]
+            for source_id in slot["source_ids"]
+        }
+        for entity_id in {subject_ids[0], object_ids[0]}
+    }
+
+    def licensed_values(tokens: list[str]) -> set[str]:
+        values: set[str] = set()
+        for value in event["actor_entity_ids"] + event["target_entity_ids"]:
+            if entity_types.get(value) in tokens:
+                values.add(value)
+        method = event.get("method_entity_id")
+        if method is not None and (
+            "method_entity_id" in tokens or entity_types.get(method) in tokens
+        ):
+            values.add(method)
+        return values
+
+    if subject_ids[0] not in licensed_values(mapping["subject_from"]):
+        return False
+    if object_ids[0] not in licensed_values(mapping["object_from"]):
+        return False
+    mention_roots = {
+        mention["mention_key"]: mention
+        for mention in mentions
+        if mention["mention_key"] in relation["root_keys"]
+    }
+    if any(
+        mention["entity_id"] not in {subject_ids[0], object_ids[0]}
+        or mention["assertion_status"] != "AFFIRMED"
+        or mention["surface_mention_id"]
+        not in bound_surfaces.get(mention["entity_id"], set())
+        for mention in mention_roots.values()
+    ):
+        return False
+    for entity_id in (subject_ids[0], object_ids[0]):
+        available = [
+            item for item in mentions
+            if item["entity_id"] == entity_id
+            and item["surface_mention_id"] in bound_surfaces.get(entity_id, set())
+        ]
+        if available and not any(
+            item["mention_key"] in mention_roots and item["assertion_status"] == "AFFIRMED"
+            for item in available
+        ):
+            return False
+    allowed_roots = {event["event_key"], *mention_roots}
+    return set(relation["root_keys"]) == allowed_roots
+
+
+def _c3_general_authority_cores(
+    inputs: dict[str, Any],
+    mentions: list[dict[str, Any]],
+    events: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Enumerate event-derived candidates independently of profile matches."""
+    relation_mapping = inputs["EVENT_RELATION_MAPPING"]["event_mapping"]
+    entity_types = _c3_entity_types(inputs)
+    candidates: list[dict[str, Any]] = []
+
+    def values_for(event: dict[str, Any], tokens: list[str]) -> list[str]:
+        values = set(event["actor_entity_ids"]) | set(event["target_entity_ids"])
+        if event["method_entity_id"] is not None:
+            values.add(event["method_entity_id"])
+        selected = []
+        for value in sorted(values):
+            assertions = {
+                item["assertion_status"]
+                for item in mentions
+                if item["entity_id"] == value
+            }
+            if assertions and "AFFIRMED" not in assertions:
+                continue
+            if value == event["method_entity_id"] and "method_entity_id" in tokens:
+                selected.append(value)
+            elif entity_types.get(value) in tokens:
+                selected.append(value)
+        return selected
+
+    for event in events:
+        frame = next(
+            item for item in inputs["EVENT_FRAME"]["frames"]
+            if item["frame_id"] == event["frame_id"]
+        )
+
+        def bound_occurrence_ids(entity_id: str) -> set[str]:
+            return {
+                source_id
+                for slot in frame["participant_slots"]
+                if entity_id in slot["domain"]["entity_ids"]
+                for source_id in slot["source_ids"]
+            }
+
+        predicates = relation_mapping.get(event["event_type"], {}).get(
+            "predicates", {}
+        )
+        diagnostic_binding = inputs.get("DIAGNOSTIC_ARGUMENT_BINDING")
+        if event["event_type"] == "DIAGNOSTIC_FINDING" and diagnostic_binding:
+            frame = next(
+                item
+                for item in inputs["EVENT_FRAME"]["frames"]
+                if item["frame_id"] == event["frame_id"]
+            )
+            frame_nodes = set(frame["source_ast_node_ids"])
+            expressed = {
+                occurrence["canonical_predicate"]
+                for request_binding in diagnostic_binding["request_bindings"]
+                for context in request_binding["diagnostic_contexts"]
+                for occurrence in context["predicate_occurrences"]
+                if occurrence["proposition_node_id"] in frame_nodes
+            }
+            predicates = {
+                predicate: mapping
+                for predicate, mapping in predicates.items()
+                if predicate in expressed
+            }
+        for predicate, mapping in sorted(predicates.items()):
+            subjects = values_for(event, mapping["subject_from"])
+            objects = values_for(event, mapping["object_from"])
+            for subject, object_ in product(subjects, objects):
+                if subject == object_:
+                    continue
+                subject_mentions = [
+                    item for item in mentions
+                    if item["entity_id"] == subject
+                    and item["surface_mention_id"] in bound_occurrence_ids(subject)
+                ]
+                object_mentions = [
+                    item for item in mentions
+                    if item["entity_id"] == object_
+                    and item["surface_mention_id"] in bound_occurrence_ids(object_)
+                ]
+                for subject_mention, object_mention in product(
+                    subject_mentions or [None], object_mentions or [None]
+                ):
+                    selected_mentions = {
+                        item["mention_key"]: copy.deepcopy(item)
+                        for item in (subject_mention, object_mention)
+                        if item is not None
+                    }
+                    relation = {
+                        "relation_key": "RR001",
+                        "predicate": predicate,
+                        "subject_selector": _c3_selector([subject]),
+                        "object_selector": _c3_selector([object_]),
+                        "activation_policy": "REQUIRED",
+                        "derivation_mode": "EVENT_DERIVED",
+                        "root_keys": sorted(
+                            [event["event_key"], *selected_mentions]
+                        ),
+                    }
+                    if not _c3_event_relation_derivation_matches(
+                        relation, events, mentions, inputs
+                    ):
+                        continue
+                    forbidden = []
+                    for mention in mentions:
+                        if (
+                            mention["assertion_status"]
+                            in {"NEGATED", "EXCLUDED", "HYPOTHETICAL"}
+                            and mention["entity_type"] in mapping["object_from"]
+                        ):
+                            selected_mentions[mention["mention_key"]] = copy.deepcopy(
+                                mention
+                            )
+                            forbidden.append(
+                                {
+                                    "forbidden_key": f"RF{len(forbidden) + 1:03d}",
+                                    "predicate": predicate,
+                                    "subject_selector": _c3_selector([subject]),
+                                    "object_selector": _c3_selector(
+                                        [mention["entity_id"]]
+                                    ),
+                                    "reason": {
+                                        "NEGATED": "EXPLICIT_NEGATION",
+                                        "EXCLUDED": "EXPLICIT_EXCLUSION",
+                                        "HYPOTHETICAL": "HYPOTHETICAL_ONLY",
+                                    }[mention["assertion_status"]],
+                                    "root_keys": [mention["mention_key"]],
+                                }
+                            )
+                    core = {
+                        "solution_id": "SOL-" + "0" * 24,
+                        "resolved_mentions": copy.deepcopy(mentions),
+                        "resolved_events": copy.deepcopy(events),
+                        "resolved_relations": [relation],
+                        "semantic_roles": [],
+                        "narrative_intents": [],
+                        "forbidden_relations": forbidden,
+                        "resolved_references": [],
+                        "resolved_overrides": [],
+                        "satisfied_constraint_ids": _c3_constraint_ids(inputs),
+                        "semantic_object_set_sha256": "0" * 64,
+                    }
+                    _c3_refresh_core(core)
+                    candidates.append(core)
+    return candidates
 
 
 def _c3_profile_cores(
@@ -3676,98 +3911,7 @@ def _c3_profile_cores(
                 }
                 _c3_refresh_core(core)
                 candidates.append(core)
-    if not candidates:
-        entity_types = _c3_entity_types(inputs)
-        frame_by_id = {
-            item["frame_id"]: item for item in inputs["EVENT_FRAME"]["frames"]
-        }
-
-        def values_for(event: dict[str, Any], tokens: list[str]) -> list[str]:
-            values = set(event["actor_entity_ids"]) | set(event["target_entity_ids"])
-            if event["method_entity_id"] is not None:
-                values.add(event["method_entity_id"])
-            for slot in frame_by_id[event["frame_id"]]["participant_slots"]:
-                values.update(slot["domain"]["entity_ids"])
-            selected = []
-            for value in sorted(values):
-                value_type = entity_types.get(value)
-                assertions = {
-                    item["assertion_status"]
-                    for item in mentions
-                    if item["entity_id"] == value
-                }
-                if assertions and "AFFIRMED" not in assertions:
-                    continue
-                if value == event["method_entity_id"] and "method_entity_id" in tokens:
-                    selected.append(value)
-                elif value_type in tokens:
-                    selected.append(value)
-            return selected
-
-        for event in events:
-            predicates = relation_mapping.get(event["event_type"], {}).get(
-                "predicates", {}
-            )
-            for predicate, mapping in sorted(predicates.items()):
-                subjects = values_for(event, mapping["subject_from"])
-                objects = values_for(event, mapping["object_from"])
-                for subject, object_ in product(subjects, objects):
-                    if subject == object_:
-                        continue
-                    subject_mentions = [item for item in mentions if item["entity_id"] == subject]
-                    object_mentions = [item for item in mentions if item["entity_id"] == object_]
-                    mention_pairs = product(subject_mentions or [None], object_mentions or [None])
-                    for subject_mention, object_mention in mention_pairs:
-                        selected_mentions = {
-                            item["mention_key"]: copy.deepcopy(item)
-                            for item in (subject_mention, object_mention)
-                            if item is not None
-                        }
-                        relation = {
-                            "relation_key": "RR001",
-                            "predicate": predicate,
-                            "subject_selector": _c3_selector([subject]),
-                            "object_selector": _c3_selector([object_]),
-                            "activation_policy": "REQUIRED",
-                            "derivation_mode": "EVENT_DERIVED",
-                            "root_keys": sorted(
-                                [event["event_key"], *selected_mentions]
-                            ),
-                        }
-                        forbidden = []
-                        for mention in mentions:
-                            if (
-                                mention["assertion_status"] in {"NEGATED", "EXCLUDED", "HYPOTHETICAL"}
-                                and mention["entity_type"] in mapping["object_from"]
-                            ):
-                                selected_mentions[mention["mention_key"]] = copy.deepcopy(mention)
-                                forbidden.append({
-                                    "forbidden_key": f"RF{len(forbidden) + 1:03d}",
-                                    "predicate": predicate,
-                                    "subject_selector": _c3_selector([subject]),
-                                    "object_selector": _c3_selector([mention["entity_id"]]),
-                                    "reason": {
-                                        "NEGATED": "EXPLICIT_NEGATION",
-                                        "EXCLUDED": "EXPLICIT_EXCLUSION",
-                                        "HYPOTHETICAL": "HYPOTHETICAL_ONLY",
-                                    }[mention["assertion_status"]],
-                                    "root_keys": [mention["mention_key"]],
-                                })
-                        core = {
-                        "solution_id": "SOL-" + "0" * 24,
-                        "resolved_mentions": copy.deepcopy(mentions),
-                        "resolved_events": copy.deepcopy(events),
-                        "resolved_relations": [relation],
-                        "semantic_roles": [],
-                        "narrative_intents": [],
-                        "forbidden_relations": forbidden,
-                        "resolved_references": [],
-                        "resolved_overrides": [],
-                        "satisfied_constraint_ids": _c3_constraint_ids(inputs),
-                        "semantic_object_set_sha256": "0" * 64,
-                        }
-                        _c3_refresh_core(core)
-                        candidates.append(core)
+    candidates.extend(_c3_general_authority_cores(inputs, mentions, events))
     unique = {canonical_sha256(item): item for item in candidates}
     return [unique[key] for key in sorted(unique)]
 
@@ -4447,37 +4591,262 @@ def _c3_resolve_proof(
     return value, digest
 
 
+def _c3_trace_spans(values: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    unique = {
+        (item["start_char"], item["end_char"], item["text"]): copy.deepcopy(item)
+        for item in values
+    }
+    return [unique[key] for key in sorted(unique)]
+
+
+def _c3_trace_root_spans(
+    root_keys: Iterable[str], core: dict[str, Any], inputs: dict[str, Any]
+) -> list[dict[str, Any]]:
+    ast_mentions = {
+        item["surface_mention_id"]: item
+        for item in inputs["CLAUSE_AST"]["surface_mentions"]
+    }
+    frames = {
+        item["frame_id"]: item for item in inputs["EVENT_FRAME"]["frames"]
+    }
+    mentions = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    events = {item["event_key"]: item for item in core["resolved_events"]}
+    derived = {
+        item[key]: item
+        for collection, key in (
+            ("resolved_relations", "relation_key"),
+            ("semantic_roles", "role_key"),
+            ("narrative_intents", "narrative_key"),
+            ("forbidden_relations", "forbidden_key"),
+        )
+        for item in core[collection]
+    }
+    spans = []
+    pending = list(root_keys)
+    visited: set[str] = set()
+    while pending:
+        key = pending.pop()
+        if key in visited:
+            continue
+        visited.add(key)
+        if key in mentions:
+            spans.append(
+                ast_mentions[mentions[key]["surface_mention_id"]]["source_span"]
+            )
+        elif key in events:
+            spans.extend(frames[events[key]["frame_id"]]["source_spans"])
+        elif key in derived:
+            pending.extend(derived[key].get("root_keys", []))
+    return _c3_trace_spans(spans)
+
+
+def _c3_trace_relation_event_types(
+    relation: dict[str, Any], core: dict[str, Any], inputs: dict[str, Any]
+) -> list[str]:
+    if relation["derivation_mode"] == "EVENT_DERIVED":
+        return sorted(
+            event["event_type"]
+            for event in core["resolved_events"]
+            if event["event_key"] in relation["root_keys"]
+        )
+    profiles = inputs["PROJECTION_RULE_SET"].get(
+        "semantic_projection_profiles", []
+    )
+    subject_ids = set(relation["subject_selector"]["entity_ids"])
+    object_ids = set(relation["object_selector"]["entity_ids"])
+    mention_types = {
+        item["entity_id"]: item["entity_type"]
+        for item in core["resolved_mentions"]
+    }
+    return sorted(
+        {
+            profile["when"]["event_type"]
+            for profile in profiles
+            if profile["when"]["predicate"] == relation["predicate"]
+            and any(
+                mention_types.get(value) == profile["when"]["subject_entity_type"]
+                for value in subject_ids
+            )
+            and any(
+                mention_types.get(value) == profile["when"]["object_entity_type"]
+                for value in object_ids
+            )
+        }
+    )
+
+
+def _c3_trace_source_bindings(
+    pointer: str,
+    query_ir: dict[str, Any],
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+) -> list[dict[str, Any]]:
+    """Construct precise source claims; validation independently re-resolves them."""
+    text = inputs["NORMALIZED_REQUEST"]["normalized_query_text"]
+    whole_span = {"start_char": 0, "end_char": len(text), "text": text}
+    tokens = [
+        value.replace("~1", "/").replace("~0", "~")
+        for value in pointer.lstrip("/").split("/")
+    ]
+    ast = inputs["CLAUSE_AST"]
+    event_frame = inputs["EVENT_FRAME"]
+    ast_mentions = {
+        item["surface_mention_id"]: item for item in ast["surface_mentions"]
+    }
+    frame_by_id = {item["frame_id"]: item for item in event_frame["frames"]}
+    proposition_nodes = sorted(
+        (item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (
+            item["source_span"]["start_char"], item["source_span"]["end_char"]
+        ),
+    )
+
+    def binding(
+        kind: str, source_ids: Iterable[str], spans: Iterable[dict[str, Any]]
+    ) -> dict[str, Any]:
+        return {
+            "object_kind": kind,
+            "object_sha256": (
+                canonical_sha256(core) if kind == "TYPED_SOLUTION" else hashes[kind]
+            ),
+            "source_ids": sorted(set(source_ids)),
+            "source_spans": _c3_trace_spans(spans),
+        }
+
+    head = tokens[0]
+    index = int(tokens[1]) if len(tokens) > 1 and tokens[1].isdigit() else None
+    if head == "clauses":
+        selected = proposition_nodes if index is None else [proposition_nodes[index]]
+        return [binding(
+            "CLAUSE_AST",
+            (item["node_id"] for item in selected),
+            (item["source_span"] for item in selected),
+        )]
+    if head == "mentions":
+        selected = core["resolved_mentions"] if index is None else [core["resolved_mentions"][index]]
+        sources = [ast_mentions[item["surface_mention_id"]] for item in selected]
+        spans = [item["source_span"] for item in sources]
+        return [
+            binding("CLAUSE_AST", (item["surface_mention_id"] for item in sources), spans),
+            binding("TYPED_SOLUTION", (item["mention_key"] for item in selected), spans),
+        ]
+    if head == "events":
+        selected = core["resolved_events"] if index is None else [core["resolved_events"][index]]
+        frames = [frame_by_id[item["frame_id"]] for item in selected]
+        source_ids: set[str] = set()
+        spans: list[dict[str, Any]] = []
+        for frame in frames:
+            source_ids.add(frame["frame_id"])
+            source_ids.update(frame["source_ast_node_ids"])
+            spans.extend(frame["source_spans"])
+            for slot in frame["participant_slots"]:
+                source_ids.add(slot["slot_id"])
+                source_ids.update(slot["source_ids"])
+                spans.extend(
+                    ast_mentions[value]["source_span"] for value in slot["source_ids"]
+                )
+        return [
+            binding("EVENT_FRAME", source_ids, spans),
+            binding(
+                "TYPED_SOLUTION",
+                (value for item in selected for value in (item["event_key"], item["frame_id"])),
+                spans,
+            ),
+        ]
+    collection_by_head = {
+        "relation_intents": "resolved_relations",
+        "narrative_intents": "narrative_intents",
+        "required_roles": "semantic_roles",
+        "forbidden_relation_intents": "forbidden_relations",
+        "resolved_references": "resolved_references",
+        "resolved_overrides": "resolved_overrides",
+    }
+    if head in collection_by_head:
+        collection = collection_by_head[head]
+        selected = core[collection] if index is None else [core[collection][index]]
+        if not selected:
+            return [binding(
+                "NORMALIZED_REQUEST",
+                [inputs["NORMALIZED_REQUEST"]["request_id"]],
+                [whole_span],
+            )]
+        bindings: list[dict[str, Any]] = []
+        for item in selected:
+            key = next(
+                item[name]
+                for name in (
+                    "relation_key", "narrative_key", "role_key", "forbidden_key",
+                    "reference_key", "override_key",
+                )
+                if name in item
+            )
+            roots = item.get("root_keys", [])
+            spans = _c3_trace_root_spans(roots, core, inputs)
+            if not spans and "hypothesis_id" in item:
+                hypotheses = (
+                    event_frame["reference_hypotheses"]
+                    if collection == "resolved_references"
+                    else event_frame["override_hypotheses"]
+                )
+                hypothesis = next(
+                    value for value in hypotheses
+                    if value[next(name for name in value if name.endswith("_hypothesis_id"))]
+                    == item["hypothesis_id"]
+                )
+                source_ids = [item["hypothesis_id"]]
+                source_ids.extend(
+                    value for name, value in hypothesis.items()
+                    if name.endswith("_source_id") and isinstance(value, str)
+                )
+                ast_nodes = {value["node_id"]: value for value in ast["nodes"]}
+                spans = [
+                    ast_mentions[value]["source_span"]
+                    if value in ast_mentions else ast_nodes[value]["source_span"]
+                    for value in source_ids if value in ast_mentions or value in ast_nodes
+                ] or [whole_span]
+                bindings.append(binding("EVENT_FRAME", source_ids, spans))
+            typed_ids = [key, *roots]
+            if "hypothesis_id" in item:
+                typed_ids.append(item["hypothesis_id"])
+            bindings.append(binding("TYPED_SOLUTION", typed_ids, spans or [whole_span]))
+            if collection in {"resolved_relations", "forbidden_relations"}:
+                event_types = (
+                    _c3_trace_relation_event_types(item, core, inputs)
+                    if collection == "resolved_relations" else []
+                )
+                bindings.append(binding(
+                    "EVENT_RELATION_MAPPING",
+                    [item["predicate"], *event_types],
+                    spans or [whole_span],
+                ))
+            elif collection in {"semantic_roles", "narrative_intents"}:
+                authority_ids = [
+                    item[name]
+                    for name in (
+                        "role_namespace", "role_value", "topic_scope", "semantic_role"
+                    ) if name in item
+                ]
+                bindings.append(binding(
+                    "SEMANTIC_ROLE_MAPPING", authority_ids, spans or [whole_span]
+                ))
+        unique = {canonical_sha256(item): item for item in bindings}
+        return [unique[key] for key in sorted(unique)]
+    return [binding(
+        "NORMALIZED_REQUEST",
+        [inputs["NORMALIZED_REQUEST"]["request_id"]],
+        [whole_span],
+    )]
+
+
 def _c3_field_traces(
     query_ir: dict[str, Any],
     core: dict[str, Any],
     inputs: dict[str, Any],
     hashes: dict[str, str],
 ) -> list[dict[str, Any]]:
-    whole_span = {
-        "start_char": 0,
-        "end_char": len(inputs["NORMALIZED_REQUEST"]["normalized_query_text"]),
-        "text": inputs["NORMALIZED_REQUEST"]["normalized_query_text"],
-    }
-    core_sha = canonical_sha256(core)
     traces = []
     for index, pointer in enumerate(_c3_json_pointers(query_ir), 1):
-        if pointer == "/clauses" or pointer.startswith("/clauses/"):
-            kinds = ("CLAUSE_AST",)
-        elif pointer == "/mentions" or pointer.startswith("/mentions/"):
-            kinds = ("CLAUSE_AST", "TYPED_SOLUTION")
-        elif pointer == "/events" or pointer.startswith("/events/"):
-            kinds = ("EVENT_FRAME", "TYPED_SOLUTION")
-        elif any(
-            pointer == prefix or pointer.startswith(prefix + "/")
-            for prefix in (
-                "/relation_intents", "/narrative_intents", "/required_roles",
-                "/forbidden_relation_intents", "/resolved_references",
-                "/resolved_overrides",
-            )
-        ):
-            kinds = ("TYPED_SOLUTION", "EVENT_RELATION_MAPPING")
-        else:
-            kinds = ("NORMALIZED_REQUEST",)
         traces.append(
             {
                 "trace_id": f"TR{index:04d}",
@@ -4485,17 +4854,9 @@ def _c3_field_traces(
                 "emitted_value_sha256": canonical_sha256(
                     _c3_pointer_get(query_ir, pointer)
                 ),
-                "source_bindings": [
-                    {
-                        "object_kind": kind,
-                        "object_sha256": (
-                            core_sha if kind == "TYPED_SOLUTION" else hashes[kind]
-                        ),
-                        "source_ids": [],
-                        "source_spans": [whole_span],
-                    }
-                    for kind in kinds
-                ],
+                "source_bindings": _c3_trace_source_bindings(
+                    pointer, query_ir, core, inputs, hashes
+                ),
                 "constraint_ids": [
                     "CNS-EMIT-LEAF_TRACE_COVERAGE",
                     "CNS-EMIT-TRACE_VALUE_HASH",
@@ -4504,6 +4865,218 @@ def _c3_field_traces(
             }
         )
     return traces
+
+
+def _c3_source_identifier_catalog(value: Any) -> set[str]:
+    """Resolve stable IDs and frozen mapping keys from an actual bound object."""
+    result: set[str] = set()
+    if isinstance(value, dict):
+        result.update(str(key) for key in value)
+        for child in value.values():
+            result.update(_c3_source_identifier_catalog(child))
+    elif isinstance(value, list):
+        for child in value:
+            result.update(_c3_source_identifier_catalog(child))
+    elif isinstance(value, str):
+        result.add(value)
+    return result
+
+
+def _c3_validate_trace_provenance(
+    traces: list[dict[str, Any]],
+    query_ir: dict[str, Any],
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+) -> None:
+    """Validate source claims from actual predecessors, not candidate trace flags."""
+    normalized = inputs["NORMALIZED_REQUEST"]
+    text = normalized["normalized_query_text"]
+    actual_objects = {
+        "NORMALIZED_REQUEST": normalized,
+        "CLAUSE_AST": inputs["CLAUSE_AST"],
+        "EVENT_FRAME": inputs["EVENT_FRAME"],
+        "TYPED_SOLUTION": core,
+        "CONSTRAINT_SET": inputs["CONSTRAINT_SET"],
+        "ENTITY_ONTOLOGY": inputs["ENTITY_ONTOLOGY"],
+        "RELATION_ONTOLOGY": inputs["RELATION_ONTOLOGY"],
+        "EVENT_RELATION_MAPPING": inputs["EVENT_RELATION_MAPPING"],
+        "SEMANTIC_ROLE_MAPPING": inputs["SEMANTIC_ROLE_MAPPING"],
+    }
+    actual_hashes = {
+        kind: canonical_sha256(value) if kind in {
+            "NORMALIZED_REQUEST", "CLAUSE_AST", "EVENT_FRAME", "TYPED_SOLUTION"
+        } else hashes[kind]
+        for kind, value in actual_objects.items()
+    }
+    ast = inputs["CLAUSE_AST"]
+    event_frame = inputs["EVENT_FRAME"]
+    ast_mentions = {
+        item["surface_mention_id"]: item for item in ast["surface_mentions"]
+    }
+    frame_by_id = {item["frame_id"]: item for item in event_frame["frames"]}
+    proposition_nodes = sorted(
+        (item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (
+            item["source_span"]["start_char"], item["source_span"]["end_char"]
+        ),
+    )
+
+    def span_keys(values: Iterable[dict[str, Any]]) -> tuple[tuple[Any, ...], ...]:
+        return tuple(sorted({
+            (value["start_char"], value["end_char"], value["text"])
+            for value in values
+        }))
+
+    def claim(
+        kind: str, ids: Iterable[str], spans: Iterable[dict[str, Any]]
+    ) -> tuple[str, tuple[str, ...], tuple[tuple[Any, ...], ...]]:
+        return kind, tuple(sorted(set(ids))), span_keys(spans)
+
+    whole_span = {"start_char": 0, "end_char": len(text), "text": text}
+
+    def expected_claims(pointer: str) -> list[tuple[str, tuple[str, ...], tuple[tuple[Any, ...], ...]]]:
+        tokens = [
+            value.replace("~1", "/").replace("~0", "~")
+            for value in pointer.lstrip("/").split("/")
+        ]
+        head = tokens[0]
+        index = int(tokens[1]) if len(tokens) > 1 and tokens[1].isdigit() else None
+        if head == "clauses":
+            selected = proposition_nodes if index is None else [proposition_nodes[index]]
+            return [claim(
+                "CLAUSE_AST",
+                (item["node_id"] for item in selected),
+                (item["source_span"] for item in selected),
+            )]
+        if head == "mentions":
+            selected = core["resolved_mentions"] if index is None else [core["resolved_mentions"][index]]
+            sources = [ast_mentions[item["surface_mention_id"]] for item in selected]
+            spans = [item["source_span"] for item in sources]
+            return [
+                claim("CLAUSE_AST", (item["surface_mention_id"] for item in sources), spans),
+                claim("TYPED_SOLUTION", (item["mention_key"] for item in selected), spans),
+            ]
+        if head == "events":
+            selected = core["resolved_events"] if index is None else [core["resolved_events"][index]]
+            frames = [frame_by_id[item["frame_id"]] for item in selected]
+            ids: set[str] = set()
+            spans: list[dict[str, Any]] = []
+            for frame in frames:
+                ids.update([frame["frame_id"], *frame["source_ast_node_ids"]])
+                spans.extend(frame["source_spans"])
+                for slot in frame["participant_slots"]:
+                    ids.update([slot["slot_id"], *slot["source_ids"]])
+                    spans.extend(
+                        ast_mentions[value]["source_span"] for value in slot["source_ids"]
+                    )
+            return [
+                claim("EVENT_FRAME", ids, spans),
+                claim(
+                    "TYPED_SOLUTION",
+                    (value for item in selected for value in (item["event_key"], item["frame_id"])),
+                    spans,
+                ),
+            ]
+        collection_by_head = {
+            "relation_intents": "resolved_relations",
+            "narrative_intents": "narrative_intents",
+            "required_roles": "semantic_roles",
+            "forbidden_relation_intents": "forbidden_relations",
+            "resolved_references": "resolved_references",
+            "resolved_overrides": "resolved_overrides",
+        }
+        if head not in collection_by_head:
+            return [claim("NORMALIZED_REQUEST", [normalized["request_id"]], [whole_span])]
+        collection = collection_by_head[head]
+        selected = core[collection] if index is None else [core[collection][index]]
+        if not selected:
+            return [claim("NORMALIZED_REQUEST", [normalized["request_id"]], [whole_span])]
+        result = []
+        for item in selected:
+            key = next(
+                item[name]
+                for name in (
+                    "relation_key", "narrative_key", "role_key", "forbidden_key",
+                    "reference_key", "override_key",
+                ) if name in item
+            )
+            roots = item.get("root_keys", [])
+            spans = _c3_trace_root_spans(roots, core, inputs)
+            if not spans and "hypothesis_id" in item:
+                hypotheses = (
+                    event_frame["reference_hypotheses"]
+                    if collection == "resolved_references"
+                    else event_frame["override_hypotheses"]
+                )
+                hypothesis = next(
+                    value for value in hypotheses
+                    if item["hypothesis_id"] in value.values()
+                )
+                ef_ids = [item["hypothesis_id"]]
+                ef_ids.extend(
+                    value for name, value in hypothesis.items()
+                    if name.endswith("_source_id") and isinstance(value, str)
+                )
+                node_by_id = {value["node_id"]: value for value in ast["nodes"]}
+                spans = [
+                    ast_mentions[value]["source_span"]
+                    if value in ast_mentions else node_by_id[value]["source_span"]
+                    for value in ef_ids if value in ast_mentions or value in node_by_id
+                ] or [whole_span]
+                result.append(claim("EVENT_FRAME", ef_ids, spans))
+            typed_ids = [key, *roots]
+            if "hypothesis_id" in item:
+                typed_ids.append(item["hypothesis_id"])
+            result.append(claim("TYPED_SOLUTION", typed_ids, spans or [whole_span]))
+            if collection in {"resolved_relations", "forbidden_relations"}:
+                event_types = (
+                    _c3_trace_relation_event_types(item, core, inputs)
+                    if collection == "resolved_relations" else []
+                )
+                result.append(claim(
+                    "EVENT_RELATION_MAPPING",
+                    [item["predicate"], *event_types],
+                    spans or [whole_span],
+                ))
+            elif collection in {"semantic_roles", "narrative_intents"}:
+                result.append(claim(
+                    "SEMANTIC_ROLE_MAPPING",
+                    [
+                        item[name]
+                        for name in (
+                            "role_namespace", "role_value", "topic_scope", "semantic_role"
+                        ) if name in item
+                    ],
+                    spans or [whole_span],
+                ))
+        return sorted(result)
+
+    for trace in traces:
+        pointer = trace["query_ir_json_pointer"]
+        try:
+            actual_value = _c3_pointer_get(query_ir, pointer)
+        except (KeyError, IndexError, TypeError, ValueError):
+            _c3_fail("field trace target pointer does not resolve")
+        if trace["emitted_value_sha256"] != canonical_sha256(actual_value):
+            _c3_fail("field trace emitted value hash differs from actual QueryIR value")
+        actual_claims = []
+        for binding in trace["source_bindings"]:
+            kind = binding["object_kind"]
+            if kind not in actual_objects or binding["object_sha256"] != actual_hashes[kind]:
+                _c3_fail("field trace source object hash or kind mismatch")
+            catalog = _c3_source_identifier_catalog(actual_objects[kind])
+            if any(source_id not in catalog for source_id in binding["source_ids"]):
+                _c3_fail("field trace source ID does not resolve in actual source object")
+            for span in binding["source_spans"]:
+                start, end = span["start_char"], span["end_char"]
+                if not (0 <= start < end <= len(text)) or text[start:end] != span["text"]:
+                    _c3_fail("field trace source span differs from normalized request slice")
+            actual_claims.append(claim(
+                kind, binding["source_ids"], binding["source_spans"]
+            ))
+        if sorted(actual_claims) != expected_claims(pointer):
+            _c3_fail("field trace occurrence provenance differs from actual predecessor sources")
 
 
 def _c3_license_dag(
@@ -4906,7 +5479,9 @@ def solve_typed_constraints(
     domains.  Only solutions matching the closed projection authority survive;
     no ordering, distance, confidence, or score is consulted.
     """
-    inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    inputs = _c3_authority_inputs(
+        normalized, ast, event_frame, root, diagnostic_argument_binding
+    )
     hashes = _c3_hash_bindings(inputs, root)
     try:
         validate_c2_event_frame(
@@ -5121,8 +5696,7 @@ def _c3_validate_proofs(
         for item in traces
     ):
         _c3_fail("field trace value hash mismatch")
-    if traces != _c3_field_traces(query_ir, core, inputs, hashes):
-        _c3_fail("field trace source authority mismatch")
+    _c3_validate_trace_provenance(traces, query_ir, core, inputs, hashes)
     dag = emission["license_dag"]
     dag_body = copy.deepcopy(dag)
     dag_body.pop("dag_sha256")
@@ -5257,7 +5831,9 @@ def validate_c3_result(
     diagnostic_argument_binding: dict[str, Any] | None = None,
 ) -> None:
     """Independently recompute S3 cardinality, projection, and proof bindings."""
-    inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    inputs = _c3_authority_inputs(
+        normalized, ast, event_frame, root, diagnostic_argument_binding
+    )
     try:
         _validate_bound_schema(result, TYPED_CONSTRAINT_RESULT_SCHEMA_PATH, root)
     except SchemaValidationError as exc:
@@ -5310,6 +5886,13 @@ def validate_c3_result(
             _c3_fail("UNIQUE selected_solution missing")
         core = copy.deepcopy(selected)
         core.pop("queryir_emission_record", None)
+        if any(
+            not _c3_event_relation_derivation_matches(
+                relation, core["resolved_events"], core["resolved_mentions"], inputs
+            )
+            for relation in core["resolved_relations"]
+        ):
+            _c3_fail("event relation derivation differs from frozen event authority")
         expected_core = space["cores"][fingerprints[0]]
         if core != expected_core:
             _c3_fail("selected solution differs from recomputed authority solution")
@@ -5353,7 +5936,9 @@ def validate_c3_solution_core(
     diagnostic_argument_binding: dict[str, Any] | None = None,
 ) -> None:
     """Validate a candidate core against recomputed upstream solution domains."""
-    inputs = _c3_authority_inputs(normalized, ast, event_frame, root)
+    inputs = _c3_authority_inputs(
+        normalized, ast, event_frame, root, diagnostic_argument_binding
+    )
     try:
         _validate_bound_schema(core, TYPED_SOLUTION_CORE_SCHEMA_PATH, root)
     except SchemaValidationError as exc:
@@ -5371,6 +5956,13 @@ def validate_c3_solution_core(
         _c3_fail("candidate core semantic object hash mismatch")
     if core.get("solution_id") != f"SOL-{core['semantic_object_set_sha256'][:24]}":
         _c3_fail("candidate core solution identity mismatch")
+    if any(
+        not _c3_event_relation_derivation_matches(
+            relation, core["resolved_events"], core["resolved_mentions"], inputs
+        )
+        for relation in core["resolved_relations"]
+    ):
+        _c3_fail("event relation derivation differs from frozen event authority")
     expected: set[bytes] = set()
     mention_domains = [
         tuple(item["candidate_entity_ids"]) for item in ast["surface_mentions"]

@@ -53,6 +53,12 @@ from scripts.p9b1q_scoped_query_ir import (
     validate_query_ir,
     validate_schema,
 )
+from scripts.p9b1q_scoped_query_ir import (
+    _c3_authority_inputs,
+    _c3_event_relation_derivation_matches,
+    _c3_pointer_get,
+    _c3_recomputed_solution_space,
+)
 
 
 def request(case: str, text: str) -> dict[str, str]:
@@ -2123,7 +2129,17 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
         )
         self.assertEqual(["U004"], method["source_ids"])
         self.assertNotIn("U003", method["source_ids"])
-        self.assertEqual("UNSUPPORTED", result["typed_constraint_result"]["status"])
+        self.assertEqual("UNIQUE", result["typed_constraint_result"]["status"])
+        core = result["typed_constraint_result"]["selected_solution"]
+        relation = core["resolved_relations"][0]
+        self.assertEqual("diagnosed_by", relation["predicate"])
+        rooted_mentions = {
+            item["surface_mention_id"]
+            for item in core["resolved_mentions"]
+            if item["mention_key"] in relation["root_keys"]
+        }
+        self.assertIn("U004", rooted_mentions)
+        self.assertNotIn("U003", rooted_mentions)
 
     def test_candidate_output_cannot_self_authorize_core_changes(self):
         changed = self.core()
@@ -2659,15 +2675,254 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
         self.assertEqual(48, len(receipt))
         self.assertEqual(48, len({item["constraint_id"] for item in receipt}))
         self.assertEqual(
-            {
-                "CNS-SOLVER-EVENT_IDENTITY",
-                "CNS-SOLVER-LICENSE_DAG",
-                "CNS-SOLVER-MINIMALITY",
-                "CNS-EMIT-QUERYIR_SCHEMA",
-            },
+            {"CNS-SOLVER-EVENT_RELATION_DERIVATION"},
             set(C3_PRE_CORRECTION_UNCOVERED_CONSTRAINT_IDS),
         )
         self.assertTrue(all(item["enforcement_or_discharge_site"] for item in receipt))
+
+    def test_trace_sources_resolve_to_exact_occurrences_and_spans(self):
+        emission = self.typed["selected_solution"]["queryir_emission_record"]
+        traces = emission["field_traces"]
+        query_ir = emission["query_ir"]
+        pointers = [item["query_ir_json_pointer"] for item in traces]
+        self.assertEqual(len(pointers), len(set(pointers)))
+        text = self.compiled["normalized_request"]["normalized_query_text"]
+        material_heads = {
+            "mentions", "events", "relation_intents", "narrative_intents",
+            "required_roles", "forbidden_relation_intents",
+            "resolved_references", "resolved_overrides",
+        }
+        broad_material_bindings = 0
+        for trace in traces:
+            self.assertEqual(
+                canonical_sha256(_c3_pointer_get(
+                    query_ir, trace["query_ir_json_pointer"]
+                )),
+                trace["emitted_value_sha256"],
+            )
+            for binding in trace["source_bindings"]:
+                self.assertTrue(binding["source_ids"])
+                for span in binding["source_spans"]:
+                    self.assertEqual(
+                        span["text"], text[span["start_char"]:span["end_char"]]
+                    )
+                    if (
+                        trace["query_ir_json_pointer"].split("/")[1]
+                        in material_heads
+                        and _c3_pointer_get(
+                            query_ir, trace["query_ir_json_pointer"]
+                        ) not in ([], {})
+                        and span["start_char"] == 0
+                        and span["end_char"] == len(text)
+                    ):
+                        broad_material_bindings += 1
+        self.assertEqual(0, broad_material_bindings)
+
+        ast_mentions = {
+            item["surface_mention_id"]: item
+            for item in self.compiled["clause_ast"]["surface_mentions"]
+        }
+        selected = self.core()["resolved_mentions"][0]
+        source = ast_mentions[selected["surface_mention_id"]]
+        trace = next(
+            item for item in traces
+            if item["query_ir_json_pointer"] == "/mentions/0/entity_id"
+        )
+        ast_binding = next(
+            item for item in trace["source_bindings"]
+            if item["object_kind"] == "CLAUSE_AST"
+        )
+        self.assertEqual([source["surface_mention_id"]], ast_binding["source_ids"])
+        self.assertEqual([source["source_span"]], ast_binding["source_spans"])
+
+    def test_trace_source_binding_tampers_and_wrong_occurrence_fail_closed(self):
+        text = "华支睾吸虫病的确诊方法是粪便检查粪便检查。"
+        actual = request("C3-TRACE-OCCURRENCE", text)
+        normalized = normalize_request(actual)
+        ast = compile_clause_ast(normalized)
+        binding = diagnostic_argument_binding(
+            normalized,
+            ast,
+            [("diagnosed_by", "华支睾吸虫病", ("粪便检查", 1))],
+        )
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c3-trace-tamper-") as directory:
+            proof_root = Path(directory)
+            compiled = compile_c3(
+                actual,
+                diagnostic_argument_binding=binding,
+                proof_root=proof_root,
+            )
+            typed = compiled["typed_constraint_result"]
+            core = typed["selected_solution"]
+            method_index = next(
+                index for index, item in enumerate(core["resolved_mentions"])
+                if item["surface_mention_id"] == "U004"
+            )
+            pointer = f"/mentions/{method_index}/entity_id"
+            first_method = next(
+                item for item in ast["surface_mentions"]
+                if item["surface_mention_id"] == "U003"
+            )
+
+            def changed_result(mutator):
+                changed = copy.deepcopy(typed)
+                trace = next(
+                    item for item in changed["selected_solution"]
+                    ["queryir_emission_record"]["field_traces"]
+                    if item["query_ir_json_pointer"] == pointer
+                )
+                source = next(
+                    item for item in trace["source_bindings"]
+                    if item["object_kind"] == "CLAUSE_AST"
+                )
+                mutator(trace, source)
+                with self.assertRaises(C3ValidationError):
+                    validate_c3_result(
+                        changed,
+                        compiled["normalized_request"],
+                        compiled["clause_ast"],
+                        compiled["event_frame"],
+                        proof_root=proof_root,
+                        diagnostic_argument_binding=binding,
+                    )
+
+            changed_result(lambda trace, source: source.__setitem__(
+                "object_sha256", "0" * 64
+            ))
+            changed_result(lambda trace, source: source.update({
+                "object_kind": "EVENT_FRAME",
+                "object_sha256": canonical_sha256(compiled["event_frame"]),
+                "source_ids": ["EF001"],
+            }))
+            changed_result(lambda trace, source: source.__setitem__(
+                "source_ids", ["U999"]
+            ))
+            changed_result(lambda trace, source: source.update({
+                "source_ids": ["U003"],
+                "source_spans": [first_method["source_span"]],
+            }))
+            changed_result(lambda trace, source: source.__setitem__(
+                "source_spans", [first_method["source_span"]]
+            ))
+            changed_result(lambda trace, source: trace.__setitem__(
+                "emitted_value_sha256", "0" * 64
+            ))
+
+    def test_profile_and_general_domains_coexist_before_constraints(self):
+        text = (
+            "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+            "吡喹酮治疗华支睾吸虫病。"
+        )
+        c2 = compile_c2(request("C3-MIXED-DOMAIN", text))
+        inputs = _c3_authority_inputs(
+            c2["normalized_request"], c2["clause_ast"], c2["event_frame"], ROOT
+        )
+        space = _c3_recomputed_solution_space(inputs)
+        predicates = {
+            relation["predicate"]
+            for core in space["cores"].values()
+            for relation in core["resolved_relations"]
+        }
+        self.assertIn("has_diagnostic_clue", predicates)
+        self.assertIn("treated_by", predicates)
+        self.assertEqual(
+            {"EXPOSURE", "TREATMENT"},
+            {
+                event["event_type"]
+                for core in space["cores"].values()
+                for event in core["resolved_events"]
+            },
+        )
+
+    def test_profile_general_candidate_interleaving_is_order_invariant(self):
+        import scripts.p9b1q_scoped_query_ir as scoped
+
+        text = (
+            "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+            "吡喹酮治疗华支睾吸虫病。"
+        )
+        c2 = compile_c2(request("C3-CANDIDATE-ORDER", text))
+        baseline = solve_typed_constraints(
+            c2["normalized_request"], c2["clause_ast"], c2["event_frame"]
+        )
+        original = scoped._c3_profile_cores
+
+        def reversed_candidates(*args, **kwargs):
+            return list(reversed(original(*args, **kwargs)))
+
+        with mock.patch.object(
+            scoped, "_c3_profile_cores", side_effect=reversed_candidates
+        ):
+            permuted = solve_typed_constraints(
+                c2["normalized_request"], c2["clause_ast"], c2["event_frame"]
+            )
+        self.assertEqual(canonical_bytes(baseline), canonical_bytes(permuted))
+
+    def test_diagnosed_by_unspecified_polarity_is_a_legal_unique_solution(self):
+        text = "华支睾吸虫病的确诊方法是粪便检查。"
+        actual = request("C3-DIAGNOSED-BY-UNSPECIFIED", text)
+        normalized = normalize_request(actual)
+        ast = compile_clause_ast(normalized)
+        binding = diagnostic_argument_binding(
+            normalized, ast, [("diagnosed_by", "华支睾吸虫病", "粪便检查")]
+        )
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c3-diagnostic-") as directory:
+            compiled = compile_c3(
+                actual,
+                diagnostic_argument_binding=binding,
+                proof_root=Path(directory),
+            )
+        typed = compiled["typed_constraint_result"]
+        self.assertEqual("UNIQUE", typed["status"])
+        selected = typed["selected_solution"]
+        self.assertEqual("UNSPECIFIED", selected["resolved_events"][0]["finding_polarity"])
+        self.assertEqual("diagnosed_by", selected["resolved_relations"][0]["predicate"])
+
+    def test_event_relation_derivation_constraint_executes_on_mutation(self):
+        text = "吡喹酮治疗华支睾吸虫病。"
+        compiled = compile_c3(request("C3-EVENT-RELATION-CNS", text))
+        typed = compiled["typed_constraint_result"]
+        self.assertEqual("UNIQUE", typed["status"])
+        core = copy.deepcopy(typed["selected_solution"])
+        core.pop("queryir_emission_record")
+        inputs = _c3_authority_inputs(
+            compiled["normalized_request"],
+            compiled["clause_ast"],
+            compiled["event_frame"],
+            ROOT,
+        )
+        relation = core["resolved_relations"][0]
+        self.assertTrue(_c3_event_relation_derivation_matches(
+            relation, core["resolved_events"], core["resolved_mentions"], inputs
+        ))
+        for mutation in ("predicate", "direction", "root"):
+            changed = copy.deepcopy(core)
+            candidate = changed["resolved_relations"][0]
+            if mutation == "predicate":
+                candidate["predicate"] = "controlled_by"
+            elif mutation == "direction":
+                candidate["subject_selector"], candidate["object_selector"] = (
+                    candidate["object_selector"], candidate["subject_selector"]
+                )
+            else:
+                candidate["root_keys"] = [
+                    value for value in candidate["root_keys"]
+                    if not value.startswith("RE")
+                ]
+            self.refresh_core(changed)
+            self.assertFalse(_c3_event_relation_derivation_matches(
+                candidate,
+                changed["resolved_events"],
+                changed["resolved_mentions"],
+                inputs,
+            ))
+            with self.assertRaises(C3ValidationError):
+                validate_c3_solution_core(
+                    changed,
+                    compiled["normalized_request"],
+                    compiled["clause_ast"],
+                    compiled["event_frame"],
+                )
 
     def test_s3_stop_boundary_rejects_later_stage_objects(self):
         validate_c3_stop_boundary(self.compiled)
