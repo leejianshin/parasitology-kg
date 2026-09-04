@@ -1,0 +1,321 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C3-DIAGNOSTIC-POLARITY-HIGH-008-AUTHORITY-CORRECTION-AUTH-001"
+authorization_kind: "C3_HIGH_008_AUTHORITY_CORRECTION_AUTHORIZATION"
+authorization_status: "ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION_AND_SEPARATE_EXPLICIT_CONTROL_BUILD_START"
+
+repository: "leejianshin/parasitology-kg"
+remote_branch: "agent/p9-b2"
+authorization_base: "310c0a5ffb14effe6d560e5c47dccb03d60ff6fc"
+current_public_tip_at_creation: "310c0a5ffb14effe6d560e5c47dccb03d60ff6fc"
+
+finding:
+  finding_id: "P9B2-C3-DIAGNOSTIC-POLARITY-REPRESENTABILITY-HIGH-008"
+  severity: "HIGH"
+  status: "OPEN_BLOCKING"
+  failed_invariant: "A_VALID_BOUND_S2_DIAGNOSTIC_POLARITY_MUST_BE_LOSSLESSLY_REPRESENTABLE_IN_S3_AND_EMBEDDED_QUERYIR"
+  root_cause: >-
+    A valid S2 DIAGNOSTIC_FINDING may carry finding_polarity=UNSPECIFIED,
+    and the frozen diagnostic QueryIR representation permits UNSPECIFIED, but
+    the frozen S3 resolved_event schema excludes UNSPECIFIED. The frozen S3
+    reference semantic execution also derives POSITIVE for an unnegated
+    diagnostic event where the valid bound S2 Event Frame polarity is
+    UNSPECIFIED.
+
+authorization_atom:
+  purpose: "AUTHORIZE_FUTURE_MINIMAL_CROSS_STAGE_HIGH_008_AUTHORITY_CORRECTION_ONLY"
+  this_turn_allowed_changed_path_count: 1
+  this_turn_allowed_changed_paths:
+    - "phase9/clonorchis-sinensis/p9b1q/p9b2-c3-diagnostic-polarity-high-008-authority-correction-authorization.yml"
+  authorization_file_only_commit: true
+  semantic_authority_mutation_this_turn: false
+  mechanical_refresh_this_turn: false
+  c3_implementation_repair_this_turn: false
+  c4_or_c5_work_this_turn: false
+  r11_secret_body_access_this_turn: false
+  r11_execution_this_turn: false
+
+frozen_cross_stage_facts:
+  s2_diagnostic_finding_unspecified_allowed: true
+  s3_resolved_event_unspecified_allowed_at_base: false
+  typed_solution_core_inherits_s3_resolved_event: true
+  queryir_diagnostic_unspecified_allowed: true
+  queryir_diagnostic_not_applicable_allowed: false
+  validator_requires_exact_event_frame_polarity_preservation: true
+  assertion_status_and_finding_polarity_are_distinct: true
+
+valid_formally_bound_reproducer:
+  request_text: "华支睾吸虫病的确诊方法是粪便检查。"
+  event_type: "DIAGNOSTIC_FINDING"
+  predicate: "diagnosed_by"
+  actor:
+    entity_id: "disease.clonorchiasis"
+    surface_mention_id: "U002"
+  method:
+    entity_id: "diagnostic.stool_egg_microscopy"
+    surface_mention_id: "U003"
+  finding_polarity: "UNSPECIFIED"
+
+substitution_prohibitions:
+  unspecified_to_not_applicable: "NOT_AUTHORIZED"
+  unspecified_to_positive: "NOT_AUTHORIZED"
+  unspecified_to_negative: "NOT_AUTHORIZED"
+  required_semantics: "PRESERVE_VALID_BOUND_S2_POLARITY_LOSSLESSLY"
+
+minimal_schema_correction:
+  option: "B"
+  target_path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-result-schema-candidate.yml"
+  target_pointer: "/$defs/resolved_event/properties/finding_polarity"
+  diagnostic_event_rule:
+    condition: "event_type == DIAGNOSTIC_FINDING"
+    permitted_values_exactly:
+      - "POSITIVE"
+      - "NEGATIVE"
+      - "UNSPECIFIED"
+    prohibited_value: "NOT_APPLICABLE"
+  non_diagnostic_event_rule:
+    condition: "event_type != DIAGNOSTIC_FINDING"
+    permitted_value_exactly: "NOT_APPLICABLE"
+    prohibited_values:
+      - "POSITIVE"
+      - "NEGATIVE"
+      - "UNSPECIFIED"
+  global_unconditional_enum_expansion: "PROHIBITED"
+  diagnostic_not_applicable_formally_reachable: false
+
+direct_semantic_authority_changes:
+  exact_path_count: 3
+  exact_paths:
+    - path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-result-schema-candidate.yml"
+      classification: "DIRECT_SEMANTIC_AUTHORITY_CHANGE"
+      purpose: "IMPLEMENT_EVENT_TYPE_CONDITIONAL_FINDING_POLARITY_OPTION_B"
+    - path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+      classification: "DIRECT_SEMANTIC_AUTHORITY_CHANGE"
+      purpose: "REQUIRE_EXACT_VALID_S2_EVENT_FRAME_POLARITY_PRESERVATION_WITHOUT_UNNEGATED_TO_POSITIVE_DEFAULT"
+    - path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+      classification: "DIRECT_SEMANTIC_AUTHORITY_CHANGE"
+      purpose: "EXECUTE_OPTION_B_AND_VALIDATE_LOSSLESS_PREDECESSOR_POLARITY_PRESERVATION"
+  fourth_direct_semantic_authority_path: "PROHIBITED"
+
+direct_semantic_current_hash_evidence:
+  evidence_only_not_standing_authority: true
+  derivation_for_future_correction: "ACTUAL_BASE_BYTES_AND_INDEPENDENTLY_RECOMPUTED_POST_CORRECTION_RAW_SHA256"
+  objects:
+    - path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-result-schema-candidate.yml"
+      raw_sha256_at_authorization_base: "7d4234a45019fe4626e1782791d765c4ea1829d00c716205534dcc74a5e75b7b"
+    - path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml"
+      raw_sha256_at_authorization_base: "5e2e262145ed1933f11dd4d5b60d150c706aab94272af32183a893295d7f78a1"
+    - path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py"
+      raw_sha256_at_authorization_base: "87a6a0dd82b6d5a30650e9051a19b43192febc3bad6f7e5d069544f3d9beeecc"
+
+semantic_change_prohibitions:
+  exact_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/event-frame-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-solution-core-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/negation_semantic_authority.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/object-canonicalization-and-hash-chain.yml"
+  every_other_unlisted_authority_path: "PROHIBITED"
+  event_frame_schema_change_authorized: false
+  queryir_schema_change_authorized: false
+  typed_solution_core_schema_byte_change_authorized: false
+  typed_solution_core_reason: >-
+    It already references typed-constraint-result-schema-candidate.yml#/$defs/resolved_event
+    and consumes the corrected resolved_event semantics through that existing
+    reference.
+  negation_authority_change_authorized: false
+
+validator_contract_change_boundary:
+  permitted_change: "MAKE_S3_DIAGNOSTIC_POLARITY_RULE_TRUTHFUL_AND_EXECUTABLE"
+  preserve_exact_event_frame_parity: true
+  unnegated_diagnostic_without_explicit_polarity_evidence: "MUST_NOT_DEFAULT_TO_POSITIVE"
+  stage_ownership_change: "PROHIBITED"
+  constraint_order_change: "PROHIBITED"
+  registered_constraint_id_change: "PROHIBITED"
+  hash_validation_weakening: "PROHIBITED"
+  s4_ownership_change: "PROHIBITED"
+  s5_semantics_change: "PROHIBITED"
+
+reference_validator_change_boundary:
+  permitted_change: "EXECUTE_CORRECTED_S3_POLARITY_SEMANTICS_AND_ASSOCIATED_SCHEMA_VALIDATION"
+  required_equality: "resolved_event.finding_polarity == bound_event_frame.assertion.finding_polarity"
+  unspecified_without_explicit_positive_or_negative_evidence: "PRESERVE_UNSPECIFIED"
+  high_006_trace_repair: "PROHIBITED"
+  high_007_domain_repair: "PROHIBITED"
+  minimality_or_license_change: "PROHIBITED"
+  c3_production_wiring_change: "PROHIBITED"
+  c4_or_c5_semantics_change: "PROHIBITED"
+
+constraint_governance:
+  domain: "1..48"
+  constraint_49: "ABSENT"
+  new_constraint_authorized: false
+  registry_mutation: "PROHIBITED"
+  constraint_set_mutation: "PROHIBITED"
+
+conditional_mechanical_refresh:
+  principle: "ONLY_EXACT_BINDINGS_ACTUALLY_CONTENT_ADDRESSED_TO_CHANGED_AUTHORITY_BYTES"
+  exact_maximum_path_count: 35
+  semantic_payload_or_expectation_change: "PROHIBITED"
+  active_typed_result_schema_fixture_hash_dependency_count_at_audit: 0
+  unlisted_changed_path: "FAIL_CLOSED_SCOPE_INSUFFICIENT"
+  exact_paths:
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-shared-argument-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/execution-binding-sidecar-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-E01.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-M01.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-M02.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-N01.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-N02.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-Q01.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-Q02.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-R01.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-shared-argument-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/object-store-index-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/queryir-emission-record-exposure-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3a-reference-override-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/reference-validator-execution-summary.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s0-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-shared-argument-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s3-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s4-positive.json"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/typed-result-exposure-positive.json"
+  frozen_unless_exact_binding_derivation_requires_change:
+    - "SEMANTIC_PAYLOAD"
+    - "REQUEST_TEXT"
+    - "AST_SEMANTICS"
+    - "EVENT_FRAME_SEMANTICS"
+    - "QUERYIR_SEMANTICS"
+    - "TYPED_SOLUTION_SEMANTICS"
+    - "EXPECTED_CONSTRAINT_IDENTITY"
+    - "EXPECTED_FAILURE_MEANING"
+    - "POSITIVE_OR_NEGATIVE_CLASSIFICATION"
+    - "FIXTURE_PURPOSE"
+    - "SOLUTION_CARDINALITY"
+    - "SEMANTIC_OBJECT_SET"
+
+design_manifest_mechanical_boundary:
+  path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  exact_authorized_changed_field_count: 5
+  exact_json_pointers:
+    - "/design_files/typed-constraint-result-schema-candidate.yml"
+    - "/design_files/stage-semantic-validator-contract.yml"
+    - "/design_files/reference-stage-semantic-validator.py"
+    - "/executable_evidence/configuration_sha256"
+    - "/executable_evidence/sha256"
+  other_manifest_field_change: "PROHIBITED"
+  active_design_manifest_hash_dependent_count_at_audit: 0
+  new_active_dependent_behavior: "FAIL_CLOSED"
+  exact_new_dependency_failure_mode: "HIGH_008_AUTHORIZED_REFRESH_CLOSURE_INCOMPLETE"
+  downstream_refresh_for_manifest_byte_change: "NOT_AUTHORIZED"
+
+maximum_future_correction_scope:
+  direct_semantic_path_count: 3
+  conditional_mechanical_path_count: 35
+  maximum_changed_path_count: 38
+  fewer_paths_permitted_only_when_dependency_not_triggered: true
+  thirty_ninth_path: "PROHIBITED"
+
+future_pre_mutation_checks:
+  required:
+    - "EXACT_AUTHORIZATION_BASE_AND_PUBLIC_TIP"
+    - "CLEAN_WORKTREE_AND_INDEX"
+    - "THREE_DIRECT_AUTHORITY_RAW_HASHES_MATCH_BASE"
+    - "ALL_CURRENT_CONTENT_ADDRESS_BINDINGS_IN_ENUMERATED_CLOSURE"
+    - "NO_ADDITIONAL_ACTIVE_DEPENDENT"
+  unrelated_stale_binding_behavior: "FAIL_CLOSED_PREEXISTING_BINDING_INCONSISTENCY"
+  unlisted_dependency_behavior: "HIGH_008_AUTHORIZED_REFRESH_CLOSURE_INCOMPLETE"
+
+future_schema_probes:
+  - case: "DIAGNOSTIC_FINDING_POSITIVE"
+    expected: "PASS"
+  - case: "DIAGNOSTIC_FINDING_NEGATIVE"
+    expected: "PASS"
+  - case: "DIAGNOSTIC_FINDING_UNSPECIFIED"
+    expected: "PASS"
+  - case: "DIAGNOSTIC_FINDING_NOT_APPLICABLE"
+    expected: "FAIL_CLOSED"
+  - case: "NON_DIAGNOSTIC_NOT_APPLICABLE"
+    expected: "PASS"
+  - case: "NON_DIAGNOSTIC_UNSPECIFIED"
+    expected: "FAIL_CLOSED"
+  - case: "NON_DIAGNOSTIC_POSITIVE"
+    expected: "FAIL_CLOSED"
+  - case: "NON_DIAGNOSTIC_NEGATIVE"
+    expected: "FAIL_CLOSED"
+
+finding_separation:
+  high_004:
+    finding_id: "P9B2-C3-PRODUCTION-WIRING-HIGH-004"
+    status: "CLOSED_FROZEN"
+    reopening_authorized: false
+  high_005:
+    finding_id: "P9B2-C3-MINIMALITY-PROOF-NONEXECUTABLE-HIGH-005"
+    status: "CLOSED_FROZEN"
+    reopening_authorized: false
+  high_006:
+    finding_id: "P9B2-C3-LICENSE-TRACE-SELF-AUTHORIZATION-HIGH-006"
+    status: "OPEN_BLOCKING"
+    remains_implementation_only: true
+    trace_schema_change_authorized: false
+    queryir_emission_record_schema_change_authorized: false
+  high_007:
+    finding_id: "P9B2-C3-SOLVER-DOMAIN-CONSTRAINT-INCOMPLETE-HIGH-007"
+    status: "OPEN_BLOCKING"
+    implementation_scope_after_high_008: "SUFFICIENT_EXISTING_SCOPE"
+    repair_during_high_008_authority_correction: "PROHIBITED"
+
+post_correction_governance_sequence:
+  implementation_reauthorization_required: true
+  required_order:
+    - "HIGH_008_AUTHORITY_CORRECTION_BUILD"
+    - "FAST_FORWARD_PUBLICATION"
+    - "INDEPENDENT_READ_ONLY_HIGH_008_CORRECTION_AUDIT"
+    - "FRESH_POST_HIGH_008_C3_IMPLEMENTATION_REAUTHORIZATION"
+    - "FAST_FORWARD_REAUTHORIZATION_PUBLICATION"
+    - "EXPLICIT_CONTROL_IMPLEMENTATION_CORRECTION_START"
+  implementation_resume_before_sequence_complete: "PROHIBITED"
+
+activation:
+  effective_only_after_fast_forward_publication: true
+  target_ref: "refs/heads/agent/p9-b2"
+  publication_modifies_semantic_authority: false
+  publication_closes_high_008: false
+  separate_future_control_start_required: "C3_HIGH_008_AUTHORITY_CORRECTION_BUILD_START=AUTHORIZED"
+
+stage_stop_boundary:
+  c3_implementation_may_resume: false
+  c4: "BLOCKED"
+  c5: "BLOCKED"
+  retrieval: "PROHIBITED"
+  model_network_call: "PROHIBITED"
+  r11_secret_body_access: "PROHIBITED"
+  r11_execution: "PROHIBITED"
+
+status_after_authorization_publication:
+  high_008: "OPEN_BLOCKING_AUTHORIZED_FOR_CORRECTION"
+  high_006: "OPEN_BLOCKING"
+  high_007: "OPEN_BLOCKING"
+  c3_implementation_correction_2: "BLOCKED_PENDING_HIGH_008_CORRECTION_AND_REAUTHORIZATION"
+  c4: "BLOCKED"
+  c5: "BLOCKED"
+  r11: "BLOCKED"
