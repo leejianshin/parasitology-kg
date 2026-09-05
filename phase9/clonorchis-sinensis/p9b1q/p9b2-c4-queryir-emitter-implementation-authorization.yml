@@ -1,0 +1,386 @@
+authorization_version: "1.0"
+authorization_id: "P9B2-C4-QUERYIR-EMITTER-IMPLEMENTATION-AUTHORIZATION-001"
+authorization_kind: "C4_PURE_QUERYIR_EMITTER_PROSPECTIVE_IMPLEMENTATION_AUTHORIZATION"
+authorization_status: "ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION_AND_SEPARATE_EXPLICIT_CONTROL_IMPLEMENTATION_START"
+
+repository: "leejianshin/parasitology-kg"
+branch: "agent/p9-b2"
+authorization_base: "970796e497878ffd7161d66838af8948197dcea2"
+current_public_tip_at_creation: "970796e497878ffd7161d66838af8948197dcea2"
+prospective_only: true
+publication_alone_starts_implementation: false
+
+frozen_predecessor_state:
+  c1: "CLOSED_FROZEN"
+  c2: "CLOSED_FROZEN"
+  c3: "CLOSED_FROZEN"
+  s0: "CLOSED_FROZEN"
+  s1: "CLOSED_FROZEN"
+  s2: "CLOSED_FROZEN"
+  s3: "CLOSED_FROZEN"
+  findings:
+    high_004: "CLOSED_FROZEN"
+    high_005: "CLOSED_FROZEN"
+    high_006: "CLOSED_FROZEN"
+    high_007: "CLOSED_FROZEN"
+    high_008: "CLOSED_FROZEN"
+  open_c3_blocking_finding_count: 0
+  c3_semantic_reopening_authorized: false
+
+c4_stage:
+  stage_id: "S4_QUERYIR_EMISSION"
+  role: "PURE_VALIDATION_AND_BYTE_IDENTICAL_EXTRACTION"
+  input_authority:
+    - "UNIQUE_TYPED_CONSTRAINT_RESULT"
+    - "EMBEDDED_COMPLETE_QUERYIR_EMISSION_RECORD"
+    - "ACTUAL_NORMALIZED_REQUEST"
+    - "ACTUAL_CLAUSE_AST"
+    - "ACTUAL_EVENT_FRAME"
+    - "ACTUAL_CONSTRAINT_SET"
+    - "ACTUAL_FROZEN_FORMAL_AUTHORITY_OBJECTS"
+    - "ACTUAL_PERSISTED_TYPED_SOLUTION_CORE"
+    - "ACTUAL_SEMANTIC_UNIVERSE"
+    - "ACTUAL_REMOVAL_PROBES"
+    - "FROZEN_QUERY_IR_SCHEMA"
+    - "FROZEN_S4_SEMANTIC_VALIDATOR_CONTRACT"
+    - "FROZEN_PROJECTION_RULE_SET"
+  output: "QUERY_IR"
+  permitted_operations:
+    - "VALIDATE"
+    - "INDEPENDENTLY_REPROJECT_FOR_COMPARISON"
+    - "EXTRACT_ALREADY_EMBEDDED_QUERYIR"
+  prohibited_operations:
+    - "PARSE_NEW_SEMANTICS"
+    - "RESOLVE_ENTITIES_OR_EVENTS"
+    - "CHOOSE_RELATIONS"
+    - "CHANGE_ASSERTION_STATUS_OR_FINDING_POLARITY"
+    - "WIDEN_SELECTORS"
+    - "ADD_TOPIC_DEFAULTS_OR_SEMANTIC_ROLES"
+    - "RESOLVE_AMBIGUITY"
+    - "PERFORM_LEXICAL_OR_RETRIEVAL_DRIVEN_INTERPRETATION"
+    - "REPAIR_C3_OUTPUT"
+
+byte_identical_extraction_invariant:
+  rule: "CANONICAL_BYTES(ACTUAL_EMITTED_QUERYIR)==CANONICAL_BYTES(EMBEDDED_QUERYIR)"
+  semantic_rewrite: "PROHIBITED"
+  field_rewrite: "PROHIBITED"
+  insertion_deletion_or_reordering: "PROHIBITED"
+  required_future_result: "QUERYIR_BYTE_IDENTICAL_EXTRACTION=PASS"
+
+status_gate:
+  permitted_status: "UNIQUE"
+  required_selected_solution_count: 1
+  prohibited_statuses:
+    - "AMBIGUOUS"
+    - "UNSUPPORTED"
+    - "INVALID"
+    - "FAIL_CLOSED"
+  non_unique_queryir_emission: "PROHIBITED"
+
+registered_emit_constraints:
+  exact_count: 7
+  exact_ids:
+    - "CNS-EMIT-QUERYIR_SCHEMA"
+    - "CNS-EMIT-VALID_STATUS"
+    - "CNS-EMIT-LEAF_TRACE_COVERAGE"
+    - "CNS-EMIT-TRACE_VALUE_HASH"
+    - "CNS-EMIT-PROJECTION_ONLY"
+    - "CNS-EMIT-LICENSE_COVERAGE"
+    - "CNS-EMIT-MINIMALITY_WITNESS"
+  new_constraint_authorized: false
+
+emission_record_validation:
+  schema: "phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-emission-record-schema-candidate.yml"
+  validate_actual_embedded_record: true
+  required_bindings:
+    - "REQUEST_BINDINGS"
+    - "STAGE_HASHES"
+    - "SEMANTIC_SOLUTION_CORE_SHA256"
+    - "QUERY_IR_SCHEMA_SHA256"
+    - "PROJECTION_RULE_SET_SHA256"
+    - "QUERY_IR"
+    - "QUERY_IR_SHA256"
+    - "FIELD_TRACES"
+    - "LICENSE_DAG"
+    - "MINIMALITY_WITNESS"
+  candidate_declaration_is_authority: false
+
+actual_source_resolution:
+  independently_resolve_actual_bound_objects: true
+  independently_recompute_actual_object_hashes: true
+  trusted_without_reread_and_rehash:
+    manifest_summaries: false
+    emission_record_summaries: false
+    candidate_declared_hashes: false
+    trace_declared_hashes: false
+
+queryir_hash_validation:
+  derivation: "CANONICAL_SHA256(ACTUAL_EXTRACTED_QUERYIR)"
+  must_equal_embedded_binding: true
+  synchronized_queryir_and_hash_mutation_is_sufficient: false
+
+trace_validation:
+  required_non_root_property_value_and_array_item_coverage: "EXACTLY_ONE_TRACE_PER_POINTER"
+  missing_trace_count_required: 0
+  duplicate_trace_target_count_required: 0
+  checks:
+    - "QUERY_IR_JSON_POINTER_RESOLVES"
+    - "EMITTED_VALUE_SHA256_MATCHES_ACTUAL_POINTED_VALUE"
+    - "SOURCE_OBJECT_EXISTS"
+    - "SOURCE_OBJECT_KIND_IS_TRUTHFUL"
+    - "SOURCE_OBJECT_HASH_MATCHES_ACTUAL_OBJECT"
+    - "NONEMPTY_SOURCE_IDS_RESOLVE_IN_DECLARED_SOURCE_OBJECT"
+    - "SOURCE_SPANS_EQUAL_ACTUAL_NORMALIZED_REQUEST_SLICES"
+  frozen_c3_trace_closure:
+    whole_request_material_semantic_trace_count: 0
+    unjustified_whole_request_trace_count: 0
+    nonempty_material_trace_specific_provenance: "PASS"
+    candidate_output_self_authorization: "NO"
+  broad_whole_request_material_provenance_sufficient: false
+
+independent_projection_only_validation:
+  validation_only: true
+  actual_sources:
+    - "TYPED_SOLUTION_CORE"
+    - "CLAUSE_AST"
+    - "EVENT_FRAME"
+    - "EVENT_RELATION_MAPPING"
+    - "SEMANTIC_ROLE_MAPPING"
+    - "PROJECTION_RULE_SET"
+  independently_reprojected_result_must_equal_embedded_queryir: true
+  replace_embedded_queryir_with_reprojection: "PROHIBITED"
+  synchronized_mutation_attack:
+    mutate_embedded_queryir_semantic_value: true
+    update_corresponding_trace_value_hash: true
+    update_queryir_sha256: true
+    update_candidate_owned_enclosing_hashes: true
+    leave_authoritative_typed_core_and_predecessors_unchanged: true
+    required_result: "SYNCHRONIZED_QUERYIR_TRACE_MUTATION_REJECTION=PASS"
+
+license_dag_validation:
+  independently_verify:
+    - "ALL_MATERIAL_QUERYIR_SEMANTIC_IDS_OCCUR_IN_LICENSE_DAG"
+    - "LICENSE_NODES_AND_EDGES_RESOLVE"
+    - "TOPOLOGICAL_ORDER_IS_VALID"
+    - "EACH_LICENSE_PATH_BEGINS_AT_ZERO_INDEGREE_ROOT"
+    - "EACH_LICENSE_PATH_FOLLOWS_ACTUAL_DECLARED_EDGES"
+    - "EACH_LICENSE_PATH_TERMINATES_AT_WITNESSED_SEMANTIC_OBJECT"
+  required_future_result: "S4_LICENSE_COVERAGE=PASS"
+
+minimality_witness_validation:
+  retained_ids_and_witnesses: "EXACT_ONE_TO_ONE_SET"
+  reject:
+    - "MISSING_WITNESS"
+    - "DUPLICATE_WITNESS"
+    - "ORPHAN_WITNESS"
+    - "WRONG_SEMANTIC_OBJECT_ID"
+    - "WRONG_QUERYIR_POINTER"
+    - "WRONG_SUPPORTING_CONSTRAINT_IDS"
+    - "WRONG_REMOVAL_PROBE_PATH"
+    - "WRONG_REMOVAL_PROBE_HASH"
+    - "WRONG_REMOVAL_UNSATISFIED_CONSTRAINT_IDS"
+  required_future_result: "S4_MINIMALITY_WITNESS=PASS"
+
+persisted_proof_object_validation:
+  independently_resolve_and_validate:
+    - "TYPED_SOLUTION"
+    - "SEMANTIC_UNIVERSE"
+    - "REMOVAL_PROBES"
+  separately_persisted_content_addressed_objects_required: true
+  embedded_or_self_referential_substitutes: "PROHIBITED"
+
+structural_recomputation:
+  compare_at_minimum:
+    - "REQUEST_BINDING"
+    - "CLAUSE_TOPOLOGY"
+    - "MENTION_CLAUSE_MEMBERSHIP"
+    - "EVENT_CLAUSE_MEMBERSHIP"
+    - "RELATION_SPANS"
+    - "RELATION_SUBJECT_AND_OBJECT_SELECTORS"
+    - "ROLES"
+    - "NARRATIVES"
+    - "PROHIBITIONS"
+    - "RESOLVED_REFERENCES"
+    - "RESOLVED_OVERRIDES"
+    - "QUERY_IR_SHA256"
+  new_inference_during_validation: "PROHIBITED"
+  explicit_empty_arrays:
+    preserve_when_frozen_output_requires: true
+    validate_justified_absence_semantics: true
+    repair_missing_array: "PROHIBITED"
+    malformed_embedded_queryir_result: "FAIL_CLOSED"
+
+queryir_schema:
+  path: "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml"
+  validation_required: true
+  mutation_authorized: false
+
+determinism_requirement:
+  invariant: "SAME_UNIQUE_SOLUTION_AND_BOUND_CONTRACT_AUTHORITY_HASHES_PRODUCE_BYTE_IDENTICAL_QUERYIR"
+  perturbations:
+    - "PYTHONHASHSEED"
+    - "TEMPORARY_ROOT"
+    - "FILESYSTEM_CREATION_ORDER"
+    - "PERMITTED_CANDIDATE_ORDERING"
+  required_future_result: "C4_DETERMINISM=PASS"
+
+c3_regression_freeze:
+  required_future_result: "C3_REGRESSION=PASS"
+  findings:
+    high_004: "CLOSED_FROZEN"
+    high_005: "CLOSED_FROZEN"
+    high_006: "CLOSED_FROZEN"
+    high_007: "CLOSED_FROZEN"
+    high_008: "CLOSED_FROZEN"
+  c3_authority_or_semantic_change: "PROHIBITED"
+
+stage_boundary:
+  c4_stops_after_s4: true
+  c5_runtime_binding_invoked: false
+  c5_implementation_authorized: false
+  retrieval_invoked: false
+  model_network_invoked: false
+  response_generation_invoked: false
+  shadow_validation_may_authorize_retrieval: false
+  r11_secret_body_accessed: false
+  r11_executed: false
+
+direct_future_implementation_scope:
+  exact_path_count: 2
+  exact_paths:
+    - path: "scripts/p9b1q_scoped_query_ir.py"
+      classification: "DIRECT_IMPLEMENTATION"
+    - path: "tests/test_p9b1q_scoped_query_ir.py"
+      classification: "DIRECT_TEST"
+  third_direct_implementation_path: "PROHIBITED"
+
+conditional_mechanical_scope:
+  exact_path_count: 1
+  exact_path: "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  classification: "CONDITIONAL_MECHANICAL_CONTENT_BINDING_REFRESH"
+  exact_authorized_field_count: 2
+  exact_authorized_fields:
+    - json_pointer: "/protected_files/scripts~1p9b1q_scoped_query_ir.py"
+      source_path: "scripts/p9b1q_scoped_query_ir.py"
+      derivation: "SHA256_RAW_FILE_BYTES"
+      change_rule: "REFRESH_ONLY_IF_FINAL_SOURCE_BYTES_CHANGE"
+    - json_pointer: "/protected_files/tests~1test_p9b1q_scoped_query_ir.py"
+      source_path: "tests/test_p9b1q_scoped_query_ir.py"
+      derivation: "SHA256_RAW_FILE_BYTES"
+      change_rule: "REFRESH_ONLY_IF_FINAL_SOURCE_BYTES_CHANGE"
+  all_other_manifest_fields: "READ_ONLY"
+  broad_manifest_rebuild: "PROHIBITED"
+
+current_protected_hash_evidence:
+  evidence_only_not_standing_future_authority: true
+  script:
+    path: "scripts/p9b1q_scoped_query_ir.py"
+    raw_sha256: "a0de75d4353bf711524fd33aa07c1b9e4af3e882edd4a7275ec7bb85b475ba59"
+    current_manifest_binding: "MATCHES"
+  test:
+    path: "tests/test_p9b1q_scoped_query_ir.py"
+    raw_sha256: "3f5f1a2dc6b9bf7d2ed5117ac710f8b45f363f8ca96b7aa61fff4f524b16e1d0"
+    current_manifest_binding: "MATCHES"
+  future_binding_authority: "INDEPENDENTLY_RECOMPUTED_SHA256_RAW_FILE_BYTES"
+
+maximum_future_changed_path_set:
+  maximum_path_count: 3
+  paths:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  manifest_inclusion_is_conditional: true
+  fourth_path: "PROHIBITED"
+
+future_dependency_precheck:
+  timing: "BEFORE_ANY_FUTURE_C4_IMPLEMENTATION_MUTATION"
+  complete_tracked_tree_search: "REQUIRED"
+  active_content_addressed_sources:
+    - "scripts/p9b1q_scoped_query_ir.py"
+    - "tests/test_p9b1q_scoped_query_ir.py"
+    - "phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml"
+  only_permitted_refresh_bindings:
+    - "/protected_files/scripts~1p9b1q_scoped_query_ir.py"
+    - "/protected_files/tests~1test_p9b1q_scoped_query_ir.py"
+  outside_scope_dependency_behavior: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  exact_failure_mode: "C4_AUTHORIZATION_SCOPE_INSUFFICIENT_ACTIVE_CONTENT_ADDRESSED_DEPENDENCY"
+  scope_self_expansion: "PROHIBITED"
+
+authority_schema_and_fixture_freeze:
+  authority_mutation_authorized: false
+  schema_mutation_authorized: false
+  fixture_mutation_authorized: false
+  prior_authorization_artifact_mutation: "PROHIBITED"
+  named_read_only_objects:
+    - "COMPILER_PIPELINE_CONTRACT"
+    - "STAGE_SEMANTIC_VALIDATOR_CONTRACT"
+    - "QUERYIR_EMISSION_RECORD_SCHEMA"
+    - "QUERY_IR_SCHEMA"
+    - "TYPED_CONSTRAINT_RESULT_SCHEMA"
+    - "TYPED_SOLUTION_CORE_SCHEMA"
+    - "EVENT_FRAME_SCHEMA"
+    - "PROJECTION_RULE_SET"
+    - "ENTITY_ONTOLOGY"
+    - "RELATION_ONTOLOGY"
+    - "PREDICATE_TYPE_MAPPING"
+    - "EVENT_RELATION_MAPPING"
+    - "SEMANTIC_ROLE_MAPPING"
+    - "CONSTRAINT_REGISTRY"
+    - "CONSTRAINT_SET"
+    - "MINIMALITY_PROOF_SCHEMA"
+    - "OBJECT_CANONICALIZATION_AND_HASH_CHAIN_AUTHORITY"
+    - "REFERENCE_STAGE_SEMANTIC_VALIDATOR"
+    - "NEGATION_SEMANTIC_AUTHORITY"
+    - "QUERY_INTERPRETER_CONFIG"
+    - "ALL_PUBLIC_ARCHITECTURE_REVIEW_FIXTURES"
+
+constraint_governance:
+  domain: "1..48"
+  no_gaps: true
+  no_duplicates: true
+  constraint_49: "ABSENT"
+  new_constraint_authorized: false
+  existing_emit_constraint_count: 7
+
+future_required_test_classes:
+  independent_oracle_required: true
+  implementation_receipt_as_sole_oracle: "PROHIBITED"
+  required:
+    - "VALID_UNIQUE_BYTE_IDENTICAL_EXTRACTION"
+    - "NON_UNIQUE_PRODUCES_NO_QUERYIR"
+    - "EMBEDDED_QUERYIR_SCHEMA_FAILURE"
+    - "QUERY_IR_SHA256_TAMPER"
+    - "MISSING_FIELD_TRACE"
+    - "DUPLICATE_TRACE_TARGET"
+    - "SOURCE_OBJECT_HASH_TAMPER"
+    - "UNRESOLVED_SOURCE_ID"
+    - "SOURCE_SPAN_TAMPER"
+    - "SYNCHRONIZED_QUERYIR_AND_TRACE_HASH_MUTATION_ATTACK"
+    - "LICENSE_DAG_MISSING_ORPHAN_AND_INVALID_PATH"
+    - "MINIMALITY_WITNESS_MISSING_DUPLICATE_AND_ORPHAN"
+    - "REMOVAL_PROBE_HASH_AND_PATH_MISMATCH"
+    - "TYPED_CORE_PROJECTION_MISMATCH"
+    - "REQUEST_BINDING_MISMATCH"
+    - "CLAUSE_TOPOLOGY_MISMATCH"
+    - "RELATION_SELECTOR_AND_DIRECTION_MISMATCH"
+    - "EXPLICIT_EMPTY_ARRAY_MALFORMED_OR_MISSING"
+    - "STRONG_DETERMINISM"
+    - "C3_REGRESSION"
+    - "NO_S5_OR_RETRIEVAL_INVOCATION"
+
+activation:
+  fast_forward_publication_required: true
+  publication_ref: "refs/heads/agent/p9-b2"
+  separate_control_start_required: true
+  required_control_start_atom: "C4_IMPLEMENTATION_START=AUTHORIZED"
+  c4_implementation_authorized_after_publication: true
+  c4_implementation_may_start_on_publication_alone: false
+  c5_authorization_eligible: false
+  c5_implementation_may_start: false
+
+future_fail_closed_behavior:
+  unlisted_required_path: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  authority_schema_or_fixture_change_required: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  active_content_addressed_dependency_outside_scope: "FAIL_CLOSED_AND_RETURN_TO_CONTROL"
+  malformed_or_self_authorizing_c3_input: "FAIL_CLOSED"
+  scope_self_expansion: "PROHIBITED"
