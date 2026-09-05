@@ -1,0 +1,447 @@
+authorization_version: '1.0'
+authorization_id: P9B2-C5-AUTHORITY-REPRESENTABILITY-CORRECTION-1-AUTHORIZATION-001
+authorization_kind: C5_S5_AUTHORITY_REPRESENTABILITY_ALIGNMENT
+authorization_status: ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION_AND_SEPARATE_EXPLICIT_CONTROL_BUILD_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+authorization_base: 531c29bff0348de394233f1d863ed5824cdb59f2
+current_public_tip_at_creation: 531c29bff0348de394233f1d863ed5824cdb59f2
+prospective_only: true
+trigger:
+  failed_build: C5_FROZEN_AUTHORITY_REPRESENTABILITY_GAP
+  independent_representability_review: CORRECTION_REQUIRED
+  implementation_commit: null
+  surviving_implementation_mutation: false
+frozen_predecessor_state:
+  C1: CLOSED_FROZEN
+  C2: CLOSED_FROZEN
+  C3: CLOSED_FROZEN
+  C4: CLOSED_FROZEN
+  S0: CLOSED_FROZEN
+  S1: CLOSED_FROZEN
+  S2: CLOSED_FROZEN
+  S3: CLOSED_FROZEN
+  S4: CLOSED_FROZEN
+  C5: OPEN_BLOCKING
+  C5_implementation_may_resume: false
+  C1_C4_semantic_reopening_authorized: false
+authorized_findings:
+  exact_count: 6
+  exact_ids:
+  - P9B2-C5-S5-PRODUCTION-PROOF-PATH-REPRESENTABILITY-HIGH-001
+  - P9B2-C5-S5-STAGE-RESULT-PATH-REPRESENTABILITY-HIGH-002
+  - P9B2-C5-S5-STAGE-RESULT-CARDINALITY-REPRESENTABILITY-HIGH-003
+  - P9B2-C5-S5-STAGE-RESULT-OBJECT-KIND-REPRESENTABILITY-HIGH-004
+  - P9B2-C5-S5-SCHEMA-GATE-PATH-REPRESENTABILITY-HIGH-005
+  - P9B2-C5-S5-SIDECAR-OUTPUT-PATH-REPRESENTABILITY-HIGH-006
+  seventh_finding_authorized: false
+correction_classification:
+  purpose: Represent already valid frozen runtime object identities in S5 authority.
+  allowed_classes:
+  - SCHEMA_REPRESENTATION_ALIGNMENT
+  - NEW_PATH_AUTHORITY_FOR_STAGE_RESULT_AND_SIDECAR_STORAGE_IDENTITY
+  - S5_EXECUTABLE_AUTHORITY_ALIGNMENT
+  new_queryir_retrieval_p9a_or_s0_s4_semantics_authorized: false
+direct_correction_scope:
+  exact_count: 4
+  exact_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validation-result-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/execution-binding-sidecar-architecture-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+  current_raw_sha256_evidence:
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validation-result-schema-candidate.yml: 79efdd92d232cd7e5b8f525c3926af0765b10961c8ee492dc5a2ed6ee97875de
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/execution-binding-sidecar-architecture-schema-candidate.yml: 61297b606964b61fe4d07995a038177e4297956b99c5a5ca1024570ce1a06e8c
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml: 172801c16738d891455ff25d7c49fae54b989f192f6d616b89534db4b4c55fec
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py: 01a858568ff68ec62c9c09ac712a1ac7c98914e1925e3e19f285517937045366
+  hash_rule: SHA256_RAW_FILE_BYTES; independently recompute before correction; mismatch fails closed; literals are
+    evidence only.
+existing_proof_path_alignment:
+  new_authority_count: 0
+  existing_alignment_count: 3
+  exact_kind_to_path_forms:
+    TYPED_SOLUTION: proof-objects/typed-solution-core/[0-9a-f]{64}.json
+    SEMANTIC_UNIVERSE: proof-objects/semantic-universe/[0-9a-f]{64}.json
+    REMOVAL_PROBE: proof-objects/removal-probe/[0-9a-f]{64}.json
+  minimum_safe_schema_form: B_KIND_CONDITIONAL
+  wrong_kind_directory_pairing: FAIL_CLOSED
+  broad_proof_objects_wildcard_authorized: false
+  fourth_proof_directory_authorized: false
+  existing_valid_fixture_forms_preserved: true
+new_storage_identity_authority:
+  stage_result_path_count: 5
+  exact_stage_result_path_forms:
+    S0: stage-validation-s0-[0-9a-f]{64}.json
+    S1: stage-validation-s1-[0-9a-f]{64}.json
+    S2: stage-validation-s2-[0-9a-f]{64}.json
+    S3: stage-validation-s3-[0-9a-f]{64}.json
+    S4: stage-validation-s4-[0-9a-f]{64}.json
+  sidecar_path_count: 1
+  exact_successful_architecture_sidecar_path_form: execution-binding-sidecar-[0-9a-f]{64}.json
+  filename_digest_rule: SHA256 over exact complete persisted canonical file bytes, including any self-hash field.
+    An internal digest omitting a self-hash field is not the filename digest unless equal by coincidence.
+  root_rule: Resolve only relative to the explicitly bound execution object root; each relative logical path identifies
+    one exact actual file.
+  fixture_identity_substitution_authorized: false
+  arbitrary_alternate_filename_authorized: false
+stage_result_schema_scope:
+  proof_path_pointer: /$defs/object_reference/properties/content_path
+  kind_path_conditional_required: true
+  new_object_kind_count: 3
+  exact_new_object_kinds:
+  - SCHEMA_GATE_DEPENDENCY_LOCK
+  - SCHEMA_GATE_DEPENDENCY_MANIFEST
+  - STRICT_SCHEMA_GATE_EXECUTABLE
+  strict_gate_exception:
+    object_kind: STRICT_SCHEMA_GATE_EXECUTABLE
+    exact_path: phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs
+    arbitrary_mjs_authorized: false
+  actual_input_objects_maximum:
+    S0_S4_existing_effective_maximum: 32
+    S5_RUNTIME_BINDING: 64
+    global_widening_authorized: false
+    draft: 2020-12
+    reviewed_instance_count_51_is_not_fixed_requirement: true
+architecture_sidecar_schema_scope:
+  proof_kind_path_pairing_required: true
+  stage_validation_result_paths:
+    exact_count: 5
+    ordered_position_bindings:
+    - index: 0
+      stage: S0
+      reference_fixture_path: fixtures/stage-validation-s0-positive.json
+      production_path_form: stage-validation-s0-[0-9a-f]{64}.json
+    - index: 1
+      stage: S1
+      reference_fixture_path: fixtures/stage-validation-s1-positive.json
+      production_path_form: stage-validation-s1-[0-9a-f]{64}.json
+    - index: 2
+      stage: S2
+      reference_fixture_path: fixtures/stage-validation-s2-positive.json
+      production_path_form: stage-validation-s2-[0-9a-f]{64}.json
+    - index: 3
+      stage: S3
+      reference_fixture_path: fixtures/stage-validation-s3-positive.json
+      production_path_form: stage-validation-s3-[0-9a-f]{64}.json
+    - index: 4
+      stage: S4
+      reference_fixture_path: fixtures/stage-validation-s4-positive.json
+      production_path_form: stage-validation-s4-[0-9a-f]{64}.json
+    stage_swapping_authorized: false
+  actual_objects_maximum: 64
+  cardinality_change_authorized_by_default: false
+  cardinality_exception: Only if the future build independently proves schema-structural necessity caused solely
+    by this authorized representation alignment.
+  frozen_success_constants:
+    disposition: QUERY_IR_VALID_RETRIEVED_ANSWERED
+    retrieval_executed: true
+    response_present: true
+  arbitrary_failure_state_widening_authorized: false
+validator_contract_storage_identity:
+  modes:
+  - REFERENCE_FIXTURE_MODE
+  - PRODUCTION_EXECUTION_MODE
+  production_requirements:
+  - CANONICAL_STAGE_RESULT_FILENAMES
+  - EXACT_STAGE_INDEX_0_TO_4_AND_S0_TO_S4_IDENTITY
+  - BOUND_EXECUTION_OBJECT_ROOT
+  - COMPLETE_PERSISTED_CANONICAL_FILE_SHA256_FILENAME_BINDING
+  - REQUEST_ID_EQUALITY
+  - STAGE_EQUALITY
+  - ACTUAL_INPUT_OUTPUT_HASH_EQUALITY
+  - VALIDATOR_EXECUTABLE_HASH_EQUALITY
+  - VALIDATOR_CONFIGURATION_CONTRACT_HASH_EQUALITY
+  - CANONICAL_SUCCESSFUL_SIDECAR_FILENAME
+  - EXACT_OBJECT_STORE_INDEX_IDENTITY
+  fixture_substitution_for_production_authorized: false
+  S0_S4_semantic_change_authorized: false
+reference_executable_scope:
+  stage: S5_ONLY
+  preserve_existing_safe_proof_resolver: true
+  proof_kinds_routed_through_existing_exact_resolver:
+  - TYPED_SOLUTION
+  - SEMANTIC_UNIVERSE
+  - REMOVAL_PROBE
+  add_safe_resolvers:
+  - PRODUCTION_STAGE_RESULT
+  - PRODUCTION_ARCHITECTURE_SIDECAR
+  validate:
+  - COMPLETE_CANONICAL_FILE_FILENAME_DIGEST
+  - REQUEST_ID
+  - EXACT_STAGE
+  - OBJECT_KIND
+  - CONTENT_PATH
+  - ACTUAL_CANONICAL_SHA256
+  - BYTE_LENGTH
+  - ORDERED_S0_S4_RESULT_SET
+  - OBJECT_STORE_INDEX_ONE_TO_ONE_BINDING
+  - DISTINCT_REFERENCE_AND_PRODUCTION_MODES
+  production_fixture_sidecar_dependency: REMOVE
+  reference_fixture_sidecar_path: fixtures/execution-binding-sidecar-positive.json
+  reference_mode_preserved: true
+  S0_S4_validation_semantics_change_authorized: false
+constraint_governance:
+  domain: 1..48
+  no_gaps: true
+  no_duplicates: true
+  constraint_49: ABSENT
+  new_constraint_authorized: false
+  exact_S5_ids:
+  - CNS-BIND-ACTUAL_OBJECT_HASH
+  - CNS-BIND-CANONICAL_PROFILE
+  - CNS-BIND-REQUEST_CHAIN
+  - CNS-BIND-RETRIEVAL_CHAIN
+  - CNS-BIND-RESPONSE_AUDIT_CHAIN
+  failure_code_addition_rename_remapping_authorized: false
+  registry_mutation_authorized: false
+  new_production_failure_sites: Use existing registered failure codes and unchanged mappings only.
+mechanical_dependencies:
+  exact_count: 34
+  exact_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-shared-argument-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/execution-binding-sidecar-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-E01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-M01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-M02.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-N01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-N02.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-Q01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-Q02.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-R01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-shared-argument-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/object-store-index-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/queryir-emission-record-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3a-reference-override-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s0-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-shared-argument-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s3-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s4-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/typed-result-exposure-positive.json
+  manifest_path_count: 1
+  fixture_evidence_path_count: 33
+  rule: Only deterministic descendant bindings of the four authorized direct file-byte changes may refresh.
+persisted_execution_evidence:
+  exact_count: 1
+  exact_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/reference-validator-execution-summary.json
+  generation_command: python reference-stage-semantic-validator.py --mode all
+  must_be_actual_successful_rerun_output: true
+  manual_pass_edit_authorized: false
+  stale_count_preservation_authorized: false
+  unexpected_semantic_count_change: REPORT_TO_CONTROL
+future_correction_path_boundary:
+  direct: 4
+  mechanical: 34
+  persisted_evidence: 1
+  total_required: 39
+  fortieth_path_authorized: false
+  pre_mutation_active_dependency_closure_required: true
+  unlisted_active_dependent: FAIL_CLOSED
+  failure_mode: C5_AUTHORITY_CORRECTION_SCOPE_INSUFFICIENT_ACTIVE_DEPENDENCY
+  autonomous_scope_expansion_authorized: false
+design_manifest_scope:
+  path: phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+  exact_authorized_field_count: 41
+  exact_json_pointers:
+  - /design_files/stage-semantic-validation-result-schema-candidate.yml
+  - /design_files/execution-binding-sidecar-architecture-schema-candidate.yml
+  - /design_files/stage-semantic-validator-contract.yml
+  - /design_files/reference-stage-semantic-validator.py
+  - /fixture_files/fixtures~1clause-ast-diagnostic-positive.json
+  - /fixture_files/fixtures~1clause-ast-diagnostic-role-catalog-positive.json
+  - /fixture_files/fixtures~1clause-ast-exposure-positive.json
+  - /fixture_files/fixtures~1clause-ast-shared-argument-positive.json
+  - /fixture_files/fixtures~1diagnostic-predicate-argument-binding-positive.json
+  - /fixture_files/fixtures~1event-frame-diagnostic-positive.json
+  - /fixture_files/fixtures~1event-frame-diagnostic-role-catalog-positive.json
+  - /fixture_files/fixtures~1event-frame-exposure-positive.json
+  - /fixture_files/fixtures~1execution-binding-sidecar-positive.json
+  - /fixture_files/fixtures~1minimality-removal-probe-E01.json
+  - /fixture_files/fixtures~1minimality-removal-probe-M01.json
+  - /fixture_files/fixtures~1minimality-removal-probe-M02.json
+  - /fixture_files/fixtures~1minimality-removal-probe-N01.json
+  - /fixture_files/fixtures~1minimality-removal-probe-N02.json
+  - /fixture_files/fixtures~1minimality-removal-probe-Q01.json
+  - /fixture_files/fixtures~1minimality-removal-probe-Q02.json
+  - /fixture_files/fixtures~1minimality-removal-probe-R01.json
+  - /fixture_files/fixtures~1normalized-request-diagnostic-positive.json
+  - /fixture_files/fixtures~1normalized-request-diagnostic-role-catalog-positive.json
+  - /fixture_files/fixtures~1normalized-request-exposure-positive.json
+  - /fixture_files/fixtures~1normalized-request-shared-argument-positive.json
+  - /fixture_files/fixtures~1object-store-index-positive.json
+  - /fixture_files/fixtures~1queryir-emission-record-exposure-positive.json
+  - /fixture_files/fixtures~1r3a-reference-override-positive.json
+  - /fixture_files/fixtures~1stage-validation-s0-positive.json
+  - /fixture_files/fixtures~1stage-validation-s1-positive.json
+  - /fixture_files/fixtures~1stage-validation-s1-shared-argument-positive.json
+  - /fixture_files/fixtures~1stage-validation-s2-diagnostic-role-catalog-positive.json
+  - /fixture_files/fixtures~1stage-validation-s2-positive.json
+  - /fixture_files/fixtures~1stage-validation-s3-positive.json
+  - /fixture_files/fixtures~1stage-validation-s4-positive.json
+  - /fixture_files/fixtures~1stage-validator-negative-fixtures.yml
+  - /fixture_files/fixtures~1typed-result-exposure-positive.json
+  - /fixture_files/fixtures~1reference-validator-execution-summary.json
+  - /executable_evidence/sha256
+  - /executable_evidence/configuration_sha256
+  - /executable_evidence/summary_sha256
+  derivation: SHA256_RAW_FILE_BYTES of exact final bound files; independently recomputed.
+  other_field_mutation_authorized: false
+  blanket_rebuild: Prohibited unless its resulting diff is independently proved to be exactly these 41 pointers.
+fixture_semantic_freeze:
+  frozen:
+  - REQUEST_TEXT
+  - QUERY_MEANING
+  - ENTITY_IDS
+  - EVENT_SEMANTICS
+  - RELATION_SEMANTICS
+  - EXPECTED_CONSTRAINT_IDS
+  - EXPECTED_FAILURE_CODE_SEMANTICS
+  - POSITIVE_NEGATIVE_CLASSIFICATION
+  - FIXTURE_PURPOSE
+  required_semantic_expectation_change: FAIL_CLOSED_AND_RETURN_TO_CONTROL
+frozen_paths:
+  historical_manifests:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.2.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.3.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.4.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.5.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.6.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest-v0.7.yml
+  implementation:
+  - scripts/p9b1q_scoped_query_ir.py
+  - tests/test_p9b1q_scoped_query_ir.py
+  private_sidecar: phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml
+  canonicalization_contract: phase9/clonorchis-sinensis/p9b1q-architecture-review/object-canonicalization-and-hash-chain.yml
+  strict_schema_gate_executable: phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs
+  all_other_authority_schema_executable_paths: FROZEN_EXCEPT_EXACT_FUTURE_DIRECT_SCOPE_AND_AUTHORIZED_DEPENDENT_REFRESH
+security_regression:
+  accept:
+  - EXISTING_FIXTURE_PATHS
+  - THREE_EXACT_PRODUCTION_PROOF_FORMS
+  - FIVE_EXACT_PRODUCTION_STAGE_RESULT_FORMS
+  - ONE_EXACT_PRODUCTION_SIDECAR_FORM
+  reject:
+  - PARENT_TRAVERSAL
+  - DOT_SEGMENT
+  - EMPTY_SEGMENT
+  - ABSOLUTE_POSIX_PATH
+  - WINDOWS_DRIVE_PATH
+  - UNC_PATH
+  - URL
+  - SYMLINK_ESCAPE
+  - DUPLICATE_SEPARATOR
+  - WRONG_ROOT
+  - WRONG_FILENAME_DIGEST
+  - NON_64_LOWERCASE_HEX_PRODUCTION_FILENAME
+  - WRONG_PROOF_DIRECTORY
+  - WRONG_KIND_DIRECTORY_PAIRING
+  - STAGE_SWAPPING
+  - WRONG_SIDECAR_FILENAME_DIGEST
+  required_result: PASS
+state_boundaries:
+  private_sidecar_representability: PASS_NO_CHANGE
+  failure_path_representability: ALREADY_PASS_NO_CHANGE
+  failure_behavior:
+  - FAIL_CLOSED
+  - NO_SUCCESSFUL_ARCHITECTURE_SIDECAR
+  - NO_UNLAWFUL_RETRIEVAL
+  - NO_RESPONSE_FROM_INVALID_CHAIN
+  reference_fixture_mode: PRESERVED
+  production_mode: DISTINCT_ACTUAL_OBJECT_IDENTITY
+semantic_authority_freeze:
+  p9a_change_authorized: false
+  retrieval_engine_change_authorized: false
+  p9b1_retrieval_authority_change_authorized: false
+  private_sidecar_enum_widening_authorized: false
+  frozen_authorities:
+  - P9A_SCHEMAS_AND_RULES
+  - RETRIEVAL_RESULT_SCHEMA
+  - P9B1_RETRIEVAL_CONTRACT
+  - RUNTIME_BUNDLE_MANIFEST
+  - RUNTIME_AUTHORITY_PROJECTION
+  - RUNTIME_CONTRACT
+  - REVIEWED_NODES_AND_EDGES
+  - SOURCE_REGISTRY
+  - ENTITY_AND_RELATION_TYPE_AUTHORITY
+  new_ranking_graph_execution_semantic_validator_response_behavior_authorized: false
+r11_governance:
+  public_commitment: FROZEN_HISTORICAL_DESIGN_AUTHORITY_UNCHANGED
+  public_commitment_mutation_authorized: false
+  secret_body_change_authorized: false
+  secret_body_access_authorized: false
+  execution_authorized: false
+  post_correction_applicability_review_required: true
+  post_correction_holder_governance_eligible: false
+  later_control_governance: Only separately after C5/S5 closure.
+post_correction_implementation_governance:
+  historical_implementation_authorization_commit: 531c29bff0348de394233f1d863ed5824cdb59f2
+  historical_authorization_valid_for_original_authority_state: true
+  historical_authorization_may_resume_post_correction_implementation: false
+  new_implementation_reauthorization_required: true
+  required_sequence:
+  - CORRECTION_BUILD
+  - CORRECTION_PUBLICATION
+  - INDEPENDENT_CORRECTION_AUDIT_PASS
+  - SEPARATE_POST_CORRECTION_C5_IMPLEMENTATION_REAUTHORIZATION
+  C5_implementation_may_resume: false
+future_correction_validation:
+  commands:
+  - cwd: phase9/clonorchis-sinensis/p9b1q-architecture-review/
+    command: node strict-schema-gate.mjs
+  - cwd: phase9/clonorchis-sinensis/p9b1q-architecture-review/
+    command: python reference-stage-semantic-validator.py --mode all
+  - cwd: .
+    command: python -m unittest discover -s tests -p "test_*.py"
+  focused_probes: All six findings plus the complete acceptance/rejection security matrix.
+  required:
+  - C1_C4_REGRESSION_PASS
+  - S0_S4_SEMANTICS_UNCHANGED
+  - EXISTING_POSITIVE_MINIMALITY_NEGATIVE_SUITES_PASS
+  - CONSTRAINTS_1_TO_48_UNCHANGED
+  - NO_CONSTRAINT_49
+  - R11_UNTOUCHED
+  permitted_probe_material: Persisted/reference objects and disposable path-resolution probes only.
+  retrieval_execution_authorized: false
+  model_network_authorized: false
+this_authorization_atom:
+  exact_changed_path_count: 1
+  exact_new_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-authority-representability-correction-1-authorization.yml
+  existing_file_mutation_authorized: false
+  execute_correction_authorized: false
+  C5_implementation_authorized: false
+  retrieval_authorized: false
+  C6_authorization_creation_authorized: false
+activation:
+  required_publication_ref: refs/heads/agent/p9-b2
+  fast_forward_publication_required: true
+  publication_starts_correction: false
+  separate_control_required: C5_AUTHORITY_REPRESENTABILITY_CORRECTION_1_BUILD=AUTHORIZED
+commit_publication_policy:
+  authorization_pass_required: true
+  exact_commit_count: 1
+  required_parent: 531c29bff0348de394233f1d863ed5824cdb59f2
+  suggested_message: 'governance(p9b2): authorize C5 representability correction'
+  history_rewrite_amend_rebase_squash_merge_authorized: false
+  publication: Fast-forward only to refs/heads/agent/p9-b2 when credentials are available; otherwise complete Git
+    bundle preserving exact identity and ancestry.
+  force_push_authorized: false
+  pull_request_authorized: false
+  main_mutation_authorized: false
+stop_rule: After authorization creation/publication STOP and return the complete result to CONTROL. Do not execute
+  the correction, refresh fixtures/manifest, resume C5, retrieve, create C6 authorization, alter R11 commitment,
+  access its secret body, or execute R11.
