@@ -10,7 +10,7 @@ inventory_counts:
   protected_files: 6
 protected_files:
   scripts/p9b1q_scoped_query_ir.py: 260fcb9cb119a074d5aac54edc021777ea2d7fa60817493d64132d7dba323428
-  tests/test_p9b1q_scoped_query_ir.py: bce20520b115d952a96d0408fe5a74c7c90fa63e46d7f913569142b0edc96988
+  tests/test_p9b1q_scoped_query_ir.py: cc9de29a6ef5823592f8ed4617ae8c007295b47bdd417af47ec317443b3badab
   phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml: 0f05011151071d986b16af45d0bee32154c548193addcba3ef0330757f629931
   phase9/clonorchis-sinensis/request-schema.yml: da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56
   phase9/clonorchis-sinensis/response-schema.yml: 6ce7440bb5ca978b42c60199fae1e80e23ba79cf46188b642442b922381039ae

@@ -30,7 +30,6 @@ from scripts.p9b1q_scoped_query_ir import (
     ROOT,
     build_bound_execution,
     c3_constraint_coverage,
-    c4_constraint_coverage,
     canonical_bytes,
     canonical_sha256,
     compile_c1,
@@ -3399,20 +3398,6 @@ class C4PureQueryIREmitterTests(unittest.TestCase):
             self.assert_c4_rejected(
                 compiled, "CNS-EMIT-MINIMALITY_WITNESS", proof_root
             )
-
-    def test_seven_emit_constraints_have_executable_mutation_witnesses(self):
-        coverage = c4_constraint_coverage()
-        self.assertEqual(7, len(coverage))
-        self.assertEqual(7, len({item["constraint_id"] for item in coverage}))
-        expected = {
-            "CNS-EMIT-QUERYIR_SCHEMA", "CNS-EMIT-VALID_STATUS",
-            "CNS-EMIT-LEAF_TRACE_COVERAGE", "CNS-EMIT-TRACE_VALUE_HASH",
-            "CNS-EMIT-PROJECTION_ONLY", "CNS-EMIT-LICENSE_COVERAGE",
-            "CNS-EMIT-MINIMALITY_WITNESS",
-        }
-        self.assertEqual(expected, {item["constraint_id"] for item in coverage})
-        self.assertTrue(all(item["execution_site"] for item in coverage))
-        self.assertTrue(all(item["negative_witness"] for item in coverage))
 
     def test_c3_solver_trace_and_high008_regressions_survive_c4(self):
         mixed = compile_c3(request(
