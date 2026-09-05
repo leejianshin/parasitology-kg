@@ -110,6 +110,10 @@ C3_PROHIBITED_STAGES = (
     "S5_RUNTIME_RETRIEVAL_BINDING",
 )
 
+C4_TERMINAL_STAGE = "S4_QUERYIR_EMISSION_IMPLEMENTATION"
+C4_IMPLEMENTED_STAGES = (*C3_IMPLEMENTED_STAGES, C4_TERMINAL_STAGE)
+C4_PROHIBITED_STAGES = ("S5_RUNTIME_RETRIEVAL_BINDING",)
+
 NORMATIVE_SCHEMA_PATHS = {
     "p9a_request_schema": PHASE9 / "request-schema.yml",
     "p9a_response_schema": PHASE9 / "response-schema.yml",
@@ -6070,6 +6074,1161 @@ def compile_c3(
     return result
 
 
+class C4ValidationError(ValueError):
+    """Fail-closed S4 emission-record validation or extraction failure."""
+
+
+def _c4_fail(constraint_id: str, message: str) -> None:
+    raise C4ValidationError(f"{C4_TERMINAL_STAGE}:{constraint_id}: {message}")
+
+
+def c4_constraint_coverage() -> list[dict[str, str]]:
+    """Describe the seven executable S4 gates and their mutation witnesses."""
+    return [
+        {
+            "constraint_id": "CNS-EMIT-QUERYIR_SCHEMA",
+            "execution_site": "_c4_validate_schemas_and_bindings",
+            "bound_object": "QUERY_IR+QUERYIR_EMISSION_RECORD",
+            "negative_witness": "SCHEMA_INVALID_EMBEDDED_QUERYIR",
+            "failure_site": "C4ValidationError:CNS-EMIT-QUERYIR_SCHEMA",
+        },
+        {
+            "constraint_id": "CNS-EMIT-VALID_STATUS",
+            "execution_site": "extract_queryir_c4",
+            "bound_object": "TYPED_CONSTRAINT_RESULT",
+            "negative_witness": "NON_UNIQUE_PREDECESSOR",
+            "failure_site": "NO_QUERYIR_OUTPUT",
+        },
+        {
+            "constraint_id": "CNS-EMIT-LEAF_TRACE_COVERAGE",
+            "execution_site": "_c4_validate_traces",
+            "bound_object": "QUERYIR_EMISSION_RECORD.FIELD_TRACES",
+            "negative_witness": "MISSING_OR_DUPLICATE_TRACE_TARGET",
+            "failure_site": "C4ValidationError:CNS-EMIT-LEAF_TRACE_COVERAGE",
+        },
+        {
+            "constraint_id": "CNS-EMIT-TRACE_VALUE_HASH",
+            "execution_site": "_c4_validate_traces",
+            "bound_object": "FIELD_TRACE+ACTUAL_SOURCE_OBJECTS",
+            "negative_witness": "POINTER_VALUE_OR_SOURCE_BINDING_TAMPER",
+            "failure_site": "C4ValidationError:CNS-EMIT-TRACE_VALUE_HASH",
+        },
+        {
+            "constraint_id": "CNS-EMIT-PROJECTION_ONLY",
+            "execution_site": "_c4_independent_queryir_projection",
+            "bound_object": "TYPED_SOLUTION+AST+EVENT_FRAME+FROZEN_MAPPINGS",
+            "negative_witness": "SYNCHRONIZED_QUERYIR_TRACE_HASH_MUTATION",
+            "failure_site": "C4ValidationError:CNS-EMIT-PROJECTION_ONLY",
+        },
+        {
+            "constraint_id": "CNS-EMIT-LICENSE_COVERAGE",
+            "execution_site": "_c4_validate_license_dag",
+            "bound_object": "LICENSE_DAG+FIELD_TRACES+TYPED_SOLUTION",
+            "negative_witness": "MISSING_OR_ORPHAN_NODE_EDGE_OR_INVALID_PATH",
+            "failure_site": "C4ValidationError:CNS-EMIT-LICENSE_COVERAGE",
+        },
+        {
+            "constraint_id": "CNS-EMIT-MINIMALITY_WITNESS",
+            "execution_site": "_c4_validate_persisted_proofs_and_minimality",
+            "bound_object": "TYPED_SOLUTION+SEMANTIC_UNIVERSE+REMOVAL_PROBES",
+            "negative_witness": "MISSING_DUPLICATE_OR_MISMATCHED_WITNESS_OR_PROBE",
+            "failure_site": "C4ValidationError:CNS-EMIT-MINIMALITY_WITNESS",
+        },
+    ]
+
+
+def _c4_project_id(identifier: str) -> str:
+    """Apply the frozen identifier projection without invoking the C3 emitter."""
+    for source, target in (
+        ("RREF", "REF"),
+        ("ROV", "OVR"),
+        ("RM", "M"),
+        ("RE", "E"),
+        ("RR", "R"),
+        ("RN", "N"),
+        ("RQ", "Q"),
+    ):
+        if identifier.startswith(source):
+            return f"{target}{int(identifier[len(source):]):02d}"
+    _c4_fail("CNS-EMIT-PROJECTION_ONLY", f"unprojectable identifier {identifier}")
+    raise AssertionError
+
+
+def _c4_independent_queryir_projection(
+    core: dict[str, Any], inputs: dict[str, Any], hashes: dict[str, str]
+) -> dict[str, Any]:
+    """Independently reproject S4 expectations; never use this value as output."""
+    normalized = inputs["NORMALIZED_REQUEST"]
+    ast = inputs["CLAUSE_AST"]
+    event_frame = inputs["EVENT_FRAME"]
+    proposition_nodes = sorted(
+        (item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (
+            item["source_span"]["start_char"], item["source_span"]["end_char"]
+        ),
+    )
+    if not proposition_nodes:
+        _c4_fail("CNS-EMIT-PROJECTION_ONLY", "Clause AST has no proposition")
+    clause_by_node = {
+        item["node_id"]: f"C{index:02d}"
+        for index, item in enumerate(proposition_nodes, 1)
+    }
+    clause_order = {
+        value: index for index, value in enumerate(clause_by_node.values(), 1)
+    }
+    clauses = [
+        {
+            "clause_id": f"C{index:02d}",
+            "order": index,
+            "source_span": copy.deepcopy(node["source_span"]),
+            "discourse_operator": "ROOT" if index == 1 else "AND",
+            "parent_clause_id": None if index == 1 else "C01",
+            "alternative_group_id": None,
+        }
+        for index, node in enumerate(proposition_nodes, 1)
+    ]
+    ast_mentions = {
+        item["surface_mention_id"]: item for item in ast["surface_mentions"]
+    }
+    mention_id_by_surface = {
+        item["surface_mention_id"]: _c4_project_id(item["mention_key"])
+        for item in core["resolved_mentions"]
+    }
+    mentions = [
+        {
+            "mention_id": _c4_project_id(item["mention_key"]),
+            "clause_id": clause_by_node[
+                ast_mentions[item["surface_mention_id"]]["containing_node_id"]
+            ],
+            "source_span": copy.deepcopy(
+                ast_mentions[item["surface_mention_id"]]["source_span"]
+            ),
+            "entity_id": item["entity_id"],
+            "entity_type": item["entity_type"],
+            "assertion_status": item["assertion_status"],
+            "temporal_scope": item["temporal_scope"],
+            "reference_ids": [],
+        }
+        for item in core["resolved_mentions"]
+    ]
+    frame_by_id = {item["frame_id"]: item for item in event_frame["frames"]}
+    events: list[dict[str, Any]] = []
+    event_clause_by_key: dict[str, str] = {}
+    for item in core["resolved_events"]:
+        if item["frame_id"] not in frame_by_id:
+            _c4_fail("CNS-EMIT-PROJECTION_ONLY", "resolved event frame is absent")
+        frame = frame_by_id[item["frame_id"]]
+        clause_id = clause_by_node[frame["source_ast_node_ids"][0]]
+        event_clause_by_key[item["event_key"]] = clause_id
+        source_ids = {
+            source
+            for slot in frame["participant_slots"]
+            for source in slot["source_ids"]
+            if source in mention_id_by_surface
+        }
+        events.append({
+            "event_id": _c4_project_id(item["event_key"]),
+            "clause_id": clause_id,
+            "source_span": copy.deepcopy(frame["source_spans"][0]),
+            "event_type": item["event_type"],
+            "assertion_status": item["assertion_status"],
+            "temporal_scope": item["temporal_scope"],
+            "actor_entity_ids": copy.deepcopy(item["actor_entity_ids"]),
+            "method_entity_id": item["method_entity_id"],
+            "specimen_code": item["specimen_code"],
+            "target_entity_id": (
+                item["target_entity_ids"][0]
+                if len(item["target_entity_ids"]) == 1 else None
+            ),
+            "finding_polarity": item["finding_polarity"],
+            "mention_ids": sorted(mention_id_by_surface[value] for value in source_ids),
+            "reference_ids": [],
+        })
+    mention_by_key = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    event_by_key = {item["event_key"]: item for item in core["resolved_events"]}
+    relation_metadata: dict[str, dict[str, Any]] = {}
+    relations: list[dict[str, Any]] = []
+    for item in core["resolved_relations"]:
+        basis = [_c4_project_id(value) for value in item["root_keys"]]
+        clause_ids = sorted({
+            next(value["clause_id"] for value in mentions if value["mention_id"] == root)
+            for root in basis if root.startswith("M")
+        }, key=clause_order.get)
+        if not clause_ids:
+            clause_ids = sorted(
+                {event_clause_by_key[value] for value in item["root_keys"]},
+                key=clause_order.get,
+            )
+        spans = [
+            copy.deepcopy(clauses[clause_order[value] - 1]["source_span"])
+            for value in clause_ids
+        ]
+        rooted = [
+            mention_by_key[value] if value in mention_by_key else event_by_key[value]
+            for value in item["root_keys"]
+        ]
+        assertions = {value["assertion_status"] for value in rooted}
+        temporals = {value["temporal_scope"] for value in rooted}
+        assertion = next(iter(assertions)) if len(assertions) == 1 else "UNKNOWN"
+        temporal = next(iter(temporals)) if len(temporals) == 1 else "UNKNOWN"
+        relation_metadata[item["relation_key"]] = {
+            "basis": basis, "clauses": clause_ids, "spans": spans,
+            "assertion": assertion, "temporal": temporal,
+        }
+        relations.append({
+            "intent_id": _c4_project_id(item["relation_key"]),
+            "clause_ids": clause_ids,
+            "source_spans": spans,
+            "predicate": item["predicate"],
+            "subject_selector": copy.deepcopy(item["subject_selector"]),
+            "object_selector": copy.deepcopy(item["object_selector"]),
+            "assertion_status": assertion,
+            "temporal_scope": temporal,
+            "activation_policy": item["activation_policy"],
+            "derivation_mode": item["derivation_mode"],
+            "basis_ids": basis,
+        })
+    roles = []
+    for item in core["semantic_roles"]:
+        metadata = relation_metadata[item["root_keys"][0]]
+        event_clauses = sorted(set(event_clause_by_key.values()), key=clause_order.get)
+        roles.append({
+            "role_id": _c4_project_id(item["role_key"]),
+            "clause_ids": event_clauses,
+            "role_namespace": item["role_namespace"],
+            "role_value": item["role_value"],
+            "activation_policy": item["activation_policy"],
+            "basis_ids": metadata["basis"],
+        })
+    narratives = []
+    for item in core["narrative_intents"]:
+        metadata = relation_metadata[item["root_keys"][0]]
+        subject_ids = set(item["entity_selector"]["entity_ids"])
+        basis = sorted(
+            _c4_project_id(value["mention_key"])
+            for value in core["resolved_mentions"]
+            if value["entity_id"] in subject_ids
+        )
+        narratives.append({
+            "narrative_intent_id": _c4_project_id(item["narrative_key"]),
+            "clause_ids": metadata["clauses"],
+            "source_spans": metadata["spans"],
+            "entity_selector": copy.deepcopy(item["entity_selector"]),
+            "topic_scope": item["topic_scope"],
+            "semantic_role": item["semantic_role"],
+            "assertion_status": metadata["assertion"],
+            "temporal_scope": metadata["temporal"],
+            "activation_policy": item["activation_policy"],
+            "derivation_mode": "DIRECT_MENTION_DERIVED",
+            "basis_ids": basis,
+            "required_anchor_predicates": item["required_anchor_predicates"],
+        })
+    node_by_id = {item["node_id"]: item for item in ast["nodes"]}
+    reference_by_id = {
+        item["reference_hypothesis_id"]: item
+        for item in event_frame["reference_hypotheses"]
+    }
+    override_by_id = {
+        item["override_hypothesis_id"]: item
+        for item in event_frame["override_hypotheses"]
+    }
+
+    def clause_and_span(source_id: str) -> tuple[str, dict[str, Any]]:
+        if source_id in ast_mentions:
+            source = ast_mentions[source_id]
+            return clause_by_node[source["containing_node_id"]], copy.deepcopy(source["source_span"])
+        node = node_by_id[source_id]
+        current = node
+        while current["node_id"] not in clause_by_node:
+            children = [node_by_id[value] for value in current["child_node_ids"]]
+            if not children:
+                _c4_fail("CNS-EMIT-PROJECTION_ONLY", "structural source has no proposition")
+            current = sorted(children, key=lambda value: value["source_span"]["start_char"])[0]
+        return clause_by_node[current["node_id"]], copy.deepcopy(node["source_span"])
+
+    resolved_references = []
+    for item in core["resolved_references"]:
+        hypothesis = reference_by_id[item["hypothesis_id"]]
+        clause_id, anaphor_span = clause_and_span(hypothesis["anaphor_source_id"])
+        reference_id = _c4_project_id(item["reference_key"])
+        resolved_references.append({
+            "reference_id": reference_id,
+            "clause_id": clause_id,
+            "anaphor_span": anaphor_span,
+            "referent_kind": "EVENT" if item["referent_key"].startswith("RE") else "MENTION",
+            "referent_id": _c4_project_id(item["referent_key"]),
+            "resolution_status": "RESOLVED",
+        })
+        target_id = _c4_project_id(item["anaphor_key"])
+        collection = events if target_id.startswith("E") else mentions
+        target = next(
+            value for value in collection
+            if value.get("event_id", value.get("mention_id")) == target_id
+        )
+        target["reference_ids"].append(reference_id)
+    resolved_overrides = []
+    for item in core["resolved_overrides"]:
+        hypothesis = override_by_id[item["hypothesis_id"]]
+        clause_id, _ = clause_and_span(hypothesis["override_ast_node_id"])
+        resolved_overrides.append({
+            "override_id": _c4_project_id(item["override_key"]),
+            "override_clause_id": clause_id,
+            "earlier_event_id": _c4_project_id(item["earlier_event_key"]),
+            "later_event_id": _c4_project_id(item["later_event_key"]),
+            "same_normalized_event_identity": True,
+            "resolution_status": "RESOLVED",
+        })
+    forbidden = []
+    for item in core["forbidden_relations"]:
+        roots = [
+            mention_by_key[value] if value in mention_by_key else event_by_key[value]
+            for value in item["root_keys"]
+        ]
+        basis = [_c4_project_id(value) for value in item["root_keys"]]
+        clause_ids = sorted({
+            next(
+                value["clause_id"] for value in mentions
+                if value["mention_id"] == _c4_project_id(root["mention_key"])
+            ) if "mention_key" in root else event_clause_by_key[root["event_key"]]
+            for root in roots
+        }, key=clause_order.get)
+        forbidden.append({
+            "prohibition_id": f"F{int(item['forbidden_key'][2:]):02d}",
+            "clause_ids": clause_ids,
+            "source_spans": [
+                copy.deepcopy(clauses[clause_order[value] - 1]["source_span"])
+                for value in clause_ids
+            ],
+            "predicate": item["predicate"],
+            "subject_selector": copy.deepcopy(item["subject_selector"]),
+            "object_selector": copy.deepcopy(item["object_selector"]),
+            "reason": item["reason"],
+            "basis_ids": basis,
+        })
+    return {
+        "query_ir_version": "0.3-candidate",
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "knowledge_version": normalized["knowledge_version"],
+        "span_basis": ast["span_basis"],
+        "interpretation_status": "VALID",
+        "producer": {
+            "producer_id": "p9b1q-queryir-emitter",
+            "producer_version": "0.1-fixture",
+            "implementation_kind": "DETERMINISTIC",
+            "configuration_sha256": hashes["PROJECTION_RULE_SET"],
+        },
+        "clauses": clauses,
+        "mentions": mentions,
+        "events": events,
+        "relation_intents": relations,
+        "narrative_intents": narratives,
+        "required_roles": roles,
+        "forbidden_relation_intents": forbidden,
+        "resolved_references": resolved_references,
+        "resolved_overrides": resolved_overrides,
+        "ambiguities": [],
+    }
+
+
+def _c4_trace_root_spans(
+    root_keys: Iterable[str], core: dict[str, Any], inputs: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Resolve textual roots independently for S4 trace validation."""
+    ast_mentions = {
+        item["surface_mention_id"]: item
+        for item in inputs["CLAUSE_AST"]["surface_mentions"]
+    }
+    frames = {
+        item["frame_id"]: item for item in inputs["EVENT_FRAME"]["frames"]
+    }
+    mentions = {item["mention_key"]: item for item in core["resolved_mentions"]}
+    events = {item["event_key"]: item for item in core["resolved_events"]}
+    derived = {
+        item[key]: item
+        for collection, key in (
+            ("resolved_relations", "relation_key"),
+            ("semantic_roles", "role_key"),
+            ("narrative_intents", "narrative_key"),
+            ("forbidden_relations", "forbidden_key"),
+        )
+        for item in core[collection]
+    }
+    spans: dict[tuple[int, int, str], dict[str, Any]] = {}
+    pending = list(root_keys)
+    visited: set[str] = set()
+    while pending:
+        key = pending.pop()
+        if key in visited:
+            continue
+        visited.add(key)
+        values: Iterable[dict[str, Any]] = []
+        if key in mentions:
+            values = [ast_mentions[mentions[key]["surface_mention_id"]]["source_span"]]
+        elif key in events:
+            values = frames[events[key]["frame_id"]]["source_spans"]
+        elif key in derived:
+            pending.extend(derived[key].get("root_keys", []))
+        for span in values:
+            spans[(span["start_char"], span["end_char"], span["text"])] = span
+    return [copy.deepcopy(spans[key]) for key in sorted(spans)]
+
+
+def _c4_relation_event_types(
+    relation: dict[str, Any], core: dict[str, Any], inputs: dict[str, Any]
+) -> list[str]:
+    if relation["derivation_mode"] == "EVENT_DERIVED":
+        return sorted(
+            event["event_type"] for event in core["resolved_events"]
+            if event["event_key"] in relation["root_keys"]
+        )
+    subject_ids = set(relation["subject_selector"]["entity_ids"])
+    object_ids = set(relation["object_selector"]["entity_ids"])
+    mention_types = {
+        item["entity_id"]: item["entity_type"] for item in core["resolved_mentions"]
+    }
+    return sorted({
+        profile["when"]["event_type"]
+        for profile in inputs["PROJECTION_RULE_SET"].get(
+            "semantic_projection_profiles", []
+        )
+        if profile["when"]["predicate"] == relation["predicate"]
+        and any(
+            mention_types.get(value) == profile["when"]["subject_entity_type"]
+            for value in subject_ids
+        )
+        and any(
+            mention_types.get(value) == profile["when"]["object_entity_type"]
+            for value in object_ids
+        )
+    })
+
+
+def _c4_expected_trace_claims(
+    pointer: str, core: dict[str, Any], inputs: dict[str, Any]
+) -> list[tuple[str, tuple[str, ...], tuple[tuple[int, int, str], ...]]]:
+    """Derive exact trace occurrence claims without invoking C3 trace generation."""
+    normalized = inputs["NORMALIZED_REQUEST"]
+    text = normalized["normalized_query_text"]
+    whole = (0, len(text), text)
+    ast = inputs["CLAUSE_AST"]
+    frame = inputs["EVENT_FRAME"]
+    ast_mentions = {
+        item["surface_mention_id"]: item for item in ast["surface_mentions"]
+    }
+    frame_by_id = {item["frame_id"]: item for item in frame["frames"]}
+    proposition_nodes = sorted(
+        (item for item in ast["nodes"] if item["node_kind"] == "PROPOSITION"),
+        key=lambda item: (
+            item["source_span"]["start_char"], item["source_span"]["end_char"]
+        ),
+    )
+
+    def span_keys(values: Iterable[dict[str, Any]]) -> tuple[tuple[int, int, str], ...]:
+        return tuple(sorted({
+            (value["start_char"], value["end_char"], value["text"])
+            for value in values
+        }))
+
+    def claim(
+        kind: str, ids: Iterable[str], spans: Iterable[dict[str, Any]]
+    ) -> tuple[str, tuple[str, ...], tuple[tuple[int, int, str], ...]]:
+        return kind, tuple(sorted(set(ids))), span_keys(spans)
+
+    tokens = [
+        value.replace("~1", "/").replace("~0", "~")
+        for value in pointer.lstrip("/").split("/")
+    ]
+    head = tokens[0]
+    index = int(tokens[1]) if len(tokens) > 1 and tokens[1].isdigit() else None
+    if head == "clauses":
+        selected = proposition_nodes if index is None else [proposition_nodes[index]]
+        return [claim(
+            "CLAUSE_AST",
+            (item["node_id"] for item in selected),
+            (item["source_span"] for item in selected),
+        )]
+    if head == "mentions":
+        selected = core["resolved_mentions"] if index is None else [core["resolved_mentions"][index]]
+        sources = [ast_mentions[item["surface_mention_id"]] for item in selected]
+        spans = [item["source_span"] for item in sources]
+        return [
+            claim("CLAUSE_AST", (item["surface_mention_id"] for item in sources), spans),
+            claim("TYPED_SOLUTION", (item["mention_key"] for item in selected), spans),
+        ]
+    if head == "events":
+        selected = core["resolved_events"] if index is None else [core["resolved_events"][index]]
+        frames = [frame_by_id[item["frame_id"]] for item in selected]
+        ids: set[str] = set()
+        spans: list[dict[str, Any]] = []
+        for actual in frames:
+            ids.update([actual["frame_id"], *actual["source_ast_node_ids"]])
+            spans.extend(actual["source_spans"])
+            for slot in actual["participant_slots"]:
+                ids.update([slot["slot_id"], *slot["source_ids"]])
+                spans.extend(ast_mentions[value]["source_span"] for value in slot["source_ids"])
+        return [
+            claim("EVENT_FRAME", ids, spans),
+            claim(
+                "TYPED_SOLUTION",
+                (value for item in selected for value in (item["event_key"], item["frame_id"])),
+                spans,
+            ),
+        ]
+    collection_by_head = {
+        "relation_intents": "resolved_relations",
+        "narrative_intents": "narrative_intents",
+        "required_roles": "semantic_roles",
+        "forbidden_relation_intents": "forbidden_relations",
+        "resolved_references": "resolved_references",
+        "resolved_overrides": "resolved_overrides",
+    }
+    if head not in collection_by_head:
+        return [("NORMALIZED_REQUEST", (normalized["request_id"],), (whole,))]
+    collection = collection_by_head[head]
+    selected = core[collection] if index is None else [core[collection][index]]
+    if not selected:
+        return [("NORMALIZED_REQUEST", (normalized["request_id"],), (whole,))]
+    result: list[tuple[str, tuple[str, ...], tuple[tuple[int, int, str], ...]]] = []
+    for item in selected:
+        key = next(
+            item[name] for name in (
+                "relation_key", "narrative_key", "role_key", "forbidden_key",
+                "reference_key", "override_key",
+            ) if name in item
+        )
+        roots = item.get("root_keys", [])
+        spans = _c4_trace_root_spans(roots, core, inputs)
+        if not spans and "hypothesis_id" in item:
+            hypotheses = (
+                frame["reference_hypotheses"]
+                if collection == "resolved_references"
+                else frame["override_hypotheses"]
+            )
+            hypothesis = next(value for value in hypotheses if item["hypothesis_id"] in value.values())
+            source_ids = [item["hypothesis_id"]]
+            source_ids.extend(
+                value for name, value in hypothesis.items()
+                if name.endswith("_source_id") and isinstance(value, str)
+            )
+            nodes = {value["node_id"]: value for value in ast["nodes"]}
+            spans = [
+                ast_mentions[value]["source_span"]
+                if value in ast_mentions else nodes[value]["source_span"]
+                for value in source_ids if value in ast_mentions or value in nodes
+            ] or [{"start_char": whole[0], "end_char": whole[1], "text": whole[2]}]
+            result.append(claim("EVENT_FRAME", source_ids, spans))
+        typed_ids = [key, *roots]
+        if "hypothesis_id" in item:
+            typed_ids.append(item["hypothesis_id"])
+        actual_spans = spans or [{"start_char": whole[0], "end_char": whole[1], "text": whole[2]}]
+        result.append(claim("TYPED_SOLUTION", typed_ids, actual_spans))
+        if collection in {"resolved_relations", "forbidden_relations"}:
+            event_types = (
+                _c4_relation_event_types(item, core, inputs)
+                if collection == "resolved_relations" else []
+            )
+            result.append(claim(
+                "EVENT_RELATION_MAPPING", [item["predicate"], *event_types], actual_spans
+            ))
+        elif collection in {"semantic_roles", "narrative_intents"}:
+            result.append(claim(
+                "SEMANTIC_ROLE_MAPPING",
+                [
+                    item[name] for name in (
+                        "role_namespace", "role_value", "topic_scope", "semantic_role"
+                    ) if name in item
+                ],
+                actual_spans,
+            ))
+    return sorted(result)
+
+
+def _c4_validate_traces(
+    traces: list[dict[str, Any]],
+    query_ir: dict[str, Any],
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+) -> None:
+    expected_pointers = _c3_json_pointers(query_ir)
+    pointers = [item["query_ir_json_pointer"] for item in traces]
+    if len(pointers) != len(set(pointers)) or set(pointers) != set(expected_pointers):
+        _c4_fail(
+            "CNS-EMIT-LEAF_TRACE_COVERAGE",
+            "field traces do not provide exact one-to-one pointer coverage",
+        )
+    trace_ids = [item["trace_id"] for item in traces]
+    if len(trace_ids) != len(set(trace_ids)):
+        _c4_fail("CNS-EMIT-LEAF_TRACE_COVERAGE", "duplicate trace identifier")
+    actual_objects = {
+        "NORMALIZED_REQUEST": inputs["NORMALIZED_REQUEST"],
+        "CLAUSE_AST": inputs["CLAUSE_AST"],
+        "EVENT_FRAME": inputs["EVENT_FRAME"],
+        "TYPED_SOLUTION": core,
+        "CONSTRAINT_SET": inputs["CONSTRAINT_SET"],
+        "ENTITY_ONTOLOGY": inputs["ENTITY_ONTOLOGY"],
+        "RELATION_ONTOLOGY": inputs["RELATION_ONTOLOGY"],
+        "EVENT_RELATION_MAPPING": inputs["EVENT_RELATION_MAPPING"],
+        "SEMANTIC_ROLE_MAPPING": inputs["SEMANTIC_ROLE_MAPPING"],
+    }
+    actual_hashes = {
+        kind: (
+            canonical_sha256(value)
+            if kind in {"NORMALIZED_REQUEST", "CLAUSE_AST", "EVENT_FRAME", "TYPED_SOLUTION"}
+            else hashes[kind]
+        )
+        for kind, value in actual_objects.items()
+    }
+    text = inputs["NORMALIZED_REQUEST"]["normalized_query_text"]
+    for trace in traces:
+        pointer = trace["query_ir_json_pointer"]
+        try:
+            pointed = _c3_pointer_get(query_ir, pointer)
+        except (KeyError, IndexError, TypeError, ValueError):
+            _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "trace pointer does not resolve")
+        if trace["emitted_value_sha256"] != canonical_sha256(pointed):
+            _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "trace pointed-value hash mismatch")
+        claims = []
+        for binding in trace["source_bindings"]:
+            kind = binding["object_kind"]
+            if kind not in actual_objects or binding["object_sha256"] != actual_hashes[kind]:
+                _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "source kind or object hash mismatch")
+            if not binding["source_ids"]:
+                _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "source binding has no resolvable identifier")
+            catalog = _c3_source_identifier_catalog(actual_objects[kind])
+            if any(value not in catalog for value in binding["source_ids"]):
+                _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "source identifier does not resolve")
+            spans = []
+            for span in binding["source_spans"]:
+                start, end = span["start_char"], span["end_char"]
+                if not (0 <= start < end <= len(text)) or text[start:end] != span["text"]:
+                    _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "source span is not an exact request slice")
+                spans.append((start, end, span["text"]))
+            claims.append((
+                kind,
+                tuple(sorted(set(binding["source_ids"]))),
+                tuple(sorted(set(spans))),
+            ))
+        if sorted(claims) != _c4_expected_trace_claims(pointer, core, inputs):
+            _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "trace occurrence provenance mismatch")
+
+
+def _c4_validate_schemas_and_bindings(
+    execution: dict[str, Any],
+    emission: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+    root: Path,
+) -> None:
+    try:
+        _validate_bound_schema(emission, QUERYIR_EMISSION_RECORD_SCHEMA_PATH, root)
+        _validate_bound_schema(emission["query_ir"], QUERY_IR_SCHEMA_PATH, root)
+    except (SchemaValidationError, KeyError, TypeError) as exc:
+        _c4_fail("CNS-EMIT-QUERYIR_SCHEMA", str(exc))
+    try:
+        _validate_bound_schema(
+            execution["typed_constraint_result"],
+            TYPED_CONSTRAINT_RESULT_SCHEMA_PATH,
+            root,
+        )
+    except (SchemaValidationError, KeyError, TypeError) as exc:
+        _c4_fail("CNS-EMIT-VALID_STATUS", str(exc))
+    normalized = execution["normalized_request"]
+    ast = execution["clause_ast"]
+    frame = execution["event_frame"]
+    typed = execution["typed_constraint_result"]
+    actual = {
+        "normalized_request_sha256": canonical_sha256(normalized),
+        "clause_ast_sha256": canonical_sha256(ast),
+        "event_frame_sha256": canonical_sha256(frame),
+        "typed_constraint_result_sha256": canonical_sha256(typed),
+    }
+    if any(execution.get(key) != value for key, value in actual.items()):
+        _c4_fail("CNS-EMIT-PROJECTION_ONLY", "production predecessor object hash mismatch")
+    expected_emission = {
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "normalized_request_sha256": hashes["NORMALIZED_REQUEST"],
+        "clause_ast_sha256": hashes["CLAUSE_AST"],
+        "event_frame_sha256": hashes["EVENT_FRAME"],
+        "query_ir_schema_sha256": hashes["QUERY_IR_SCHEMA"],
+        "projection_rule_set_sha256": hashes["PROJECTION_RULE_SET"],
+    }
+    if any(emission.get(key) != value for key, value in expected_emission.items()):
+        _c4_fail("CNS-EMIT-PROJECTION_ONLY", "emission record actual-object binding mismatch")
+    if emission["query_ir_sha256"] != canonical_sha256(emission["query_ir"]):
+        _c4_fail("CNS-EMIT-TRACE_VALUE_HASH", "QueryIR canonical hash mismatch")
+    expected_typed_bindings = {
+        "request_id": normalized["request_id"],
+        "request_sha256": normalized["request_sha256"],
+        "normalized_request_sha256": hashes["NORMALIZED_REQUEST"],
+        "clause_ast_sha256": hashes["CLAUSE_AST"],
+        "event_frame_sha256": hashes["EVENT_FRAME"],
+        "entity_ontology_sha256": hashes["ENTITY_ONTOLOGY"],
+        "relation_ontology_sha256": hashes["RELATION_ONTOLOGY"],
+        "event_relation_mapping_sha256": hashes["EVENT_RELATION_MAPPING"],
+        "predicate_type_mapping_sha256": hashes["PREDICATE_TYPE_MAPPING"],
+        "semantic_role_mapping_sha256": hashes["SEMANTIC_ROLE_MAPPING"],
+        "constraint_set_sha256": hashes["CONSTRAINT_SET"],
+        "constraint_registry_sha256": hashes["CONSTRAINT_REGISTRY"],
+        "stage_validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+        "canonicalization_profile_sha256": hashes["CANONICALIZATION_PROFILE"],
+    }
+    if any(typed.get(key) != value for key, value in expected_typed_bindings.items()):
+        _c4_fail("CNS-EMIT-PROJECTION_ONLY", "typed-result authority binding mismatch")
+
+
+def _c4_resolve_proof(
+    proof_root: Path, relative: str, kind: str, request_id: str
+) -> tuple[dict[str, Any], str] | None:
+    """Reject symlinks lexically before using the shared content-address resolver."""
+    if not isinstance(relative, str):
+        return None
+    current = proof_root
+    for component in relative.split("/"):
+        current = current / component
+        if current.is_symlink():
+            return None
+    return _c3_resolve_proof(proof_root, relative, kind, request_id)
+
+
+def _c4_load_persisted_core(
+    emission: dict[str, Any], proof_root: Path, request_id: str, root: Path
+) -> dict[str, Any]:
+    digest = emission["semantic_solution_core_sha256"]
+    relative = f"proof-objects/typed-solution-core/{digest}.json"
+    resolved = _c4_resolve_proof(proof_root, relative, "TYPED_SOLUTION", request_id)
+    if resolved is None or resolved[1] != digest:
+        _c4_fail(
+            "CNS-EMIT-MINIMALITY_WITNESS",
+            "separately persisted typed solution is missing or incorrectly addressed",
+        )
+    core = resolved[0]
+    try:
+        _validate_bound_schema(core, TYPED_SOLUTION_CORE_SCHEMA_PATH, root)
+    except SchemaValidationError as exc:
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", str(exc))
+    if core["semantic_object_set_sha256"] != canonical_sha256(_c3_semantic_object_set(core)):
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "typed core semantic object-set hash mismatch")
+    if core["solution_id"] != f"SOL-{core['semantic_object_set_sha256'][:24]}":
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "typed core solution identity mismatch")
+    return core
+
+
+def _c4_expected_node_kind(
+    material_id: str, collection: str, index: int, core: dict[str, Any]
+) -> str:
+    if collection == "resolved_mentions":
+        mention = core[collection][index]
+        if mention["assertion_status"] in {"NEGATED", "EXCLUDED", "HYPOTHETICAL"}:
+            return "NEGATED_OR_EXCLUDED_ROOT"
+        if any(
+            mention["mention_key"] in relation["root_keys"]
+            for relation in core["resolved_relations"]
+        ):
+            return "EXPLICIT_RELATION_ROOT"
+        if not core["resolved_relations"]:
+            return "EXPLICIT_QUESTION_SLOT_ROOT"
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", f"unlicensed mention {material_id}")
+    if collection == "resolved_events":
+        return (
+            "AFFIRMED_EVENT_ROOT"
+            if core[collection][index]["assertion_status"] == "AFFIRMED"
+            else "NEGATED_OR_EXCLUDED_ROOT"
+        )
+    return {
+        "resolved_relations": "RELATION",
+        "narrative_intents": "NARRATIVE",
+        "semantic_roles": "SEMANTIC_ROLE",
+        "forbidden_relations": "PROHIBITION",
+        "resolved_references": "REFERENCE",
+        "resolved_overrides": "OVERRIDE",
+    }[collection]
+
+
+def _c4_validate_license_dag(
+    emission: dict[str, Any], core: dict[str, Any]
+) -> tuple[dict[str, str], set[tuple[str, str]]]:
+    dag = emission["license_dag"]
+    body = copy.deepcopy(dag)
+    body.pop("dag_sha256", None)
+    if dag.get("dag_sha256") != canonical_sha256(body):
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "license DAG hash mismatch")
+    nodes = dag["nodes"]
+    node_ids = [item["node_id"] for item in nodes]
+    semantic_ids = [item["semantic_object_id"] for item in nodes]
+    if len(node_ids) != len(set(node_ids)) or len(semantic_ids) != len(set(semantic_ids)):
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "duplicate license node or semantic object")
+    materials = _c3_material_objects(core)
+    material = {item[0]: item for item in materials}
+    if set(semantic_ids) != set(material):
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "license material coverage mismatch")
+    trace_by_pointer = {
+        item["query_ir_json_pointer"]: item["trace_id"]
+        for item in emission["field_traces"]
+    }
+    node_by_material = {item["semantic_object_id"]: item["node_id"] for item in nodes}
+    for node in nodes:
+        material_id = node["semantic_object_id"]
+        _, collection, index, pointer, _ = material[material_id]
+        if (
+            node["node_kind"] != _c4_expected_node_kind(material_id, collection, index, core)
+            or node["source_binding_ids"] != [trace_by_pointer[pointer]]
+        ):
+            _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "license node authority mismatch")
+    order = dag["topological_order"]
+    if len(order) != len(set(order)) or set(order) != set(node_ids):
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "topological order is incomplete or duplicated")
+    position = {value: index for index, value in enumerate(order)}
+    edges = dag["edges"]
+    edge_ids = [item["edge_id"] for item in edges]
+    if len(edge_ids) != len(set(edge_ids)):
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "duplicate license edge")
+    material_by_node = {value: key for key, value in node_by_material.items()}
+    actual_edges: set[tuple[str, str, str]] = set()
+    for edge in edges:
+        source, target = edge["from_node_id"], edge["to_node_id"]
+        if (
+            source not in material_by_node
+            or target not in material_by_node
+            or position[source] >= position[target]
+            or edge["constraint_ids"] != ["CNS-SOLVER-LICENSE_DAG"]
+        ):
+            _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "dangling, cyclic, or unlicensed edge")
+        actual_edges.add((material_by_node[source], material_by_node[target], edge["edge_kind"]))
+    key_to_material = {item[4]: item[0] for item in materials}
+    expected_edges: set[tuple[str, str, str]] = set()
+    for material_id, collection, index, _, _ in materials:
+        item = core[collection][index]
+        if collection == "resolved_relations":
+            for root_key in item["root_keys"]:
+                root = key_to_material[root_key]
+                expected_edges.add((
+                    root,
+                    material_id,
+                    "EVENT_DERIVES_RELATION" if root.startswith("E") else "ROOTS_EVENT_OR_RELATION",
+                ))
+        elif collection in {"semantic_roles", "narrative_intents"}:
+            expected_edges.add((
+                key_to_material[item["root_keys"][0]],
+                material_id,
+                "RELATION_LICENSES_ROLE" if collection == "semantic_roles" else "RELATION_LICENSES_NARRATIVE",
+            ))
+        elif collection == "forbidden_relations":
+            expected_edges.add((
+                key_to_material[item["root_keys"][0]], material_id,
+                "NEGATED_BASIS_LICENSES_PROHIBITION",
+            ))
+        elif collection == "resolved_references":
+            expected_edges.add((
+                key_to_material[item["anaphor_key"]], material_id, "REFERENCE_BINDS_OBJECT"
+            ))
+        elif collection == "resolved_overrides":
+            expected_edges.add((
+                key_to_material[item["later_event_key"]], material_id, "OVERRIDE_BINDS_EVENTS"
+            ))
+    if actual_edges != expected_edges or len(actual_edges) != len(edges):
+        _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "license edges differ from typed-core authority")
+    indegree = {value: 0 for value in node_ids}
+    adjacency: set[tuple[str, str]] = set()
+    for edge in edges:
+        indegree[edge["to_node_id"]] += 1
+        adjacency.add((edge["from_node_id"], edge["to_node_id"]))
+    for node in nodes:
+        is_root_kind = node["node_kind"] in {
+            "AFFIRMED_EVENT_ROOT", "EXPLICIT_RELATION_ROOT",
+            "EXPLICIT_QUESTION_SLOT_ROOT", "NEGATED_OR_EXCLUDED_ROOT",
+        }
+        if (indegree[node["node_id"]] == 0) != is_root_kind:
+            _c4_fail("CNS-EMIT-LICENSE_COVERAGE", "license zero-indegree root authority mismatch")
+    return node_by_material, adjacency
+
+
+def _c4_validate_persisted_proofs_and_minimality(
+    result: dict[str, Any],
+    emission: dict[str, Any],
+    core: dict[str, Any],
+    inputs: dict[str, Any],
+    hashes: dict[str, str],
+    proof_root: Path,
+    root: Path,
+    node_by_material: dict[str, str],
+    adjacency: set[tuple[str, str]],
+) -> None:
+    query_ir = emission["query_ir"]
+    minimality = emission["minimality_witness"]
+    body = copy.deepcopy(minimality)
+    body.pop("witness_sha256", None)
+    if minimality.get("witness_sha256") != canonical_sha256(body):
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "minimality witness hash mismatch")
+    materials = _c3_material_objects(core)
+    material = {item[0]: item for item in materials}
+    material_ids = set(material)
+    retained = minimality["retained_semantic_object_ids"]
+    witnesses = minimality["retained_object_witnesses"]
+    witness_ids = [item["semantic_object_id"] for item in witnesses]
+    if (
+        len(retained) != len(set(retained))
+        or len(witness_ids) != len(set(witness_ids))
+        or set(retained) != material_ids
+        or set(witness_ids) != material_ids
+        or len(retained) != len(witnesses)
+        or minimality["omitted_object_ids"] != []
+        or minimality["omitted_object_exclusion_constraint_ids"] != []
+    ):
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "minimality witness is not an exact retained set")
+    universe_result = _c4_resolve_proof(
+        proof_root,
+        minimality["semantic_universe_path"],
+        "SEMANTIC_UNIVERSE",
+        result["request_id"],
+    )
+    if universe_result is None or universe_result[1] != minimality["semantic_universe_sha256"]:
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "semantic universe path or hash mismatch")
+    universe = universe_result[0]
+    try:
+        validate_schema(universe, MINIMALITY_PROOF_SCHEMA_PATH, root)
+    except SchemaValidationError as exc:
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", str(exc))
+    if universe["query_ir_sha256"] != canonical_sha256(query_ir):
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "semantic universe QueryIR hash mismatch")
+    universe_objects = universe["semantic_objects"]
+    if (
+        len(universe_objects) != len(material_ids)
+        or {item["semantic_object_id"] for item in universe_objects} != material_ids
+    ):
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "semantic universe is incomplete")
+    expected_kind = {
+        "resolved_mentions": "MENTION",
+        "resolved_events": "EVENT",
+        "resolved_relations": "RELATION_INTENT",
+        "narrative_intents": "NARRATIVE_INTENT",
+        "semantic_roles": "REQUIRED_ROLE",
+        "forbidden_relations": "FORBIDDEN_RELATION",
+        "resolved_references": "REFERENCE",
+        "resolved_overrides": "OVERRIDE",
+    }
+    for item in universe_objects:
+        _, collection, _, pointer, _ = material[item["semantic_object_id"]]
+        if (
+            item["object_kind"] != expected_kind[collection]
+            or item["query_ir_json_pointer"] != pointer
+        ):
+            _c4_fail(
+                "CNS-EMIT-MINIMALITY_WITNESS",
+                "semantic universe object kind or pointer mismatch",
+            )
+        try:
+            pointed = _c3_pointer_get(query_ir, item["query_ir_json_pointer"])
+        except (KeyError, IndexError, TypeError, ValueError):
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "semantic universe pointer invalid")
+        if item["canonical_sha256"] != canonical_sha256(pointed):
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "semantic universe object hash mismatch")
+    node_ids = set(node_by_material.values())
+    incoming = {value: 0 for value in node_ids}
+    for _, target in adjacency:
+        incoming[target] += 1
+    for witness in witnesses:
+        material_id = witness["semantic_object_id"]
+        _, collection, index, pointer, _ = material[material_id]
+        expected_constraint = _c3_removal_constraint(collection)
+        path = witness["license_path_node_ids"]
+        if (
+            witness["query_ir_json_pointer"] != pointer
+            or witness["supporting_constraint_ids"] != [expected_constraint]
+            or witness["removal_unsatisfied_constraint_ids"] != [expected_constraint]
+            or not path
+            or path[-1] != node_by_material[material_id]
+            or path[0] not in incoming
+            or incoming[path[0]] != 0
+            or any(value not in node_ids for value in path)
+            or any((left, right) not in adjacency for left, right in zip(path, path[1:]))
+        ):
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "witness semantics or license path mismatch")
+        probe_result = _c4_resolve_proof(
+            proof_root,
+            witness["removal_probe_path"],
+            "REMOVAL_PROBE",
+            result["request_id"],
+        )
+        if probe_result is None or probe_result[1] != witness["removal_probe_sha256"]:
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "removal probe path or hash mismatch")
+        probe = probe_result[0]
+        try:
+            validate_schema(probe, MINIMALITY_PROOF_SCHEMA_PATH, root)
+        except SchemaValidationError as exc:
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", str(exc))
+        operation = probe["mutation"][0]
+        match = re.fullmatch(r"/([a-z_]+)/([0-9]+)", operation.get("path", ""))
+        expected_path = f"/{collection}/{index}"
+        expected_core_path = (
+            f"proof-objects/typed-solution-core/"
+            f"{emission['semantic_solution_core_sha256']}.json"
+        )
+        external = {
+            "validator_contract_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+            "validator_executable_path": "reference-stage-semantic-validator.py",
+            "validator_executable_sha256": file_sha256(root / REFERENCE_STAGE_VALIDATOR_PATH),
+            "validator_configuration_path": "stage-semantic-validator-contract.yml",
+            "validator_configuration_sha256": hashes["STAGE_VALIDATOR_CONTRACT"],
+            "constraint_set_sha256": hashes["CONSTRAINT_SET"],
+        }
+        if (
+            operation.get("op") != "remove"
+            or match is None
+            or operation["path"] != expected_path
+            or probe["removed_semantic_object_id"] != material_id
+            or probe["removed_query_ir_json_pointer"] != pointer
+            or probe["base_typed_solution_path"] != expected_core_path
+            or probe["base_typed_solution_sha256"] != emission["semantic_solution_core_sha256"]
+            or probe["expected_result"] != "FAIL_CLOSED"
+            or probe["recomputed_derived_hashes"] != ["semantic_object_set_sha256"]
+            or probe["expected_unsatisfied_constraint_ids"] != [expected_constraint]
+            or any(probe.get(key) != value for key, value in external.items())
+        ):
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "removal probe authority binding mismatch")
+        candidate = copy.deepcopy(core)
+        candidate[collection].pop(index)
+        _c3_refresh_core(candidate)
+        if (
+            probe["candidate_typed_solution_sha256"] != canonical_sha256(candidate)
+            or probe["candidate_semantic_object_set_sha256"]
+            != candidate["semantic_object_set_sha256"]
+            or probe["enumerated_solution_count_after_removal"]
+            != int(_c3_subset_satisfies(core, candidate))
+            or probe["enumerated_solution_count_after_removal"] != 0
+        ):
+            _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "removal probe replay mismatch")
+
+
+def extract_queryir_c4(
+    c3_execution: dict[str, Any],
+    *,
+    root: Path = ROOT,
+    proof_root: Path | None = None,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Validate S4 independently and extract only the embedded QueryIR bytes."""
+    try:
+        validate_c3_stop_boundary(c3_execution)
+        typed = c3_execution["typed_constraint_result"]
+    except (C3ValidationError, KeyError, TypeError) as exc:
+        _c4_fail("CNS-EMIT-VALID_STATUS", str(exc))
+    if typed.get("status") != "UNIQUE":
+        try:
+            _validate_bound_schema(typed, TYPED_CONSTRAINT_RESULT_SCHEMA_PATH, root)
+        except SchemaValidationError as exc:
+            _c4_fail("CNS-EMIT-VALID_STATUS", str(exc))
+        if typed.get("selected_solution") is not None:
+            _c4_fail("CNS-EMIT-VALID_STATUS", "non-UNIQUE result selected a solution")
+        return None
+    if typed.get("solution_cardinality") != "ONE" or not isinstance(
+        typed.get("selected_solution"), dict
+    ):
+        _c4_fail("CNS-EMIT-VALID_STATUS", "UNIQUE result lacks exactly one selected solution")
+    if proof_root is None:
+        _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "proof root is required")
+    selected = typed["selected_solution"]
+    emission = selected.get("queryir_emission_record")
+    if not isinstance(emission, dict):
+        _c4_fail("CNS-EMIT-QUERYIR_SCHEMA", "embedded emission record is absent")
+    normalized = c3_execution["normalized_request"]
+    ast = c3_execution["clause_ast"]
+    event_frame = c3_execution["event_frame"]
+    inputs = _c3_authority_inputs(
+        normalized, ast, event_frame, root, diagnostic_argument_binding
+    )
+    hashes = _c3_hash_bindings(inputs, root)
+    _c4_validate_schemas_and_bindings(c3_execution, emission, inputs, hashes, root)
+    core = _c4_load_persisted_core(emission, proof_root, typed["request_id"], root)
+    embedded_core = copy.deepcopy(selected)
+    embedded_core.pop("queryir_emission_record", None)
+    if canonical_bytes(core) != canonical_bytes(embedded_core):
+        _c4_fail("CNS-EMIT-PROJECTION_ONLY", "embedded solution differs from persisted typed core")
+    independently_projected = _c4_independent_queryir_projection(core, inputs, hashes)
+    query_ir = emission["query_ir"]
+    if canonical_bytes(independently_projected) != canonical_bytes(query_ir):
+        _c4_fail(
+            "CNS-EMIT-PROJECTION_ONLY",
+            "embedded QueryIR differs from independent typed-core projection",
+        )
+    _c4_validate_traces(emission["field_traces"], query_ir, core, inputs, hashes)
+    node_by_material, adjacency = _c4_validate_license_dag(emission, core)
+    _c4_validate_persisted_proofs_and_minimality(
+        typed, emission, core, inputs, hashes, proof_root, root,
+        node_by_material, adjacency,
+    )
+    try:
+        validate_c3_result(
+            typed,
+            normalized,
+            ast,
+            event_frame,
+            root=root,
+            proof_root=proof_root,
+            diagnostic_argument_binding=diagnostic_argument_binding,
+        )
+    except C3ValidationError as exc:
+        _c4_fail("CNS-EMIT-PROJECTION_ONLY", f"frozen C3 predecessor invalid: {exc}")
+    return copy.deepcopy(query_ir)
+
+
+def validate_c4_stop_boundary(value: dict[str, Any]) -> None:
+    if value.get("terminal_stage") != C4_TERMINAL_STAGE:
+        _c4_fail("CNS-EMIT-VALID_STATUS", "terminal stage mismatch")
+    if value.get("implemented_stages") != list(C4_IMPLEMENTED_STAGES):
+        _c4_fail("CNS-EMIT-VALID_STATUS", "implemented stage sequence mismatch")
+    prohibited = {
+        "retrieval_result", "runtime_binding", "s5_stage_result",
+        "response", "response_generation",
+    }
+    pending: list[Any] = [value]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, dict):
+            overlap = prohibited & set(item)
+            if overlap:
+                _c4_fail(
+                    "CNS-EMIT-PROJECTION_ONLY",
+                    f"prohibited downstream object keys: {sorted(overlap)}",
+                )
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+
+
+def compile_c4(
+    request: dict[str, Any],
+    root: Path = ROOT,
+    *,
+    diagnostic_argument_binding: dict[str, Any] | None = None,
+    proof_root: Path | None = None,
+) -> dict[str, Any]:
+    """Run the production S0-S4 path and stop before S5 or retrieval."""
+    actual_proof_root = proof_root or Path(tempfile.mkdtemp(prefix="p9b1q-c4-proof-"))
+    c3 = compile_c3(
+        request,
+        root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+        proof_root=actual_proof_root,
+    )
+    query_ir = extract_queryir_c4(
+        c3,
+        root=root,
+        proof_root=actual_proof_root,
+        diagnostic_argument_binding=diagnostic_argument_binding,
+    )
+    result = copy.deepcopy(c3)
+    result["implemented_stages"] = list(C4_IMPLEMENTED_STAGES)
+    result["terminal_stage"] = C4_TERMINAL_STAGE
+    if query_ir is not None:
+        result["query_ir"] = query_ir
+        result["query_ir_sha256"] = canonical_sha256(query_ir)
+    validate_c4_stop_boundary(result)
+    return result
+
+
 @dataclass(frozen=True)
 class Span:
     start: int
@@ -8259,7 +9418,7 @@ def main() -> int:
     parser.add_argument("--proof-root", type=Path, default=Path.cwd())
     args = parser.parse_args()
     request = _read_yaml(args.request)
-    execution = compile_c3(request, proof_root=args.proof_root)
+    execution = compile_c4(request, proof_root=args.proof_root)
     output = json.dumps(execution, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     if args.output:
         args.output.write_text(output, encoding="utf-8")

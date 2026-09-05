@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,9 @@ from scripts.p9b1q_scoped_query_ir import (
     C1ValidationError,
     C2ValidationError,
     C3ValidationError,
+    C4ValidationError,
+    C4_IMPLEMENTED_STAGES,
+    C4_TERMINAL_STAGE,
     C3_PRE_CORRECTION_UNCOVERED_CONSTRAINT_IDS,
     CLAUSE_AST_SCHEMA_PATH,
     CONFIG_PATH,
@@ -26,14 +30,17 @@ from scripts.p9b1q_scoped_query_ir import (
     ROOT,
     build_bound_execution,
     c3_constraint_coverage,
+    c4_constraint_coverage,
     canonical_bytes,
     canonical_sha256,
     compile_c1,
     compile_c2,
     compile_c3,
+    compile_c4,
     compile_clause_ast,
     compile_event_frame,
     execute_query_ir,
+    extract_queryir_c4,
     file_sha256,
     interpret_request,
     normalize_request,
@@ -50,6 +57,7 @@ from scripts.p9b1q_scoped_query_ir import (
     validate_c3_result,
     validate_c3_solution_core,
     validate_c3_stop_boundary,
+    validate_c4_stop_boundary,
     validate_query_ir,
     validate_schema,
 )
@@ -2440,7 +2448,7 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
                 }))
         self.assertEqual([hashes[0]] * 3, hashes)
 
-    def test_production_cli_reaches_c3_and_stops_before_downstream_stages(self):
+    def test_production_cli_reaches_c3_then_c4_and_stops_before_downstream_stages(self):
         with tempfile.TemporaryDirectory(prefix="p9b1q-c3-cli-") as directory:
             work = Path(directory)
             request_path = work / "request.json"
@@ -2461,9 +2469,15 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
                 text=True,
             )
             output = json.loads(completed.stdout)
-            self.assertEqual("S3_TYPED_CONSTRAINT_SOLVER", output["terminal_stage"])
+            self.assertEqual("S4_QUERYIR_EMISSION_IMPLEMENTATION", output["terminal_stage"])
             self.assertEqual("UNIQUE", output["typed_constraint_result"]["status"])
-            self.assertNotIn("query_ir", output)
+            self.assertEqual(
+                canonical_bytes(output["query_ir"]),
+                canonical_bytes(
+                    output["typed_constraint_result"]["selected_solution"]
+                    ["queryir_emission_record"]["query_ir"]
+                ),
+            )
             self.assertNotIn("retrieval_result", output)
             self.assertNotIn("runtime_binding", output)
             self.assertGreater(len(list((work / "proof-objects").rglob("*.json"))), 2)
@@ -2937,6 +2951,528 @@ class C3TypedConstraintSolverTests(unittest.TestCase):
                 "terminal_stage": "S3_TYPED_CONSTRAINT_SOLVER",
                 "retrieval_result": {},
             })
+
+
+class C4PureQueryIREmitterTests(unittest.TestCase):
+    UNIQUE_TEXT = (
+        "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病的什么证据？"
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls._temporary = tempfile.TemporaryDirectory(prefix="p9b1q-c4-tests-")
+        cls.proof_root = Path(cls._temporary.name)
+        cls.c3 = compile_c3(
+            request("C4-UNIQUE", cls.UNIQUE_TEXT), proof_root=cls.proof_root
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._temporary.cleanup()
+
+    @staticmethod
+    def emission(value):
+        return value["typed_constraint_result"]["selected_solution"][
+            "queryir_emission_record"
+        ]
+
+    @staticmethod
+    def readdress(value):
+        value["typed_constraint_result_sha256"] = canonical_sha256(
+            value["typed_constraint_result"]
+        )
+
+    @classmethod
+    def refresh_dag(cls, value):
+        dag = cls.emission(value)["license_dag"]
+        body = copy.deepcopy(dag)
+        body.pop("dag_sha256")
+        dag["dag_sha256"] = canonical_sha256(body)
+        cls.readdress(value)
+
+    @classmethod
+    def refresh_minimality(cls, value):
+        witness = cls.emission(value)["minimality_witness"]
+        body = copy.deepcopy(witness)
+        body.pop("witness_sha256")
+        witness["witness_sha256"] = canonical_sha256(body)
+        cls.readdress(value)
+
+    def assert_c4_rejected(self, value, constraint=None, proof_root=None):
+        with self.assertRaises(C4ValidationError) as caught:
+            extract_queryir_c4(
+                value,
+                proof_root=proof_root or self.proof_root,
+            )
+        if constraint:
+            self.assertIn(constraint, str(caught.exception))
+
+    def test_unique_extraction_is_byte_identical_and_pure(self):
+        extracted = extract_queryir_c4(self.c3, proof_root=self.proof_root)
+        embedded = self.emission(self.c3)["query_ir"]
+        self.assertEqual(canonical_bytes(embedded), canonical_bytes(extracted))
+        self.assertIsNot(embedded, extracted)
+        self.assertEqual(
+            self.emission(self.c3)["query_ir_sha256"], canonical_sha256(extracted)
+        )
+        validate_schema(extracted, QUERY_IR_SCHEMA_PATH)
+
+    def test_production_entry_reaches_c4_and_stops_before_s5(self):
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c4-production-") as directory:
+            with mock.patch(
+                "scripts.p9b1q_scoped_query_ir.run_scoped_query",
+                side_effect=AssertionError("retrieval invoked"),
+            ), mock.patch(
+                "scripts.p9b1q_scoped_query_ir.execute_query_ir",
+                side_effect=AssertionError("runtime binding invoked"),
+            ), mock.patch(
+                "scripts.p9b1q_scoped_query_ir.build_bound_execution",
+                side_effect=AssertionError("response generation invoked"),
+            ):
+                value = compile_c4(
+                    request("C4-PRODUCTION", self.UNIQUE_TEXT),
+                    proof_root=Path(directory),
+                )
+        self.assertEqual(C4_TERMINAL_STAGE, value["terminal_stage"])
+        self.assertEqual(list(C4_IMPLEMENTED_STAGES), value["implemented_stages"])
+        self.assertEqual("UNIQUE", value["typed_constraint_result"]["status"])
+        self.assertIn("query_ir", value)
+        self.assertNotIn("retrieval_result", value)
+        self.assertNotIn("runtime_binding", value)
+        validate_c4_stop_boundary(value)
+
+    def test_non_unique_and_failed_predecessors_emit_no_queryir(self):
+        ambiguous = compile_c3(request(
+            "C4-AMBIGUOUS",
+            "来自流行地区并有生食淡水鱼史，可以作为华支睾吸虫病"
+            "华支睾吸虫病的什么证据？",
+        ))
+        unsupported = compile_c3(request("C4-UNSUPPORTED", "粪便检卵阳性。"))
+        c2 = compile_c2(request("C4-INVALID", self.UNIQUE_TEXT))
+        invalid = copy.deepcopy(self.c3)
+        invalid["typed_constraint_result"] = solve_typed_constraints(
+            c2["normalized_request"], c2["clause_ast"], c2["event_frame"],
+            bound_hashes={"CLAUSE_AST": "0" * 64},
+        )
+        self.readdress(invalid)
+        for name, value in (
+            ("AMBIGUOUS", ambiguous),
+            ("UNSUPPORTED", unsupported),
+            ("INVALID", invalid),
+        ):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                self.assertIsNone(
+                    extract_queryir_c4(value, proof_root=Path(directory))
+                )
+        failed = copy.deepcopy(self.c3)
+        failed.pop("typed_constraint_result")
+        self.assert_c4_rejected(failed, "CNS-EMIT-VALID_STATUS")
+
+    def test_queryir_schema_hash_and_explicit_array_tampers_fail(self):
+        schema_tamper = copy.deepcopy(self.c3)
+        del self.emission(schema_tamper)["query_ir"]["ambiguities"]
+        self.emission(schema_tamper)["query_ir_sha256"] = canonical_sha256(
+            self.emission(schema_tamper)["query_ir"]
+        )
+        self.readdress(schema_tamper)
+        self.assert_c4_rejected(schema_tamper, "CNS-EMIT-QUERYIR_SCHEMA")
+
+        hash_tamper = copy.deepcopy(self.c3)
+        self.emission(hash_tamper)["query_ir_sha256"] = "0" * 64
+        self.readdress(hash_tamper)
+        self.assert_c4_rejected(hash_tamper, "CNS-EMIT-TRACE_VALUE_HASH")
+
+    def test_trace_coverage_pointer_and_value_tampers_fail(self):
+        missing = copy.deepcopy(self.c3)
+        self.emission(missing)["field_traces"].pop()
+        self.readdress(missing)
+        self.assert_c4_rejected(missing, "CNS-EMIT-LEAF_TRACE_COVERAGE")
+
+        duplicate = copy.deepcopy(self.c3)
+        copied = copy.deepcopy(self.emission(duplicate)["field_traces"][0])
+        copied["trace_id"] = "TR9999"
+        self.emission(duplicate)["field_traces"].append(copied)
+        self.readdress(duplicate)
+        self.assert_c4_rejected(duplicate)
+
+        redirected = copy.deepcopy(self.c3)
+        first, second = self.emission(redirected)["field_traces"][:2]
+        first["query_ir_json_pointer"], second["query_ir_json_pointer"] = (
+            second["query_ir_json_pointer"], first["query_ir_json_pointer"]
+        )
+        self.readdress(redirected)
+        self.assert_c4_rejected(redirected, "CNS-EMIT-TRACE_VALUE_HASH")
+
+        value_hash = copy.deepcopy(self.c3)
+        self.emission(value_hash)["field_traces"][0]["emitted_value_sha256"] = "0" * 64
+        self.readdress(value_hash)
+        self.assert_c4_rejected(value_hash, "CNS-EMIT-TRACE_VALUE_HASH")
+
+    def test_trace_source_hash_kind_id_and_span_tampers_fail(self):
+        pointer = "/mentions/0/entity_id"
+
+        def source(value):
+            trace = next(
+                item for item in self.emission(value)["field_traces"]
+                if item["query_ir_json_pointer"] == pointer
+            )
+            return next(
+                item for item in trace["source_bindings"]
+                if item["object_kind"] == "CLAUSE_AST"
+            )
+
+        changed = copy.deepcopy(self.c3)
+        source(changed)["object_sha256"] = "0" * 64
+        self.readdress(changed)
+        self.assert_c4_rejected(changed, "CNS-EMIT-TRACE_VALUE_HASH")
+
+        changed = copy.deepcopy(self.c3)
+        binding = source(changed)
+        binding["object_kind"] = "EVENT_FRAME"
+        binding["object_sha256"] = canonical_sha256(changed["event_frame"])
+        binding["source_ids"] = ["EF001"]
+        self.readdress(changed)
+        self.assert_c4_rejected(changed, "CNS-EMIT-TRACE_VALUE_HASH")
+
+        changed = copy.deepcopy(self.c3)
+        source(changed)["source_ids"] = ["U002"]
+        self.readdress(changed)
+        self.assert_c4_rejected(changed, "CNS-EMIT-TRACE_VALUE_HASH")
+
+        changed = copy.deepcopy(self.c3)
+        wrong = next(
+            item["source_span"] for item in changed["clause_ast"]["surface_mentions"]
+            if item["surface_mention_id"] == "U002"
+        )
+        source(changed)["source_spans"] = [wrong]
+        self.readdress(changed)
+        self.assert_c4_rejected(changed, "CNS-EMIT-TRACE_VALUE_HASH")
+
+    def test_synchronized_queryir_and_trace_hash_mutation_fails_projection(self):
+        changed = copy.deepcopy(self.c3)
+        emission = self.emission(changed)
+        relation = emission["query_ir"]["relation_intents"][0]
+        relation["predicate"] = "treated_by"
+        trace = next(
+            item for item in emission["field_traces"]
+            if item["query_ir_json_pointer"] == "/relation_intents/0/predicate"
+        )
+        trace["emitted_value_sha256"] = canonical_sha256("treated_by")
+        emission["query_ir_sha256"] = canonical_sha256(emission["query_ir"])
+        self.readdress(changed)
+        self.assert_c4_rejected(changed, "CNS-EMIT-PROJECTION_ONLY")
+
+    def test_readdressed_request_binding_tamper_fails(self):
+        changed = copy.deepcopy(self.c3)
+        emission = self.emission(changed)
+        emission["request_id"] = "P9B1Q-C4-REDIRECTED"
+        self.readdress(changed)
+        self.assert_c4_rejected(changed, "CNS-EMIT-PROJECTION_ONLY")
+
+    def test_request_clause_mention_event_and_relation_projection_tampers_fail(self):
+        mutations = {
+            "request": lambda q: q.__setitem__("request_id", "P9B1Q-OTHER"),
+            "clause": lambda q: q["clauses"][0].__setitem__("order", 2),
+            "mention": lambda q: q["mentions"][0].__setitem__(
+                "entity_id", "disease.clonorchiasis"
+            ),
+            "event": lambda q: q["events"][0].__setitem__("event_type", "TREATMENT"),
+            "relation": lambda q: q["relation_intents"][0].__setitem__(
+                "activation_policy", "OPTIONAL"
+            ),
+            "role": lambda q: q["required_roles"][0].__setitem__(
+                "role_value", "treatment"
+            ),
+            "narrative": lambda q: q["narrative_intents"][0].__setitem__(
+                "topic_scope", "treatment"
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                changed = copy.deepcopy(self.c3)
+                emission = self.emission(changed)
+                mutate(emission["query_ir"])
+                emission["query_ir_sha256"] = canonical_sha256(emission["query_ir"])
+                self.readdress(changed)
+                self.assert_c4_rejected(changed)
+
+    def test_license_dag_negative_matrix_fails_closed(self):
+        def missing_node(value):
+            dag = self.emission(value)["license_dag"]
+            removed = dag["nodes"].pop()
+            dag["topological_order"].remove(removed["node_id"])
+            dag["edges"] = [
+                item for item in dag["edges"]
+                if removed["node_id"] not in (item["from_node_id"], item["to_node_id"])
+            ]
+
+        def orphan_node(value):
+            dag = self.emission(value)["license_dag"]
+            extra = copy.deepcopy(dag["nodes"][0])
+            extra.update({"node_id": "LN9999", "semantic_object_id": "M999"})
+            dag["nodes"].append(extra)
+            dag["topological_order"].append("LN9999")
+
+        def missing_edge(value):
+            self.emission(value)["license_dag"]["edges"].pop()
+
+        def invalid_from(value):
+            self.emission(value)["license_dag"]["edges"][0]["from_node_id"] = "LN9999"
+
+        def invalid_to(value):
+            self.emission(value)["license_dag"]["edges"][0]["to_node_id"] = "LN9999"
+
+        def cycle(value):
+            dag = self.emission(value)["license_dag"]
+            edge = copy.deepcopy(dag["edges"][0])
+            edge["edge_id"] = "LE9999"
+            edge["from_node_id"], edge["to_node_id"] = edge["to_node_id"], edge["from_node_id"]
+            dag["edges"].append(edge)
+
+        def bad_order(value):
+            self.emission(value)["license_dag"]["topological_order"].reverse()
+
+        def wrong_terminal(value):
+            nodes = self.emission(value)["license_dag"]["nodes"]
+            nodes[0]["semantic_object_id"], nodes[-1]["semantic_object_id"] = (
+                nodes[-1]["semantic_object_id"], nodes[0]["semantic_object_id"]
+            )
+
+        def wrong_trace(value):
+            dag = self.emission(value)["license_dag"]
+            dag["nodes"][0]["source_binding_ids"] = [
+                self.emission(value)["field_traces"][-1]["trace_id"]
+            ]
+
+        for name, mutate in (
+            ("missing_node", missing_node),
+            ("orphan_node", orphan_node),
+            ("missing_edge", missing_edge),
+            ("invalid_from", invalid_from),
+            ("invalid_to", invalid_to),
+            ("cycle", cycle),
+            ("bad_order", bad_order),
+            ("wrong_terminal", wrong_terminal),
+            ("wrong_trace", wrong_trace),
+        ):
+            with self.subTest(name=name):
+                changed = copy.deepcopy(self.c3)
+                mutate(changed)
+                self.refresh_dag(changed)
+                self.assert_c4_rejected(changed, "CNS-EMIT-LICENSE_COVERAGE")
+
+    def test_minimality_witness_and_removal_probe_negative_matrix(self):
+        def missing(value):
+            self.emission(value)["minimality_witness"]["retained_object_witnesses"].pop()
+
+        def orphan(value):
+            self.emission(value)["minimality_witness"]["retained_object_witnesses"][0][
+                "semantic_object_id"
+            ] = "M999"
+
+        def duplicate(value):
+            witnesses = self.emission(value)["minimality_witness"]["retained_object_witnesses"]
+            witnesses.append(copy.deepcopy(witnesses[0]))
+
+        def wrong_pointer(value):
+            self.emission(value)["minimality_witness"]["retained_object_witnesses"][0][
+                "query_ir_json_pointer"
+            ] = "/mentions/1"
+
+        def wrong_probe_hash(value):
+            self.emission(value)["minimality_witness"]["retained_object_witnesses"][0][
+                "removal_probe_sha256"
+            ] = "0" * 64
+
+        def wrong_probe_path(value):
+            self.emission(value)["minimality_witness"]["retained_object_witnesses"][0][
+                "removal_probe_path"
+            ] = "proof-objects/removal-probe/" + "0" * 64 + ".json"
+
+        def wrong_constraints(value):
+            item = self.emission(value)["minimality_witness"]["retained_object_witnesses"][0]
+            item["supporting_constraint_ids"] = ["CNS-SOLVER-EVENT_IDENTITY"]
+            item["removal_unsatisfied_constraint_ids"] = ["CNS-SOLVER-EVENT_IDENTITY"]
+
+        for name, mutate in (
+            ("missing", missing),
+            ("orphan", orphan),
+            ("duplicate", duplicate),
+            ("wrong_pointer", wrong_pointer),
+            ("wrong_probe_hash", wrong_probe_hash),
+            ("wrong_probe_path", wrong_probe_path),
+            ("wrong_constraints", wrong_constraints),
+        ):
+            with self.subTest(name=name):
+                changed = copy.deepcopy(self.c3)
+                mutate(changed)
+                self.refresh_minimality(changed)
+                self.assert_c4_rejected(changed)
+
+    def test_readdressed_semantic_universe_and_removal_probe_tampers_fail(self):
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c4-readdressed-proof-") as directory:
+            proof_root = Path(directory)
+            compiled = compile_c3(
+                request("C4-READDRESSED-PROOF", self.UNIQUE_TEXT), proof_root=proof_root
+            )
+            emission = self.emission(compiled)
+            minimality = emission["minimality_witness"]
+
+            universe_path = proof_root / minimality["semantic_universe_path"]
+            universe = json.loads(universe_path.read_text(encoding="utf-8"))
+            universe["semantic_objects"][0]["query_ir_json_pointer"] = "/mentions/1"
+            new_universe_sha = canonical_sha256(universe)
+            new_universe_path = (
+                proof_root / "proof-objects/semantic-universe" / f"{new_universe_sha}.json"
+            )
+            new_universe_path.write_bytes(canonical_bytes(universe))
+            minimality["semantic_universe_path"] = str(
+                new_universe_path.relative_to(proof_root)
+            )
+            minimality["semantic_universe_sha256"] = new_universe_sha
+            self.refresh_minimality(compiled)
+            self.assert_c4_rejected(
+                compiled, "CNS-EMIT-MINIMALITY_WITNESS", proof_root
+            )
+
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c4-readdressed-probe-") as directory:
+            proof_root = Path(directory)
+            compiled = compile_c3(
+                request("C4-READDRESSED-PROBE", self.UNIQUE_TEXT), proof_root=proof_root
+            )
+            emission = self.emission(compiled)
+            witness = emission["minimality_witness"]["retained_object_witnesses"][0]
+            old_path = proof_root / witness["removal_probe_path"]
+            probe = json.loads(old_path.read_text(encoding="utf-8"))
+            probe["expected_unsatisfied_constraint_ids"] = [
+                "CNS-SOLVER-EVENT_IDENTITY"
+            ]
+            new_probe_sha = canonical_sha256(probe)
+            new_probe_path = proof_root / "proof-objects/removal-probe" / f"{new_probe_sha}.json"
+            new_probe_path.write_bytes(canonical_bytes(probe))
+            witness["removal_probe_path"] = str(new_probe_path.relative_to(proof_root))
+            witness["removal_probe_sha256"] = new_probe_sha
+            self.refresh_minimality(compiled)
+            self.assert_c4_rejected(
+                compiled, "CNS-EMIT-MINIMALITY_WITNESS", proof_root
+            )
+
+    def test_persisted_core_universe_and_path_security_fail_closed(self):
+        bad_paths = (
+            "../proof-objects/removal-probe/" + "0" * 64 + ".json",
+            "/tmp/" + "0" * 64 + ".json",
+            "C:/tmp/" + "0" * 64 + ".json",
+            "\\\\server\\share\\proof.json",
+            "https://example.invalid/proof.json",
+        )
+        for path in bad_paths:
+            with self.subTest(path=path):
+                changed = copy.deepcopy(self.c3)
+                self.emission(changed)["minimality_witness"]["retained_object_witnesses"][0][
+                    "removal_probe_path"
+                ] = path
+                self.refresh_minimality(changed)
+                self.assert_c4_rejected(changed)
+
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c4-proof-security-") as directory:
+            proof_root = Path(directory)
+            compiled = compile_c3(
+                request("C4-MISSING-CORE", self.UNIQUE_TEXT), proof_root=proof_root
+            )
+            digest = self.emission(compiled)["semantic_solution_core_sha256"]
+            (proof_root / "proof-objects/typed-solution-core" / f"{digest}.json").unlink()
+            self.assert_c4_rejected(
+                compiled, "CNS-EMIT-MINIMALITY_WITNESS", proof_root
+            )
+
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c4-symlink-") as directory:
+            proof_root = Path(directory)
+            compiled = compile_c3(
+                request("C4-SYMLINK", self.UNIQUE_TEXT), proof_root=proof_root
+            )
+            witness = self.emission(compiled)["minimality_witness"]["retained_object_witnesses"][0]
+            target = proof_root / witness["removal_probe_path"]
+            outside = proof_root / "outside.json"
+            outside.write_bytes(target.read_bytes())
+            target.unlink()
+            target.symlink_to(outside)
+            self.assert_c4_rejected(
+                compiled, "CNS-EMIT-MINIMALITY_WITNESS", proof_root
+            )
+
+    def test_seven_emit_constraints_have_executable_mutation_witnesses(self):
+        coverage = c4_constraint_coverage()
+        self.assertEqual(7, len(coverage))
+        self.assertEqual(7, len({item["constraint_id"] for item in coverage}))
+        expected = {
+            "CNS-EMIT-QUERYIR_SCHEMA", "CNS-EMIT-VALID_STATUS",
+            "CNS-EMIT-LEAF_TRACE_COVERAGE", "CNS-EMIT-TRACE_VALUE_HASH",
+            "CNS-EMIT-PROJECTION_ONLY", "CNS-EMIT-LICENSE_COVERAGE",
+            "CNS-EMIT-MINIMALITY_WITNESS",
+        }
+        self.assertEqual(expected, {item["constraint_id"] for item in coverage})
+        self.assertTrue(all(item["execution_site"] for item in coverage))
+        self.assertTrue(all(item["negative_witness"] for item in coverage))
+
+    def test_c3_solver_trace_and_high008_regressions_survive_c4(self):
+        mixed = compile_c3(request(
+            "C4-MIXED-REGRESSION",
+            self.UNIQUE_TEXT + "吡喹酮治疗华支睾吸虫病。",
+        ))
+        predicates = {
+            relation["predicate"]
+            for core in _c3_recomputed_solution_space(_c3_authority_inputs(
+                mixed["normalized_request"], mixed["clause_ast"], mixed["event_frame"], ROOT
+            ))["cores"].values()
+            for relation in core["resolved_relations"]
+        }
+        self.assertTrue({"has_diagnostic_clue", "treated_by"} <= predicates)
+        self.assertEqual(48, len(c3_constraint_coverage()))
+
+        actual = request("C4-HIGH008", "华支睾吸虫病的确诊方法是粪便检查。")
+        normalized = normalize_request(actual)
+        ast = compile_clause_ast(normalized)
+        binding = diagnostic_argument_binding(
+            normalized, ast, [("diagnosed_by", "华支睾吸虫病", "粪便检查")]
+        )
+        with tempfile.TemporaryDirectory(prefix="p9b1q-c4-high008-") as directory:
+            value = compile_c4(
+                actual,
+                diagnostic_argument_binding=binding,
+                proof_root=Path(directory),
+            )
+        self.assertEqual("AFFIRMED", value["query_ir"]["events"][0]["assertion_status"])
+        self.assertEqual("UNSPECIFIED", value["query_ir"]["events"][0]["finding_polarity"])
+
+    def test_three_fresh_c4_runs_are_byte_deterministic(self):
+        hashes = []
+        for index in range(3):
+            with tempfile.TemporaryDirectory(prefix=f"p9b1q-c4-det-{index}-") as directory:
+                root = Path(directory)
+                for name in (("z", "a") if index % 2 else ("a", "z")):
+                    (root / f"{name}{index}").mkdir()
+                request_path = root / "request.json"
+                request_path.write_text(json.dumps(
+                    request("C4-DETERMINISM", self.UNIQUE_TEXT), ensure_ascii=False
+                ), encoding="utf-8")
+                environment = os.environ.copy()
+                environment["PYTHONHASHSEED"] = str(101 + index)
+                completed = subprocess.run(
+                    [
+                        sys.executable,
+                        str(ROOT / "scripts/p9b1q_scoped_query_ir.py"),
+                        "--request", str(request_path),
+                        "--proof-root", str(root),
+                    ],
+                    cwd=root,
+                    env=environment,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                value = json.loads(completed.stdout)
+                hashes.append(canonical_sha256(value["query_ir"]))
+        self.assertEqual([hashes[0]] * 3, hashes)
 
 
 class BindingChainTests(unittest.TestCase):
