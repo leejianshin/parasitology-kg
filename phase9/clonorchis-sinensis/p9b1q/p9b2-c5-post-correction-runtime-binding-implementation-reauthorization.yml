@@ -1,0 +1,507 @@
+reauthorization_version: '1.0'
+reauthorization_id: P9B2-C5-POST-CORRECTION-RUNTIME-BINDING-IMPLEMENTATION-REAUTHORIZATION-001
+reauthorization_kind: POST_CORRECTION_C5_PROSPECTIVE_IMPLEMENTATION_REAUTHORIZATION
+reauthorization_status: ACTIVE_ONLY_AFTER_FAST_FORWARD_PUBLICATION
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+reauthorization_base: c56011be3063fbcea548386b077886a95625ba7f
+current_public_tip_at_creation: c56011be3063fbcea548386b077886a95625ba7f
+frozen_implementation_authority_base: c56011be3063fbcea548386b077886a95625ba7f
+prospective_only: true
+control_governance_state:
+  source: EXPLICIT_CONTROL_POST_CORRECTION_REAUTHORIZATION
+  predecessors:
+    C1: CLOSED_FROZEN
+    C2: CLOSED_FROZEN
+    C3: CLOSED_FROZEN
+    C4: CLOSED_FROZEN
+    S0: CLOSED_FROZEN
+    S1: CLOSED_FROZEN
+    S2: CLOSED_FROZEN
+    S3: CLOSED_FROZEN
+    S4: CLOSED_FROZEN
+  C5_AUTHORITY_REPRESENTABILITY_CORRECTION_1: CLOSED_FROZEN
+  six_representability_findings:
+    P9B2-C5-S5-PRODUCTION-PROOF-PATH-REPRESENTABILITY-HIGH-001: CLOSED_FROZEN
+    P9B2-C5-S5-STAGE-RESULT-PATH-REPRESENTABILITY-HIGH-002: CLOSED_FROZEN
+    P9B2-C5-S5-STAGE-RESULT-CARDINALITY-REPRESENTABILITY-HIGH-003: CLOSED_FROZEN
+    P9B2-C5-S5-STAGE-RESULT-OBJECT-KIND-REPRESENTABILITY-HIGH-004: CLOSED_FROZEN
+    P9B2-C5-S5-SCHEMA-GATE-PATH-REPRESENTABILITY-HIGH-005: CLOSED_FROZEN
+    P9B2-C5-S5-SIDECAR-OUTPUT-PATH-REPRESENTABILITY-HIGH-006: CLOSED_FROZEN
+  open_c5_representability_finding_count: 0
+  representability_correction_reopening_authorized: false
+  s0_s4_semantic_reopening_authorized: false
+  c5_status: OPEN_BLOCKING
+historical_authorization:
+  commit: 531c29bff0348de394233f1d863ed5824cdb59f2
+  status: SUPERSEDED_FOR_IMPLEMENTATION_START_BY_AUTHORITY_CHANGE
+  may_resume_implementation: false
+  historical_artifact_mutation_authorized: false
+baseline_evidence:
+  base_commit: c56011be3063fbcea548386b077886a95625ba7f
+  hash_rule: SHA256_RAW_FILE_BYTES
+  evidence_only: true
+  corrected_authority_raw_sha256:
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validation-result-schema-candidate.yml: fbcaea1f2f447269392bb8b1035e3fc43f8ac247d154772b4a7a7192b1eb4770
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/execution-binding-sidecar-architecture-schema-candidate.yml: b02703646daabf5ad3812a14e5cd741d4d35c96d5b48fc8f2e1d88b0f6abe151
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml: 6defb6826ba4d1f36515da7d93fe6457e3c4835b38b9e97e31a034b45e612968
+    phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py: 7493675d78f52b61bdb96000ed3b4d132fa3bead5bb6442eb4bcd4d5813c58b8
+  implementation_raw_sha256:
+    scripts/p9b1q_scoped_query_ir.py: 260fcb9cb119a074d5aac54edc021777ea2d7fa60817493d64132d7dba323428
+    tests/test_p9b1q_scoped_query_ir.py: cc9de29a6ef5823592f8ed4617ae8c007295b47bdd417af47ec317443b3badab
+  independently_verified_at_creation: true
+  current_design_manifest_bindings: PASS
+  future_pre_mutation_recomputation_required: true
+  authority_mismatch_disposition: FAIL_CLOSED
+  authority_mismatch_failure_mode: POST_CORRECTION_C5_REAUTHORIZATION_AUTHORITY_BYTE_MISMATCH
+  literal_hash_is_standing_future_authority: false
+c5_stage:
+  stage_id: S5_RUNTIME_BINDING
+  role: BIND_THE_EXACT_VALIDATED_C4_QUERYIR_TO_EXISTING_DETERMINISTIC_P9B1_SEMANTIC_VALIDATION_RETRIEVAL_AND_P9A_AUDIT_RESPONSE_CHAIN
+  successful_output: EXECUTION_BINDING_SIDECAR
+  new_parser_authorized: false
+  new_queryir_generator_authorized: false
+  new_semantic_solver_authorized: false
+  new_retrieval_engine_authorized: false
+  new_ranking_layer_authorized: false
+  new_graph_rule_layer_authorized: false
+  new_response_generator_authorized: false
+  new_authority_projection_authorized: false
+constraint_governance:
+  domain: 1..48
+  no_gaps: true
+  no_duplicates: true
+  constraint_49: ABSENT
+  new_constraint_authorized: false
+  failure_code_remapping_authorized: false
+  exact_s5_constraint_count: 5
+  exact_s5_constraint_ids:
+  - CNS-BIND-ACTUAL_OBJECT_HASH
+  - CNS-BIND-CANONICAL_PROFILE
+  - CNS-BIND-REQUEST_CHAIN
+  - CNS-BIND-RETRIEVAL_CHAIN
+  - CNS-BIND-RESPONSE_AUDIT_CHAIN
+  required_behavioral_coverage: 5/5
+  required_ceremonial_constraint_count: 0
+  each_constraint_requires:
+  - ACTUAL_EXECUTION_SITE
+  - ACTUAL_BOUND_OBJECTS
+  - POSITIVE_WITNESS
+  - NEGATIVE_MUTATION_WITNESS
+  - ACTUAL_FAILURE_CODE_AND_SITE
+  coverage_receipt_only_closure: PROHIBITED
+queryir_identity:
+  authority: THE_EXACT_C4_OUTPUT_QUERYIR
+  canonical_byte_identity_required_among:
+  - C4_RETURNED_QUERYIR
+  - S4_VALIDATION_RESULT_BOUND_QUERYIR
+  - S5_ACTUAL_QUERYIR
+  - PRIVATE_SIDECAR_QUERYIR_REFERENCE
+  - SEMANTIC_VALIDATOR_QUERYIR_INPUT
+  - RETRIEVAL_QUERYIR_INPUT
+  reconstruction_reinterpretation_or_repair: PROHIBITED
+  prohibited_regeneration_authorities:
+  - interpret_request(request)
+  - run_scoped_query(request)
+  legacy_helpers: May remain for frozen regression; never authorize regeneration or replacement of the C4 QueryIR
+    during C5.
+actual_object_chain:
+  canonicalization_authority: phase9/clonorchis-sinensis/p9b1q-architecture-review/object-canonicalization-and-hash-chain.yml
+  binding_authority: phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml
+  rule: Independently resolve the complete actual authority-derived object chain for each execution; no hash-only
+    or receipt-only substitute.
+  minimum_actual_objects:
+  - P9A_REQUEST
+  - NORMALIZED_REQUEST
+  - CLAUSE_AST
+  - EVENT_FRAME
+  - TYPED_CONSTRAINT_RESULT
+  - TYPED_SOLUTION
+  - QUERYIR_EMISSION_RECORD
+  - QUERY_IR
+  - SEMANTIC_UNIVERSE
+  - ALL_REMOVAL_PROBES
+  - SEMANTIC_VALIDATION_RESULT
+  - S0_TO_S4_STAGE_SEMANTIC_VALIDATION_RESULTS
+  - RETRIEVAL_RESULT_IF_LAWFULLY_EXECUTED
+  - P9A_AUDIT_RECORD
+  - P9A_RESPONSE_IF_PRESENT
+  - EXECUTION_BINDING_SIDECAR_SCHEMA
+  - STAGE_VALIDATOR_EXECUTABLE
+  - STAGE_VALIDATOR_CONTRACT
+  - CANONICALIZATION_PROFILE
+  - NEGATION_SURFACE_SCOPE_AUTHORITY
+  - NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE
+  - REQUIRED_MAPPING_SCHEMA_CONSTRAINT_AND_SCHEMA_GATE_OBJECTS
+  - ALL_OTHER_ARTIFACTS_REQUIRED_BY_FROZEN_CONTRACTS
+  fixed_52_object_cardinality_rule: false
+  stage_input_capacity:
+    S0_TO_S4_EFFECTIVE_MAX_ITEMS: 32
+    S5_RUNTIME_BINDING_MAX_ITEMS: 64
+  canonicalization: SORTED_UTF8_JSON_NO_INSIGNIFICANT_WHITESPACE
+  array_order: PRESERVE_FROZEN_CONTRACT_ORDER
+  additional_unicode_normalization_before_hash: false
+  runtime_hash: SHA256_OF_EXACT_CANONICAL_PERSISTED_BYTES
+  normative_hash: SHA256_RAW_FILE_BYTES
+  object_kind_is_part_of_identity: true
+production_storage_identity:
+  mode: PRODUCTION_EXECUTION_MODE
+  reference_fixture_mode: Frozen reference evidence/regression only.
+  production_fixture_identity_substitution: PROHIBITED
+  proof_paths:
+    TYPED_SOLUTION: ^proof-objects/typed-solution-core/[0-9a-f]{64}\.json$
+    SEMANTIC_UNIVERSE: ^proof-objects/semantic-universe/[0-9a-f]{64}\.json$
+    REMOVAL_PROBE: ^proof-objects/removal-probe/[0-9a-f]{64}\.json$
+  proof_kind_directory_mismatch: FAIL_CLOSED
+  existing_safe_proof_resolver_required: true
+  ordered_stage_result_paths:
+  - ^stage-validation-s0-[0-9a-f]{64}\.json$
+  - ^stage-validation-s1-[0-9a-f]{64}\.json$
+  - ^stage-validation-s2-[0-9a-f]{64}\.json$
+  - ^stage-validation-s3-[0-9a-f]{64}\.json$
+  - ^stage-validation-s4-[0-9a-f]{64}\.json$
+  ordered_stages:
+  - S0_NORMALIZED_REQUEST
+  - S1_CLAUSE_AST
+  - S2_EVENT_FRAME
+  - S3_TYPED_SOLVER
+  - S4_QUERYIR_EMISSION
+  successful_sidecar_path: ^execution-binding-sidecar-[0-9a-f]{64}\.json$
+  filename_digest: SHA256_OF_COMPLETE_EXACT_PERSISTED_CANONICAL_FILE_BYTES_INCLUDING_INTERNAL_SELF_HASH
+  internal_result_digest: CANONICAL_SHA256_WITH_ONLY_RESULT_SHA256_OMITTED
+  internal_sidecar_digest: CANONICAL_SHA256_WITH_ONLY_SIDECAR_SHA256_OMITTED
+  internal_digest_as_filename_authority: PROHIBITED
+  reference_sidecar_path: fixtures/execution-binding-sidecar-positive.json
+  execution_object_root: ONE_EXPLICITLY_CALLER_BOUND_DISPOSABLE_EXECUTION_OBJECT_ROOT
+  repository_fixture_fallback: PROHIBITED
+  reject_paths:
+  - PARENT_TRAVERSAL
+  - DOT_SEGMENTS
+  - EMPTY_SEGMENTS
+  - DUPLICATE_SEPARATORS
+  - POSIX_ABSOLUTE
+  - WINDOWS_DRIVE
+  - UNC
+  - URL
+  - SYMLINK_ESCAPE
+  - WRONG_ROOT
+  - WRONG_FILENAME_DIGEST
+stage_result_validation:
+  actual_production_shaped_results_required: true
+  validator: phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+  contract: phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+  independent_checks:
+  - S0_TO_S4_PASS
+  - EXACT_REQUEST_BINDING
+  - EXACT_STAGE
+  - EXACT_ACTUAL_INPUT_HASHES
+  - EXACT_ACTUAL_OUTPUT_HASH
+  - EXACT_VALIDATOR_EXECUTABLE_HASH
+  - EXACT_VALIDATOR_CONTRACT_CONFIGURATION_HASH
+  - EXACT_CANONICALIZATION_PROFILE
+  - PERSISTED_CANONICAL_BYTES
+  - COMPLETE_FILE_FILENAME_DIGEST
+  - INTERNAL_RESULT_DIGEST
+  receipt_only_substitution: PROHIBITED
+pre_retrieval_gate_sequence:
+- ACTUAL_S0_TO_S4_VALIDATION_RESULTS_PASS
+- EXACT_C4_QUERYIR_BINDING_PASS
+- COMPLETE_ACTUAL_OBJECT_RESOLUTION_PASS
+- ACTUAL_OBJECT_HASH_AND_BYTE_LENGTH_PASS
+- CANONICALIZATION_PROFILE_BINDING_PASS
+- REQUEST_CHAIN_PASS
+- NORMATIVE_ARTIFACT_IDENTITY_PASS
+- SEMANTIC_VALIDATOR_EXECUTABLE_BUILD_CONFIGURATION_IDENTITY_PASS
+- DETERMINISTIC_SEMANTIC_VALIDATION_RECOMPUTATION_PASS
+- NONZERO_EXECUTABLE_SEMANTIC_INTENT_WHERE_RETRIEVAL_REQUIRED
+pre_retrieval_failure:
+  disposition: FAIL_CLOSED
+  c5_controlled_retrieval_call_count: 0
+  retry_authorized: false
+  fallback_authorized: false
+  response_generation_from_invalid_chain: false
+  successful_architecture_sidecar_authorized: false
+semantic_validator_binding:
+  existing_deterministic_validator_only: true
+  input: EXACT_C4_QUERYIR
+  independently_bound:
+  - SEMANTIC_VALIDATION_RESULT_SCHEMA
+  - QUERYIR_SEMANTIC_CONTRACT
+  - SEMANTIC_VALIDATOR_CONTRACT
+  - EVENT_PREDICATE_TYPE_ROLE_MAPPING
+  - VALIDATOR_EXECUTABLE_BUILD_CONFIGURATION
+  deterministic_recomputation_required: true
+  caller_supplied_semantic_result_is_authority: false
+retrieval_scope:
+  existing_frozen_deterministic_local_p9b1_only: true
+  retrieval_engine_change_authorized: false
+  frozen:
+  - RANKING
+  - GRAPH_TRAVERSAL_SEMANTICS
+  - CANDIDATE_LICENSING
+  - ENTITY_EXPANSION
+  - LEXICAL_FALLBACK
+  - RUNTIME_BUNDLE
+  - AUTHORITY_PROJECTION
+  - REVIEWED_GRAPH
+  - SOURCE_REGISTRY
+  new_c5_controlled_test_retrieval:
+    authorized_after_implementation_activation: true
+    only_after_all_pre_retrieval_gates_pass: true
+    exact_c4_queryir_input_required: true
+    deterministic_retrieval_recomputation_required: true
+    query_semantic_licensing_recomputation_required: true
+    student_facing_release_authorized: false
+    production_deployment_authorized: false
+  preexisting_frozen_regression_retrieval:
+    base: c56011be3063fbcea548386b077886a95625ba7f
+    existing_local_retrieval_permitted: true
+    global_zero_retrieval_requirement_for_full_unittest: false
+    record_baseline_before_implementation_mutation: true
+    preserve:
+    - ALL_EXISTING_TEST_METHOD_NAMES
+    - ALL_EXISTING_TEST_PASS_OUTCOMES
+    - EXISTING_RETRIEVAL_STATUS_EXPECTATIONS
+    - ASSERTED_CANDIDATE_IDS_ORDER_COUNT
+    new_c5_tests_may_be_added: true
+    delete_or_weaken_existing_tests_to_allow_c5: false
+  future_reporting_must_distinguish:
+  - PREEXISTING_FROZEN_REGRESSION_RETRIEVAL
+  - NEW_C5_CONTROLLED_TEST_RETRIEVAL
+private_sidecar:
+  schema: phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml
+  schema_change_authorized: false
+  exact_c4_queryir_binding_required: true
+  rule: SIDECAR_IS_A_MIRROR_NOT_AUTHORITY
+architecture_sidecar:
+  schema: phase9/clonorchis-sinensis/p9b1q-architecture-review/execution-binding-sidecar-architecture-schema-candidate.yml
+  schema_change_authorized: false
+  successful_production_output_only: true
+  actual_required_fields:
+  - REQUEST_ID
+  - CANONICALIZATION_PROFILE
+  - VALIDATOR_CONTRACT
+  - COMPLETE_ACTUAL_OBJECTS
+  - FIVE_ORDERED_PRODUCTION_STAGE_RESULT_PATHS
+  - SUCCESSFUL_DISPOSITION
+  - RETRIEVAL_EXECUTED_TRUE
+  - RESPONSE_PRESENT_TRUE
+  - INTERNAL_SIDECAR_HASH
+  - FULL_PERSISTED_FILE_FILENAME_DIGEST
+  persist_reread_and_independently_hash_actual_output: true
+  successful_sidecar_on_failure: PROHIBITED
+object_store_index:
+  existing_frozen_contract_only: true
+  non_sidecar_actual_object_to_index_entry: EXACTLY_ONE_TO_ONE
+  exact_matching_fields:
+  - path
+  - object_kind
+  - canonical_sha256
+  execution_binding_sidecar_entry_count: 1
+  sidecar_binding: ACTUAL_PRODUCTION_PATH_AND_COMPLETE_PERSISTED_CANONICAL_BYTES_HASH
+  reject:
+  - MISSING_ENTRY
+  - DUPLICATE_ENTRY
+  - ORPHAN_ENTRY
+  - WRONG_PATH
+  - WRONG_KIND
+  - WRONG_HASH
+  - ZERO_SIDECAR_ENTRIES
+  - MULTIPLE_SIDECAR_ENTRIES
+p9a_audit_response:
+  existing_frozen_behavior_only: true
+  schema_or_rule_change_authorized: false
+  independently_bind_or_recompute:
+  - REQUEST
+  - RETRIEVAL_CANDIDATES
+  - CANDIDATE_SEMANTIC_LICENSES
+  - ADMITTED_CLAIMS
+  - MATERIAL_CLAIMS
+  - AUDIT_DISPOSITION
+  - RESPONSE_DISPOSITION
+  - RESPONSE_VALIDATION
+  - RESPONSE_HASH
+  - RUNTIME_BUNDLE
+failure_path:
+  fail_closed_on:
+  - PRIOR_STAGE_FAILURE
+  - QUERYIR_BINDING_FAILURE
+  - SEMANTIC_VALIDATION_FAILURE
+  - ACTUAL_OBJECT_MISMATCH
+  - RETRIEVAL_RECOMPUTATION_MISMATCH
+  - AUDIT_MISMATCH
+  - RESPONSE_MISMATCH
+  - SIDECAR_INDEX_MISMATCH
+  new_retrieval_attempt_before_lawful_retrieval: PROHIBITED
+  successful_architecture_sidecar_fabrication: PROHIBITED
+  earlier_stage_repair: PROHIBITED
+test_oracle_quality:
+  required: ACTUAL_BEHAVIOR_OR_INDEPENDENTLY_RECONSTRUCTED_STRUCTURAL_EXPECTATIONS
+  prohibited_sole_oracles:
+  - COVERAGE_RECEIPT
+  - EXECUTION_SITE_STRING
+  - NEGATIVE_WITNESS_DESCRIPTION
+  - SIDECAR_STATE_SUMMARY
+  - OBJECT_STORE_INDEX_SUMMARY
+  - MANIFEST_HASH_STRING
+  - COMPONENT_SELF_DESCRIPTION
+  weak_self_confirming_c5_test_count_target: 0
+required_future_negative_classes:
+- REQUEST_HASH_MISMATCH
+- REQUEST_ID_MISMATCH
+- QUERYIR_HASH_MISMATCH
+- QUERYIR_FROM_ANOTHER_REQUEST
+- SEMANTIC_VALIDATION_COPIED_FROM_ANOTHER_QUERYIR
+- SEMANTIC_VALIDATOR_EXECUTABLE_DRIFT
+- SEMANTIC_VALIDATOR_CONFIGURATION_DRIFT
+- NORMATIVE_ARTIFACT_WRONG_PATH
+- NORMATIVE_ARTIFACT_HASH_MISMATCH
+- RUNTIME_BUNDLE_FILE_BYTE_DIGEST_MISMATCH
+- RUNTIME_BUNDLE_LOGICAL_DIGEST_MISMATCH
+- GRAPH_EXECUTOR_EXECUTABLE_DRIFT
+- GRAPH_EXECUTOR_CONFIGURATION_DRIFT
+- RETRIEVAL_COPIED_FROM_ANOTHER_QUERYIR
+- RETRIEVAL_COPIED_FROM_ANOTHER_REQUEST
+- RETRIEVAL_CONTENT_ADDRESS_MISMATCH
+- RETRIEVAL_BYTE_LENGTH_MISMATCH
+- CANDIDATE_SEMANTIC_LICENSE_MISMATCH
+- AUDIT_COPIED_FROM_ANOTHER_REQUEST
+- AUDIT_CANDIDATE_ADMITTED_MATERIAL_CLAIM_MISMATCH
+- RESPONSE_HASH_MISMATCH
+- RESPONSE_AUDIT_DISPOSITION_MISMATCH
+- RESPONSE_RUNTIME_BUNDLE_MISMATCH
+- SIDECAR_STATE_SUMMARY_MISMATCH
+- PRIVATE_SIDECAR_OBJECT_REFERENCE_MISMATCH
+- ARCHITECTURE_SIDECAR_ACTUAL_OBJECT_MISMATCH
+- OBJECT_STORE_INDEX_MISSING_ENTRY
+- OBJECT_STORE_INDEX_DUPLICATE_ENTRY
+- OBJECT_STORE_INDEX_ORPHAN_ENTRY
+- WRONG_OBJECT_KIND_WITH_MATCHING_BYTES
+- NONCANONICAL_PERSISTED_JSON
+- PATH_TRAVERSAL_ABSOLUTE_WINDOWS_UNC_URL_AND_SYMLINK_ESCAPE
+- RETRIEVAL_ATTEMPT_WITH_FAILED_PREREQUISITE_STAGE_VALIDATION
+- SAME_ID_WRONG_PATH
+- SAME_FILENAME_WRONG_CANONICAL_PATH
+- HASH_WITHOUT_ACTUAL_OBJECT
+- WRONG_BYTE_LENGTH
+- WRONG_CONTENT_ADDRESS_SUFFIX
+- PRODUCTION_STAGE_RESULT_WRONG_FILENAME_DIGEST
+- PRODUCTION_STAGE_RESULT_WRONG_STAGE
+- PRODUCTION_STAGE_RESULT_FIXTURE_SUBSTITUTION
+- PRODUCTION_SIDECAR_WRONG_FULL_FILE_DIGEST
+- PRODUCTION_SIDECAR_INTERNAL_HASH_AS_FILENAME_DIGEST
+- PRODUCTION_SIDECAR_FIXTURE_SUBSTITUTION
+determinism:
+  required: true
+  perturb:
+  - PYTHONHASHSEED
+  - TEMPORARY_EXECUTION_OBJECT_ROOT
+  - FILESYSTEM_CREATION_ORDER
+  - PERMITTED_OBJECT_RESOLUTION_ORDER
+  contract_governed_timestamps: HOLD_FIXED_WHERE_REQUIRED
+  compare_canonical_outputs_and_hashes:
+  - C4_QUERYIR
+  - SEMANTIC_VALIDATION
+  - RETRIEVAL_RESULT
+  - P9A_AUDIT
+  - P9A_RESPONSE
+  - PRIVATE_SIDECAR
+  - PRODUCTION_S0_TO_S4_STAGE_RESULTS
+  - ARCHITECTURE_SIDECAR
+  - OBJECT_STORE_INDEX
+future_repository_scope:
+  direct_implementation_path_count: 2
+  exact_direct_implementation_paths: &id001
+  - scripts/p9b1q_scoped_query_ir.py
+  - tests/test_p9b1q_scoped_query_ir.py
+  conditional_mechanical_path_count: 1
+  conditional_mechanical_path: phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+  maximum_changed_path_count: 3
+  fourth_tracked_path_authorized: false
+  runtime_objects: DISPOSABLE_EXECUTION_ROOTS_ONLY_NOT_TRACKED_REPOSITORY_MUTATION
+  exact_manifest_pointers:
+  - /protected_files/scripts~1p9b1q_scoped_query_ir.py
+  - /protected_files/tests~1test_p9b1q_scoped_query_ir.py
+  manifest_derivation: SHA256_RAW_FILE_BYTES_OF_ACTUAL_FINAL_SCRIPT_OR_TEST
+  refresh_only_if_corresponding_file_bytes_changed: true
+  other_manifest_field_mutation_authorized: false
+future_dependency_gate:
+  timing: BEFORE_IMPLEMENTATION_MUTATION
+  search: COMPLETE_TRACKED_TREE
+  active_content_addressed_sources: *id001
+  only_refresh_authority: THE_TWO_EXACT_PROTECTED_FILE_MANIFEST_POINTERS
+  unlisted_active_dependent_requiring_mutation: FAIL_CLOSED
+  failure_mode: POST_CORRECTION_C5_IMPLEMENTATION_SCOPE_INSUFFICIENT_ACTIVE_DEPENDENCY
+  autonomous_scope_expansion_authorized: false
+authority_freeze:
+  corrected_authority_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validation-result-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/execution-binding-sidecar-architecture-schema-candidate.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+  also_read_only:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/object-canonicalization-and-hash-chain.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/
+  - HISTORICAL_MANIFESTS
+  - phase9/clonorchis-sinensis/p9b1q/p9b2-c5-authority-representability-correction-1-authorization.yml
+  - ALL_C1_TO_C4_AUTHORITY
+  - ALL_P9A_AUTHORITY
+  - ALL_P9B1_RETRIEVAL_AUTHORITY
+  - ALL_PRIOR_AUTHORIZATION_ARTIFACTS
+  authority_mutation_authorized: false
+  schema_mutation_authorized: false
+  fixture_mutation_authorized: false
+  new_representability_gap: FAIL_CLOSED_AND_RETURN_TO_CONTROL
+standard_future_gates:
+  architecture_review_commands:
+  - node strict-schema-gate.mjs
+  - python reference-stage-semantic-validator.py --mode all
+  repository_root_commands:
+  - python -m unittest discover -s tests -p "test_*.py"
+  focused_c5_tests_required: true
+  c1_c2_c3_c4_regressions: PASS_REQUIRED
+network_and_release:
+  model_network_authorized: false
+  web_access_authorized: false
+  remote_model_authorized: false
+  network_retrieval_authorized: false
+  local_deterministic_repository_runtime_data_only: true
+r11_c6_boundary:
+  r11_public_commitment_change_authorized: false
+  r11_secret_body_access_authorized: false
+  r11_execution_authorized: false
+  c6_authorization_eligible: false
+  r11_post_correction_applicability_review_required: true
+  r11_post_correction_holder_governance_eligible: false
+  applicability_review_timing: ONLY_AFTER_C5_S5_CLOSES
+this_turn_scope:
+  action: CREATE_REAUTHORIZATION_FILE_ONLY
+  exact_new_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-post-correction-runtime-binding-implementation-reauthorization.yml
+  changed_path_count: 1
+  implementation_authorized: false
+  script_test_manifest_mutation_authorized: false
+  authority_schema_fixture_mutation_authorized: false
+  c5_controlled_retrieval_authorized: false
+activation:
+  requires_fast_forward_publication_to: refs/heads/agent/p9-b2
+  publication_alone_starts_implementation: false
+  separate_explicit_control_start_required: true
+  required_control_instruction: C5_IMPLEMENTATION_START=AUTHORIZED
+  implementation_may_start_this_turn: false
+  implementation_may_start_after_publication_without_control: false
+commit_publication_policy:
+  only_on_complete_pass: true
+  exact_commit_count: 1
+  required_parent: c56011be3063fbcea548386b077886a95625ba7f
+  commit_kind: AUTHORIZATION_ONLY
+  suggested_message: 'governance(p9b2): reauthorize C5 runtime binding after correction'
+  history_rewrite_amend_rebase_squash_merge: PROHIBITED
+  credentialed_publication: FAST_FORWARD_ONLY_TO_refs/heads/agent/p9-b2
+  otherwise: EXPORT_ONE_COMPLETE_GIT_BUNDLE_PRESERVING_EXACT_COMMIT_IDENTITY_AND_ANCESTRY
+  force_push_authorized: false
+  pr_authorized: false
+  main_mutation_authorized: false
+stop_after_authorization_publication_or_handoff: true
