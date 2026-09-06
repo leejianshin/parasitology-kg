@@ -3169,11 +3169,308 @@ def stage_record_errors(result: dict[str, Any], observed: list[dict[str, str]]) 
     return observed
 
 
+_S5_STAGE_ORDER = (
+    "S0_NORMALIZED_REQUEST", "S1_CLAUSE_AST", "S2_EVENT_FRAME",
+    "S3_TYPED_SOLVER", "S4_QUERYIR_EMISSION",
+)
+_S5_REVIEW_PREFIX = "phase9/clonorchis-sinensis/p9b1q-architecture-review/"
+_S5_RUNTIME_SCHEMAS = {
+    "P9A_REQUEST": "phase9/clonorchis-sinensis/request-schema.yml",
+    "NORMALIZED_REQUEST": "normalized-request-schema-candidate.yml",
+    "CLAUSE_AST": "clause-ast-schema-candidate.yml",
+    "EVENT_FRAME": "event-frame-schema-candidate.yml",
+    "TYPED_CONSTRAINT_RESULT": "typed-constraint-result-schema-candidate.yml",
+    "QUERYIR_EMISSION_RECORD": "queryir-emission-record-schema-candidate.yml",
+    "QUERY_IR": "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml",
+    "SEMANTIC_VALIDATION_RESULT": "phase9/clonorchis-sinensis/p9b1q/semantic-validation-result-schema-candidate.yml",
+    "RETRIEVAL_RESULT": "phase9/clonorchis-sinensis/retrieval-result-schema.yml",
+    "P9A_RESPONSE": "phase9/clonorchis-sinensis/response-schema.yml",
+    "P9A_AUDIT_RECORD": "phase9/clonorchis-sinensis/audit-log-schema.yml",
+    "DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING": "diagnostic-predicate-argument-binding-schema-candidate.yml",
+}
+# Existing canonical authority identities. Review-relative spellings resolve to
+# the same repository file, never to an execution-root copy of authority bytes.
+_S5_NORMATIVE_PATHS = {
+    "STAGE_VALIDATOR_EXECUTABLE": Path(__file__).resolve(),
+    "STAGE_VALIDATOR_CONTRACT": CONTRACT,
+    "CANONICALIZATION_PROFILE": HERE / "object-canonicalization-and-hash-chain.yml",
+    "EXECUTION_BINDING_SIDECAR_SCHEMA": HERE / "execution-binding-sidecar-architecture-schema-candidate.yml",
+    "CLAUSE_GRAMMAR_CONFIG": HERE / "clause-grammar-config.yml",
+    "CONSTRAINT_REGISTRY_SCHEMA": CONSTRAINT_REGISTRY_SCHEMA,
+    "CONSTRAINT_REGISTRY": REGISTRY,
+    "CONSTRAINT_SET": CONSTRAINT_SET,
+    "CONSTRAINT_SET_SCHEMA": CONSTRAINT_SET_SCHEMA,
+    "MINIMALITY_PROOF_SCHEMA": HERE / "minimality-proof-schema-candidate.yml",
+    "SCHEMA_GATE_DEPENDENCY_LOCK": HERE / "package-lock.json",
+    "SCHEMA_GATE_DEPENDENCY_MANIFEST": HERE / "package.json",
+    "STRICT_SCHEMA_GATE_EXECUTABLE": SCHEMA_GATE,
+    "QUERY_IR_SCHEMA": REPO / "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml",
+    "PROJECTION_RULE_SET": PROJECTION_RULE_SET,
+    "ENTITY_ONTOLOGY": REPO / "schema/entity-types.yml",
+    "ENTITY_ALIAS_AUTHORITY": QUERY_INTERPRETER_CONFIG,
+    "RELATION_ONTOLOGY": REPO / "schema/relation-types.yml",
+    "TYPED_SOLUTION_CORE_SCHEMA": HERE / "typed-solution-core-schema-candidate.yml",
+    "QUERY_INTERPRETER_CONFIG": QUERY_INTERPRETER_CONFIG,
+    "NEGATION_SURFACE_SCOPE_AUTHORITY": NEGATION_AUTHORITY,
+    "NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE": NEGATION_SEMANTIC_IMPLEMENTATION,
+    "PREDICATE_TYPE_MAPPING": FIXTURES / "authority-predicate-type-mapping.json",
+    "EVENT_RELATION_MAPPING": FIXTURES / "authority-event-relation-mapping.json",
+    "SEMANTIC_ROLE_MAPPING": FIXTURES / "authority-semantic-role-mapping.json",
+}
+
+
+def _s5_safe_file(root: Path, relative: str) -> Path:
+    """Resolve an admitted logical identity under an explicitly bound root."""
+    if (not isinstance(relative, str) or not relative or "\\" in relative
+            or ":" in relative or relative.startswith("/")
+            or any(part in ("", ".", "..") for part in relative.split("/"))):
+        raise ValueError("invalid S5 logical path")
+    candidate = root.joinpath(*relative.split("/"))
+    if any(p.is_symlink() for p in (candidate, *candidate.parents)):
+        raise ValueError("S5 symlink identity is prohibited")
+    resolved = candidate.resolve(strict=True)
+    resolved.relative_to(root.resolve(strict=True))
+    if not resolved.is_file():
+        raise ValueError("missing S5 actual file")
+    return resolved
+
+
+def _s5_canonical_json(path: Path) -> tuple[dict[str, Any], bytes]:
+    raw = path.read_bytes()
+    value = json.loads(raw)
+    if not isinstance(value, dict) or raw != canonical_bytes(value):
+        raise ValueError("noncanonical S5 JSON object")
+    return value, raw
+
+
+def resolve_s5_storage_object(
+    relative: str, expected_kind: str, *, execution_root: Path,
+    request_id: str, stage_index: int | None = None,
+) -> tuple[dict[str, Any], bytes]:
+    """Resolve only the exact production stage-result/sidecar filename forms."""
+    if expected_kind == "STAGE_SEMANTIC_VALIDATION_RESULT" and stage_index in range(5):
+        pattern = rf"stage-validation-s{stage_index}-([0-9a-f]{{64}})\.json"
+        schema = "stage-semantic-validation-result-schema-candidate.yml"
+        self_field = "result_sha256"
+    elif expected_kind == "EXECUTION_BINDING_SIDECAR" and stage_index is None:
+        pattern = r"execution-binding-sidecar-([0-9a-f]{64})\.json"
+        schema = "execution-binding-sidecar-architecture-schema-candidate.yml"
+        self_field = "sidecar_sha256"
+    else:
+        raise ValueError("wrong S5 storage object kind or stage")
+    match = re.fullmatch(pattern, relative) if isinstance(relative, str) else None
+    if match is None:
+        raise ValueError("wrong S5 production filename")
+    value, raw = _s5_canonical_json(_s5_safe_file(execution_root, relative))
+    if sha_bytes(raw) != match.group(1) or not schema_valid(schema, value):
+        raise ValueError("S5 filename digest or schema mismatch")
+    body = dict(value)
+    declared = body.pop(self_field)
+    if canonical_sha(body) != declared or value["request_id"] != request_id:
+        raise ValueError("S5 internal digest or request mismatch")
+    if value["canonicalization_profile_sha256"] != sha_bytes(
+        (HERE / "object-canonicalization-and-hash-chain.yml").read_bytes()
+    ) or value["validator_contract_sha256"] != sha_bytes(CONTRACT.read_bytes()):
+        raise ValueError("S5 profile or contract mismatch")
+    if stage_index is not None:
+        validator = value["validator"]
+        contract = load_yaml(CONTRACT)["validators"][_S5_STAGE_ORDER[stage_index]]
+        if (value["stage"] != _S5_STAGE_ORDER[stage_index]
+                or value["result"] != "PASS" or value["errors"]
+                or validator["validator_id"] != contract["validator_id"]
+                or validator["executable_sha256"] != sha_bytes(Path(__file__).read_bytes())
+                or validator["configuration_sha256"] != sha_bytes(CONTRACT.read_bytes())
+                or value["verified_constraint_ids"] != contract["registered_constraints"]):
+            raise ValueError("S5 stage identity or validator binding mismatch")
+    return value, raw
+
+
+def _s5_runtime_schema_valid(kind: str, value: Any) -> bool:
+    schema_path = resolve_review_path(_S5_RUNTIME_SCHEMAS[kind])
+    if kind not in {"SEMANTIC_VALIDATION_RESULT", "RETRIEVAL_RESULT", "P9A_RESPONSE", "P9A_AUDIT_RECORD"}:
+        return schema_valid(schema_path.name, value)
+    # Reuse the gate's existing AJV engine for frozen schemas outside its
+    # compiled fixture inventory. Their conditional type/required annotations
+    # predate AJV lint rules; disabling those lints preserves JSON Schema semantics.
+    script = """const fs=require('fs'), YAML=require('yaml');
+const Ajv=require('ajv/dist/2020').default;
+const schema=YAML.parse(fs.readFileSync(process.argv[1], 'utf8'));
+const validate=new Ajv({strict:true,strictTypes:false,strictRequired:false,validateFormats:false}).compile(schema);
+process.exit(validate(JSON.parse(fs.readFileSync(0,'utf8'))) ? 0 : 1);"""
+    result = subprocess.run(["node", "-e", script, str(schema_path)], cwd=HERE,
+                            input=canonical_bytes(value), capture_output=True, check=False)
+    return result.returncode == 0
+
+
+def _s5_resolve_reference(
+    reference: dict[str, Any], *, execution_root: Path, request_id: str,
+) -> tuple[Any, bytes]:
+    kind = reference["object_kind"]
+    relative = reference.get("path", reference.get("content_path"))
+    if not isinstance(relative, str):
+        raise ValueError("missing S5 object path")
+    if kind in _PROOF_PRODUCTION_PATHS:
+        if not _PROOF_PRODUCTION_PATHS[kind].fullmatch(relative):
+            raise ValueError("production proof requires exact production identity")
+        found = resolve_proof_object(relative, kind, proof_root=execution_root, request_id=request_id)
+        if found is None:
+            raise ValueError("S5 proof binding mismatch")
+        value, path, _ = found
+        raw = path.read_bytes()
+        if "request_id" in value and value["request_id"] != request_id:
+            raise ValueError("S5 proof request mismatch")
+    elif kind == "STAGE_SEMANTIC_VALIDATION_RESULT":
+        match = re.fullmatch(r"stage-validation-s([0-4])-[0-9a-f]{64}\.json", relative)
+        if match is None:
+            raise ValueError("production stage fixture substitution")
+        value, raw = resolve_s5_storage_object(
+            relative, kind, execution_root=execution_root,
+            request_id=request_id, stage_index=int(match.group(1)),
+        )
+    elif kind in _S5_NORMATIVE_PATHS:
+        expected = _S5_NORMATIVE_PATHS[kind]
+        canonical_path = expected.relative_to(REPO).as_posix()
+        spellings = {canonical_path}
+        if expected.is_relative_to(HERE):
+            spellings.add(expected.relative_to(HERE).as_posix())
+        if relative not in spellings:
+            raise ValueError("wrong normative S5 object path/kind")
+        path = _s5_safe_file(REPO, canonical_path)
+        raw = path.read_bytes()
+        value = json.loads(raw) if path.suffix == ".json" else (
+            load_yaml(path) if path.suffix == ".yml" else None
+        )
+    elif kind in _S5_RUNTIME_SCHEMAS:
+        if not re.fullmatch(r"(?:[A-Za-z0-9._-]+|fixtures/[A-Za-z0-9._-]+)\.json", relative):
+            raise ValueError("invalid S5 runtime JSON identity")
+        value, raw = _s5_canonical_json(_s5_safe_file(execution_root, relative))
+        selected = pointer_get(value, reference.get("content_json_pointer"))
+        if not _s5_runtime_schema_valid(kind, selected):
+            raise ValueError("S5 runtime object kind/schema mismatch")
+        schema_path = resolve_review_path(_S5_RUNTIME_SCHEMAS[kind])
+        allowed_schema_ids = {_S5_RUNTIME_SCHEMAS[kind], schema_path.name, load_yaml(schema_path)["$id"]}
+        if reference["schema_id"].split("#", 1)[0] not in allowed_schema_ids:
+            raise ValueError("S5 declared schema identity mismatch")
+        if "request_id" in selected and selected["request_id"] != request_id:
+            raise ValueError("S5 runtime request mismatch")
+    else:
+        raise ValueError("unresolved S5 object kind")
+    if (sha_bytes(raw) != reference["canonical_sha256"]
+            or len(raw) != reference["byte_length"]):
+        raise ValueError("S5 actual object hash/length mismatch")
+    return value, raw
+
+
+def _validate_s5_production(
+    sidecar: dict[str, Any], object_store_index: dict[str, Any], *,
+    execution_root: Path, sidecar_path: str,
+) -> list[dict[str, str]]:
+    """S5 storage-identity validation; never execute retrieval or S0-S4."""
+    constraint = "CNS-BIND-ACTUAL_OBJECT_HASH"
+    failure_pointer = "/"
+    try:
+        actual, raw = resolve_s5_storage_object(
+            sidecar_path, "EXECUTION_BINDING_SIDECAR",
+            execution_root=execution_root, request_id=sidecar["request_id"],
+        )
+        if canonical_bytes(sidecar) != raw:
+            raise ValueError("candidate is not the actual persisted sidecar")
+        references = actual["actual_objects"]
+        def identity(ref: dict[str, Any]) -> tuple[str, str, str]:
+            return ref["path"], ref["object_kind"], ref["canonical_sha256"]
+        expected = [identity(ref) for ref in references]
+        if len(expected) != len(set(expected)):
+            raise ValueError("duplicate S5 actual identity")
+        entries = object_store_index["objects"]
+        side_entries = [e for e in entries if e["object_kind"] == "EXECUTION_BINDING_SIDECAR"]
+        other = [identity(e) for e in entries if e["object_kind"] != "EXECUTION_BINDING_SIDECAR"]
+        failure_pointer = "/object_store_index/objects"
+        if (len(side_entries) != 1 or len(other) != len(set(other))
+                or set(other) != set(expected)
+                or identity(side_entries[0]) != (sidecar_path, "EXECUTION_BINDING_SIDECAR", sha_bytes(raw))
+                or object_store_index["sidecar_sha256"] != sha_bytes(raw)):
+            raise ValueError("S5 index is not an exact mirror")
+        parsed: dict[str, list[Any]] = {}
+        resolved: dict[tuple[str, str, str], tuple[Any, bytes]] = {}
+        for i, ref in enumerate(references):
+            failure_pointer = f"/actual_objects/{i}"
+            value, source_raw = _s5_resolve_reference(
+                ref, execution_root=execution_root, request_id=actual["request_id"],
+            )
+            resolved[identity(ref)] = (value, source_raw)
+            parsed.setdefault(ref["object_kind"], []).append(value)
+        required = load_yaml(HERE / "object-canonicalization-and-hash-chain.yml")["object_chain"]["S5_RUNTIME_BINDING"]["actual_inputs"]
+        aliases = {"STAGE_SEMANTIC_VALIDATION_RESULTS_S0_TO_S4": "STAGE_SEMANTIC_VALIDATION_RESULT",
+                   "RETRIEVAL_RESULT_IF_EXECUTED": "RETRIEVAL_RESULT", "P9A_RESPONSE_IF_PRESENT": "P9A_RESPONSE"}
+        if not {aliases.get(k, k) for k in required} <= set(parsed):
+            raise ValueError("incomplete S5 actual chain")
+        failure_pointer = "/stage_validation_result_paths"
+        stage_paths = actual["stage_validation_result_paths"]
+        stage_refs = [ref for ref in references if ref["object_kind"] == "STAGE_SEMANTIC_VALIDATION_RESULT"]
+        if len(stage_refs) != 5 or {ref["path"] for ref in stage_refs} != set(stage_paths):
+            raise ValueError("S5 stage result set is not one-to-one")
+        for ordinal, relative in enumerate(stage_paths):
+            result, _ = resolve_s5_storage_object(
+                relative, "STAGE_SEMANTIC_VALIDATION_RESULT", execution_root=execution_root,
+                request_id=actual["request_id"], stage_index=ordinal,
+            )
+            contract = load_yaml(CONTRACT)["validators"][_S5_STAGE_ORDER[ordinal]]
+            input_kinds = [r["object_kind"] for r in result["actual_input_objects"]]
+            needed = {"REMOVAL_PROBE" if k == "REMOVAL_PROBES" else k for k in contract["required_actual_inputs"]}
+            if (not needed <= set(input_kinds)
+                    or result["actual_output_object"]["object_kind"] != contract["required_actual_output"]):
+                raise ValueError("S5 stage input/output kinds mismatch")
+            for ref in result["actual_input_objects"] + [result["actual_output_object"]]:
+                path = ref["content_path"]
+                normalized_path = path[len(_S5_REVIEW_PREFIX):] if path.startswith(_S5_REVIEW_PREFIX) else path
+                key = (path, ref["object_kind"], ref["canonical_sha256"])
+                if key not in resolved:
+                    key = (normalized_path, ref["object_kind"], ref["canonical_sha256"])
+                if key not in resolved or len(resolved[key][1]) != ref["byte_length"]:
+                    raise ValueError("stage result does not bind same actual object")
+                source_ref = dict(ref, content_path=key[0])
+                _s5_resolve_reference(source_ref, execution_root=execution_root, request_id=actual["request_id"])
+        constraint = "CNS-BIND-REQUEST_CHAIN"
+        failure_pointer = "/request_id"
+        singleton = ["P9A_REQUEST", "NORMALIZED_REQUEST", "CLAUSE_AST", "EVENT_FRAME",
+                     "TYPED_CONSTRAINT_RESULT", "QUERYIR_EMISSION_RECORD", "QUERY_IR",
+                     "SEMANTIC_VALIDATION_RESULT", "RETRIEVAL_RESULT", "P9A_RESPONSE", "P9A_AUDIT_RECORD"]
+        if any(len(parsed.get(k, [])) != 1 for k in singleton):
+            raise ValueError("missing or duplicate S5 request-chain object")
+        request = parsed["P9A_REQUEST"][0]
+        for values in parsed.values():
+            for value in values:
+                if isinstance(value, dict):
+                    if "request_id" in value and value["request_id"] != request["request_id"]:
+                        raise ValueError("cross-request S5 object")
+                    if "request_sha256" in value and value["request_sha256"] != canonical_sha(request):
+                        raise ValueError("cross-request S5 hash")
+        constraint = "CNS-BIND-RETRIEVAL_CHAIN"
+        failure_pointer = "/retrieval_executed"
+        if (parsed["QUERY_IR"][0]["interpretation_status"] != "VALID"
+                or parsed["RETRIEVAL_RESULT"][0]["status"] != "RETRIEVED"):
+            raise ValueError("invalid successful S5 retrieval state")
+        constraint = "CNS-BIND-RESPONSE_AUDIT_CHAIN"
+        failure_pointer = "/response_present"
+        if parsed["P9A_AUDIT_RECORD"][0]["response_sha256"] != canonical_sha(parsed["P9A_RESPONSE"][0]):
+            raise ValueError("S5 response/audit binding mismatch")
+    except (KeyError, TypeError, ValueError, OSError, RuntimeError, IndexError):
+        return [error(constraint, registry_failure(constraint), failure_pointer)]
+    return []
+
+
 def validate_s5(
     sidecar: dict[str, Any],
     object_store_index: dict[str, Any] | None = None,
     actual_object_overrides: dict[str, dict[str, Any]] | None = None,
+    *,
+    execution_root: Path | None = None,
+    sidecar_path: str | None = None,
 ) -> list[dict[str, str]]:
+    if execution_root is not None or sidecar_path is not None:
+        if execution_root is None or sidecar_path is None or object_store_index is None or actual_object_overrides is not None:
+            return [error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/")]
+        return _validate_s5_production(sidecar, object_store_index, execution_root=execution_root, sidecar_path=sidecar_path)
     errors: list[dict[str, str]] = []
     if not schema_valid("execution-binding-sidecar-architecture-schema-candidate.yml", sidecar):
         errors.append(error("CNS-BIND-ACTUAL_OBJECT_HASH", "ACTUAL_OBJECT_BINDING_MISMATCH", "/"))

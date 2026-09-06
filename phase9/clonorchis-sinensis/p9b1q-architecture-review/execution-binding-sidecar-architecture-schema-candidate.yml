@@ -31,11 +31,26 @@ properties:
     maxItems: 5
     uniqueItems: true
     prefixItems:
-      - {const: "fixtures/stage-validation-s0-positive.json"}
-      - {const: "fixtures/stage-validation-s1-positive.json"}
-      - {const: "fixtures/stage-validation-s2-positive.json"}
-      - {const: "fixtures/stage-validation-s3-positive.json"}
-      - {const: "fixtures/stage-validation-s4-positive.json"}
+      - anyOf:
+        - const: fixtures/stage-validation-s0-positive.json
+        - type: string
+          pattern: ^stage-validation-s0-[0-9a-f]{64}\.json$
+      - anyOf:
+        - const: fixtures/stage-validation-s1-positive.json
+        - type: string
+          pattern: ^stage-validation-s1-[0-9a-f]{64}\.json$
+      - anyOf:
+        - const: fixtures/stage-validation-s2-positive.json
+        - type: string
+          pattern: ^stage-validation-s2-[0-9a-f]{64}\.json$
+      - anyOf:
+        - const: fixtures/stage-validation-s3-positive.json
+        - type: string
+          pattern: ^stage-validation-s3-[0-9a-f]{64}\.json$
+      - anyOf:
+        - const: fixtures/stage-validation-s4-positive.json
+        - type: string
+          pattern: ^stage-validation-s4-[0-9a-f]{64}\.json$
     items: false
   disposition: {const: QUERY_IR_VALID_RETRIEVED_ANSWERED}
   retrieval_executed: {const: true}
@@ -53,7 +68,122 @@ $defs:
       object_kind: {type: string, pattern: "^[A-Z][A-Z0-9_]{2,95}$"}
       path:
         type: string
-        pattern: "^(fixtures/[A-Za-z0-9._-]+\\.json|[A-Za-z0-9._-]+\\.(json|yml|py|mjs)|schema/[A-Za-z0-9._/-]+\\.yml|phase9/clonorchis-sinensis/[A-Za-z0-9._/-]+\\.yml)$"
+        anyOf:
+        - pattern: ^(fixtures/[A-Za-z0-9._-]+\.json|[A-Za-z0-9._-]+\.(json|yml|py|mjs)|schema/[A-Za-z0-9._/-]+\.yml|phase9/clonorchis-sinensis/[A-Za-z0-9._/-]+\.yml)$
+          type: string
+        - pattern: ^proof-objects/typed-solution-core/[0-9a-f]{64}\.json$
+          type: string
+        - pattern: ^proof-objects/semantic-universe/[0-9a-f]{64}\.json$
+          type: string
+        - pattern: ^proof-objects/removal-probe/[0-9a-f]{64}\.json$
+          type: string
       schema_id: {type: string, minLength: 1, maxLength: 512}
       canonical_sha256: {$ref: "#/$defs/sha256"}
       byte_length: {type: integer, minimum: 1}
+    allOf:
+    - if:
+        properties:
+          path:
+            pattern: ^proof-objects/typed-solution-core/[0-9a-f]{64}\.json$
+            type: string
+        required:
+        - path
+      then:
+        properties:
+          object_kind:
+            const: TYPED_SOLUTION
+    - if:
+        properties:
+          object_kind:
+            const: TYPED_SOLUTION
+          path:
+            pattern: ^proof-objects/
+            type: string
+        required:
+        - object_kind
+        - path
+      then:
+        properties:
+          path:
+            pattern: ^proof-objects/typed-solution-core/[0-9a-f]{64}\.json$
+            type: string
+    - if:
+        properties:
+          path:
+            pattern: ^proof-objects/semantic-universe/[0-9a-f]{64}\.json$
+            type: string
+        required:
+        - path
+      then:
+        properties:
+          object_kind:
+            const: SEMANTIC_UNIVERSE
+    - if:
+        properties:
+          object_kind:
+            const: SEMANTIC_UNIVERSE
+          path:
+            pattern: ^proof-objects/
+            type: string
+        required:
+        - object_kind
+        - path
+      then:
+        properties:
+          path:
+            pattern: ^proof-objects/semantic-universe/[0-9a-f]{64}\.json$
+            type: string
+    - if:
+        properties:
+          path:
+            pattern: ^proof-objects/removal-probe/[0-9a-f]{64}\.json$
+            type: string
+        required:
+        - path
+      then:
+        properties:
+          object_kind:
+            const: REMOVAL_PROBE
+    - if:
+        properties:
+          object_kind:
+            const: REMOVAL_PROBE
+          path:
+            pattern: ^proof-objects/
+            type: string
+        required:
+        - object_kind
+        - path
+      then:
+        properties:
+          path:
+            pattern: ^proof-objects/removal-probe/[0-9a-f]{64}\.json$
+            type: string
+    - if:
+        properties:
+          path:
+            pattern: ^stage-validation-
+            type: string
+        required:
+        - path
+      then:
+        properties:
+          object_kind:
+            const: STAGE_SEMANTIC_VALIDATION_RESULT
+          path:
+            pattern: ^stage-validation-s[0-4]-[0-9a-f]{64}\.json$
+            type: string
+    - if:
+        properties:
+          path:
+            pattern: ^execution-binding-sidecar-.*\.json$
+            type: string
+        required:
+        - path
+      then:
+        properties:
+          object_kind:
+            const: EXECUTION_BINDING_SIDECAR
+          path:
+            pattern: ^execution-binding-sidecar-[0-9a-f]{64}\.json$
+            type: string

@@ -269,9 +269,50 @@ validators:
       - "the sidecar actual output object is independently resolved and hashed; its own summaries are never authority"
       - "the non-sidecar object-store index entry set is exactly one-to-one with sidecar.actual_objects"
       - "every non-sidecar index path, object_kind and canonical_sha256 equals its corresponding material authority reference"
-      - "exactly one EXECUTION_BINDING_SIDECAR index entry binds the canonical sidecar bytes at fixtures/execution-binding-sidecar-positive.json"
+      - "exactly one EXECUTION_BINDING_SIDECAR index entry binds the complete canonical sidecar bytes at its mode-specific actual output path"
       - "retrieval is absent for every non-VALID interpretation or failed stage"
       - "retrieval, response and audit bind actual request and QueryIR objects under existing P9-A contracts"
+
+    storage_identity:
+      reference_fixture_mode:
+        stage_result_paths:
+          - fixtures/stage-validation-s0-positive.json
+          - fixtures/stage-validation-s1-positive.json
+          - fixtures/stage-validation-s2-positive.json
+          - fixtures/stage-validation-s3-positive.json
+          - fixtures/stage-validation-s4-positive.json
+        sidecar_path: fixtures/execution-binding-sidecar-positive.json
+      production_execution_mode:
+        execution_object_root: EXPLICIT_CALLER_BOUND_ROOT_NOT_CANDIDATE_AUTHORITY
+        stage_result_path_forms:
+          - 'stage-validation-s0-[0-9a-f]{64}.json'
+          - 'stage-validation-s1-[0-9a-f]{64}.json'
+          - 'stage-validation-s2-[0-9a-f]{64}.json'
+          - 'stage-validation-s3-[0-9a-f]{64}.json'
+          - 'stage-validation-s4-[0-9a-f]{64}.json'
+        exact_stage_order: [S0_NORMALIZED_REQUEST, S1_CLAUSE_AST, S2_EVENT_FRAME, S3_TYPED_SOLVER, S4_QUERYIR_EMISSION]
+        sidecar_path_form: 'execution-binding-sidecar-[0-9a-f]{64}.json'
+        filename_digest: SHA256_OF_COMPLETE_EXACT_PERSISTED_CANONICAL_FILE_BYTES
+        internal_digest_rule: result_sha256 and sidecar_sha256 omit only their own field; verify separately from the complete-file filename digest.
+        fixture_identity_substitution: PROHIBITED
+        proof_resolution: Existing resolve_proof_object with exact kind/directory pairing and bound execution object root.
+        schema_gate_executable_path: phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs
+        stage_result_checks:
+          - Actual persisted canonical bytes, full-file filename digest, byte length and internal result digest.
+          - Exact request_id, stage ordinal and validator ID; PASS with no errors.
+          - Exact current validator executable, configuration/contract and canonicalization profile file hashes.
+          - Actual input/output objects independently resolved with truthful kinds, paths, schemas, hashes and lengths.
+          - Exact registered constraint list and required input/output kinds from the unchanged stage contract.
+          - Ordered S0-S4 results bind the same actual object chain recorded in the sidecar.
+        sidecar_checks:
+          - Independently resolve actual complete canonical sidecar bytes; no embedded or fixture substitute.
+          - Verify internal sidecar digest, full-file filename digest, request, profile, contract and frozen success constants.
+          - Exact one-to-one non-sidecar index entries match actual_objects by path, object_kind and canonical_sha256.
+          - Exactly one sidecar index entry binds the actual mode-specific path and complete canonical bytes.
+        rejected_paths:
+          - Parent or dot segments, empty segments, duplicate separators, POSIX absolute, Windows drive, UNC and URL.
+          - Symlinks, escape or wrong root, wrong filename digest, wrong stage, wrong kind/directory and noncanonical JSON.
+        authority_boundary: S5 storage identity only; S0-S4 validation semantics and existing proof resolver semantics remain unchanged.
 
 negative_fixture_contract:
   manifest: "fixtures/stage-validator-negative-fixtures.yml"
