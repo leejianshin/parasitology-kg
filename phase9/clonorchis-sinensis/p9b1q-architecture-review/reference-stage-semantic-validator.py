@@ -2142,6 +2142,7 @@ def semantic_object_set(core: dict[str, Any]) -> dict[str, Any]:
             "resolved_relations",
             "semantic_roles",
             "narrative_intents",
+            "forbidden_relations",
             "resolved_references",
             "resolved_overrides",
         )
@@ -2566,7 +2567,37 @@ def validate_semantic_authority(
         ):
             errors.append(error("CNS-SOLVER-ASSERTION_SCOPE", "SCOPE_TARGET_INVALID", "/selected_solution/resolved_mentions"))
             break
-    if require_complete and set(actual_mentions) != set(expected_mentions):
+    # Fixed AST candidates authorize identities; production minimality may omit
+    # candidates that are not dependencies of the resolved semantic objects.
+    mention_keys = {item["mention_key"] for item in core["resolved_mentions"]}
+    required_mention_keys = {
+        root
+        for collection in ("resolved_relations", "semantic_roles", "narrative_intents", "forbidden_relations")
+        for item in core.get(collection, [])
+        for root in item["root_keys"]
+        if root.startswith("RM")
+    }
+    required_mention_keys.update(
+        item[key]
+        for item in core["resolved_references"]
+        for key in ("anaphor_key", "referent_key")
+        if item[key].startswith("RM")
+    )
+    required_entities = {
+        entity_id
+        for relation in core["resolved_relations"]
+        for selector in ("subject_selector", "object_selector")
+        for entity_id in relation[selector]["entity_ids"]
+    }
+    if (
+        len(actual_mentions) != len(core["resolved_mentions"])
+        or len(mention_keys) != len(core["resolved_mentions"])
+        or (require_complete and (
+            not required_mention_keys <= mention_keys
+            or not required_entities <= {item["entity_id"] for item in actual_mentions.values()}
+            or (not core["resolved_relations"] and set(actual_mentions) != set(expected_mentions))
+        ))
+    ):
         errors.append(error("CNS-SOLVER-ENTITY_RESOLUTION", "SLOT_TYPE_MISMATCH", "/selected_solution/resolved_mentions"))
 
     expected_events = _expected_fixed_events(inputs)
