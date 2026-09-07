@@ -1659,6 +1659,8 @@ def validate_s3(
     inputs: dict[str, Any] | None = None,
     input_hashes: dict[str, str] | None = None,
     assertion_only: bool = False,
+    *,
+    proof_root: Path | None = None,
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     inputs = inputs or {}
@@ -1815,15 +1817,58 @@ def validate_s3(
     enumerated = 0 if semantic_errors else finite_solution_count(core, emission, inputs)
     if (not semantic_errors or empty_unique) and typed["solution_cardinality"] != ("ONE" if enumerated == 1 else "ZERO" if enumerated == 0 else "MULTIPLE"):
         errors.append(error("CNS-SOLVER-SOLUTION_CARDINALITY", "SOLUTION_CARDINALITY_MISMATCH", "/solution_cardinality"))
-    if not errors and proof_artifact_chain_errors(typed, inputs):
+    if not errors and proof_artifact_chain_errors(typed, inputs, proof_root=HERE if proof_root is None else proof_root):
         errors.append(error("CNS-SOLVER-MINIMALITY", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     return ordered(errors)
+
+
+def trace_source_identifiers(value: Any, kind: str) -> set[str]:
+    """Catalog identifier fields in the actual source, never arbitrary text values."""
+    identifier_fields = {
+        "request_id", "node_id", "surface_mention_id", "marker_id",
+        "attachment_set_id", "frame_id", "slot_id", "mention_key", "event_key",
+        "relation_key", "role_key", "narrative_key", "forbidden_key",
+        "reference_key", "override_key", "hypothesis_id", "anaphor_source_id",
+    }
+    reference_fields = {
+        "source_ids", "source_ast_node_ids", "governing_ast_node_ids",
+        "candidate_referent_ids", "surface_mention_ids", "frame_ids",
+    }
+    result: set[str] = set()
+    if kind == "EVENT_RELATION_MAPPING" and isinstance(value, dict):
+        for event_type, mapping in value.get("event_mapping", {}).items():
+            result.add(event_type)
+            result.update(mapping.get("predicates", {}))
+        return result
+    if kind == "SEMANTIC_ROLE_MAPPING" and isinstance(value, dict):
+        for role_kind, catalog in value.get("role_catalog", {}).items():
+            result.add(role_kind)
+            result.update(catalog)
+        result.update(value.get("narrative_intent_mapping", {}))
+        result.update(value.get("closed_contrast_derivations", {}))
+        return result
+
+    def visit(item: Any) -> None:
+        if isinstance(item, dict):
+            for key, child in item.items():
+                if key in identifier_fields and isinstance(child, str):
+                    result.add(child)
+                if key in reference_fields and isinstance(child, list):
+                    result.update(x for x in child if isinstance(x, str))
+                visit(child)
+        elif isinstance(item, list):
+            for child in item:
+                visit(child)
+    visit(value)
+    return result
 
 
 def validate_s4(
     typed: dict[str, Any],
     query_ir: dict[str, Any],
     inputs: dict[str, Any] | None = None,
+    *,
+    proof_root: Path | None = None,
 ) -> list[dict[str, str]]:
     errors: list[dict[str, str]] = []
     if not schema_valid("query-ir-schema-candidate.yml", query_ir):
@@ -1844,41 +1889,26 @@ def validate_s4(
         if trace["query_ir_json_pointer"] in set(pointers) and canonical_sha(pointer_get(emitted, trace["query_ir_json_pointer"])) != trace["emitted_value_sha256"]:
             errors.append(error("CNS-EMIT-TRACE_VALUE_HASH", "TRACE_VALUE_HASH_MISMATCH", f"/selected_solution/queryir_emission_record/field_traces/{index}"))
     core = solution_core(typed)
-    core_ids = set()
-    for collection, key in (
-        ("resolved_mentions", "mention_key"),
-        ("resolved_events", "event_key"),
-        ("resolved_relations", "relation_key"),
-        ("narrative_intents", "narrative_key"),
-        ("semantic_roles", "role_key"),
-        ("resolved_references", "reference_key"),
-        ("resolved_overrides", "override_key"),
-    ):
-        core_ids.update(item[key] for item in core[collection])
-    ast = inputs.get("CLAUSE_AST", {})
-    ast_ids = {
-        item[key]
-        for collection, key in (
-            ("nodes", "node_id"),
-            ("surface_mentions", "surface_mention_id"),
-            ("assertion_markers", "marker_id"),
-            ("attachment_sets", "attachment_set_id"),
+    source_objects = {
+        kind: inputs[kind]
+        for kind in (
+            "NORMALIZED_REQUEST", "CLAUSE_AST", "EVENT_FRAME",
+            "EVENT_RELATION_MAPPING", "SEMANTIC_ROLE_MAPPING",
         )
-        for item in ast.get(collection, [])
+        if kind in inputs
     }
-    normalized = inputs.get("NORMALIZED_REQUEST", {})
-    normalized_text = normalized.get("normalized_query_text", "")
-    typed_core_hash = canonical_sha(core)
-    ast_hash = canonical_sha(ast) if ast else None
+    source_objects["TYPED_SOLUTION"] = core
+    normalized_text = inputs.get("NORMALIZED_REQUEST", {}).get("normalized_query_text", "")
     if inputs:
         for index, trace in enumerate(traces):
             for binding in trace["source_bindings"]:
-                expected_ids = core_ids if binding["object_kind"] == "TYPED_SOLUTION" else ast_ids
-                expected_hash = typed_core_hash if binding["object_kind"] == "TYPED_SOLUTION" else ast_hash
-                if expected_hash is None or binding["object_sha256"] != expected_hash or any(source_id not in expected_ids for source_id in binding["source_ids"]):
+                kind = binding["object_kind"]
+                actual = source_objects.get(kind)
+                expected_ids = trace_source_identifiers(actual, kind)
+                if actual is None or binding["object_sha256"] != canonical_sha(actual) or any(source_id not in expected_ids for source_id in binding["source_ids"]):
                     errors.append(error("CNS-EMIT-TRACE_VALUE_HASH", "TRACE_VALUE_HASH_MISMATCH", f"/selected_solution/queryir_emission_record/field_traces/{index}"))
                 for span in binding["source_spans"]:
-                    if normalized_text[span["start_char"] : span["end_char"]] != span["text"]:
+                    if not (0 <= span["start_char"] < span["end_char"] <= len(normalized_text)) or normalized_text[span["start_char"] : span["end_char"]] != span["text"]:
                         errors.append(error("CNS-EMIT-TRACE_VALUE_HASH", "TRACE_VALUE_HASH_MISMATCH", f"/selected_solution/queryir_emission_record/field_traces/{index}"))
     if query_ir != emitted:
         errors.append(error("CNS-EMIT-PROJECTION_ONLY", "NON_PURE_PROJECTION", "/"))
@@ -1903,6 +1933,7 @@ def validate_s4(
         probe_result = resolve_proof_object(
             witness["removal_probe_path"],
             "REMOVAL_PROBE",
+            proof_root=HERE if proof_root is None else proof_root,
             request_id=typed["request_id"],
         )
         if probe_result is None:
@@ -1923,8 +1954,8 @@ def validate_s4(
         errors.append(error("CNS-EMIT-MINIMALITY_WITNESS", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     if not rooted_witness_paths_valid(emission) or material_ids(core) != set(emission["minimality_witness"]["retained_semantic_object_ids"]):
         errors.append(error("CNS-EMIT-LICENSE_COVERAGE", "LICENSE_DAG_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
-    s3_proof_inputs = load_stage_result("S3")[1]
-    if not errors and proof_artifact_chain_errors(typed, s3_proof_inputs):
+    s3_proof_inputs = load_stage_result("S3")[1] if proof_root is None else inputs
+    if not errors and proof_artifact_chain_errors(typed, s3_proof_inputs, proof_root=HERE if proof_root is None else proof_root):
         errors.append(error("CNS-EMIT-MINIMALITY_WITNESS", "MINIMALITY_WITNESS_INVALID", "/selected_solution/queryir_emission_record/minimality_witness"))
     return ordered(errors)
 
@@ -2791,7 +2822,7 @@ def derive_queryir_projection(
                 "event_id": _queryir_id(item["event_key"]),
                 "event_type": item["event_type"],
                 "finding_polarity": item["finding_polarity"],
-                "mention_ids": sorted(mention_id_by_surface[source] for source in source_ids),
+                "mention_ids": sorted(mention_id_by_surface[source] for source in source_ids if source in mention_id_by_surface),
                 "method_entity_id": item["method_entity_id"],
                 "reference_ids": [],
                 "source_span": copy.deepcopy(frame["source_spans"][0]),

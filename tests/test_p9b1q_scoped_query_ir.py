@@ -3626,6 +3626,168 @@ class ProductionProofChainCorrectionTests(unittest.TestCase):
                     extract_queryir_c4(changed, proof_root=self.proof_root)
 
 
+
+class ReferenceProductionParityTests(unittest.TestCase):
+    """Actual fresh production objects, independently read normative inputs."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        import yaml
+        cls.temporary = tempfile.TemporaryDirectory(prefix="p9b1q-d3-")
+        cls.addClassCleanup(cls.temporary.cleanup)
+        cls.proof_root = Path(cls.temporary.name)
+        cls.traps = []
+        for target in (
+            "scripts.p9b1q_scoped_query_ir.execute_query_ir",
+            "scripts.p9b1q_scoped_query_ir.run_scoped_query",
+            "socket.create_connection", "socket.socket.connect",
+        ):
+            patch = mock.patch(target, side_effect=AssertionError(target))
+            cls.traps.append(patch.start())
+            cls.addClassCleanup(patch.stop)
+        cls.execution = compile_c4(
+            request("D3-PARITY", C3TypedConstraintSolverTests.UNIQUE_TEXT),
+            proof_root=cls.proof_root,
+        )
+        cls.typed = cls.execution["typed_constraint_result"]
+        cls.emission = cls.typed["selected_solution"]["queryir_emission_record"]
+        cls.query_ir = cls.execution["query_ir"]
+        review = ROOT / "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+        spec = importlib.util.spec_from_file_location(
+            "d3_reference_oracle", review / "reference-stage-semantic-validator.py"
+        )
+        cls.reference = importlib.util.module_from_spec(spec)
+        with mock.patch.object(sys, "path", [str(review)] + sys.path):
+            spec.loader.exec_module(cls.reference)
+        cls.inputs = {
+            "NORMALIZED_REQUEST": cls.execution["normalized_request"],
+            "CLAUSE_AST": cls.execution["clause_ast"],
+            "EVENT_FRAME": cls.execution["event_frame"],
+        }
+        cls.hashes = {k: cls.digest(v) for k, v in cls.inputs.items()}
+        paths = {
+            "ENTITY_ONTOLOGY": ROOT / "schema/entity-types.yml",
+            "RELATION_ONTOLOGY": ROOT / "schema/relation-types.yml",
+            "QUERY_IR_SCHEMA": ROOT / "phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml",
+        }
+        for kind, filename in (
+            ("PREDICATE_TYPE_MAPPING", "fixtures/authority-predicate-type-mapping.json"),
+            ("EVENT_RELATION_MAPPING", "fixtures/authority-event-relation-mapping.json"),
+            ("SEMANTIC_ROLE_MAPPING", "fixtures/authority-semantic-role-mapping.json"),
+            ("PROJECTION_RULE_SET", "queryir-projection-rule-set.yml"),
+            ("CONSTRAINT_SET", "constraint-set-v0.1.yml"),
+            ("CONSTRAINT_REGISTRY", "constraint-id-registry.yml"),
+            ("CONSTRAINT_REGISTRY_SCHEMA", "constraint-id-registry-schema-candidate.yml"),
+            ("CONSTRAINT_SET_SCHEMA", "constraint-set-schema-candidate.yml"),
+            ("MINIMALITY_PROOF_SCHEMA", "minimality-proof-schema-candidate.yml"),
+            ("TYPED_SOLUTION_CORE_SCHEMA", "typed-solution-core-schema-candidate.yml"),
+            ("NEGATION_SURFACE_SCOPE_AUTHORITY", "negation-surface-scope-authority.yml"),
+            ("STAGE_VALIDATOR_CONTRACT", "stage-semantic-validator-contract.yml"),
+        ):
+            paths[kind] = review / filename
+        for kind, path in paths.items():
+            raw = path.read_bytes()
+            cls.inputs[kind] = yaml.safe_load(raw)
+            cls.hashes[kind] = hashlib.sha256(raw).hexdigest()
+        cls.inputs["NEGATION_SEMANTIC_AUTHORITY_EXECUTABLE"] = (review / "negation_semantic_authority.py").read_text()
+        minimality = cls.emission["minimality_witness"]
+        def persisted(relative):
+            raw = (cls.proof_root / relative).read_bytes()
+            value = json.loads(raw)
+            if cls.encoded(value) != raw:
+                raise AssertionError("noncanonical actual proof")
+            return value
+        cls.core = persisted("proof-objects/typed-solution-core/" + cls.emission["semantic_solution_core_sha256"] + ".json")
+        cls.inputs.update({
+            "TYPED_CONSTRAINT_RESULT": cls.typed,
+            "QUERYIR_EMISSION_RECORD": cls.emission,
+            "TYPED_SOLUTION": cls.core,
+            "SEMANTIC_UNIVERSE": persisted(minimality["semantic_universe_path"]),
+            "REMOVAL_PROBES": [persisted(w["removal_probe_path"]) for w in minimality["retained_object_witnesses"]],
+        })
+        chain = yaml.safe_load((review / "object-canonicalization-and-hash-chain.yml").read_text())
+        for stage in ("S3_TYPED_SOLVER", "S4_QUERYIR_EMISSION"):
+            required = set(cls.inputs["STAGE_VALIDATOR_CONTRACT"]["validators"][stage]["required_actual_inputs"])
+            required.update(chain["object_chain"][stage]["actual_inputs"])
+            if required - cls.inputs.keys():
+                raise AssertionError(sorted(required - cls.inputs.keys()))
+
+    @staticmethod
+    def encoded(value):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+
+    @classmethod
+    def digest(cls, value):
+        return hashlib.sha256(cls.encoded(value)).hexdigest()
+
+    def s4(self, typed=None, inputs=None, root=None):
+        with mock.patch.object(self.reference, "load_stage_result", side_effect=AssertionError("fixture fallback")):
+            return self.reference.validate_s4(
+                self.typed if typed is None else typed, self.query_ir,
+                self.inputs if inputs is None else inputs,
+                proof_root=self.proof_root if root is None else root,
+            )
+
+    def test_reference_s3_complete_production_chain(self):
+        with mock.patch.object(self.reference, "load_stage_result", side_effect=AssertionError("fixture fallback")):
+            self.assertEqual([], self.reference.validate_s3(
+                self.typed, self.inputs, self.hashes, proof_root=self.proof_root))
+
+    def test_reference_s4_complete_production_chain(self):
+        self.assertEqual([], self.s4())
+        self.assertEqual(self.encoded(self.emission["query_ir"]), self.encoded(self.query_ir))
+        self.assertTrue(all(trap.call_count == 0 for trap in self.traps))
+
+    def test_non_typed_sources_bind_actual_objects(self):
+        kinds = set()
+        for trace in self.emission["field_traces"]:
+            for binding in trace["source_bindings"]:
+                kind = binding["object_kind"]
+                actual = self.core if kind == "TYPED_SOLUTION" else self.inputs[kind]
+                self.assertEqual(self.digest(actual), binding["object_sha256"])
+                for span in binding["source_spans"]:
+                    self.assertLess(span["start_char"], span["end_char"])
+                    self.assertEqual(span["text"], self.inputs["NORMALIZED_REQUEST"]["normalized_query_text"][span["start_char"]:span["end_char"]])
+                kinds.add(kind)
+        self.assertEqual({"NORMALIZED_REQUEST", "CLAUSE_AST", "EVENT_FRAME", "TYPED_SOLUTION", "EVENT_RELATION_MAPPING", "SEMANTIC_ROLE_MAPPING"}, kinds)
+        self.assertEqual([], self.s4())
+
+    def test_wrong_source_kind_hash_and_identifier_rejected(self):
+        for field, value in (("object_kind", "UNKNOWN"), ("object_kind", "CLAUSE_AST"), ("object_sha256", "0" * 64), ("source_ids", ["EF999"]), ("source_ids", ["AFFIRMED"])):
+            with self.subTest(field=field, value=value):
+                typed = copy.deepcopy(self.typed)
+                bindings = [b for t in typed["selected_solution"]["queryir_emission_record"]["field_traces"] for b in t["source_bindings"]]
+                binding = next(b for b in bindings if b["object_kind"] == "TYPED_SOLUTION" and "EF001" in b["source_ids"])
+                binding[field] = value
+                errors = self.s4(typed)
+                self.assertTrue(any(e["constraint_id"] == "CNS-EMIT-TRACE_VALUE_HASH" for e in errors), errors)
+
+    def test_actual_typed_frame_id_resolves(self):
+        self.assertIn("EF001", {e["frame_id"] for e in self.core["resolved_events"]})
+        self.assertNotIn("EF999", self.encoded(self.core).decode())
+        self.assertEqual([], self.s4())
+
+    def test_event_projection_uses_only_retained_mentions(self):
+        retained = {m["surface_mention_id"] for m in self.core["resolved_mentions"]}
+        sources = {s for f in self.inputs["EVENT_FRAME"]["frames"] for slot in f["participant_slots"] for s in slot["source_ids"]}
+        self.assertIn("U003", sources)
+        self.assertNotIn("U003", retained)
+        before = self.encoded(self.core)
+        projected = self.reference.derive_queryir_projection(self.core, self.inputs)
+        self.assertEqual(["M01"], projected["events"][0]["mention_ids"])
+        self.assertEqual(self.query_ir, projected)
+        self.assertEqual(before, self.encoded(self.core))
+
+    def test_production_proof_context_never_falls_back(self):
+        with tempfile.TemporaryDirectory(dir=self.proof_root) as missing:
+            self.assertTrue(self.s4(root=Path(missing)))
+            self.assertTrue(self.reference.validate_s3(self.typed, self.inputs, self.hashes, proof_root=Path(missing)))
+        changed = copy.deepcopy(self.inputs)
+        changed["EVENT_FRAME"]["frames"][0]["frame_id"] = "EF999"
+        self.assertTrue(self.s4(inputs=changed))
+
+
 class BindingChainTests(unittest.TestCase):
     def setUp(self):
         self.actual = request(
