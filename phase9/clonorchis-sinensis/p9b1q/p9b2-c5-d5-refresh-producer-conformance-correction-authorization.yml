@@ -1,0 +1,248 @@
+authorization_version: '1.0'
+authorization_id: AUTH-D5P-C5-REFRESH-PRODUCER-CONFORMANCE-CORRECTION
+authorization_kind: C5_D5P_REFRESH_PRODUCER_CONFORMANCE_CORRECTION
+authorization_status: PROSPECTIVE_PENDING_PUBLICATION_AND_EXPLICIT_BUILD_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+authorization_base: af17bb3a2100a760931d2fd05857743c7f69261f
+blocking_finding: P9B1Q-C5-D5-REFRESH-PRODUCER-CONFORMANCE-HIGH-001
+control_authorization: C5_D5P_REFRESH_PRODUCER_CONFORMANCE_CORRECTION_AUTHORIZATION_MATERIALIZATION=AUTHORIZED
+purpose: >-
+  Correct the derived evidence refresh producer and add a fail-closed narrow
+  refresh mode without refreshing any actual repository evidence.
+
+current_materialization:
+  allowed_changed_path_count: 1
+  allowed_new_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-refresh-producer-conformance-correction-authorization.yml
+  existing_tracked_file_mutation_authorized: false
+  implementation_authorized: false
+  commit_authorized: false
+  push_authorized: false
+  pr_authorized: false
+
+prospective_implementation:
+  requires_authorization_publication: true
+  requires_separate_explicit_control_build_start: true
+  direct_path_count: 2
+  direct_paths:
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+    - tests/test_p9b1q_scoped_query_ir.py
+  any_other_direct_implementation_path: UNAUTHORIZED
+  runtime_recovery_authorized: false
+  p9b2_implementation_authorized: false
+
+frozen_semantic_identity:
+  status: CLOSED_FROZEN
+  exact_collection_count: 8
+  exact_collections:
+    - resolved_mentions
+    - resolved_events
+    - resolved_relations
+    - semantic_roles
+    - narrative_intents
+    - forbidden_relations
+    - resolved_references
+    - resolved_overrides
+  algorithm: SHA256_OF_CANONICAL_UTF8_JSON
+  object_keys_sorted_recursively: true
+  array_order_preserved: true
+  insignificant_whitespace: false
+  additional_unicode_normalization: NONE
+  semantic_object_set_sha256_derivation: SHA256 of the canonical object containing exactly the eight collections
+  solution_id_derivation: '"SOL-" + semantic_object_set_sha256[:24]'
+  producer_may_conform: true
+  producer_may_redefine: false
+
+current_defect:
+  nonconforming_implementation: phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py::semantic_set
+  current_field_set:
+    - resolved_mentions
+    - resolved_events
+    - resolved_relations
+    - semantic_roles
+    - narrative_intents
+    - resolved_references
+    - resolved_overrides
+  missing_field: forbidden_relations
+  classification: IMPLEMENTATION_BUG_IN_DERIVED_EVIDENCE_PRODUCER
+  semantic_authority_conflict: false
+  frozen_semantic_object_set_sha256: 44c949792c62a160683f36867132ef63d80664c385010a97f98a9406d7f8b2e1
+  incorrect_seven_set_sha256: d889890999b43c26bde04f87601be55909b960a76d8d80298c92454b74f82d86
+
+semantic_set_correction:
+  required: Derive identity from exactly the frozen eight collections, including forbidden_relations
+  configured_identity_field_set_divergence: FAIL_CLOSED
+  prohibited:
+    - adding a ninth semantic collection
+    - dropping any frozen collection
+    - changing canonical serialization
+    - changing solution_id derivation
+    - changing semantic payload to fit the producer
+
+narrow_refresh_mode:
+  required: true
+  existing_producer_only: true
+  explicit_functionally_equivalent_execution_path_permitted: true
+  legacy_full_main_authorized_as_future_d5_entrypoint: false
+  cli_or_function_name: IMPLEMENTATION_CHOICE_MUST_BE_REPORTED_BY_BUILD
+  requirements:
+    - read existing semantic-bearing persisted objects
+    - preserve frozen semantic payload
+    - update only mechanically derived executable bindings, transitive hashes, proof hashes, receipts and approved manifest bindings
+    - validate the prospective changed path set before writing
+    - validate the prospective changed field or pointer set before writing
+    - write only objects whose authorized derived fields actually change
+    - fail closed if semantic payload would change
+    - fail closed if semantic authority bytes would change
+    - fail closed if schema bytes would change
+    - fail closed if an output path is outside the supplied and authorized refresh scope
+    - be deterministic
+    - be idempotent when run again on already refreshed bytes
+  semantic_reconstruction_based_on_legacy_main_behavior: PROHIBITED
+  derived_field_change_requires: EXPLICIT_JUSTIFICATION_FROM_FROZEN_UPSTREAM_BYTES
+
+protected_semantic_payload:
+  - normalized request text and spans
+  - Clause AST structure and roles
+  - Event Frame predicates and participants
+  - typed resolved mentions
+  - typed resolved events
+  - typed resolved relations
+  - semantic roles
+  - narrative intents
+  - forbidden relations
+  - resolved references
+  - resolved overrides
+  - constraint-satisfaction semantics
+  - minimality removal target semantics
+  - QueryIR semantic projection
+  - negative-case operation semantics
+  - expected constraints
+  - expected failure codes
+
+special_derived_bindings:
+  future_mapping_must_account_for: true
+  narrow_mode_must_support: true
+  general_semantic_rewrite_authorized: false
+  r3a_removal_candidate_hashes:
+    field: candidate_semantic_object_set_sha256
+    derivation: Independent removal-candidate replay using the frozen eight-field identity definition
+    corrected_simulation_values:
+      R3A-PROBE-REF01: 556c2759109f06c8348da7960b421f96ad582d9a2762507cf3cfa794534c0b87
+      R3A-PROBE-REF02: 3cded18ddd46e9fca53056d377c401f7e140bc3c9827b94d199339a20ebf235b
+      R3A-PROBE-OVR01: d49a4c7aa749eb7a7cf5750792737a7a38513a895d0ba53da0b26ae241de0b66
+  negative_fixture_base_object_bindings:
+    path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml
+    operations_unchanged: true
+    expected_constraints_unchanged: true
+    expected_failure_codes_unchanged: true
+  simulation_values_role: CONFORMANCE_EVIDENCE_ONLY_NOT_D5_REFRESH_AUTHORIZATION
+
+write_set_safety:
+  d5p_output_writing_execution_location: DISPOSABLE_NON_AUTHORITATIVE_COPIES_OUTSIDE_REPOSITORY_WORKTREE_ONLY
+  actual_repository_fixture_refresh_authorized: false
+  actual_repository_evidence_refresh_authorized: false
+  actual_repository_manifest_refresh_authorized: false
+  legacy_potential_40_path_write_set_authorized: false
+  prior_35_path_simulation_is_final_d5_allowlist: false
+  exact_d5_allowlist_prerequisite_sequence:
+    - D5P correction
+    - BUILD verification
+    - publication
+    - independent read-only audit
+    - resumed D5 stale-binding mapping
+
+test_obligations:
+  path: tests/test_p9b1q_scoped_query_ir.py
+  additive_producer_conformance_coverage_only: true
+  existing_d1_d2_d3_test_deletion_authorized: false
+  existing_d1_d2_d3_test_weakening_authorized: false
+  minimum_coverage:
+    - NONEMPTY_FORBIDDEN_RELATIONS_AFFECTS_IDENTITY
+    - AUTHORITATIVE_EIGHT_FIELD_SEMANTIC_SET_PARITY
+    - FROZEN_CORE_SEMANTIC_OBJECT_SET_SHA256_PRESERVED
+    - FROZEN_CORE_SOLUTION_ID_PRESERVED
+    - MISSING_IDENTITY_FIELD_FAILS_CLOSED
+    - EXTRA_IDENTITY_FIELD_OR_DEFINITION_DRIFT_FAILS_CLOSED
+    - NARROW_MODE_PATH_ALLOWLIST_ENFORCED
+    - NARROW_MODE_FIELD_POINTER_ALLOWLIST_ENFORCED
+    - SEMANTIC_PAYLOAD_MUTATION_REJECTED
+    - SEMANTIC_AUTHORITY_MUTATION_REJECTED
+    - DETERMINISTIC_REPEATED_OUTPUT
+    - IDEMPOTENT_SECOND_RUN
+    - R3A_REMOVAL_CANDIDATE_HASH_INDEPENDENT_REPLAY
+    - NEGATIVE_FIXTURE_SEMANTICS_PRESERVED
+    - D1_D2_D3_POST_CORRECTION_NON_REGRESSION
+
+protected_frozen_paths_and_classes:
+  - scripts/p9b1q_scoped_query_ir.py
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-projection-rule-set.yml
+  - typed schemas
+  - schema/**
+  - semantic authority artifacts
+  - all fixtures/**
+  - derived/**
+  - sources/**
+  - P9-A contracts
+  - P9-B2/**
+  - authorization artifacts
+  - manifests and derived evidence
+
+frozen_non_regression:
+  D01_D02: removal-proof semantics
+  D03: kind-aware trace provenance
+  D04: typed-source identifier semantics
+  D05: retained-mention projection
+  D06: S3 explicit production proof context
+  D07: S4 explicit production proof context
+  d1_d7_implementation_change_required: false
+  semantic_authority_change_required: false
+  schema_change_required: false
+  if_any_becomes_required: FAIL_CLOSED_AND_RETURN_TO_CONTROL
+
+d5_refresh_exclusions:
+  evidence_refresh: NOT_AUTHORIZED
+  fixture_refresh: NOT_AUTHORIZED
+  manifest_refresh: NOT_AUTHORIZED
+  d5_changed_path_allowlist: NOT_FINALIZED
+  d5_evidence_refresh_build: NOT_AUTHORIZED
+  purpose_limit: Establish a trustworthy future producer only
+
+future_build_validation:
+  - exact two-file direct change scope
+  - authoritative eight-field parity
+  - current frozen core identity preservation
+  - semantic payload preservation
+  - narrow-mode path allowlist enforcement
+  - narrow-mode field allowlist enforcement
+  - determinism across repeated runs
+  - idempotency
+  - R3A independent removal-candidate replay
+  - negative fixture semantic preservation
+  - D1/D2 non-regression
+  - D3 non-regression
+  - full unittest regression
+  - protected-byte comparison
+  - network/retrieval/model side-effect evidence
+  - no actual repository evidence/fixture/manifest refresh
+  - all output-writing producer executions occur only in disposable simulation copies
+
+publication_and_activation:
+  authorization_publication_required: true
+  required_publication_parent: af17bb3a2100a760931d2fd05857743c7f69261f
+  publication_starts_implementation: false
+  separate_control_activation: C5_D5P_REFRESH_PRODUCER_CONFORMANCE_CORRECTION_BUILD_START=AUTHORIZED
+  without_separate_activation: D5P_IMPLEMENTATION_NOT_AUTHORIZED
+
+current_turn_stop:
+  after_materialization: STOP_AND_RETURN_TO_P9_B1Q_CONTROL
+  implement_d5p: false
+  commit: false
+  push: false
+  create_pr: false
+  enter_d5_evidence_refresh: false
+  enter_runtime_recovery: false
+  enter_p9b2: false
