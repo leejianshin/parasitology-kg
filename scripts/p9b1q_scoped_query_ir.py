@@ -10,6 +10,7 @@ content in QueryIR.
 from __future__ import annotations
 
 import argparse
+import builtins
 import copy
 import hashlib
 import importlib.util
@@ -5195,17 +5196,39 @@ def _c3_license_dag(
     return dag, paths
 
 
-def _c3_removal_constraint(collection: str) -> str:
-    return {
-        "resolved_mentions": "CNS-SOLVER-ENTITY_RESOLUTION",
-        "resolved_events": "CNS-SOLVER-EVENT_IDENTITY",
-        "resolved_relations": "CNS-SOLVER-EVENT_RELATION_DERIVATION",
-        "semantic_roles": "CNS-SOLVER-ASSERTION_SCOPE",
-        "narrative_intents": "CNS-SOLVER-ASSERTION_SCOPE",
-        "forbidden_relations": "CNS-SOLVER-LICENSE_DAG",
-        "resolved_references": "CNS-SOLVER-EVENT_IDENTITY",
-        "resolved_overrides": "CNS-SOLVER-EVENT_IDENTITY",
-    }[collection]
+def _c3_load_removal_validator(root: Path) -> Any:
+    """Load the proof-bound executable without using ambient module identities."""
+    path = root / REFERENCE_STAGE_VALIDATOR_PATH
+    spec = importlib.util.spec_from_file_location("p9b1q_removal_validator", path)
+    if spec is None or spec.loader is None:
+        _c3_fail("cannot resolve frozen removal proof validator")
+    module = importlib.util.module_from_spec(spec)
+    negation = _load_negation_semantic_authority(root)
+
+    def bound_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "negation_semantic_authority" and level == 0:
+            return negation
+        return builtins.__import__(name, globals, locals, fromlist, level)
+
+    # The reference executable's sibling import must resolve under the same
+    # repository root, without replacing another caller's sys.modules entry.
+    module.__dict__["__builtins__"] = dict(vars(builtins), __import__=bound_import)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _c3_replay_removal(
+    candidate: dict[str, Any], inputs: dict[str, Any], validator: Any,
+) -> tuple[list[str], int]:
+    """Evaluate actual removal bytes using the frozen predicate and finite domain."""
+    errors = validator.validate_semantic_authority(
+        candidate, inputs, require_complete=True
+    )
+    observed = [errors[0]["constraint_id"]] if errors else []
+    # This is the frozen proof replay enumerator, not the production solver's
+    # required-object shortcut. Its emission argument is unused by the predicate.
+    count = validator.finite_solution_count(candidate, {}, inputs)
+    return observed, count
 
 
 def _c3_build_emission(
@@ -5250,14 +5273,17 @@ def _c3_build_emission(
         proof_root, "SEMANTIC_UNIVERSE", universe
     )
     witnesses = []
+    removal_validator = _c3_load_removal_validator(root)
     for material_id, collection, index, pointer, _ in _c3_material_objects(core):
         candidate = copy.deepcopy(core)
         candidate[collection].pop(index)
         _c3_refresh_core(candidate)
-        constraint = _c3_removal_constraint(collection)
-        post_removal_count = int(_c3_subset_satisfies(core, candidate))
-        if post_removal_count != 0:
+        observed, post_removal_count = _c3_replay_removal(
+            candidate, inputs, removal_validator
+        )
+        if not observed or post_removal_count != 0:
             _c3_fail(f"retained material object is removable: {material_id}")
+        constraint = observed[0]
         probe = {
             "proof_object_version": "0.1-candidate",
             "proof_object_kind": "REMOVAL_PROBE",
@@ -5758,6 +5784,7 @@ def _c3_validate_proofs(
         _c3_fail("removal witness completeness mismatch")
     node_by_id = {item["node_id"]: item for item in dag["nodes"]}
     edges = {(item["from_node_id"], item["to_node_id"]) for item in dag["edges"]}
+    removal_validator = _c3_load_removal_validator(root)
     for witness in minimality["retained_object_witnesses"]:
         path = witness["license_path_node_ids"]
         if (
@@ -5811,14 +5838,19 @@ def _c3_validate_proofs(
             _c3_fail("removal probe collection invalid")
         candidate[collection].pop(index)
         _c3_refresh_core(candidate)
-        expected_constraint = _c3_removal_constraint(collection)
+        observed, post_removal_count = _c3_replay_removal(
+            candidate, inputs, removal_validator
+        )
         if (
             canonical_sha256(candidate) != probe["candidate_typed_solution_sha256"]
             or candidate["semantic_object_set_sha256"]
             != probe["candidate_semantic_object_set_sha256"]
-            or probe["expected_unsatisfied_constraint_ids"] != [expected_constraint]
+            or not observed
+            or probe["expected_unsatisfied_constraint_ids"] != observed
+            or witness["supporting_constraint_ids"] != observed
+            or witness["removal_unsatisfied_constraint_ids"] != observed
             or probe["enumerated_solution_count_after_removal"]
-            != int(_c3_subset_satisfies(core, candidate))
+            != post_removal_count
             or probe["enumerated_solution_count_after_removal"] != 0
         ):
             _c3_fail("removal probe replay mismatch")
@@ -7029,15 +7061,22 @@ def _c4_validate_persisted_proofs_and_minimality(
     incoming = {value: 0 for value in node_ids}
     for _, target in adjacency:
         incoming[target] += 1
+    removal_validator = _c3_load_removal_validator(root)
     for witness in witnesses:
         material_id = witness["semantic_object_id"]
         _, collection, index, pointer, _ = material[material_id]
-        expected_constraint = _c3_removal_constraint(collection)
+        candidate = copy.deepcopy(core)
+        candidate[collection].pop(index)
+        _c3_refresh_core(candidate)
+        observed, post_removal_count = _c3_replay_removal(
+            candidate, inputs, removal_validator
+        )
         path = witness["license_path_node_ids"]
         if (
             witness["query_ir_json_pointer"] != pointer
-            or witness["supporting_constraint_ids"] != [expected_constraint]
-            or witness["removal_unsatisfied_constraint_ids"] != [expected_constraint]
+            or not observed
+            or witness["supporting_constraint_ids"] != observed
+            or witness["removal_unsatisfied_constraint_ids"] != observed
             or not path
             or path[-1] != node_by_material[material_id]
             or path[0] not in incoming
@@ -7084,19 +7123,16 @@ def _c4_validate_persisted_proofs_and_minimality(
             or probe["base_typed_solution_sha256"] != emission["semantic_solution_core_sha256"]
             or probe["expected_result"] != "FAIL_CLOSED"
             or probe["recomputed_derived_hashes"] != ["semantic_object_set_sha256"]
-            or probe["expected_unsatisfied_constraint_ids"] != [expected_constraint]
+            or probe["expected_unsatisfied_constraint_ids"] != observed
             or any(probe.get(key) != value for key, value in external.items())
         ):
             _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "removal probe authority binding mismatch")
-        candidate = copy.deepcopy(core)
-        candidate[collection].pop(index)
-        _c3_refresh_core(candidate)
         if (
             probe["candidate_typed_solution_sha256"] != canonical_sha256(candidate)
             or probe["candidate_semantic_object_set_sha256"]
             != candidate["semantic_object_set_sha256"]
             or probe["enumerated_solution_count_after_removal"]
-            != int(_c3_subset_satisfies(core, candidate))
+            != post_removal_count
             or probe["enumerated_solution_count_after_removal"] != 0
         ):
             _c4_fail("CNS-EMIT-MINIMALITY_WITNESS", "removal probe replay mismatch")

@@ -3460,6 +3460,172 @@ class C4PureQueryIREmitterTests(unittest.TestCase):
         self.assertEqual([hashes[0]] * 3, hashes)
 
 
+class ProductionProofChainCorrectionTests(unittest.TestCase):
+    """Compare production proof bytes with the unchanged reference predicate."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        import yaml
+
+        cls.temporary = tempfile.TemporaryDirectory(prefix="p9b1q-d1-d2-")
+        cls.addClassCleanup(cls.temporary.cleanup)
+        cls.proof_root = Path(cls.temporary.name)
+        for target in (
+            "scripts.p9b1q_scoped_query_ir.execute_query_ir",
+            "scripts.p9b1q_scoped_query_ir.run_scoped_query",
+            "socket.create_connection",
+            "socket.socket.connect",
+        ):
+            trap = mock.patch(target, side_effect=AssertionError(target))
+            trap.start()
+            cls.addClassCleanup(trap.stop)
+        cls.execution = compile_c3(
+            request("D1-D2", C3TypedConstraintSolverTests.UNIQUE_TEXT),
+            proof_root=cls.proof_root,
+        )
+        if cls.execution["typed_constraint_result"]["status"] != "UNIQUE":
+            raise AssertionError(cls.execution["typed_constraint_result"])
+        cls.emission = cls.execution["typed_constraint_result"]["selected_solution"][
+            "queryir_emission_record"
+        ]
+        review = ROOT / "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+        # Load the oracle directly, independently of the production loader/replay.
+        spec = importlib.util.spec_from_file_location(
+            "d1_d2_reference_oracle", review / "reference-stage-semantic-validator.py"
+        )
+        cls.reference = importlib.util.module_from_spec(spec)
+        with mock.patch.object(sys, "path", [str(review)] + sys.path):
+            spec.loader.exec_module(cls.reference)
+        cls.inputs = {
+            "NORMALIZED_REQUEST": cls.execution["normalized_request"],
+            "CLAUSE_AST": cls.execution["clause_ast"],
+            "EVENT_FRAME": cls.execution["event_frame"],
+            "ENTITY_ONTOLOGY": yaml.safe_load((ROOT / "schema/entity-types.yml").read_text()),
+            "RELATION_ONTOLOGY": yaml.safe_load((ROOT / "schema/relation-types.yml").read_text()),
+        }
+        for kind, filename in (
+            ("PREDICATE_TYPE_MAPPING", "fixtures/authority-predicate-type-mapping.json"),
+            ("EVENT_RELATION_MAPPING", "fixtures/authority-event-relation-mapping.json"),
+            ("SEMANTIC_ROLE_MAPPING", "fixtures/authority-semantic-role-mapping.json"),
+            ("PROJECTION_RULE_SET", "queryir-projection-rule-set.yml"),
+            ("CONSTRAINT_SET", "constraint-set-v0.1.yml"),
+            ("CONSTRAINT_REGISTRY", "constraint-id-registry.yml"),
+        ):
+            cls.inputs[kind] = yaml.safe_load((review / filename).read_text())
+
+    @staticmethod
+    def encoded(value):
+        return json.dumps(
+            value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+
+    @classmethod
+    def digest(cls, value):
+        return hashlib.sha256(cls.encoded(value)).hexdigest()
+
+    def replay_witness(self, witness):
+        raw = (self.proof_root / witness["removal_probe_path"]).read_bytes()
+        probe = json.loads(raw)
+        self.assertEqual(self.encoded(probe), raw)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), witness["removal_probe_sha256"])
+        core_raw = (self.proof_root / probe["base_typed_solution_path"]).read_bytes()
+        self.assertEqual(hashlib.sha256(core_raw).hexdigest(), probe["base_typed_solution_sha256"])
+        candidate = json.loads(core_raw)
+        self.assertEqual(1, len(probe["mutation"]))
+        operation = probe["mutation"][0]
+        self.assertEqual("remove", operation["op"])
+        collection, index = operation["path"].strip("/").split("/")
+        candidate[collection].pop(int(index))
+        material = {key: candidate[key] for key in (
+            "resolved_mentions", "resolved_events", "resolved_relations",
+            "semantic_roles", "narrative_intents", "forbidden_relations",
+            "resolved_references", "resolved_overrides",
+        )}
+        candidate["semantic_object_set_sha256"] = self.digest(material)
+        candidate["solution_id"] = "SOL-" + self.digest(material)[:24]
+        self.assertEqual(self.digest(candidate), probe["candidate_typed_solution_sha256"])
+        self.assertEqual(self.digest(material), probe["candidate_semantic_object_set_sha256"])
+        errors = self.reference.validate_semantic_authority(
+            candidate, self.inputs, require_complete=True
+        )
+        self.assertTrue(errors)
+        order = {entry["id"]: entry["order"] for entry in self.inputs["CONSTRAINT_REGISTRY"]["entries"]}
+        first = min(errors, key=lambda item: (order[item["constraint_id"]], item["json_pointer"]))
+        self.assertEqual(first, errors[0])
+        observed = [first["constraint_id"]]
+        self.assertEqual(observed, probe["expected_unsatisfied_constraint_ids"])
+        self.assertEqual(observed, witness["supporting_constraint_ids"])
+        self.assertEqual(observed, witness["removal_unsatisfied_constraint_ids"])
+        self.assertEqual("FAIL_CLOSED", probe["expected_result"])
+        self.assertEqual(0, self.reference.finite_solution_count(candidate, self.emission, self.inputs))
+        self.assertEqual(0, probe["enumerated_solution_count_after_removal"])
+        return probe, errors
+
+    def test_minimality_probe_replay_matches_reference_semantic_order(self):
+        probes = {}
+        for witness in self.emission["minimality_witness"]["retained_object_witnesses"]:
+            with self.subTest(material=witness["semantic_object_id"]):
+                probe, errors = self.replay_witness(witness)
+                probes[probe["probe_id"]] = errors
+        self.assertEqual({"MINPROBE-" + key for key in (
+            "M01", "M05", "E01", "R01", "N01", "N02", "Q01", "Q02",
+        )}, set(probes))
+        # Both failures are real; registry order, not relation collection identity,
+        # makes entity completeness the governing failure after removing R01.
+        self.assertEqual([
+            "CNS-SOLVER-ENTITY_RESOLUTION",
+            "CNS-SOLVER-EVENT_RELATION_DERIVATION",
+        ], [item["constraint_id"] for item in probes["MINPROBE-R01"]])
+
+    def test_s4_consumes_semantically_replayed_minimality_proof(self):
+        from scripts import p9b1q_scoped_query_ir as production
+
+        for witness in self.emission["minimality_witness"]["retained_object_witnesses"]:
+            self.replay_witness(witness)
+        consume = production._c4_validate_persisted_proofs_and_minimality
+
+        def independent_consume(*args, **kwargs):
+            with mock.patch.object(
+                production, "_c3_subset_satisfies", side_effect=AssertionError("shortcut replay")
+            ):
+                return consume(*args, **kwargs)
+
+        with mock.patch.object(
+            production, "_c3_build_emission", side_effect=AssertionError("proof regeneration")
+        ), mock.patch.object(
+            production, "_c4_validate_persisted_proofs_and_minimality", side_effect=independent_consume
+        ):
+            extracted = extract_queryir_c4(self.execution, proof_root=self.proof_root)
+        self.assertEqual(self.encoded(self.emission["query_ir"]), self.encoded(extracted))
+
+        for attack in ("later_constraint", "wrong_count", "candidate_hash"):
+            with self.subTest(attack=attack):
+                changed = copy.deepcopy(self.execution)
+                emission = changed["typed_constraint_result"]["selected_solution"]["queryir_emission_record"]
+                minimality = emission["minimality_witness"]
+                witness = next(item for item in minimality["retained_object_witnesses"] if item["semantic_object_id"] == "R01")
+                probe = json.loads((self.proof_root / witness["removal_probe_path"]).read_bytes())
+                if attack == "later_constraint":
+                    wrong = ["CNS-SOLVER-EVENT_RELATION_DERIVATION"]
+                    probe["expected_unsatisfied_constraint_ids"] = wrong
+                    witness["supporting_constraint_ids"] = wrong
+                    witness["removal_unsatisfied_constraint_ids"] = wrong
+                elif attack == "wrong_count":
+                    probe["enumerated_solution_count_after_removal"] = 1
+                else:
+                    probe["candidate_typed_solution_sha256"] = "0" * 64
+                digest = self.digest(probe)
+                relative = f"proof-objects/removal-probe/{digest}.json"
+                (self.proof_root / relative).write_bytes(self.encoded(probe))
+                witness["removal_probe_path"] = relative
+                witness["removal_probe_sha256"] = digest
+                minimality["witness_sha256"] = self.digest({k: v for k, v in minimality.items() if k != "witness_sha256"})
+                changed["typed_constraint_result_sha256"] = self.digest(changed["typed_constraint_result"])
+                with self.assertRaisesRegex(C4ValidationError, "CNS-EMIT-MINIMALITY_WITNESS"):
+                    extract_queryir_c4(changed, proof_root=self.proof_root)
+
+
 class BindingChainTests(unittest.TestCase):
     def setUp(self):
         self.actual = request(
