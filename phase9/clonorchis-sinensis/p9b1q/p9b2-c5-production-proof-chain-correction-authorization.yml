@@ -1,0 +1,158 @@
+authorization_version: "1.0"
+authorization_id: AUTH-D1D2-C5-PRODUCTION-PROOF-CHAIN-CORRECTION
+authorization_kind: C5_PRODUCTION_PROOF_CHAIN_CORRECTION
+authorization_status: PROSPECTIVE_PENDING_PUBLICATION_AND_EXPLICIT_BUILD_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+authorization_base: 188e3c1af4e54b8f3785d4eb88ca476ed5538a93
+control_state: AUTH-D1D2_DESIGN_COMPLETE
+control_finding: P9B1Q-C5-PRODUCTION-WIRING-PROVENANCE-CRITICAL-001
+diagnostic_basis: P9B1Q-C5-RECOVERY-UPSTREAM-PARITY-DIAGNOSTIC-002
+
+current_recovery_state:
+  c5_status: REOPENED_BLOCKING_RECOVERY
+  p9b2_status: BLOCKED
+  runtime_recovery_authorized: false
+  reference_validator_correction_authorized: false
+  d1_d2_implementation_authorized: false
+  evidence_refresh_authorized: false
+
+materialization_boundary:
+  mode: AUTHORIZATION_ARTIFACT_ONLY
+  changed_path_count: 1
+  changed_paths:
+    - phase9/clonorchis-sinensis/p9b1q/p9b2-c5-production-proof-chain-correction-authorization.yml
+  existing_tracked_path_mutation_authorized: false
+  implementation_authorized: false
+  tests_authorized: false
+  retrieval_authorized: false
+  c5_runtime_execution_authorized: false
+  evidence_refresh_authorized: false
+  commit_authorized: false
+  push_authorized: false
+  pull_request_authorized: false
+  amend_rebase_merge_authorized: false
+
+prospective_implementation_scope:
+  effective_only_after_activation: true
+  purpose: D1_D2_PRODUCTION_PROOF_CHAIN_CORRECTION_ONLY
+  direct_runtime_paths:
+    - scripts/p9b1q_scoped_query_ir.py
+  direct_test_paths:
+    - tests/test_p9b1q_scoped_query_ir.py
+  direct_path_count: 2
+
+d1_s3_proof_generation:
+  finding: D01
+  owner: PRODUCTION_S3_COMPILER
+  purpose: >-
+    Correct production minimality witness generation by replaying the removal
+    candidate through the same frozen semantic predicate in registered constraint
+    evaluation order and deriving the actual first failing constraint.
+  required_derivation:
+    - REMOVAL_CANDIDATE
+    - SAME_FROZEN_SEMANTIC_PREDICATE
+    - REGISTERED_CONSTRAINT_EVALUATION_ORDER
+    - ACTUAL_FIRST_FAILING_CONSTRAINT
+  allowed_future_changes:
+    - removal witness generation
+    - removal candidate replay
+    - failure constraint derivation
+    - proof consistency validation
+  prohibited_changes:
+    - constraint registry changes
+    - constraint ID changes
+    - constraint ordering changes
+    - new constraints
+    - constraint removal
+    - semantic authority changes
+    - QueryIR semantic changes
+    - KG authority changes
+
+d2_s4_proof_consumption:
+  finding: D02
+  owner: PRODUCTION_C4_VALIDATION_PATH
+  purpose: >-
+    Accept persisted proof only when it agrees with independent replay and
+    frozen semantic evaluation.
+  required_equality: PERSISTED_PROOF == INDEPENDENT_REPLAY == FROZEN_SEMANTIC_EVALUATION
+  allowed_future_changes:
+    - persisted proof verification
+    - minimality replay
+    - proof object validation
+  prohibited_changes:
+    - trusting stored expected results without replay
+    - weakening proof checks
+    - bypassing semantic evaluation
+    - QueryIR semantic changes
+    - retrieval semantic changes
+
+protected_paths_and_contracts:
+  reference_validator:
+    path: phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+    reason: D3_NOT_AUTHORIZED
+  knowledge_authority:
+    - schema/
+    - derived/
+    - sources/
+  p9a_contracts:
+    - request-schema
+    - response-schema
+    - audit-log-schema
+  p9b2:
+    - phase9/clonorchis-sinensis/p9b2/**
+  schemas: UNCHANGED
+  semantic_fixtures: UNCHANGED
+  manifests: NO_REFRESH_AUTHORIZED
+  all_paths_outside_direct_scope: PROTECTED_UNLESS_SEPARATELY_AUTHORIZED
+
+future_test_authorization:
+  path: tests/test_p9b1q_scoped_query_ir.py
+  allowed_purposes:
+    - minimality probe replay consistency
+    - constraint order consistency
+    - proof hash consistency
+    - independent replay consistency
+  prohibited_changes:
+    - deleting tests
+    - weakening assertions
+    - modifying expected constraints to match implementation
+    - removing negative cases
+
+evidence_policy:
+  current_refresh_status: NOT_AUTHORIZED
+  future_order:
+    - D1_D2_IMPLEMENTATION
+    - VALIDATION
+    - DEPENDENCY_RECOMPUTATION
+    - POSSIBLE_MECHANICAL_REFRESH
+  mechanical_refresh_requires_separate_authorization: true
+  semantic_fixture_refresh_authorized: false
+
+commit_boundary:
+  current_turn_commit_authorized: false
+  future_implementation_commit_must_be_separate_from:
+    - reference validator correction
+    - evidence refresh
+    - P9-B2
+    - runtime recovery
+
+audit_requirement:
+  after: D1_D2_IMPLEMENTATION
+  mandatory: INDEPENDENT_READ_ONLY_AUDIT
+  targets:
+    - minimality witness correctness
+    - removal replay correctness
+    - proof hash correctness
+    - deterministic output
+    - no semantic authority change
+
+activation_rule:
+  local_artifact_existence_authorizes_implementation: false
+  all_required_conditions:
+    - authorization publication
+    - explicit CONTROL build-start message
+  required_control_message: C5_D1_D2_PRODUCTION_PROOF_CHAIN_CORRECTION_BUILD_START=AUTHORIZED
+  publication_alone_authorizes_implementation: false
+
+stop_after_materialization: true
