@@ -1,0 +1,391 @@
+authorization_version: "1.0"
+authorization_id: AUTH-D3-C5-REFERENCE-VALIDATOR-PARITY-CORRECTION
+authorization_status: PROSPECTIVE_PENDING_PUBLICATION_AND_EXPLICIT_BUILD_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+authorization_base: 70a2fb46a0e147ac5e256049a8b5a217bd97585f
+target_file: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-reference-validator-parity-correction-authorization.yml
+role: D3_AUTHORIZATION_MATERIALIZER
+mode: AUTHORIZATION_ARTIFACT_ONLY
+closed_frozen_predecessors:
+  - D01
+  - D02
+open_targets:
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+purpose:
+  correction: CORRECT_REFERENCE_VALIDATOR_IMPLEMENTATION_PARITY_WITH_FROZEN_PRODUCTION_OBJECT_CHAIN
+  semantic_authority_change: PROHIBITED
+design_source_rule:
+  complete_control_design_supplied: true
+  search_another_work_window_for_design: false
+  infer_or_expand_design: false
+
+base_acquisition_and_identity_gate:
+  base_is_public: true
+  when_base_absent_locally:
+    scope: MECHANICAL_PUBLIC_BRANCH_OR_OBJECT_ACQUISITION_ONLY
+    permitted_operations:
+      - inspect existing remotes
+      - git fetch origin agent/p9-b2
+      - verify refs
+      - create a clean detached/worktree checkout at exact BASE
+  prohibited_operations:
+    - merge
+    - rebase
+    - cherry-pick
+    - reset an unrelated evidence worktree
+    - modify an existing preserved BUILD/AUDIT worktree
+  before_target_creation:
+    head: 70a2fb46a0e147ac5e256049a8b5a217bd97585f
+    index: CLEAN
+    tracked_worktree: CLEAN
+  exact_base_unobtainable:
+    result: FAIL_CLOSED
+    action: STOP
+
+current_materialization_authority:
+  allowed_changed_path_count: 1
+  allowed_changed_paths:
+    - phase9/clonorchis-sinensis/p9b1q/p9b2-c5-reference-validator-parity-correction-authorization.yml
+  implementation_authorized: false
+  existing_tracked_file_mutation_authorized: false
+  explicitly_protected_files:
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+    - scripts/p9b1q_scoped_query_ir.py
+    - tests/test_p9b1q_scoped_query_ir.py
+  commit_authorized: false
+  push_authorized: false
+  pull_request_authorized: false
+
+prospective_future_direct_paths:
+  activation_conditions:
+    - authorization artifact separately published
+    - CONTROL later issues explicit BUILD START
+  paths:
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+    - tests/test_p9b1q_scoped_query_ir.py
+  count: 2
+  any_other_direct_implementation_path: UNAUTHORIZED
+
+d03_kind_aware_trace_provenance:
+  target: D03_KIND_AWARE_TRACE_PROVENANCE
+  invalid_reference_behavior_to_correct:
+    typed_solution: typed core
+    every_other_source_kind: CLAUSE_AST
+  required_resolution_chain:
+    - binding.object_kind
+    - actual bound object of that exact kind
+    - actual object hash
+    - identifier catalog belonging to that actual object
+    - exact source-span validation
+  production_source_kinds_requiring_exact_support:
+    - NORMALIZED_REQUEST
+    - CLAUSE_AST
+    - EVENT_FRAME
+    - TYPED_SOLUTION
+    - EVENT_RELATION_MAPPING
+    - SEMANTIC_ROLE_MAPPING
+  invariants:
+    object_kind_match: REQUIRED
+    actual_object_hash_match: REQUIRED
+    source_id_resolution: REQUIRED
+    source_span_exact_request_slice: REQUIRED
+  prohibited:
+    - unknown kind to CLAUSE_AST fallback
+    - unknown kind to permissive acceptance
+    - candidate-declared hash self-authorization
+    - candidate-declared source-ID self-authorization
+    - trace validation weakening
+
+d04_typed_source_identifier_completeness:
+  target: D04_TYPED_SOURCE_IDENTIFIER_COMPLETENESS
+  purpose: >-
+    Resolve legitimate identifiers actually present in the bound TYPED_SOLUTION
+    object, including legitimate frame identifiers such as EF001.
+  identifier_bearing_fields_may_include:
+    - mention_key
+    - event_key
+    - frame_id
+    - relation_key
+    - role_key
+    - narrative_key
+    - forbidden_key
+    - reference_key
+    - override_key
+    - hypothesis_id
+  legitimate_references_to_those_ids:
+    requirement: contained in the actual bound typed object
+  required_behavior:
+    id_exists_in_actual_bound_object: MAY_RESOLVE
+    id_absent_from_actual_bound_object: FAIL_CLOSED
+  examples:
+    EF001_present: ACCEPT
+    EF999_absent: FAIL_CLOSED
+  prohibited:
+    - accepting arbitrary strings
+    - accepting arbitrary syntactically valid IDs
+    - accepting arbitrary EF* IDs
+    - accepting IDs not present in the actual bound object
+  classification: IDENTIFIER_COMPLETENESS_CORRECTION_NOT_VALIDATION_WEAKENING
+
+d05_retained_mention_projection_parity:
+  target: D05_RETAINED_MENTION_PROJECTION_PARITY
+  required_distinction: EVENT_FRAME participant source is not automatically a retained QueryIR mention
+  required_projection_rule:
+    left_set: event participant source_ids
+    operation: INTERSECT
+    right_set: surface mentions retained in typed-core resolved_mentions
+    output: QueryIR event.mention_ids
+  mention_mapping_source: retained typed-core mentions
+  canonical_parity_case:
+    source_id: U003
+    may_be_legitimate_event_frame_participant_source: true
+    retained_in_typed_minimal_core: false
+    must_be_forced_into_queryir_mention_ids: false
+  strictly_prohibited:
+    - adding U003 back to resolved_mentions merely to satisfy projection
+    - adding any other non-retained mention merely to satisfy projection
+    - expanding the minimal core
+    - changing semantic object membership
+    - changing minimality semantics
+
+d06_complete_s3_test_construction:
+  target: D06_COMPLETE_S3_TEST_CONSTRUCTION
+  authority_inputs_helper_alone_is_complete_stage_evidence: false
+  insufficient_helper: _c3_authority_inputs()
+  required_complete_production_test_chain:
+    - fresh production S3 output
+    - NORMALIZED_REQUEST
+    - CLAUSE_AST
+    - EVENT_FRAME
+    - complete normative authority inputs
+    - actual persisted proof objects
+    - actual disposable proof_root
+    - actual hash bindings
+  validation: invoke actual reference S3 validation with the complete chain
+  narrow_support_plumbing:
+    condition: validate_s3 cannot currently receive the actual production proof root
+    permitted_change: >-
+      Add an explicit optional proof-context parameter sufficient only to pass the
+      supplied production proof_root into the existing proof-chain validation.
+    prohibited:
+      - changing proof semantics
+      - generating proof objects
+      - rewriting proof objects
+      - repairing proof objects
+      - falling back from failed production proof to fixture proof
+    no_explicit_production_context: preserve compatible legacy fixture behavior
+
+d07_complete_s4_test_construction:
+  target: D07_COMPLETE_S4_TEST_CONSTRUCTION
+  required_production_test_chain:
+    - fresh production C4 result
+    - actual typed result
+    - actual QueryIR
+    - actual predecessor stage objects
+    - actual production proof_root
+    - actual S3 proof inputs
+  explicit_production_context: use that actual evidence
+  prohibited_substitution: >-
+    Silently substituting load_stage_result("S3") fixture evidence for the
+    supplied production chain.
+  narrow_support_plumbing:
+    permitted_change: explicit optional S4 proof context
+    functional_equivalents:
+      - proof_root
+      - proof_inputs
+    parameter_names: implementation may choose exact names
+    behavior: must remain narrowly bounded
+    explicit_production_context_supplied: use supplied actual production evidence
+    no_explicit_context: preserve existing legacy fixture behavior
+    prohibited:
+      - production failure to fixture fallback
+      - candidate proof to fixture substitution
+      - proof regeneration
+
+future_test_file_boundary:
+  path: tests/test_p9b1q_scoped_query_ir.py
+  change_purpose: ADDITIVE_D3_PARITY_AND_NON_REGRESSION_COVERAGE
+  existing_d1_d2_tests: must remain semantically intact
+  explicitly_preserved_test_class: ProductionProofChainCorrectionTests
+  prohibited:
+    - deleting existing D1/D2 tests
+    - weakening existing D1/D2 assertions
+    - changing expected R01 governing first failure
+    - changing eight-probe expectation
+    - disabling D1/D2 tamper rejection coverage
+  minimum_d3_coverage:
+    - S3_COMPLETE_PRODUCTION_CHAIN_POSITIVE
+    - S4_COMPLETE_PRODUCTION_CHAIN_POSITIVE
+    - NON_TYPED_KIND_AWARE_TRACE_POSITIVE
+    - WRONG_OBJECT_KIND_NEGATIVE
+    - WRONG_OBJECT_HASH_NEGATIVE
+    - LEGAL_TYPED_FRAME_ID_POSITIVE
+    - FORGED_TYPED_FRAME_ID_NEGATIVE
+    - RETAINED_MENTION_PROJECTION_POSITIVE
+    - NON_RETAINED_EVENT_FRAME_SOURCE_NOT_QUERYIR_MENTION
+    - D1_D2_POST_D3_NON_REGRESSION
+
+protected_paths_and_bytes:
+  closed_frozen_d01_d02_production:
+    path: scripts/p9b1q_scoped_query_ir.py
+    raw_sha256: 56f40521fd0081587ddfe427877adfa2bff0fa33069a17641d6a39d83f94468d
+    modification_by_d3: PROHIBITED
+  additional_paths:
+    - scripts/p9b1_local_retrieval.py
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/queryir-projection-rule-set.yml
+    - phase9/clonorchis-sinensis/p9b1q/**
+    - schema/**
+    - fixtures/**
+    - derived/**
+    - sources/**
+    - P9-B2/**
+  additional_contracts:
+    - P9-A contracts
+  p9b1q_materialization_exception: this authorization artifact only during materialization
+  fixture_modification: PROHIBITED
+
+semantic_invariants:
+  constraint_domain: 1..48
+  constraint_49: ABSENT
+  constraint_ids_changed: false
+  constraint_order_changed: false
+  semantic_authority_changed: false
+  queryir_semantic_contract_changed: false
+  entity_semantics_changed: false
+  relation_semantics_changed: false
+  polarity_semantics_changed: false
+  minimality_semantics_changed: false
+  kg_authority_changed: false
+
+d1_d2_oracle_non_regression_gate:
+  dependency: D1/D2 production proof chain invokes the frozen reference-stage-semantic-validator.py executable
+  required_behavior: >-
+    A legitimate D3 executable byte correction changes its SHA binding but must
+    preserve CLOSED_FROZEN D01/D02 semantic behavior. D3 BUILD must independently
+    re-establish all eight probe expectations below.
+  probe_expectations:
+    MINPROBE-M01:
+      first_constraint: CNS-SOLVER-ENTITY_RESOLUTION
+    MINPROBE-M05:
+      first_constraint: CNS-SOLVER-ENTITY_RESOLUTION
+    MINPROBE-E01:
+      first_constraint: CNS-SOLVER-EVENT_IDENTITY
+    MINPROBE-R01:
+      first_constraint: CNS-SOLVER-ENTITY_RESOLUTION
+      second_constraint: CNS-SOLVER-EVENT_RELATION_DERIVATION
+    MINPROBE-N01:
+      first_constraint: CNS-SOLVER-ASSERTION_SCOPE
+    MINPROBE-N02:
+      first_constraint: CNS-SOLVER-ASSERTION_SCOPE
+    MINPROBE-Q01:
+      first_constraint: CNS-SOLVER-ASSERTION_SCOPE
+    MINPROBE-Q02:
+      first_constraint: CNS-SOLVER-ASSERTION_SCOPE
+  all_eight_post_removal_finite_solution_count: 0
+  existing_d2_tamper_matrix: must remain FAIL_CLOSED
+  allowed_derived_changes:
+    - validator executable SHA binding
+    - hashes mechanically derived from the authorized new executable bytes
+  d01_d02_semantic_result_drift: PROHIBITED
+  semantic_non_regression_failure:
+    d3_build: FAIL_CLOSED
+    d01_d02_reopen_required: true
+    actions:
+      - RETURN_CONTROL
+      - STOP
+
+implementation_stop_conditions:
+  fail_closed_if_required:
+    - modifying scripts/p9b1q_scoped_query_ir.py
+    - modifying constraint registry
+    - modifying constraint IDs
+    - modifying constraint order
+    - modifying schema
+    - modifying fixtures
+    - modifying projection-rule authority
+    - adding U003 or another non-retained mention to minimal core
+    - weakening trace validation
+    - accepting arbitrary source IDs
+    - changing D01/D02 semantic behavior
+    - changing QueryIR semantics
+    - introducing network dependency
+    - introducing retrieval dependency
+    - introducing model dependency
+    - modifying any unauthorized path
+  result: FAIL_CLOSED
+  actions:
+    - STOP
+    - RETURN_P9_B1Q_CONTROL
+
+evidence_and_manifest_boundary:
+  evidence_refresh: NOT_AUTHORIZED
+  manifest_refresh: NOT_AUTHORIZED
+  fixture_refresh: NOT_AUTHORIZED
+  stale_binding_rule: >-
+    A D3 validator byte change may make validator-hash-bound derived evidence
+    stale. This does not authorize evidence refresh in D3.
+  required_trust_sequence:
+    - D3 implementation
+    - BUILD verification
+    - publication
+    - independent read-only audit
+    - CONTROL decides whether to authorize D5 derived evidence refresh
+
+future_commit_boundary:
+  d3_build_automatically_authorizes_publication: false
+  during_d3_build:
+    commit_allowed: false
+    push_allowed: false
+    pr_allowed: false
+  prerequisites_for_separate_control_commit_publication_authorization:
+    - D3 BUILD PASS
+    - CONTROL BUILD VERIFY PASS
+
+authorization_publication_requirement:
+  artifact_must_be_published_before_implementation: true
+  required_publication_parent: 70a2fb46a0e147ac5e256049a8b5a217bd97585f
+  publication_starts_d3_build: false
+
+separate_explicit_build_start:
+  prerequisites:
+    - authorization publication
+    - CONTROL verification
+  exact_required_control_instruction: C5_D3_REFERENCE_VALIDATOR_PARITY_CORRECTION_BUILD_START=AUTHORIZED
+  without_exact_separate_activation: D3_IMPLEMENTATION_NOT_AUTHORIZED
+
+materialization_output_requirements:
+  format: structured YAML faithfully representing the supplied CONTROL design
+  broaden_weaken_or_reinterpret_boundaries: PROHIBITED
+  report_fields:
+    - D3_AUTHORIZATION_MATERIALIZATION
+    - BASE
+    - AUTHORIZATION_FILE
+    - THIS_TURN_CHANGED_PATH_COUNT
+    - THIS_TURN_CHANGED_PATHS
+    - UNAUTHORIZED_CHANGED_PATH_COUNT
+    - TRACKED_BYTES_PRESERVED
+    - REFERENCE_VALIDATOR_CHANGED
+    - PRODUCTION_SCRIPT_CHANGED
+    - TEST_FILE_CHANGED
+    - COMMIT_CREATED
+    - PUSH_PERFORMED
+    - WORKTREE_STATUS
+    - INDEX_STATUS
+    - STOP
+
+stop_after_materialization:
+  required: true
+  prohibited_next_actions:
+    - implement D3
+    - modify tests
+    - modify reference validator
+    - commit
+    - push
+  return_artifact_and_verification_report_to: P9-B1Q CONTROL
