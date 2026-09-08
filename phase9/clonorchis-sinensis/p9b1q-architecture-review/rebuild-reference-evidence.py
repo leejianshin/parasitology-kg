@@ -107,6 +107,8 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
         raise ValueError("SYMLINK_REFRESH_ROOT")
     root = supplied_root.resolve(strict=True)
 
+    directory_identities = {}
+
     def complete_snapshot():
         # Independently enumerate the disposable tree. Never infer this inventory
         # from the caller's snapshot or filter away unlisted protected objects.
@@ -123,6 +125,15 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
         identities = set()
 
         def visit(directory):
+            info = directory.stat(follow_symlinks=False)
+            identity = (info.st_dev, info.st_ino)
+            if not stat.S_ISDIR(info.st_mode):
+                raise ValueError("NON_DIRECTORY_REFRESH_COMPONENT")
+            if directory in directory_identities:
+                if directory_identities[directory] != identity:
+                    raise ValueError("DIRECTORY_IDENTITY_CHANGED: " + str(directory))
+            else:
+                directory_identities[directory] = identity
             with os.scandir(directory) as entries:
                 for entry in entries:
                     if entry.name in (".git", "node_modules"):
@@ -362,55 +373,95 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
         if raw != frozen_bytes[name] and raw != planned[name]:
             raise ValueError("FROZEN_INPUT_CHANGED: " + name)
     changed = sorted(n for n in expected if current[n] != expected[n])
-    # Re-read all inputs at the final write boundary; no validation runs after writes.
+    # Pin all potentially written objects before the first output mutation.
     complete_snapshot()
     if any(path(n).read_bytes() != raw for n, raw in current.items()):
         raise ValueError("REFRESH_INPUT_CHANGED_DURING_VALIDATION")
     expected_live_bytes = dict(current)
+    handles = {}
     written = []
+
+    def pinned_bytes(name):
+        fd, identity = handles[name]
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or (info.st_dev, info.st_ino) != identity:
+            raise ValueError("PINNED_OBJECT_IDENTITY_CHANGED: " + name)
+        os.lseek(fd, 0, os.SEEK_SET)
+        chunks = []
+        while True:
+            chunk = os.read(fd, 1024 * 1024)
+            if not chunk:
+                return b"".join(chunks)
+            chunks.append(chunk)
+
+    def write_pinned(name, raw):
+        fd, _ = handles[name]
+        pinned_bytes(name)  # Verify the original object, never a replacement path.
+        os.lseek(fd, 0, os.SEEK_SET)
+        offset = 0
+        while offset < len(raw):
+            count = os.write(fd, raw[offset:])
+            if count <= 0:
+                raise ValueError("SHORT_PINNED_WRITE: " + name)
+            offset += count
+        os.ftruncate(fd, len(raw))
+        os.fsync(fd)
+        if pinned_bytes(name) != raw:
+            raise ValueError("PINNED_BYTE_MISMATCH: " + name)
 
     def validate_live_bytes():
         complete_snapshot()
+        for name, (fd, identity) in handles.items():
+            info = path(name).stat(follow_symlinks=False)
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or (info.st_dev, info.st_ino) != identity):
+                raise ValueError("OUTPUT_PATH_IDENTITY_CHANGED: " + name)
+            if pinned_bytes(name) != expected_live_bytes[name]:
+                raise ValueError("PINNED_INPUT_CHANGED: " + name)
         for name, raw in expected_live_bytes.items():
             if path(name).read_bytes() != raw:
                 raise ValueError("WRITE_PHASE_INPUT_CHANGED: " + name)
 
     try:
         for name in changed:
-            validate_live_bytes()
             target = path(name)
-            written.append(name)  # Also account for a partially failed write.
-            target.write_bytes(expected[name])
-            if path(name).read_bytes() != expected[name]:
-                raise ValueError("WRITTEN_OUTPUT_MISMATCH: " + name)
+            info = target.stat(follow_symlinks=False)
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise ValueError("UNSAFE_OUTPUT_OBJECT: " + name)
+            identity = (info.st_dev, info.st_ino)
+            fd = os.open(target, os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC)
+            handles[name] = (fd, identity)
+            if pinned_bytes(name) != current[name]:
+                raise ValueError("PINNED_INPUT_MISMATCH: " + name)
+        validate_live_bytes()
+        for name in changed:
+            validate_live_bytes()
+            written.append(name)  # Includes a partially failed write.
+            write_pinned(name, expected[name])
             expected_live_bytes[name] = expected[name]
-        validate_live_bytes()  # Includes drift injected after the final write.
+            validate_live_bytes()
+        validate_live_bytes()
     except Exception as failure:
         rollback_errors = []
         for name in reversed(written):
             try:
-                # Do not follow a replaced root, symlink, or hardlink on rollback.
-                if root.is_symlink():
-                    raise ValueError("UNSAFE_ROLLBACK_ROOT")
-                target = path(name)
-                info = target.stat(follow_symlinks=False)
-                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-                    raise ValueError("UNSAFE_ROLLBACK_OBJECT")
-                target.write_bytes(current[name])
-                if path(name).read_bytes() != current[name]:
-                    raise ValueError("ROLLBACK_BYTE_MISMATCH")
+                # The descriptor still owns the original object after unlink,
+                # rename, or movement of any ancestor outside the root pathname.
+                write_pinned(name, current[name])
             except Exception as rollback_failure:
                 rollback_errors.append(name + ": " + str(rollback_failure))
-        # Verify the complete rollback set again after all restorations.
         for name in written:
             try:
-                if root.is_symlink() or path(name).read_bytes() != current[name]:
+                if pinned_bytes(name) != current[name]:
                     raise ValueError("ROLLBACK_FINAL_BYTE_MISMATCH")
             except Exception as rollback_failure:
                 rollback_errors.append(name + ": " + str(rollback_failure))
         if rollback_errors:
             raise ValueError("ROLLBACK_FAILED: " + "; ".join(rollback_errors)) from failure
         raise ValueError("REFRESH_TRANSACTION_FAIL_CLOSED: " + str(failure)) from failure
+    finally:
+        for fd, _ in handles.values():
+            os.close(fd)
 
     return changed
 

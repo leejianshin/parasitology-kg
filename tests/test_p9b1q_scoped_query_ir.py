@@ -4342,27 +4342,28 @@ class RefreshProducerConformanceTests(unittest.TestCase):
                 first, second = sorted(policy)
                 protected = self.H + ("typed-solution-core-schema-candidate.yml" if attack == "schema"
                                       else "constraint-set-v0.1.yml")
-                original = Path.write_bytes
+                original = os.write
                 events = []
                 drifted = [False]
                 external = b"externally changed bytes\n"
-                def observed_write(target, raw):
+                def observed_write(fd, raw):
+                    target = Path(os.readlink(f"/proc/self/fd/{fd}"))
                     relative = target.relative_to(root).as_posix()
                     rollback = raw == frozen[relative]
                     events.append((relative, rollback, drifted[0]))
-                    count = original(target, raw)
+                    count = original(fd, raw)
                     trigger = second if attack == "final" else first
                     if not rollback and relative == trigger and not drifted[0]:
                         drifted[0] = True
                         if attack == "extra":
-                            original(root / "extra-during-write", external)
+                            (root / "extra-during-write").write_bytes(external)
                         elif attack == "symlink":
                             (root / protected).unlink()
                             (root / protected).symlink_to(root / "scripts/p9b1q_scoped_query_ir.py")
                         else:
-                            original(root / (second if attack == "second_target" else protected), external)
+                            (root / (second if attack == "second_target" else protected)).write_bytes(external)
                     return count
-                with mock.patch.object(Path, "write_bytes", observed_write):
+                with mock.patch.object(os, "write", observed_write):
                     with self.assertRaisesRegex(ValueError, "REFRESH_TRANSACTION_FAIL_CLOSED"):
                         self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
                 self.assertTrue(drifted[0])
@@ -4387,19 +4388,132 @@ class RefreshProducerConformanceTests(unittest.TestCase):
         root, frozen, policy, rules = self.simulation()
         first = sorted(policy)[0]
         protected = "scripts/p9b1q_scoped_query_ir.py"
-        original = Path.write_bytes
+        original = os.write
         calls = []
-        def replace_written_output(target, raw):
-            calls.append(target)
-            count = original(target, raw)
-            target.unlink()
-            target.symlink_to(root / protected)
+        pinned = []
+        def replace_written_output(fd, raw):
+            count = original(fd, raw)
+            if not calls:
+                target = root / first
+                calls.append(target)
+                pinned.append(os.dup(fd))
+                self.addCleanup(os.close, pinned[0])
+                target.unlink()
+                target.symlink_to(root / protected)
             return count
-        with mock.patch.object(Path, "write_bytes", replace_written_output):
-            with self.assertRaisesRegex(ValueError, "ROLLBACK_FAILED"):
+        with mock.patch.object(os, "write", replace_written_output):
+            with self.assertRaisesRegex(ValueError, "REFRESH_TRANSACTION_FAIL_CLOSED"):
                 self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
         self.assertEqual([root / first], calls)
         self.assertEqual(frozen[protected], (root / protected).read_bytes())
+        self.assertTrue((root / first).is_symlink())
+        self.assertEqual(frozen[first], os.pread(pinned[0], len(frozen[first]) + 1, 0))
+
+    def test_pinned_original_objects_survive_directory_and_path_identity_attacks(self):
+        import shutil
+        for attack in ("parent_after_first", "parent_before_first", "parent_after_final",
+                       "deep_ancestor", "root", "file_replacement", "file_symlink",
+                       "parent_symlink", "unlink", "rename"):
+            with self.subTest(attack=attack), tempfile.TemporaryDirectory(prefix="d5p-moved-") as temporary:
+                root, frozen, policy, rules = self.simulation()
+                first, second = sorted(policy)
+                original_write, original_open = os.write, os.open
+                identities = {(os.stat(root / n).st_dev, os.stat(root / n).st_ino): n for n in policy}
+                moved = Path(temporary) / "original"
+                duplicates, events, external_before = {}, [], {}
+                injected = [False]
+                def inject():
+                    injected[0] = True
+                    target = root / first
+                    if attack in ("file_replacement", "file_symlink", "unlink", "rename"):
+                        raw = target.read_bytes()
+                        if attack == "unlink":
+                            target.unlink()
+                        else:
+                            target.rename(moved)
+                            if attack == "file_replacement":
+                                target.write_bytes(raw)
+                                external_before[target] = raw
+                            elif attack == "file_symlink":
+                                target.symlink_to(root / "scripts/p9b1q_scoped_query_ir.py")
+                    else:
+                        directory = (root if attack == "root" else root / "phase9"
+                                     if attack == "deep_ancestor" else target.parent)
+                        directory.rename(moved)
+                        if attack == "parent_symlink":
+                            directory.symlink_to(moved, target_is_directory=True)
+                        else:
+                            shutil.copytree(moved, directory)
+                            external_before.update({p: p.read_bytes() for p in directory.rglob("*") if p.is_file()})
+                def observe_open(target, flags, *args, **kwargs):
+                    fd = original_open(target, flags, *args, **kwargs)
+                    info = os.fstat(fd)
+                    name = identities.get((info.st_dev, info.st_ino))
+                    if name and flags & os.O_RDWR and name not in duplicates:
+                        duplicates[name] = os.dup(fd)
+                        if attack == "parent_before_first" and len(duplicates) == len(policy):
+                            inject()
+                    return fd
+                def observe_write(fd, raw):
+                    info = os.fstat(fd)
+                    name = identities[(info.st_dev, info.st_ino)]
+                    rollback = bytes(raw) == frozen[name]
+                    events.append((name, rollback, injected[0]))
+                    count = original_write(fd, raw)
+                    if not injected[0] and not rollback:
+                        if attack != "parent_after_final" or name == second:
+                            inject()
+                    return count
+                try:
+                    with mock.patch.object(os, "open", observe_open), mock.patch.object(os, "write", observe_write):
+                        with self.assertRaisesRegex(ValueError, "REFRESH_TRANSACTION_FAIL_CLOSED"):
+                            self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    self.assertTrue(injected[0])
+                    self.assertEqual([], [e for e in events if e[2] and not e[1]])
+                    written = {n for n, rollback, _ in events if not rollback}
+                    expected = set() if attack == "parent_before_first" else set(policy) if attack == "parent_after_final" else {first}
+                    self.assertEqual(expected, written)
+                    for name in written:
+                        fd = duplicates[name]
+                        self.assertEqual(frozen[name], os.pread(fd, len(frozen[name]) + 1, 0))
+                        self.assertEqual(len(frozen[name]), os.fstat(fd).st_size)
+                    for path, raw in external_before.items():
+                        self.assertEqual(raw, path.read_bytes(), str(path))
+                    if attack.startswith("parent_") and attack != "parent_before_first":
+                        self.assertEqual(frozen[first], (moved / Path(first).name).read_bytes())
+                    if attack == "file_symlink":
+                        self.assertTrue((root / first).is_symlink())
+                        self.assertEqual(frozen["scripts/p9b1q_scoped_query_ir.py"],
+                                         (root / "scripts/p9b1q_scoped_query_ir.py").read_bytes())
+                finally:
+                    for fd in duplicates.values():
+                        os.close(fd)
+
+    def test_pinned_rollback_failure_is_explicit_and_short_writes_are_completed(self):
+        for fail_rollback in (False, True):
+            with self.subTest(fail_rollback=fail_rollback):
+                root, frozen, policy, rules = self.simulation()
+                first = sorted(policy)[0]
+                original = os.write
+                injected = [False]
+                def write(fd, raw):
+                    if fail_rollback:
+                        if injected[0]:
+                            raise OSError("independent rollback I/O failure")
+                        count = original(fd, raw)
+                        injected[0] = True
+                        (root / "extra-drift").write_bytes(b"external")
+                        return count
+                    return original(fd, raw[:max(1, len(raw) // 2)])
+                with mock.patch.object(os, "write", write):
+                    if fail_rollback:
+                        with self.assertRaisesRegex(ValueError, "ROLLBACK_FAILED"):
+                            self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    else:
+                        changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                        self.assertEqual(sorted(policy), changed)
+                        self.assertEqual([], self.producer["narrow_refresh"](
+                            root, frozen_bytes=frozen, field_policy=policy, rules=rules))
 
 
 if __name__ == "__main__":
