@@ -6,6 +6,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import stat
 import runpy
 import subprocess
 from pathlib import Path
@@ -65,13 +67,352 @@ def pointer_get(value: Any, pointer: str) -> Any:
     return current
 
 
-def semantic_set(core: dict[str, Any]) -> dict[str, Any]:
-    return {k: core[k] for k in ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles", "narrative_intents", "resolved_references", "resolved_overrides")}
+SEMANTIC_COLLECTIONS = (
+    "resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles",
+    "narrative_intents", "forbidden_relations", "resolved_references", "resolved_overrides",
+)
+
+
+def semantic_set(core: dict[str, Any], *, fields=None) -> dict[str, Any]:
+    # This literal is a conformance guard, not a caller-configurable identity domain.
+    frozen = ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles",
+              "narrative_intents", "forbidden_relations", "resolved_references", "resolved_overrides")
+    selected = SEMANTIC_COLLECTIONS if fields is None else tuple(fields)
+    if tuple(SEMANTIC_COLLECTIONS) != frozen or selected != frozen:
+        raise ValueError("SEMANTIC_IDENTITY_DEFINITION_DRIFT")
+    if any(k not in core or not isinstance(core[k], list) for k in frozen):
+        raise ValueError("MISSING_OR_INVALID_SEMANTIC_COLLECTION")
+    return {k: core[k] for k in frozen}
 
 
 def refresh_core(core: dict[str, Any]) -> None:
     core["semantic_object_set_sha256"] = csha(semantic_set(core))
     core["solution_id"] = f"SOL-{core['semantic_object_set_sha256'][:24]}"
+
+
+def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
+                   field_policy: dict[str, list[str]], rules: list[dict[str, Any]],
+                   prospective_bytes: dict[str, bytes] | None = None) -> list[str]:
+    """Rebind explicit derived fields, validating the entire transaction before writes.
+
+    frozen_bytes is the independently acquired, complete input snapshot supplied by
+    CONTROL, never a candidate-owned hash summary. field_policy is prospective
+    authorization, not inferred from existing hash values. Rules are ordered;
+    forward dependencies and repeated targets are rejected. No legacy generation
+    code is called. A caller can supply a prospective patch for independent checking.
+    The same snapshot/policy/rules are reusable for an idempotent second execution.
+    """
+    supplied_root = Path(root)
+    if supplied_root.is_symlink():
+        raise ValueError("SYMLINK_REFRESH_ROOT")
+    root = supplied_root.resolve(strict=True)
+
+    def complete_snapshot():
+        # Independently enumerate the disposable tree. Never infer this inventory
+        # from the caller's snapshot or filter away unlisted protected objects.
+        expected = set()
+        for name in frozen_bytes:
+            if (not isinstance(name, str) or not name or "\\" in name or ":" in name
+                    or any(part in ("", ".", "..", ".git", "node_modules") for part in name.split("/"))):
+                raise ValueError("UNSAFE_SNAPSHOT_PATH")
+            normalized = Path(name).as_posix()
+            if normalized != name or normalized in expected:
+                raise ValueError("ALIASED_SNAPSHOT_PATH")
+            expected.add(normalized)
+        actual = set()
+        identities = set()
+
+        def visit(directory):
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    if entry.name in (".git", "node_modules"):
+                        raise ValueError("NON_DISPOSABLE_REFRESH_ROOT")
+                    info = entry.stat(follow_symlinks=False)
+                    if stat.S_ISLNK(info.st_mode):
+                        raise ValueError("SYMLINK_SNAPSHOT_PATH")
+                    if stat.S_ISDIR(info.st_mode):
+                        visit(Path(entry.path))
+                    elif stat.S_ISREG(info.st_mode):
+                        name = Path(entry.path).relative_to(root).as_posix()
+                        identity = (info.st_dev, info.st_ino)
+                        if name in actual or identity in identities:
+                            raise ValueError("ALIASED_ROOT_FILE")
+                        actual.add(name)
+                        identities.add(identity)
+                    else:
+                        raise ValueError("NON_REGULAR_SNAPSHOT_OBJECT")
+        visit(root)
+        if actual != expected:
+            raise ValueError("INCOMPLETE_FROZEN_SNAPSHOT")
+
+    complete_snapshot()
+
+    def path(name):
+        if not isinstance(name, str) or not name or "\\" in name or ":" in name:
+            raise ValueError("UNSAFE_REFRESH_PATH")
+        parts = name.split("/")
+        if any(x in ("", ".", "..") for x in parts):
+            raise ValueError("UNSAFE_REFRESH_PATH")
+        result = root.joinpath(*parts)
+        if any(root.joinpath(*parts[:i]).is_symlink() for i in range(1, len(parts) + 1)):
+            raise ValueError("SYMLINK_REFRESH_PATH")
+        if not result.is_file() or not result.resolve().is_relative_to(root):
+            raise ValueError("MISSING_REFRESH_OBJECT")
+        return result
+
+    def decode(name, raw):
+        return json.loads(raw) if name.endswith(".json") else yaml.safe_load(raw)
+
+    def encode(name, value):
+        return cbytes(value) if name.endswith(".json") else yaml.safe_dump(
+            value, allow_unicode=True, sort_keys=False).encode("utf-8")
+
+    def tokens(pointer):
+        if not isinstance(pointer, str) or not pointer.startswith("/"):
+            raise ValueError("INVALID_REFRESH_POINTER")
+        return [x.replace("~1", "/").replace("~0", "~") for x in pointer[1:].split("/")]
+
+    def get(obj, pointer):
+        if pointer == "":
+            return obj
+        for token in tokens(pointer):
+            obj = obj[int(token)] if isinstance(obj, list) else obj[token]
+        return obj
+
+    def put(obj, pointer, value):
+        ts = tokens(pointer)
+        parent = get(obj, "/" + "/".join(pointer[1:].split("/")[:-1])) if len(ts) > 1 else obj
+        key = int(ts[-1]) if isinstance(parent, list) else ts[-1]
+        parent[key]  # Never insert missing fields or repair malformed objects.
+        parent[key] = value
+
+    def canonical_source(rule):
+        allowed = {"path", "pointer", "derivation", "source_path", "source_pointer",
+                   "source_role", "expected_value"}
+        if set(rule) - allowed:
+            raise ValueError("UNAUTHORIZED_SOURCE_RULE_FIELD")
+        name, pointer, kind = rule["path"], rule["pointer"], rule["derivation"]
+        ts = tokens(pointer)
+        owner = decode(name, frozen_bytes[name])
+        parent_pointer = pointer.rsplit("/", 1)[0]
+        record = get(owner, parent_pointer)
+        architecture = "phase9/clonorchis-sinensis/p9b1q-architecture-review/"
+        roles = {
+            "REFERENCE_STAGE_VALIDATOR_EXECUTABLE": architecture + "reference-stage-semantic-validator.py",
+            "PRODUCTION_SCOPED_QUERY_IR_EXECUTABLE": "scripts/p9b1q_scoped_query_ir.py",
+        }
+        requested_role = rule.get("source_role")
+        if requested_role is not None and requested_role not in roles:
+            raise ValueError("UNKNOWN_SOURCE_ROLE")
+
+        def reference(value):
+            if (not isinstance(value, str) or not value or "\\" in value or ":" in value
+                    or any(t in ("", ".", "..") for t in value.split("/"))):
+                raise ValueError("UNSAFE_SOURCE_REFERENCE")
+            candidates = {n for n in (value, architecture + value) if n in frozen_bytes}
+            if len(candidates) != 1:
+                raise ValueError("MISSING_OR_AMBIGUOUS_CANONICAL_SOURCE")
+            return candidates.pop()
+
+        # Target identity establishes a role; the caller can only assert it.
+        fixed_targets = {
+            (architecture + "fixtures/reference-validator-execution-summary.json", "/executable_sha256"):
+                "REFERENCE_STAGE_VALIDATOR_EXECUTABLE",
+            (architecture + "fixtures/typed-result-exposure-positive.json", "/solver/executable_sha256"):
+                "REFERENCE_STAGE_VALIDATOR_EXECUTABLE",
+        }
+        expected_role = fixed_targets.get((name, pointer))
+        if (pointer == "/producer/executable_sha256"
+                and name.startswith(architecture + "fixtures/")
+                and isinstance(record, dict) and "producer_id" in record):
+            expected_role = "REFERENCE_STAGE_VALIDATOR_EXECUTABLE"
+        reference_fields = {
+            "canonical_sha256": ("path", "content_path"),
+            "byte_length": ("path", "content_path"),
+            "executable_sha256": ("executable_path",),
+            "configuration_sha256": ("configuration_path",),
+            "validator_executable_sha256": ("validator_executable_path",),
+            "validator_configuration_sha256": ("validator_configuration_path",),
+        }
+        keys = [k for k in reference_fields.get(ts[-1], ()) if isinstance(record, dict) and k in record]
+        source_pointer = ""
+        if ts[-1] == "candidate_semantic_object_set_sha256":
+            if (kind != "REMOVAL_CANDIDATE_SHA256" or len(ts) != 4
+                    or ts[:2] != ["objects", "minimality_probes"] or not ts[2].isdigit()):
+                raise ValueError("R3A_DERIVATION_REQUIRED")
+            source = name
+            source_pointer = "/objects/typed_solution_core"
+        elif expected_role is not None:
+            if kind != "RAW_SHA256":
+                raise ValueError("UNSUPPORTED_EXECUTABLE_BINDING")
+            source = roles[expected_role]
+            if keys and (len(keys) != 1 or reference(record[keys[0]]) != source):
+                raise ValueError("FIXED_ROLE_RECORD_SOURCE_MISMATCH")
+        elif keys:
+            if len(keys) != 1 or kind not in ("RAW_SHA256", "BYTE_LENGTH", "CANONICAL_SHA256"):
+                raise ValueError("INVALID_RECORD_SOURCE_DERIVATION")
+            source = reference(record[keys[0]])
+            source_pointer = record.get("content_json_pointer") or ""
+            if source_pointer and kind != "CANONICAL_SHA256":
+                raise ValueError("SUBOBJECT_CANONICAL_DERIVATION_REQUIRED")
+        elif kind == "SELF_SHA256":
+            if ts[-1] not in ("result_sha256", "sidecar_sha256", "link_sha256"):
+                raise ValueError("UNSUPPORTED_SELF_HASH_FIELD")
+            source = name
+            source_pointer = parent_pointer
+        elif (name.endswith("/design-manifest.yml") and len(ts) == 2
+              and ts[0] in ("protected_files", "design_files", "fixture_files")):
+            source = reference(ts[1])
+            if kind != "RAW_SHA256":
+                raise ValueError("UNSUPPORTED_MANIFEST_PATH_DERIVATION")
+        else:
+            raise ValueError("UNRESOLVED_CANONICAL_SOURCE_AUTHORITY")
+        if requested_role is not None and roles[requested_role] != source:
+            raise ValueError("SOURCE_ROLE_TARGET_MISMATCH")
+        if rule.get("source_path", source) != source:
+            raise ValueError("SOURCE_PATH_AUTHORITY_MISMATCH")
+        if rule.get("source_pointer", source_pointer) != source_pointer:
+            raise ValueError("SOURCE_POINTER_AUTHORITY_MISMATCH")
+        if source not in frozen_bytes:
+            raise ValueError("MISSING_CANONICAL_SOURCE")
+        return source, source_pointer
+
+    # Normative objects cannot be made writable by a hash-shaped field policy.
+    for name, pointers in field_policy.items():
+        lower = name.lower()
+        if (name not in frozen_bytes or not pointers or len(pointers) != len(set(pointers))
+                or ("/fixtures/" not in name and not name.endswith("/design-manifest.yml"))
+                or any(x in lower for x in ("schema", "authority", "ontology", "mapping", "contract", "authorization"))):
+            raise ValueError("PROTECTED_OR_UNAUTHORIZED_REFRESH_PATH")
+        for pointer in pointers:
+            tokens(pointer)
+    current = {name: path(name).read_bytes() for name in frozen_bytes}
+    planned = dict(frozen_bytes)
+    objects = {}
+    targets = [(r["path"], r["pointer"]) for r in rules]
+    if len(targets) != len(set(targets)):
+        raise ValueError("DUPLICATE_REFRESH_TARGET")
+    pending_paths = [r["path"] for r in rules]
+    for rule in rules:
+        name, pointer = rule["path"], rule["pointer"]
+        if name not in field_policy or pointer not in field_policy[name]:
+            raise ValueError("UNAUTHORIZED_REFRESH_FIELD")
+        source, source_pointer = canonical_source(rule)
+        pending_paths.pop(0)
+        if source not in planned or (source != name and source in pending_paths):
+            raise ValueError("UNRESOLVED_OR_FORWARD_REFRESH_SOURCE")
+        kind = rule["derivation"]
+        leaf = tokens(pointer)[-1]
+        manifest = name.endswith("/design-manifest.yml")
+        allowed_leaf = (leaf.endswith("sha256") or leaf == "byte_length" or
+                        (manifest and tokens(pointer)[0] in ("design_files", "fixture_files", "protected_files")))
+        if not allowed_leaf:
+            raise ValueError("SEMANTIC_REFRESH_TARGET")
+        obj = objects.setdefault(name, decode(name, planned[name]))
+        source_raw = planned[source]
+        if kind == "RAW_SHA256":
+            value = sha_bytes(source_raw)
+        elif kind == "BYTE_LENGTH":
+            if leaf != "byte_length":
+                raise ValueError("DERIVATION_TARGET_MISMATCH")
+            value = len(source_raw)
+        elif kind == "CANONICAL_SHA256":
+            value = csha(get(decode(source, source_raw), source_pointer))
+        elif kind == "SELF_SHA256":
+            candidate = copy.deepcopy(get(obj, source_pointer))
+            del candidate[tokens(pointer)[-1]]
+            value = csha(candidate)
+        elif kind == "REMOVAL_CANDIDATE_SHA256":
+            if leaf != "candidate_semantic_object_set_sha256":
+                raise ValueError("REMOVAL_TARGET_MISMATCH")
+            core = copy.deepcopy(get(decode(source, source_raw), source_pointer))
+            # The operation is read from the actual persisted probe, not the rule.
+            probe_pointer = pointer.rsplit("/", 1)[0]
+            probe = get(decode(name, frozen_bytes[name]), probe_pointer)
+            for operation in probe["operation"]:
+                if set(operation) != {"op", "path"} or operation["op"] != "remove":
+                    raise ValueError("UNSUPPORTED_REMOVAL_OPERATION")
+                ts = tokens(operation["path"])
+                if len(ts) != 2 or ts[0] not in SEMANTIC_COLLECTIONS:
+                    raise ValueError("INVALID_REMOVAL_TARGET")
+                core = apply_remove(core, operation["path"])
+            value = csha(semantic_set(core))
+        else:
+            raise ValueError("UNSUPPORTED_REFRESH_DERIVATION")
+        if leaf == "byte_length" and kind != "BYTE_LENGTH":
+            raise ValueError("DERIVATION_TARGET_MISMATCH")
+        if "expected_value" in rule and rule["expected_value"] != value:
+            raise ValueError("UPSTREAM_DERIVATION_MISMATCH")
+        put(obj, pointer, value)
+        # Compare every other field, including semantic fields, without stripping them.
+        before = decode(name, frozen_bytes[name])
+        restored = copy.deepcopy(obj)
+        for target_name, target_pointer in targets:
+            if target_name == name:
+                put(restored, target_pointer, get(before, target_pointer))
+        if restored != before:
+            raise ValueError("SEMANTIC_PAYLOAD_CHANGED")
+        planned[name] = frozen_bytes[name] if obj == before else encode(name, obj)
+    expected = {n: planned[n] for n in field_policy if planned[n] != frozen_bytes[n]}
+    if prospective_bytes is not None and prospective_bytes != expected:
+        raise ValueError("PROSPECTIVE_PATCH_MISMATCH")
+    # Every actual input must equal either the trusted starting bytes or the exact
+    # validated result of this transaction. This also detects synchronized tampering.
+    for name, raw in current.items():
+        if raw != frozen_bytes[name] and raw != planned[name]:
+            raise ValueError("FROZEN_INPUT_CHANGED: " + name)
+    changed = sorted(n for n in expected if current[n] != expected[n])
+    # Re-read all inputs at the final write boundary; no validation runs after writes.
+    complete_snapshot()
+    if any(path(n).read_bytes() != raw for n, raw in current.items()):
+        raise ValueError("REFRESH_INPUT_CHANGED_DURING_VALIDATION")
+    expected_live_bytes = dict(current)
+    written = []
+
+    def validate_live_bytes():
+        complete_snapshot()
+        for name, raw in expected_live_bytes.items():
+            if path(name).read_bytes() != raw:
+                raise ValueError("WRITE_PHASE_INPUT_CHANGED: " + name)
+
+    try:
+        for name in changed:
+            validate_live_bytes()
+            target = path(name)
+            written.append(name)  # Also account for a partially failed write.
+            target.write_bytes(expected[name])
+            if path(name).read_bytes() != expected[name]:
+                raise ValueError("WRITTEN_OUTPUT_MISMATCH: " + name)
+            expected_live_bytes[name] = expected[name]
+        validate_live_bytes()  # Includes drift injected after the final write.
+    except Exception as failure:
+        rollback_errors = []
+        for name in reversed(written):
+            try:
+                # Do not follow a replaced root, symlink, or hardlink on rollback.
+                if root.is_symlink():
+                    raise ValueError("UNSAFE_ROLLBACK_ROOT")
+                target = path(name)
+                info = target.stat(follow_symlinks=False)
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                    raise ValueError("UNSAFE_ROLLBACK_OBJECT")
+                target.write_bytes(current[name])
+                if path(name).read_bytes() != current[name]:
+                    raise ValueError("ROLLBACK_BYTE_MISMATCH")
+            except Exception as rollback_failure:
+                rollback_errors.append(name + ": " + str(rollback_failure))
+        # Verify the complete rollback set again after all restorations.
+        for name in written:
+            try:
+                if root.is_symlink() or path(name).read_bytes() != current[name]:
+                    raise ValueError("ROLLBACK_FINAL_BYTE_MISMATCH")
+            except Exception as rollback_failure:
+                rollback_errors.append(name + ": " + str(rollback_failure))
+        if rollback_errors:
+            raise ValueError("ROLLBACK_FAILED: " + "; ".join(rollback_errors)) from failure
+        raise ValueError("REFRESH_TRANSACTION_FAIL_CLOSED: " + str(failure)) from failure
+
+    return changed
 
 
 def replace_hashes(value: Any, old_exec: str, new_exec: str, old_contract: str, new_contract: str) -> None:

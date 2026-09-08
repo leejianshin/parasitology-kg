@@ -3918,5 +3918,489 @@ class BindingChainTests(unittest.TestCase):
                     validate_bound_execution(sidecar, self.store)
 
 
+
+class RefreshProducerConformanceTests(unittest.TestCase):
+    """D5P oracles use persisted bytes and independent JSON/removal operations."""
+    H = "phase9/clonorchis-sinensis/p9b1q-architecture-review/"
+    fields = ("resolved_mentions", "resolved_events", "resolved_relations", "semantic_roles",
+              "narrative_intents", "forbidden_relations", "resolved_references", "resolved_overrides")
+
+    def setUp(self):
+        import runpy
+        self.producer = runpy.run_path(str(ROOT / self.H / "rebuild-reference-evidence.py"))
+        self.core = json.loads((ROOT / self.H / "fixtures/typed-solution-exposure-positive.json").read_bytes())
+
+    @staticmethod
+    def independent_hash(value):
+        return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True,
+                                        separators=(",", ":")).encode("utf-8")).hexdigest()
+
+    def simulation(self):
+        temporary = tempfile.TemporaryDirectory(prefix="d5p-test-")
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        paths = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "-z"]).decode().split("\0")[:-1]
+        frozen = {name: (ROOT / name).read_bytes() for name in paths}
+        for name, raw in frozen.items():
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        r3a = self.H + "fixtures/r3a-reference-override-positive.json"
+        negative = self.H + "fixtures/stage-validator-negative-fixtures.yml"
+        policy = {r3a: [f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256" for i in range(3)],
+                  negative: ["/base_objects/11/canonical_sha256"]}
+        rules = [{"path": r3a, "pointer": pointer, "source_path": r3a,
+                  "source_pointer": "/objects/typed_solution_core", "derivation": "REMOVAL_CANDIDATE_SHA256"}
+                 for pointer in policy[r3a]]
+        rules.append({"path": negative, "pointer": policy[negative][0],
+                      "source_path": self.H + "fixtures/typed-solution-exposure-positive.json", "derivation": "RAW_SHA256"})
+        return root, frozen, policy, rules
+
+    def test_frozen_eight_collection_identity_and_solution(self):
+        import runpy
+        with mock.patch.object(sys, "path", [str(ROOT / self.H), *sys.path]):
+            validator = runpy.run_path(str(ROOT / self.H / "reference-stage-semantic-validator.py"))
+        expected = {k: self.core[k] for k in self.fields}
+        self.assertEqual(expected, validator["semantic_object_set"](self.core))
+        self.assertEqual(expected, self.producer["semantic_set"](self.core))
+        self.assertEqual(self.independent_hash(expected), "44c949792c62a160683f36867132ef63d80664c385010a97f98a9406d7f8b2e1")
+        refreshed = copy.deepcopy(self.core)
+        self.producer["refresh_core"](refreshed)
+        self.assertEqual(refreshed, self.core)
+        self.assertEqual(refreshed["solution_id"], "SOL-44c949792c62a160683f3686")
+
+    def test_nonempty_forbidden_relations_affect_identity(self):
+        changed = copy.deepcopy(self.core)
+        changed["forbidden_relations"] = [{"semantic_object_id": "PROHIBITION-ORACLE"}]
+        actual = self.producer["semantic_set"](changed)
+        self.assertEqual(self.independent_hash(actual), self.independent_hash({k: changed[k] for k in self.fields}))
+        self.assertNotEqual(self.independent_hash(actual), self.core["semantic_object_set_sha256"])
+
+    def test_missing_extra_and_mutated_identity_definition_rejected(self):
+        for field in self.fields:
+            core = copy.deepcopy(self.core)
+            del core[field]
+            with self.subTest(missing=field), self.assertRaises(ValueError):
+                self.producer["semantic_set"](core)
+        for fields in (self.fields[:-1], self.fields + ("ninth",)):
+            with self.subTest(definition=fields), self.assertRaises(ValueError):
+                self.producer["semantic_set"](self.core, fields=fields)
+        function = self.producer["semantic_set"]
+        with mock.patch.dict(function.__globals__, SEMANTIC_COLLECTIONS=self.fields[:-1]):
+            with self.assertRaises(ValueError):
+                function(self.core)
+
+    def test_narrow_r3a_replay_negative_semantics_and_idempotency(self):
+        import yaml
+        root, frozen, policy, rules = self.simulation()
+        expected_hashes = ["556c2759109f06c8348da7960b421f96ad582d9a2762507cf3cfa794534c0b87",
+                           "3cded18ddd46e9fca53056d377c401f7e140bc3c9827b94d199339a20ebf235b",
+                           "d49a4c7aa749eb7a7cf5750792737a7a38513a895d0ba53da0b26ae241de0b66"]
+        r3a, negative = policy
+        before = json.loads(frozen[r3a])
+        for i, probe in enumerate(before["objects"]["minimality_probes"]):
+            candidate = copy.deepcopy(before["objects"]["typed_solution_core"])
+            for operation in probe["operation"]:
+                collection, index = operation["path"].split("/")[1:]
+                self.assertEqual(operation["op"], "remove")
+                del candidate[collection][int(index)]
+            self.assertEqual(self.independent_hash({k: candidate[k] for k in self.fields}), expected_hashes[i])
+        changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+        self.assertEqual(changed, sorted(policy))
+        after = json.loads((root / r3a).read_bytes())
+        for i, probe in enumerate(after["objects"]["minimality_probes"]):
+            self.assertEqual(probe["candidate_semantic_object_set_sha256"], expected_hashes[i])
+            probe["candidate_semantic_object_set_sha256"] = before["objects"]["minimality_probes"][i]["candidate_semantic_object_set_sha256"]
+        self.assertEqual(after, before)
+        negative_before = yaml.safe_load(frozen[negative])
+        negative_after = yaml.safe_load((root / negative).read_bytes())
+        self.assertEqual(negative_after["cases"], negative_before["cases"])
+        core_path = self.H + "fixtures/typed-solution-exposure-positive.json"
+        self.assertEqual(negative_after["base_objects"][11]["canonical_sha256"], hashlib.sha256(frozen[core_path]).hexdigest())
+        negative_after["base_objects"][11]["canonical_sha256"] = negative_before["base_objects"][11]["canonical_sha256"]
+        self.assertEqual(negative_after, negative_before)
+        self.assertEqual(self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+        for name in frozen.keys() - policy.keys():
+            self.assertEqual((root / name).read_bytes(), frozen[name])
+
+    def test_narrow_attacks_validate_whole_plan_before_any_write(self):
+        for attack in ("path", "pointer", "semantic_and_hash", "authority", "schema", "wrong_derived_hash", "semantic_pointer"):
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                options = {}
+                if attack == "path":
+                    rules[-1]["path"] = self.H + "fixtures/normalized-request-exposure-positive.json"
+                elif attack == "pointer":
+                    rules[-1]["pointer"] = "/base_objects/0/canonical_sha256"
+                elif attack == "semantic_and_hash":
+                    name = rules[0]["path"]
+                    candidate = json.loads(frozen[name])
+                    candidate["objects"]["typed_solution_core"]["resolved_mentions"][0]["entity_id"] = "tampered"
+                    core = candidate["objects"]["typed_solution_core"]
+                    core["semantic_object_set_sha256"] = self.independent_hash({k: core[k] for k in self.fields})
+                    core["solution_id"] = "SOL-" + core["semantic_object_set_sha256"][:24]
+                    (root / name).write_text(json.dumps(candidate))
+                elif attack in ("authority", "schema"):
+                    name = self.H + ("constraint-set-v0.1.yml" if attack == "authority" else "typed-solution-core-schema-candidate.yml")
+                    (root / name).write_bytes(frozen[name] + b"\n# drift\n")
+                elif attack == "wrong_derived_hash":
+                    rules[-1]["expected_value"] = "0" * 64
+                else:
+                    name = rules[0]["path"]
+                    pointer = "/objects/minimality_probes/0/expected_constraint_id"
+                    policy[name].append(pointer)
+                    rules.append({"path": name, "pointer": pointer, "source_path": name, "derivation": "RAW_SHA256"})
+                actual_before = {n: (root / n).read_bytes() for n in frozen}
+                with self.assertRaises(ValueError):
+                    self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules, **options)
+                self.assertEqual(actual_before, {n: (root / n).read_bytes() for n in frozen})
+
+    def test_narrow_prospective_patch_and_protected_output_rejection(self):
+        root, frozen, policy, rules = self.simulation()
+        with self.assertRaises(ValueError):
+            self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules,
+                                           prospective_bytes={rules[0]["path"]: b"{}"})
+        policy[self.H + "constraint-set-v0.1.yml"] = ["/sha256"]
+        with self.assertRaises(ValueError):
+            self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+        self.assertEqual(frozen, {n: (root / n).read_bytes() for n in frozen})
+
+    def test_narrow_determinism_without_network_retrieval_or_model(self):
+        import socket
+        hashes = []
+        for _ in range(3):
+            root, frozen, policy, rules = self.simulation()
+            with mock.patch.object(socket.socket, "connect", side_effect=AssertionError("network")) as connect, \
+                 mock.patch.object(socket, "create_connection", side_effect=AssertionError("network")) as connection, \
+                 mock.patch("scripts.p9b1q_scoped_query_ir.execute_query_ir", side_effect=AssertionError("retrieval")) as retrieval:
+                changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                self.assertEqual(connect.call_count + connection.call_count + retrieval.call_count, 0)
+            digest = hashlib.sha256()
+            for name in changed:
+                digest.update(name.encode() + b"\0" + (root / name).read_bytes())
+            hashes.append(digest.hexdigest())
+        self.assertEqual(len(set(hashes)), 1)
+
+    def test_snapshot_completeness_attacks_fail_before_output_writes(self):
+        import yaml
+        attacks = ("authority_omitted", "schema_omitted", "ordinary_omitted", "missing_root",
+                   "extra_root", "file_symlink", "directory_symlink", "alias", "absolute",
+                   "traversal", "hardlink")
+        for attack in attacks:
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                ordinary = "scripts/p9b1q_scoped_query_ir.py"
+                if attack in ("authority_omitted", "schema_omitted"):
+                    name = self.H + ("constraint-set-v0.1.yml" if attack == "authority_omitted"
+                                     else "typed-solution-core-schema-candidate.yml")
+                    changed = yaml.safe_load(frozen[name])
+                    if attack == "schema_omitted":
+                        changed["properties"]["resolved_mentions"]["maxItems"] = 1
+                    else:
+                        changed[next(iter(changed))] = "TAMPERED_AUTHORITY"
+                    (root / name).write_text(yaml.safe_dump(changed))
+                    del frozen[name]
+                elif attack == "ordinary_omitted":
+                    del frozen[ordinary]
+                elif attack == "missing_root":
+                    (root / ordinary).unlink()
+                elif attack == "extra_root":
+                    (root / "unlisted.txt").write_text("extra")
+                elif attack == "file_symlink":
+                    (root / ordinary).unlink()
+                    (root / ordinary).symlink_to(root / "tests/test_p9b1q_scoped_query_ir.py")
+                elif attack == "directory_symlink":
+                    (root / "scripts").rename(root / "moved-scripts")
+                    (root / "scripts").symlink_to(root / "moved-scripts", target_is_directory=True)
+                elif attack in ("alias", "absolute", "traversal"):
+                    bad = {"alias": "scripts/./p9b1q_scoped_query_ir.py",
+                           "absolute": str(root / ordinary),
+                           "traversal": "scripts/../scripts/p9b1q_scoped_query_ir.py"}[attack]
+                    frozen[bad] = frozen.pop(ordinary)
+                else:
+                    (root / ordinary).unlink()
+                    os.link(root / "tests/test_p9b1q_scoped_query_ir.py", root / ordinary)
+                before = {n: (root / n).read_bytes() for n in policy}
+                with mock.patch.object(Path, "write_bytes", side_effect=AssertionError("OUTPUT_WRITE")) as write:
+                    with self.assertRaises(ValueError):
+                        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    self.assertEqual(write.call_count, 0)
+                self.assertEqual(before, {n: (root / n).read_bytes() for n in policy})
+
+    def test_snapshot_path_set_rechecked_after_rule_evaluation(self):
+        root, frozen, policy, rules = self.simulation()
+        before = {n: (root / n).read_bytes() for n in policy}
+        function = self.producer["narrow_refresh"]
+        original = function.__globals__["sha_bytes"]
+        def change_inventory(raw):
+            (root / "appeared-during-validation.txt").write_text("injected")
+            return original(raw)
+        with mock.patch.dict(function.__globals__, sha_bytes=change_inventory), \
+             mock.patch.object(Path, "write_bytes", side_effect=AssertionError("OUTPUT_WRITE")) as write:
+            with self.assertRaisesRegex(ValueError, "INCOMPLETE_FROZEN_SNAPSHOT"):
+                function(root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+            self.assertEqual(write.call_count, 0)
+        self.assertEqual(before, {n: (root / n).read_bytes() for n in policy})
+
+    def test_complete_snapshot_positive_control_matches_enumerated_root(self):
+        root, frozen, policy, rules = self.simulation()
+        actual = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+        self.assertEqual(actual, set(frozen))
+        changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+        self.assertEqual(changed, sorted(policy))
+        self.assertEqual(self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+
+
+    def test_source_authority_rejects_wrong_paths_roles_and_overrides_before_write(self):
+        attacks = ("wrong_path", "matching_expected", "unknown_role", "override_catalog",
+                   "validator_claims_script", "script_claims_validator", "wrong_role")
+        for attack in attacks:
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                script = "scripts/p9b1q_scoped_query_ir.py"
+                validator = self.H + "reference-stage-semantic-validator.py"
+                if attack in ("validator_claims_script", "wrong_role"):
+                    name = self.H + "fixtures/normalized-request-exposure-positive.json"
+                    pointer = "/producer/executable_sha256"
+                    policy[name] = [pointer]
+                    rules.append({"path": name, "pointer": pointer, "derivation": "RAW_SHA256",
+                                  "source_role": "REFERENCE_STAGE_VALIDATOR_EXECUTABLE", "source_path": script})
+                    if attack == "wrong_role":
+                        rules[-1].pop("source_path")
+                        rules[-1]["source_role"] = "PRODUCTION_SCOPED_QUERY_IR_EXECUTABLE"
+                elif attack == "script_claims_validator":
+                    name = self.H + "design-manifest.yml"
+                    pointer = "/protected_files/scripts~1p9b1q_scoped_query_ir.py"
+                    policy[name] = [pointer]
+                    rules.append({"path": name, "pointer": pointer, "derivation": "RAW_SHA256",
+                                  "source_role": "PRODUCTION_SCOPED_QUERY_IR_EXECUTABLE", "source_path": validator})
+                elif attack == "unknown_role":
+                    rules[-1]["source_role"] = "UNKNOWN"
+                elif attack == "override_catalog":
+                    rules[-1]["role_catalog"] = {"REFERENCE_STAGE_VALIDATOR_EXECUTABLE": script}
+                else:
+                    rules[-1]["source_path"] = script
+                    if attack == "matching_expected":
+                        rules[-1]["expected_value"] = hashlib.sha256(frozen[script]).hexdigest()
+                before = {n: (root / n).read_bytes() for n in policy}
+                with mock.patch.object(Path, "write_bytes", side_effect=AssertionError("OUTPUT_WRITE")) as write:
+                    with self.assertRaises(ValueError):
+                        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    self.assertEqual(write.call_count, 0)
+                self.assertEqual(before, {n: (root / n).read_bytes() for n in policy})
+
+    def test_target_record_reference_is_frozen_and_safe(self):
+        import yaml
+        for attack in ("changed_sibling", "synchronized_sibling", "missing_source", "unsafe_source"):
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                name = rules[-1]["path"]
+                obj = yaml.safe_load(frozen[name])
+                obj["base_objects"][11]["path"] = "scripts/p9b1q_scoped_query_ir.py"
+                if attack == "synchronized_sibling":
+                    obj["base_objects"][11]["canonical_sha256"] = hashlib.sha256(frozen["scripts/p9b1q_scoped_query_ir.py"]).hexdigest()
+                elif attack == "missing_source":
+                    obj["base_objects"][11]["path"] = "fixtures/absent-source.json"
+                elif attack == "unsafe_source":
+                    obj["base_objects"][11]["path"] = "../escape.json"
+                raw = yaml.safe_dump(obj,sort_keys=False).encode()
+                (root / name).write_bytes(raw)
+                if attack in ("missing_source", "unsafe_source"):
+                    frozen[name] = raw
+                with mock.patch.object(Path, "write_bytes", side_effect=AssertionError("OUTPUT_WRITE")) as write:
+                    with self.assertRaises(ValueError):
+                        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    self.assertEqual(write.call_count, 0)
+
+    def test_r3a_source_core_and_operation_are_not_caller_authority(self):
+        for attack in ("file", "core_pointer", "operation", "generic_algorithm"):
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                rule = rules[2]
+                if attack == "file":
+                    rule["source_path"] = self.H + "fixtures/typed-solution-exposure-positive.json"
+                elif attack == "core_pointer":
+                    rule["source_pointer"] = "/objects/query_ir"
+                elif attack == "operation":
+                    rule["operation"] = [{"op": "remove", "path": "/resolved_mentions/0"}]
+                else:
+                    rule["derivation"] = "RAW_SHA256"
+                with mock.patch.object(Path, "write_bytes", side_effect=AssertionError("OUTPUT_WRITE")) as write:
+                    with self.assertRaises(ValueError):
+                        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    self.assertEqual(write.call_count, 0)
+
+    def test_known_source_classes_derive_from_actual_frozen_objects(self):
+        import yaml
+        root, frozen, policy, rules = self.simulation()
+        normalized = self.H + "fixtures/normalized-request-exposure-positive.json"
+        stage = self.H + "fixtures/stage-validation-s0-positive.json"
+        manifest = self.H + "design-manifest.yml"
+        validator = self.H + "reference-stage-semantic-validator.py"
+        script = "scripts/p9b1q_scoped_query_ir.py"
+        policy[normalized] = ["/producer/executable_sha256"]
+        policy[stage] = ["/actual_input_objects/0/canonical_sha256", "/actual_input_objects/1/canonical_sha256",
+                         "/actual_input_objects/1/byte_length", "/result_sha256"]
+        policy[manifest] = ["/protected_files/scripts~1p9b1q_scoped_query_ir.py"]
+        rules.extend([
+            {"path": normalized, "pointer": policy[normalized][0], "derivation": "RAW_SHA256",
+             "source_role": "REFERENCE_STAGE_VALIDATOR_EXECUTABLE"},
+            {"path": stage, "pointer": policy[stage][0], "derivation": "CANONICAL_SHA256"},
+            {"path": stage, "pointer": policy[stage][1], "derivation": "RAW_SHA256"},
+            {"path": stage, "pointer": policy[stage][2], "derivation": "BYTE_LENGTH"},
+            {"path": stage, "pointer": policy[stage][3], "derivation": "SELF_SHA256"},
+            {"path": manifest, "pointer": policy[manifest][0], "derivation": "RAW_SHA256",
+             "source_role": "PRODUCTION_SCOPED_QUERY_IR_EXECUTABLE"},
+        ])
+        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+        n = json.loads((root / normalized).read_bytes())
+        v = json.loads((root / stage).read_bytes())
+        m = yaml.safe_load((root / manifest).read_bytes())
+        self.assertEqual(n["producer"]["executable_sha256"], hashlib.sha256(frozen[validator]).hexdigest())
+        self.assertEqual(m["protected_files"][script], hashlib.sha256(frozen[script]).hexdigest())
+        self.assertEqual(v["actual_input_objects"][1]["canonical_sha256"], hashlib.sha256(frozen[validator]).hexdigest())
+        self.assertEqual(v["actual_input_objects"][1]["byte_length"], len(frozen[validator]))
+        request_path = v["actual_input_objects"][0]["content_path"]
+        self.assertEqual(v["actual_input_objects"][0]["canonical_sha256"], self.independent_hash(json.loads(frozen[request_path])))
+        self_hash = v.pop("result_sha256")
+        self.assertEqual(self_hash, self.independent_hash(v))
+        self.assertEqual(self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+
+
+    def test_real_stale_surface_sources_include_prefixed_and_fixed_roles(self):
+        import yaml
+        validator = self.H + "reference-stage-semantic-validator.py"
+        rows = [
+            ("normalized-request-exposure-positive.json", "/producer/executable_sha256", validator),
+            ("minimality-removal-probe-M01.json", "/validator_executable_sha256", validator),
+            ("minimality-removal-probe-M01.json", "/validator_configuration_sha256", self.H + "stage-semantic-validator-contract.yml"),
+            ("reference-validator-execution-summary.json", "/executable_sha256", validator),
+            ("typed-result-exposure-positive.json", "/solver/executable_sha256", validator),
+            ("stage-validation-s0-positive.json", "/validator/executable_sha256", validator),
+            ("execution-binding-sidecar-positive.json", "/actual_objects/29/canonical_sha256", validator),
+            ("object-store-index-positive.json", "/objects/29/canonical_sha256", validator),
+        ]
+        for filename, pointer, source in rows:
+            with self.subTest(target=filename, pointer=pointer):
+                root, frozen, _, _ = self.simulation()
+                name = self.H + "fixtures/" + filename
+                before = json.loads(frozen[name])
+                # No caller source path, pointer or role establishes authority.
+                rule = {"path": name, "pointer": pointer, "derivation": "RAW_SHA256"}
+                self.producer["narrow_refresh"](root, frozen_bytes=frozen,
+                    field_policy={name: [pointer]}, rules=[rule])
+                after = json.loads((root / name).read_bytes())
+                parts = pointer.strip("/").split("/")
+                old, new = before, after
+                for part in parts[:-1]:
+                    old = old[int(part)] if isinstance(old, list) else old[part]
+                    new = new[int(part)] if isinstance(new, list) else new[part]
+                self.assertEqual(new[parts[-1]], hashlib.sha256(frozen[source]).hexdigest())
+                new[parts[-1]] = old[parts[-1]]
+                self.assertEqual(after, before)
+                self.assertEqual([], self.producer["narrow_refresh"](root, frozen_bytes=frozen,
+                    field_policy={name: [pointer]}, rules=[rule]))
+
+    def test_corr3_source_assertions_cannot_create_authority(self):
+        cases = ("prefixed_path", "configuration_path", "summary_role", "solver_role",
+                 "arbitrary_target", "catalog", "wrong_role_matching_hash", "wrong_path_matching_hash")
+        for attack in cases:
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                name = self.H + "fixtures/minimality-removal-probe-M01.json"
+                pointer = "/validator_executable_sha256"
+                rule = {"path": name, "pointer": pointer, "derivation": "RAW_SHA256"}
+                script = "scripts/p9b1q_scoped_query_ir.py"
+                if attack in ("prefixed_path", "wrong_path_matching_hash"):
+                    rule["source_path"] = script
+                elif attack == "configuration_path":
+                    rule["pointer"] = "/validator_configuration_sha256"
+                    rule["source_path"] = self.H + "reference-stage-semantic-validator.py"
+                elif attack in ("summary_role", "wrong_role_matching_hash"):
+                    rule.update(path=self.H + "fixtures/reference-validator-execution-summary.json",
+                                pointer="/executable_sha256", source_role="PRODUCTION_SCOPED_QUERY_IR_EXECUTABLE")
+                elif attack == "solver_role":
+                    rule.update(path=self.H + "fixtures/typed-result-exposure-positive.json",
+                                pointer="/solver/executable_sha256", source_role="PRODUCTION_SCOPED_QUERY_IR_EXECUTABLE")
+                elif attack == "arbitrary_target":
+                    rule.update(pointer="/validator_contract_sha256", source_role="REFERENCE_STAGE_VALIDATOR_EXECUTABLE")
+                else:
+                    rule["role_catalog"] = {"REFERENCE_STAGE_VALIDATOR_EXECUTABLE": script}
+                if attack.endswith("matching_hash"):
+                    rule["expected_value"] = hashlib.sha256(frozen[script]).hexdigest()
+                policy.setdefault(rule["path"], []).append(rule["pointer"])
+                rules.append(rule)
+                with mock.patch.object(Path, "write_bytes", side_effect=AssertionError("OUTPUT_WRITE")) as write:
+                    with self.assertRaises(ValueError):
+                        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                    self.assertEqual(0, write.call_count)
+
+    def test_write_phase_and_final_boundary_drift_roll_back_transaction(self):
+        for attack in ("authority", "schema", "second_target", "extra", "symlink", "final"):
+            with self.subTest(attack=attack):
+                root, frozen, policy, rules = self.simulation()
+                first, second = sorted(policy)
+                protected = self.H + ("typed-solution-core-schema-candidate.yml" if attack == "schema"
+                                      else "constraint-set-v0.1.yml")
+                original = Path.write_bytes
+                events = []
+                drifted = [False]
+                external = b"externally changed bytes\n"
+                def observed_write(target, raw):
+                    relative = target.relative_to(root).as_posix()
+                    rollback = raw == frozen[relative]
+                    events.append((relative, rollback, drifted[0]))
+                    count = original(target, raw)
+                    trigger = second if attack == "final" else first
+                    if not rollback and relative == trigger and not drifted[0]:
+                        drifted[0] = True
+                        if attack == "extra":
+                            original(root / "extra-during-write", external)
+                        elif attack == "symlink":
+                            (root / protected).unlink()
+                            (root / protected).symlink_to(root / "scripts/p9b1q_scoped_query_ir.py")
+                        else:
+                            original(root / (second if attack == "second_target" else protected), external)
+                    return count
+                with mock.patch.object(Path, "write_bytes", observed_write):
+                    with self.assertRaisesRegex(ValueError, "REFRESH_TRANSACTION_FAIL_CLOSED"):
+                        self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                self.assertTrue(drifted[0])
+                self.assertEqual([], [e for e in events if e[2] and not e[1]])
+                written = {n for n, rollback, _ in events if not rollback}
+                self.assertEqual({first, second} if attack == "final" else {first}, written)
+                self.assertEqual(written, {n for n, rollback, _ in events if rollback})
+                for name in written:
+                    self.assertEqual(frozen[name], (root / name).read_bytes())
+                if attack == "second_target":
+                    self.assertEqual(external, (root / second).read_bytes())
+                elif attack == "extra":
+                    self.assertEqual(external, (root / "extra-during-write").read_bytes())
+                elif attack == "symlink":
+                    self.assertTrue((root / protected).is_symlink())
+                else:
+                    self.assertEqual(external, (root / protected).read_bytes())
+                for name in frozen.keys() - written - {protected, second}:
+                    self.assertEqual(frozen[name], (root / name).read_bytes())
+
+    def test_rollback_rejects_replaced_output_path_without_touching_referent(self):
+        root, frozen, policy, rules = self.simulation()
+        first = sorted(policy)[0]
+        protected = "scripts/p9b1q_scoped_query_ir.py"
+        original = Path.write_bytes
+        calls = []
+        def replace_written_output(target, raw):
+            calls.append(target)
+            count = original(target, raw)
+            target.unlink()
+            target.symlink_to(root / protected)
+            return count
+        with mock.patch.object(Path, "write_bytes", replace_written_output):
+            with self.assertRaisesRegex(ValueError, "ROLLBACK_FAILED"):
+                self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+        self.assertEqual([root / first], calls)
+        self.assertEqual(frozen[protected], (root / protected).read_bytes())
+
+
 if __name__ == "__main__":
     unittest.main()
