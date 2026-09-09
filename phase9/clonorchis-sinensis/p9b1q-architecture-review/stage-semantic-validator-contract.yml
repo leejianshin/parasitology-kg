@@ -18,7 +18,7 @@ reference_execution:
   required_counts:
     positive: 18
     minimality: 8
-    negative: 76
+    negative: 84
   repeat_runs: 3
   repeat_requirement: BYTE_IDENTICAL_CANONICAL_JSON
   network_or_model_allowed: false
@@ -30,9 +30,9 @@ reference_execution:
     invocation: "node strict-schema-gate.mjs"
     engine: "AJV 8.17.1 Draft 2020-12"
     strict: true
-    required_compiled_schema_count: 12
-    required_fixture_pair_count: 36
-    required_valid_fixture_count: 36
+    required_compiled_schema_count: 13
+    required_fixture_pair_count: 37
+    required_valid_fixture_count: 37
 
 failure_code_authority:
   canonical_source: constraint-id-registry.yml

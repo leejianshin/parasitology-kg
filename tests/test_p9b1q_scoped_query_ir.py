@@ -4516,5 +4516,230 @@ class RefreshProducerConformanceTests(unittest.TestCase):
                             root, frozen_bytes=frozen, field_policy=policy, rules=rules))
 
 
+class FrozenExecutionCountContractCorrectionTests(unittest.TestCase):
+    """Compare contract counts with frozen execution, never summary receipts."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        import yaml
+
+        cls.review_relative = Path("phase9/clonorchis-sinensis/p9b1q-architecture-review")
+        cls.temporary = tempfile.TemporaryDirectory(prefix="p9b1q-count-contract-")
+        cls.addClassCleanup(cls.temporary.cleanup)
+        cls.root = Path(cls.temporary.name)
+        tracked = subprocess.check_output(
+            ["git", "-C", str(ROOT), "ls-files", "-z"]
+        ).decode().split("\0")[:-1]
+        cls.frozen = {name: (ROOT / name).read_bytes() for name in tracked}
+        for name, raw in cls.frozen.items():
+            target = cls.root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        cls.review = cls.root / cls.review_relative
+        # The exact gate uses both ESM imports and a local AJV package path.
+        # Its dependency overlay belongs only to this disposable copy.
+        modules_setting = os.environ.get("P9B1Q_COUNT_NODE_MODULES")
+        if not modules_setting:
+            raise RuntimeError("P9B1Q_COUNT_NODE_MODULES must name external locked dependencies")
+        modules = Path(modules_setting).resolve(strict=True)
+        if modules.is_relative_to(ROOT.resolve()):
+            raise RuntimeError("count-test dependencies must be outside the checkout")
+        if (modules.parent / "package-lock.json").read_bytes() != (
+            cls.review / "package-lock.json"
+        ).read_bytes():
+            raise RuntimeError("external dependency lock differs from repository lock")
+        lock = json.loads((cls.review / "package-lock.json").read_bytes())
+        for name, package in lock["packages"].items():
+            if not name.startswith("node_modules/"):
+                continue
+            installed = json.loads((modules.parent / name / "package.json").read_bytes())
+            if installed["version"] != package["version"]:
+                raise RuntimeError("external dependency version mismatch: " + name)
+        (cls.review / "node_modules").symlink_to(modules, target_is_directory=True)
+        cls.contract = yaml.safe_load(
+            (cls.review / "stage-semantic-validator-contract.yml").read_bytes()
+        )["reference_execution"]
+        spec = importlib.util.spec_from_file_location(
+            "frozen_count_contract_validator",
+            cls.review / "reference-stage-semantic-validator.py",
+        )
+        cls.validator = importlib.util.module_from_spec(spec)
+        with mock.patch.object(sys, "path", [str(cls.review), *sys.path]):
+            spec.loader.exec_module(cls.validator)
+
+    @classmethod
+    def tearDownClass(cls):
+        for name, raw in cls.frozen.items():
+            if (cls.root / name).read_bytes() != raw:
+                raise AssertionError("frozen count-test input changed: " + name)
+
+    def test_negative_count_contract_matches_current_authorized_inventory(self):
+        import ast
+        import hashlib
+        import yaml
+
+        source = (self.review / "reference-stage-semantic-validator.py").read_text()
+
+        def structure(text):
+            """Prove the defined normal-completion domain, not execution success."""
+            tree = ast.parse(text)
+            functions = {}
+            for node in tree.body:
+                if isinstance(node, ast.FunctionDef):
+                    self.assertNotIn(node.name, functions)
+                    functions[node.name] = node
+
+            def same(node, expression):
+                self.assertEqual(ast.dump(ast.parse(expression).body[0]), ast.dump(node))
+
+            # Resolve each manifest through the actual module-level path binding.
+            bindings = {
+                "HERE": "Path(__file__).resolve().parent",
+                "FIXTURES": 'HERE / "fixtures"',
+                "NEGATIVE": 'FIXTURES / "stage-validator-negative-fixtures.yml"',
+                "R3B_NEGATIVE": 'FIXTURES / "r3b-negation-scope-negative-fixtures.yml"',
+                "R3A_NEGATIVE": 'FIXTURES / "r3a-reference-override-negative-fixtures.yml"',
+            }
+            for name, expression in bindings.items():
+                stores = [n for n in ast.walk(tree)
+                          if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store)
+                          and n.id == name]
+                self.assertEqual(1, len(stores), name + " must have one unambiguous binding")
+                assignments = [n for n in tree.body if isinstance(n, ast.Assign)
+                               and any(isinstance(t, ast.Name) and t.id == name for t in n.targets)]
+                self.assertEqual(1, len(assignments))
+                same(assignments[0], name + " = " + expression)
+
+            for name, manifest, binding, result, item in (
+                ("run_negative", "manifest", "NEGATIVE", "results", "case"),
+                ("run_r3b_authoritative", "negative_manifest", "R3B_NEGATIVE", "negative", "fixture"),
+            ):
+                function = functions[name]
+                loads = [n for n in function.body if isinstance(n, ast.Assign)
+                         and any(isinstance(t, ast.Name) and t.id == manifest for t in n.targets)]
+                self.assertEqual(1, len(loads))
+                same(loads[0], manifest + " = load_yaml(" + binding + ")")
+                loops = [n for n in function.body if isinstance(n, ast.For)]
+                self.assertEqual(1, len(loops))
+                loop = loops[0]
+                self.assertEqual(item, ast.unparse(loop.target))
+                self.assertEqual(manifest + "['cases']", ast.unparse(loop.iter))
+                self.assertEqual([], loop.orelse)
+                self.assertFalse(any(isinstance(n, (ast.Break, ast.Continue, ast.Return))
+                                     for n in ast.walk(loop)))
+                appends = [n for n in ast.walk(function) if isinstance(n, ast.Call)
+                           and isinstance(n.func, ast.Attribute)
+                           and ast.unparse(n.func) == result + ".append"]
+                self.assertEqual(1, len(appends))
+                # The single append is unconditional and last in the full-case loop.
+                self.assertIsInstance(loop.body[-1], ast.Expr)
+                self.assertIs(loop.body[-1].value, appends[0])
+                record = appends[0].args[0]
+                self.assertIsInstance(record, ast.Dict)
+                fields = {ast.literal_eval(k): v for k, v in zip(record.keys, record.values)}
+                self.assertEqual(item + "['fixture_id']", ast.unparse(fields["fixture_id"]))
+                self.assertIsInstance(function.body[-1], ast.Return)
+                if name == "run_negative":
+                    same(function.body[-1], "return results")
+                else:
+                    same(function.body[-1], 'return {"positive": positive, "negative": negative}')
+                    gates = [n for n in function.body if isinstance(n, ast.If)
+                             and any(isinstance(v, ast.Return) for v in ast.walk(n))]
+                    self.assertEqual(1, len(gates))
+                    same(gates[0], 'if any(item["errors"] for item in positive):\n'
+                         '    return {"positive": positive, "negative": []}')
+                    self.assertLess(function.body.index(gates[0]), function.body.index(loads[0]))
+
+            combined = functions["one_run"]
+            same(combined.body[3], "negative = run_negative()")
+            same(combined.body[4], "r3b = run_r3b_authoritative()")
+            same(combined.body[6], 'negative.extend(r3b["negative"])')
+            returned = combined.body[-1].value
+            fields = {ast.literal_eval(k): v for k, v in zip(returned.keys, returned.values)}
+            self.assertEqual("negative", ast.unparse(fields["negative"]))
+            self.assertFalse(any(isinstance(n, ast.Name) and "r3a" in n.id.lower()
+                                 for n in ast.walk(combined)))
+
+            # Conservative AST guards cover indirect mutations/reassignments in the
+            # reviewed functions as well. Any drift requires renewed structural review;
+            # these fingerprints are NOT execution receipts or the count oracle.
+            for name, expected in {
+                "run_negative": "0c24802d520e39b9558a46b57c2e782aaf7b34d7ed083b0802c062a0c0fdc5ad",
+                "run_r3b_authoritative": "20e1aa30f8d767fa98e9f7d996955166d5fa6a9d2a1423bcc1146049ec4d3904",
+                "one_run": "7c83e9daa950f68adcef9d3375f728a10b1cb37d29076955f8fab080a1822f1b",
+            }.items():
+                actual = hashlib.sha256(ast.dump(functions[name], include_attributes=False).encode()).hexdigest()
+                self.assertEqual(expected, actual, name + " source structure changed")
+
+        structure(source)
+        # Disposable source counterexamples exercise fail-closed structural checks.
+        for old, new in (
+            ("manifest = load_yaml(NEGATIVE)", "manifest = load_yaml(R3A_NEGATIVE)"),
+            ('negative.extend(r3b["negative"])', "pass"),
+            ('negative.extend(r3b["negative"])', 'negative.extend(r3a["negative"])'),
+            ('for case in manifest["cases"]:', 'for case in manifest["cases"][:1]:'),
+            ("results.append(", "results.extend("),
+            ('R3B_NEGATIVE = FIXTURES / "r3b-negation-scope-negative-fixtures.yml"',
+             'R3B_NEGATIVE = FIXTURES / "r3a-reference-override-negative-fixtures.yml"'),
+        ):
+            with self.subTest(source_drift=old):
+                self.assertIn(old, source)
+                with self.assertRaises(AssertionError):
+                    structure(source.replace(old, new))
+
+        fixtures = self.review / "fixtures"
+        domains = []
+        for filename in (
+            "stage-validator-negative-fixtures.yml",
+            "r3b-negation-scope-negative-fixtures.yml",
+            "r3a-reference-override-negative-fixtures.yml",
+        ):
+            cases = yaml.safe_load((fixtures / filename).read_bytes())["cases"]
+            ids = [case["fixture_id"] for case in cases]
+            self.assertEqual(len(ids), len(set(ids)), filename)
+            domains.append(ids)
+        stage_ids, r3b_ids, r3a_ids = domains
+        for left, right in ((stage_ids, r3b_ids), (stage_ids, r3a_ids), (r3b_ids, r3a_ids)):
+            self.assertTrue(set(left).isdisjoint(right))
+        defined_ids = stage_ids + r3b_ids
+        defined_count = len(defined_ids)
+        self.assertEqual((70, 14, 16), tuple(map(len, domains)))
+        self.assertEqual(defined_count, self.contract["required_counts"]["negative"])
+        self.assertEqual(84, defined_count)
+        stale = copy.deepcopy(self.contract)
+        stale["required_counts"]["negative"] = 76
+        with self.assertRaises(AssertionError):
+            self.assertEqual(defined_count, stale["required_counts"]["negative"])
+
+    def test_schema_gate_count_contract_matches_current_authorized_inventory(self):
+        run = subprocess.run(
+            ["node", str(self.review / "strict-schema-gate.mjs")],
+            cwd=self.review, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(0, run.returncode, run.stderr)
+        output = json.loads(run.stdout)
+        self.assertEqual("PASS", output["result"])
+        self.assertEqual(len(output["results"]), output["fixture_pair_count"])
+        self.assertEqual(
+            sum(item["valid"] for item in output["results"]),
+            output["valid_fixture_count"],
+        )
+        self.assertTrue(all(item["valid"] for item in output["results"]))
+        for field, expected, stale_value in (
+            ("compiled_schema_count", 13, 12),
+            ("fixture_pair_count", 37, 36),
+            ("valid_fixture_count", 37, 36),
+        ):
+            with self.subTest(field=field):
+                actual = output[field]
+                self.assertEqual(actual, self.contract["schema_gate"]["required_" + field])
+                self.assertEqual(expected, actual)
+                stale = copy.deepcopy(self.contract["schema_gate"])
+                stale["required_" + field] = stale_value
+                with self.assertRaises(AssertionError):
+                    self.assertEqual(actual, stale["required_" + field])
+
+
 if __name__ == "__main__":
     unittest.main()
