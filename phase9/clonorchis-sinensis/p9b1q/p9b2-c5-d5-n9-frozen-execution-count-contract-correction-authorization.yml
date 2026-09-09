@@ -1,0 +1,107 @@
+authorization_version: "1.0"
+authorization_id: AUTH-D5-N9-FROZEN-EXECUTION-COUNT-CONTRACT-CORRECTION
+record_type: FROZEN_EXECUTION_ACCEPTANCE_METADATA_CORRECTION_AUTHORIZATION
+authorization_status: PROSPECTIVE_PENDING_PUBLICATION_AND_EXPLICIT_BUILD_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+base: 3e40dcbc9ba74e10f6bb0fb8874b2035b16e404e
+target_finding: D5-N9-FROZEN-EXECUTION-COUNT-CONFLICT-004
+parent_findings:
+  - D5-SCOPE-EXECUTION-PAYLOAD-ADMISSIBILITY-002
+  - D5-MAPPING-CANONICAL-SOURCE-CLOSURE-GAP-001
+
+authority_precedence: CURRENT_AUTHORIZED_INVENTORY
+governance_basis:
+  - 77dda619
+  - d3581070
+  - 1c3bee76
+  - bd79a5a4
+  - 0ea3abe0
+evidence_limitations:
+  - eight_delta_negative_cases_are_authorized_but_individual_independent_audit_receipts_are_not_claimed
+  - historical_reason_for_contract_count_nonsynchronization_is_unresolved
+
+authorized_direct_implementation_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+  - tests/test_p9b1q_scoped_query_ir.py
+contract_exact_field_corrections:
+  /reference_execution/required_counts/negative:
+    old: 76
+    new: 84
+  /reference_execution/schema_gate/required_compiled_schema_count:
+    old: 12
+    new: 13
+  /reference_execution/schema_gate/required_fixture_pair_count:
+    old: 36
+    new: 37
+  /reference_execution/schema_gate/required_valid_fixture_count:
+    old: 36
+    new: 37
+contract_other_field_changes_allowed: false
+contract_version_change_allowed: false
+contract_id_change_allowed: false
+contract_status_change_allowed: false
+whole_file_yaml_reserialization_allowed: false
+
+independent_count_regression_tests_required: true
+required_execution_count_semantics: >-
+  negative = len(one_run()["negative"]) = 70 stage + 14 R3B = 84;
+  R3A governance-only cases excluded from this denominator.
+required_schema_gate_semantics: >-
+  compiled_schema_count = localSchemas.length = 13;
+  fixture_pair_count = pairs.length = 37;
+  valid_fixture_count = actual valid pairs on PASS = 37.
+required_test_obligations:
+  - exact four corrected literals verified
+  - negative contract count independently compared to actual one_run negative inventory
+  - schema-gate contract counts independently compared to actual strict-schema-gate output
+  - stale 76/12/36/36 counterexamples fail
+  - old persisted execution summary is not authority
+  - no existing test deleted
+  - no existing assertion weakened
+
+protected_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+  - scripts/p9b1q_scoped_query_ir.py
+  - fixtures/**
+  - evidence/**
+  - manifests
+  - schema/**
+  - all semantic authority artifacts
+  - P9-B2/**
+protected_scope_interpretation: >-
+  Fixture, evidence and manifest protection applies at every repository location,
+  including architecture-review fixtures and design-manifest.yml.
+  All semantic authority is protected except the exact four execution acceptance
+  metadata fields explicitly authorized above; no other exception is granted.
+reference_validator_change_allowed: false
+schema_gate_change_allowed: false
+producer_change_allowed: false
+runtime_change_allowed: false
+schema_change_allowed: false
+kg_semantic_authority_change_allowed: false
+execution_acceptance_metadata_change_allowed: EXACT_FOUR_FIELDS_ONLY
+
+evidence_refresh_allowed: false
+fixture_refresh_allowed: false
+manifest_refresh_allowed: false
+d5_mapping_resume_during_correction: false
+expected_consequence: >-
+  stage-semantic-validator-contract.yml raw SHA256 changes, therefore downstream
+  configuration bindings become newly stale and must be mapped separately after
+  correction verification.
+
+publication_required: true
+publication_starts_implementation: false
+separate_control_activation_required: D5_N9_COUNT_CONTRACT_CORRECTION_BUILD_START=AUTHORIZED
+
+materialization_scope:
+  only_new_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-n9-frozen-execution-count-contract-correction-authorization.yml
+  preexisting_tracked_file_count: 303
+  existing_file_changes_allowed: false
+  implementation_started: false
+  stage_allowed: false
+  commit_allowed: false
+  push_allowed: false
