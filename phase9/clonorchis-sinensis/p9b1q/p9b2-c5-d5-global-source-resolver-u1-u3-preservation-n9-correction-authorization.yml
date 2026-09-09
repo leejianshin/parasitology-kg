@@ -1,0 +1,194 @@
+authorization_version: '1.0'
+authorization_id: AUTH-D5-GLOBAL-SOURCE-RESOLVER-U1-U3-PRESERVATION-N9-CORRECTION
+record_type: D5_GLOBAL_SOURCE_RESOLVER_CORRECTION_AUTHORIZATION
+status: PROSPECTIVE_PENDING_PUBLICATION_AND_EXPLICIT_CONTROL_BUILD_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+base: 63961603b974cef5e783fce39f97f8594ffd1501
+control_closure_state:
+  D5-MAPPING-CANONICAL-SOURCE-CLOSURE-GAP-001: CLOSED_VERIFIED
+materialization_scope: EXACTLY_ONE_NEW_AUTHORIZATION_FILE_NO_EXISTING_TRACKED_FILE_CHANGE
+
+authorized_direct_implementation_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+  - tests/test_p9b1q_scoped_query_ir.py
+direct_implementation_path_count: 2
+other_direct_implementation_paths_authorized: false
+authorized_resolver_policy_classes:
+  - R01
+  - R02
+  - R03
+  - R04
+  - R05
+  - R07
+  - R08
+  - R09
+  - R10
+  - R11
+  - R12
+  - R13
+  - R14
+  - R15
+  - R16
+  - R17
+  - R18
+  - R20
+  - R21
+  - R22
+  - R23
+  - P_U1
+  - P_U3
+resolver_policy_scope: ADD_OR_EXTEND_EXACT_LIST_ONLY
+generic_hash_match_resolver_authorized: false
+
+preservation_target_path_prefix: phase9/clonorchis-sinensis/p9b1q-architecture-review/
+u1_preservation:
+  authority_record_id: AUTH-D5-U1-OPAQUE-SOLVER-TRACE-PRESERVATION
+  target: fixtures/typed-result-exposure-positive.json#/solver_trace_sha256
+  preserved_literal: '44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'
+  exact_literal_preservation_required: true
+  write_allowed: false
+  recomputation_allowed: false
+  empty_object_derivation_allowed: false
+  compile_c3_derivation_allowed: false
+  generic_resolver_capture_allowed: false
+  caller_replacement_allowed: false
+  inheritance_allowed: false
+  initial_mismatch_action: FAIL_CLOSED
+  downstream_rule: HASH_EXACT_PROSPECTIVE_BYTES_CONTAINING_PRESERVED_U1
+u3_preservation:
+  authority_record_id: AUTH-D5-U3-OPAQUE-SOLVER-CONFIGURATION-PRESERVATION
+  target: fixtures/typed-result-exposure-positive.json#/solver/configuration_sha256
+  preserved_literal: '7750ae58d7c89215809df97ce008e9bd9638447b9b91127e456e67b5d7de1c00'
+  exact_literal_preservation_required: true
+  write_allowed: false
+  recomputation_allowed: false
+  constraint_set_derivation_allowed: false
+  typed_solver_contract_derivation_for_historical_0_2_fixture_allowed: false
+  current_compile_c3_rule_inheritance_allowed: false
+  generic_resolver_capture_allowed: false
+  caller_replacement_allowed: false
+  inheritance_allowed: false
+  initial_mismatch_action: FAIL_CLOSED
+  downstream_rule: HASH_EXACT_PROSPECTIVE_BYTES_CONTAINING_PRESERVED_U3
+
+n9_capability:
+  purpose: NARROW_DISPOSABLE_PROSPECTIVE_EXECUTION
+  entrypoint: phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+  invocation_arguments:
+    - --mode
+    - all
+  reference_validator_modification_allowed: false
+  execution_context: COMPLETE_SEALED_DISPOSABLE_PROSPECTIVE_PREDECESSOR_TREE_ONLY
+  predecessor_closure_required_before_execution: true
+  acceptance:
+    exit_code: 0
+    result: PASS
+    positive_count: 18
+    minimality_count: 8
+    negative_count: 84
+    compiled_schema_count: 13
+    fixture_pair_count: 37
+    valid_fixture_count: 37
+    canonical_payload_run_count: 3
+    canonical_payload_runs_byte_identical_required: true
+    failure_code_governance: PASS
+    exact_validator_identity_required: true
+    exact_configuration_identity_required: true
+    summary_source: FRESH_STDOUT_ONLY
+    persisted_summary_allowed: false
+    bootstrap_summary_allowed: false
+    caller_supplied_summary_allowed: false
+    synthetic_summary_allowed: false
+    network_dependency_allowed: false
+    model_dependency_allowed: false
+    retrieval_dependency_allowed: false
+  verification_output_scope: PROSPECTIVE_ONLY
+  authoritative_repository_evidence_write_allowed: false
+
+required_test_obligations:
+  - Prove every authorized resolver class.
+  - Prove complete non-overlapping field coverage.
+  - Prove complete topology with no cycles.
+  - Prove U1 and U3 exact preservation.
+  - Prove all nine typed-result downstream bindings.
+  - Prove all 23 negative fixture bindings.
+  - Prove deliberate corruption constants remain protected.
+  - Prove R3A/R3B ordering and context.
+  - Prove historical/versioned snapshots never become writable.
+  - Prove N9 cannot run before predecessor closure.
+  - Prove the N9 successful fresh acceptance path.
+  - Prove N9 failure/count/nondeterminism/identity rejection.
+  - Prove stale/bootstrap/synthetic/caller summary rejection.
+  - Prove YAML safe scalar patching.
+  - Prove non-target byte preservation.
+  - Prove idempotence.
+  - Preserve existing CLOSED_VERIFIED D5P transaction and rollback guarantees.
+required_negative_coverage:
+  u1:
+    - modification
+    - empty_object_recomputation
+    - compile_c3_recomputation
+    - generic_capture
+    - caller_replacement
+    - scope_expansion
+    - inheritance
+  u3:
+    - modification
+    - constraint_set_recomputation
+    - typed_solver_contract_recomputation
+    - production_rule_inheritance
+    - generic_capture
+    - caller_replacement
+    - scope_expansion
+    - inheritance
+  other:
+    - hash_match_only_source_inference
+    - missing_source
+    - ambiguous_source
+    - wrong_source
+    - duplicate_target
+    - overlapping_target
+    - forward_dependency
+    - cyclic_dependency
+    - historical_binding_captured_as_writable
+    - semantic_payload_mutation
+    - n9_premature_execution
+    - bad_n9_counts
+    - nondeterministic_n9_output
+    - invalid_failure_code_governance
+    - unsafe_yaml_mutation
+    - unrelated_byte_changes
+
+reference_validator_change_allowed: false
+schema_gate_change_allowed: false
+schema_change_allowed: false
+semantic_authority_change_allowed: false
+runtime_change_allowed: false
+actual_evidence_refresh_allowed: false
+actual_fixture_refresh_allowed: false
+actual_manifest_refresh_allowed: false
+d5_mapping_resume_allowed: false
+authoritative_repository_evidence_write_allowed: false
+commit_of_implementation_allowed: false
+push_of_implementation_allowed: false
+
+prospective_simulation_base: 63961603b974cef5e783fce39f97f8594ffd1501
+prospective_simulation_output_field_policy_count: 719
+prospective_simulation_output_file_count: 37
+n9_execution_included: true
+prospective_count_interpretation: POLICY_SCOPE_COUNTS_NOT_PREDICTIONS_THAT_EVERY_VALUE_CHANGES
+
+publication_required: true
+publication_starts_implementation: false
+separate_control_build_start_required: true
+implementation_authorized_by_materialization: false
+implementation_authorized_by_publication: false
+activation_boundary: ONLY_A_LATER_EXPLICIT_CONTROL_BUILD_START_MAY_BEGIN_IMPLEMENTATION
+current_turn_prohibitions:
+  - staging
+  - committing
+  - pushing
+  - implementation
+  - evidence_refresh
+  - d5_mapping_resume
