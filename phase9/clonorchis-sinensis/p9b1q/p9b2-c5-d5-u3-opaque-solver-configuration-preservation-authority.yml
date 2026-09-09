@@ -1,0 +1,144 @@
+authority_record_version: '1.0'
+authority_record_id: AUTH-D5-U3-OPAQUE-SOLVER-CONFIGURATION-PRESERVATION
+record_type: D5_FIXTURE_OPAQUE_FIELD_PRESERVATION_AUTHORITY
+status: MATERIALIZED_PENDING_PUBLICATION_INDEPENDENT_AUDIT_AND_CONTROL_ACCEPTANCE
+effective: false
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+base: e63ec39bdf1de506bfdc142db01e5b3df9fea42c
+target_finding: D5-SOLVER-CONFIGURATION-AUTHORITY-GAP-U3
+parent_finding: D5-MAPPING-CANONICAL-SOURCE-CLOSURE-GAP-001
+rule_id: D5-U3-OPAQUE-SOLVER-CONFIGURATION-PRESERVE
+target_file: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/typed-result-exposure-positive.json
+target_pointer: /solver/configuration_sha256
+preserved_literal: 7750ae58d7c89215809df97ce008e9bd9638447b9b91127e456e67b5d7de1c00
+fixture_solver_version: 0.2-fixture
+classification: OPAQUE_PERSISTED_EVIDENCE_PRESERVE
+fixture_revision_count: 25
+u3_change_event_count_excluding_introduction: 2
+u3_value_setting_events_including_introduction: 3
+constraint_set_covariation_event_count: 2
+typed_solver_contract_covariation_event_count: 0
+other_source_covariation_event_count: 0
+first_divergence_commit: 3169ea555c529a5cc8767e72ca62a1ef294d6e36
+introduction_source_authority: HASH_CORRELATION_ONLY
+pre_divergence_source_rule_status: HASH_CORRELATION_ONLY
+post_divergence_interpretation: UNRESOLVED
+historical_configuration_semantics: NO_FORMALLY_DEFINED_EXACT_SOURCE_LOCATED_IN_RELEVANT_REACHABLE_HISTORY
+constraint_set_as_source: HASH_CORRELATION_ONLY
+typed_solver_contract_as_historical_source: NOT_APPLICABLE
+original_exact_source: NOT_PROVEN
+constraint_set_derivation_asserted: false
+typed_solver_contract_derivation_asserted_for_historical_fixture: false
+hash_covariation_proves_derivation: false
+divergence_proves_staleness: false
+current_expected_value_proven: false
+current_value_correctness_asserted: false
+current_staleness_asserted: false
+current_production_solver_version: 0.1-c3
+current_production_configuration_source: phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml
+current_production_configuration_derivation: RAW_FILE_SHA256
+current_production_authority_applies_to_historical_0_2_fixture: false
+production_configuration_recomputation_obligations_unchanged: true
+structural_consumer_count: 10
+direct_recomputation_consumer_count: 0
+semantic_pass_fail_consumer_count: 0
+current_validator_recomputes_u3: false
+current_semantic_acceptance_depends_on_u3_source_identity: false
+d5_refresh_policy: PRESERVE_EXACT_LITERAL
+d5_write_allowed: false
+d5_recomputation_allowed: false
+constraint_set_recomputation_allowed: false
+typed_solver_contract_recomputation_allowed_for_this_fixture: false
+generic_hash_resolver_capture_allowed: false
+caller_replacement_allowed: false
+protected_field_required: true
+precondition: EXACT_BASE_TARGET_POINTER_AND_LITERAL_MATCH
+mismatch_action: FAIL_CLOSED_NO_REPAIR
+downstream_rule: HASH_EXACT_PROSPECTIVE_OBJECT_WITH_PRESERVED_LITERAL
+scope: EXACT_FILE_AND_EXACT_POINTER_ONLY
+inheritance_to_other_fixtures: false
+inheritance_to_new_solver_results: false
+future_change_requires_separate_authority: true
+downstream_binding_path_prefix: phase9/clonorchis-sinensis/p9b1q-architecture-review/
+direct_downstream_binding_count: 9
+whole_object_downstream_binding_count: 9
+semantic_downstream_binding_count: 0
+kg_semantic_change_allowed: false
+queryir_semantic_change_allowed: false
+constraint_semantic_change_allowed: false
+selected_solution_semantic_change_allowed: false
+failure_code_semantic_change_allowed: false
+semantic_role_change_allowed: false
+narrative_semantic_change_allowed: false
+reference_override_semantic_change_allowed: false
+u1_authority_inherited: false
+u1_authority_record_id: AUTH-D5-U1-OPAQUE-SOLVER-TRACE-PRESERVATION
+u1_and_u3_are_separate_exact_pointer_exceptions: true
+d5p_reopen_required: false
+new_transaction_semantics_required: false
+existing_d5p_field_allowlist_enforcement_required: true
+planning_precondition_literal_check_required: true
+pre_write_preserved_literal_check_required: true
+parent_object_overwrite_must_not_bypass_preservation: true
+rollback_semantics_change_required: false
+publication_required: true
+publication_makes_effective: false
+independent_read_only_authority_audit_required: true
+control_acceptance_required: true
+effective_only_after:
+- PUBLICATION
+- INDEPENDENT_READ_ONLY_AUTHORITY_AUDIT_PASS
+- CONTROL_ACCEPTANCE
+implementation_authorized: false
+producer_change_authorized: false
+test_change_authorized: false
+evidence_refresh_authorized: false
+fixture_refresh_authorized: false
+manifest_refresh_authorized: false
+d5_mapping_resume_authorized: false
+prospective_execution_authorized: false
+downstream_bindings:
+- path: fixtures/stage-validation-s3-positive.json
+  pointer: /actual_output_object/canonical_sha256
+- path: fixtures/stage-validation-s3-positive.json
+  pointer: /actual_output_object/byte_length
+- path: fixtures/stage-validation-s4-positive.json
+  pointer: /actual_input_objects/3/canonical_sha256
+- path: fixtures/stage-validation-s4-positive.json
+  pointer: /actual_input_objects/3/byte_length
+- path: fixtures/execution-binding-sidecar-positive.json
+  pointer: /actual_objects/5/canonical_sha256
+- path: fixtures/execution-binding-sidecar-positive.json
+  pointer: /actual_objects/5/byte_length
+- path: fixtures/object-store-index-positive.json
+  pointer: /objects/5/canonical_sha256
+- path: fixtures/stage-validator-negative-fixtures.yml
+  pointer: /base_objects/8/canonical_sha256
+- path: design-manifest.yml
+  pointer: /fixture_files/fixtures~1typed-result-exposure-positive.json
+preservation_evidence_limit: Preservation does not establish that the current literal is semantically
+  correct; it establishes only that D5 has no authority to replace it.
+production_boundary: Newly generated/current production solver results remain governed by production compile_c3
+  configuration binding. This historical fixture exception must never be inherited by production results.
+structural_consumer_count_basis:
+  schema_field_definition_count: 1
+  whole_object_identity_binding_count: 9
+consumer_authority_limit: The structural consumers are not source-derivation authority.
+downstream_identity_limit: These bindings may be refreshed from prospective parent-object bytes under
+  separate authorization; they do not prove U3 configuration provenance. This record does not authorize
+  evidence refresh.
+u1_independence_statement: U1 and U3 are separate exact-pointer exceptions. U1 authority is not the legal
+  basis for this U3 record.
+future_required_negative_test_obligations:
+- Reject producer modification of U3.
+- Reject producer recomputation of U3 from constraint-set-v0.1.yml.
+- Reject producer recomputation of U3 from typed-constraint-solver-contract.yml.
+- Reject inheritance of the current compile_c3 configuration rule into the historical 0.2-fixture.
+- Reject generic SHA resolver capture of U3.
+- Reject a caller-supplied replacement U3 value.
+- Reject exception scope expansion beyond the exact file and pointer.
+- Reject inheritance of the exception by another fixture or newly generated solver result.
+- Reject a downstream whole-object hash computed from bytes that do not retain the exact preserved U3
+  literal.
+negative_test_obligation_boundary: FUTURE_IMPLEMENTATION_ONLY_NO_TEST_IMPLEMENTATION_NOW
