@@ -1,0 +1,124 @@
+authority_record_version: "1.0"
+authority_record_id: AUTH-D5-U1-OPAQUE-SOLVER-TRACE-PRESERVATION
+record_type: D5_FIXTURE_OPAQUE_FIELD_PRESERVATION_AUTHORITY
+status: MATERIALIZED_PENDING_PUBLICATION_INDEPENDENT_AUDIT_AND_CONTROL_ACCEPTANCE
+effective: false
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+base: 0d8af74cdbb00bea6c15733a18ce95e58e4a6eed
+open_blocking_finding: D5-MAPPING-CANONICAL-SOURCE-CLOSURE-GAP-001
+rule_id: D5-U1-OPAQUE-SOLVER-TRACE-PRESERVE
+target_file: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/typed-result-exposure-positive.json
+target_pointer: /solver_trace_sha256
+preserved_literal: "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+classification: OPAQUE_PERSISTED_EVIDENCE_PRESERVE
+
+introducing_commit: a13bd208f2567ed3dc041ff994e4d511dab1a341
+original_derivation: UNKNOWN
+original_trace_bytes: NOT_LOCATED_IN_REACHABLE_TRACKED_HISTORY
+original_generator: NOT_PROVEN
+introduction_context: 0.2-fixture
+introduction_solver_executable_sha256_status: ZERO_PLACEHOLDER
+fixture_revisions_including_introduction: 25
+subsequent_fixture_revisions: 24
+preserved_literal_distinct_value_count: 1
+persisted_literal_stability: UNCHANGED_ACROSS_25_FIXTURE_REVISIONS_INCLUDING_INTRODUCTION
+persistence_proves_original_derivation: false
+empty_object_derivation_asserted: false
+compile_c3_derivation_authorized_for_this_fixture: false
+
+execution_success_authority: false
+semantic_source_authority: false
+current_compile_c3_trace_identity_asserted: false
+current_validator_recomputes_this_fixture_field: false
+schema_requirement: REQUIRED_64_LOWERCASE_HEX_SHA256_FORMAT_ONLY_FOR_THIS_PROVENANCE_QUESTION
+production_trace_recomputation_obligations_unchanged: true
+production_trace_requirement: >-
+  This exception does not weaken production Typed Solver requirements to
+  recompute solver_trace_sha256 for newly generated or current production results.
+
+d5_refresh_policy: PRESERVE_EXACT_LITERAL
+d5_write_allowed: false
+d5_recomputation_allowed: false
+generic_hash_resolver_capture_allowed: false
+caller_replacement_allowed: false
+protected_field_required: true
+precondition: EXACT_BASE_TARGET_POINTER_AND_LITERAL_MATCH
+mismatch_action: FAIL_CLOSED_NO_REPAIR
+downstream_rule: HASH_EXACT_PROSPECTIVE_OBJECT_WITH_PRESERVED_LITERAL
+scope: EXACT_FILE_AND_EXACT_POINTER_ONLY
+inheritance_to_new_objects: false
+future_change_requires_separate_authority: true
+
+downstream_binding_path_prefix: phase9/clonorchis-sinensis/p9b1q-architecture-review/
+downstream_bindings:
+  - path: fixtures/stage-validation-s3-positive.json
+    pointer: /actual_output_object/canonical_sha256
+  - path: fixtures/stage-validation-s3-positive.json
+    pointer: /actual_output_object/byte_length
+  - path: fixtures/stage-validation-s4-positive.json
+    pointer: /actual_input_objects/3/canonical_sha256
+  - path: fixtures/stage-validation-s4-positive.json
+    pointer: /actual_input_objects/3/byte_length
+  - path: fixtures/execution-binding-sidecar-positive.json
+    pointer: /actual_objects/5/canonical_sha256
+  - path: fixtures/execution-binding-sidecar-positive.json
+    pointer: /actual_objects/5/byte_length
+  - path: fixtures/object-store-index-positive.json
+    pointer: /objects/5/canonical_sha256
+  - path: fixtures/stage-validator-negative-fixtures.yml
+    pointer: /base_objects/8/canonical_sha256
+  - path: design-manifest.yml
+    pointer: /fixture_files/fixtures~1typed-result-exposure-positive.json
+downstream_identity_limit: >-
+  The preserved literal may contribute bytes to the prospective typed-result
+  whole-object identity but must not authorize semantics. These downstream
+  bindings establish whole-object identity only; they do not establish
+  solver-trace semantic provenance.
+
+kg_semantic_change_allowed: false
+queryir_semantic_change_allowed: false
+constraint_semantic_change_allowed: false
+selected_solution_semantic_change_allowed: false
+failure_code_semantic_change_allowed: false
+semantic_role_change_allowed: false
+narrative_semantic_change_allowed: false
+reference_override_semantic_change_allowed: false
+
+d5p_reopen_required: false
+new_transaction_semantics_required: false
+existing_d5p_field_allowlist_enforcement_required: true
+planning_precondition_literal_check_required: true
+pre_write_preserved_literal_check_required: true
+parent_object_overwrite_must_not_bypass_preservation: true
+rollback_semantics_change_required: false
+
+future_required_negative_test_obligations:
+  - Reject producer modification of U1.
+  - Reject producer recomputation of U1 from {}.
+  - Reject producer recomputation of U1 from compile_c3.
+  - Reject generic SHA resolver capture of U1.
+  - Reject a caller-supplied replacement U1 value.
+  - Reject exception scope expansion beyond the exact file and pointer.
+  - Reject inheritance of the exception by another typed-result.
+  - >-
+    Reject a downstream whole-object hash computed from bytes other than
+    the exact prospective object retaining the preserved literal.
+negative_test_obligation_boundary: FUTURE_IMPLEMENTATION_ONLY_NO_TEST_IMPLEMENTATION_NOW
+
+publication_required: true
+publication_makes_effective: false
+independent_read_only_authority_audit_required: true
+control_acceptance_required: true
+effective_only_after:
+  - PUBLICATION
+  - INDEPENDENT_READ_ONLY_AUTHORITY_AUDIT_PASS
+  - CONTROL_ACCEPTANCE
+implementation_authorized: false
+producer_change_authorized: false
+test_change_authorized: false
+evidence_refresh_authorized: false
+fixture_refresh_authorized: false
+manifest_refresh_authorized: false
+d5_mapping_resume_authorized: false
+prospective_execution_authorized: false
