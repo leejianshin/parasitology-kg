@@ -26,6 +26,16 @@ jobs:
           python scripts/validate_knowledge.py
           --knowledge-dir tests/fixtures/knowledge
           --source-registry tests/fixtures/source-registry.yml
+      - name: Provision external locked reference dependencies
+        shell: bash
+        run: |
+          NODE_DEP_ROOT="$RUNNER_TEMP/p9b1q-node-deps"
+          mkdir -p "$NODE_DEP_ROOT"
+          cp phase9/clonorchis-sinensis/p9b1q-architecture-review/package.json "$NODE_DEP_ROOT/"
+          cp phase9/clonorchis-sinensis/p9b1q-architecture-review/package-lock.json "$NODE_DEP_ROOT/"
+          npm ci --prefix "$NODE_DEP_ROOT" --ignore-scripts --no-audit --no-fund
+          echo "P9B1Q_COUNT_NODE_MODULES=$NODE_DEP_ROOT/node_modules" >> "$GITHUB_ENV"
+          echo "P9B1Q_D3_NODE_MODULES=$NODE_DEP_ROOT/node_modules" >> "$GITHUB_ENV"
       - name: Validate relation schema decisions
         run: python -m unittest discover -s tests -p "test_*.py"
       - name: Validate Phase 5 admission plan

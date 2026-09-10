@@ -3630,13 +3630,50 @@ class ProductionProofChainCorrectionTests(unittest.TestCase):
 class ReferenceProductionParityTests(unittest.TestCase):
     """Actual fresh production objects, independently read normative inputs."""
 
+    @staticmethod
+    def locked_node_modules():
+        """Require the explicit external lock; never substitute ambient packages."""
+        setting = os.environ.get("P9B1Q_D3_NODE_MODULES")
+        if not setting:
+            raise RuntimeError("P9B1Q_D3_NODE_MODULES is required")
+        modules = Path(setting).resolve(strict=True)
+        if modules.is_relative_to(ROOT.resolve()):
+            raise RuntimeError("D3 dependencies must be outside the checkout")
+        if not modules.is_dir() or modules.name != "node_modules":
+            raise RuntimeError("D3 dependency root must be a node_modules directory")
+        review = ROOT / "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+        raw = (review / "package-lock.json").read_bytes()
+        if (modules.parent / "package-lock.json").read_bytes() != raw:
+            raise RuntimeError("D3 external dependency lock differs from repository lock")
+        for location, package in json.loads(raw)["packages"].items():
+            if not location.startswith("node_modules/"):
+                continue
+            package_root = (modules.parent / location).resolve(strict=True)
+            if not package_root.is_relative_to(modules):
+                raise RuntimeError("D3 package origin escapes external dependency root")
+            metadata = (package_root / "package.json").resolve(strict=True)
+            if not metadata.is_relative_to(package_root):
+                raise RuntimeError("D3 package metadata origin escapes package root")
+            installed = json.loads(metadata.read_bytes())
+            if installed["version"] != package["version"]:
+                raise RuntimeError("D3 external dependency version mismatch: " + location)
+            if installed["name"] != location.removeprefix("node_modules/"):
+                raise RuntimeError("D3 external dependency name mismatch: " + location)
+        return modules
+
     @classmethod
     def setUpClass(cls):
         import importlib.util
         import yaml
+        cls.modules = cls.locked_node_modules()
         cls.temporary = tempfile.TemporaryDirectory(prefix="p9b1q-d3-")
         cls.addClassCleanup(cls.temporary.cleanup)
         cls.proof_root = Path(cls.temporary.name)
+        node_environment = {k: v for k, v in os.environ.items()
+                            if k not in {"NODE_PATH", "NODE_OPTIONS"}}
+        environment_patch = mock.patch.dict(os.environ, node_environment, clear=True)
+        environment_patch.start()
+        cls.addClassCleanup(environment_patch.stop)
         cls.traps = []
         for target in (
             "scripts.p9b1q_scoped_query_ir.execute_query_ir",
@@ -3653,7 +3690,42 @@ class ReferenceProductionParityTests(unittest.TestCase):
         cls.typed = cls.execution["typed_constraint_result"]
         cls.emission = cls.typed["selected_solution"]["queryir_emission_record"]
         cls.query_ir = cls.execution["query_ir"]
-        review = ROOT / "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+        # Preserve the frozen reference surface and its repository-relative paths.
+        # The dependency link belongs exclusively to this disposable copy.
+        copy_root = cls.proof_root / "reference"
+        tracked = subprocess.check_output(
+            ["git", "-C", str(ROOT), "ls-files", "-z"]
+        ).decode().split("\0")[:-1]
+        cls.reference_bytes = {}
+        for name in tracked:
+            raw = (ROOT / name).read_bytes()
+            target = copy_root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+            if target.read_bytes() != raw:
+                raise AssertionError("D3 copied source bytes differ: " + name)
+            cls.reference_bytes[target] = raw
+        review = copy_root / "phase9/clonorchis-sinensis/p9b1q-architecture-review"
+        (review / "node_modules").symlink_to(cls.modules, target_is_directory=True)
+        # Resolve real entry points from the disposable gate's location. An
+        # absent local package must not silently resolve from a global ancestor.
+        origins = subprocess.run(
+            ["node", "--input-type=module", "-e", """
+import { createRequire } from 'node:module';
+import { realpathSync } from 'node:fs';
+const require = createRequire(process.argv[1]);
+console.log(JSON.stringify(Object.fromEntries(
+  ['ajv/dist/2020.js', 'yaml', 'fast-deep-equal', 'fast-uri',
+   'json-schema-traverse', 'require-from-string'].map(
+     name => [name, realpathSync(require.resolve(name))]))));
+""", str(review / "strict-schema-gate.mjs")],
+            cwd=review, capture_output=True, text=True, check=True,
+            env={k: v for k, v in os.environ.items()
+                 if k not in {"NODE_PATH", "NODE_OPTIONS"}},
+        )
+        for name, origin in json.loads(origins.stdout).items():
+            if not Path(origin).is_relative_to(cls.modules / name.split("/")[0]):
+                raise RuntimeError("D3 runtime module origin mismatch: " + name)
         spec = importlib.util.spec_from_file_location(
             "d3_reference_oracle", review / "reference-stage-semantic-validator.py"
         )
@@ -3729,7 +3801,44 @@ class ReferenceProductionParityTests(unittest.TestCase):
                 proof_root=self.proof_root if root is None else root,
             )
 
+    @classmethod
+    def tearDownClass(cls):
+        for path, raw in cls.reference_bytes.items():
+            if path.read_bytes() != raw:
+                raise AssertionError("D3 disposable reference input changed: " + str(path))
+
     def test_reference_s3_complete_production_chain(self):
+        # Four active negative controls stay within the existing seven tests.
+        with self.subTest(dependency_control="missing_setting"):
+            with mock.patch.dict(os.environ, {}, clear=True):
+                with self.assertRaisesRegex(RuntimeError, "P9B1Q_D3_NODE_MODULES is required"):
+                    self.locked_node_modules()
+        with self.subTest(dependency_control="inside_checkout"):
+            with mock.patch.dict(os.environ, {"P9B1Q_D3_NODE_MODULES": str(ROOT)}):
+                with self.assertRaisesRegex(RuntimeError, "outside the checkout"):
+                    self.locked_node_modules()
+        with tempfile.TemporaryDirectory(prefix="p9b1q-d3-negative-") as directory:
+            root = Path(directory)
+            modules = root / "node_modules"
+            modules.mkdir()
+            lock = root / "package-lock.json"
+            lock.write_bytes(b"{}")
+            with mock.patch.dict(os.environ, {"P9B1Q_D3_NODE_MODULES": str(modules)}):
+                with self.subTest(dependency_control="lock_mismatch"):
+                    with self.assertRaisesRegex(RuntimeError, "lock differs"):
+                        self.locked_node_modules()
+                raw = (self.modules.parent / "package-lock.json").read_bytes()
+                lock.write_bytes(raw)
+                for location, package in json.loads(raw)["packages"].items():
+                    if location.startswith("node_modules/"):
+                        target = root / location / "package.json"
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        metadata = json.loads((self.modules.parent / location / "package.json").read_bytes())
+                        metadata["version"] = "0.0.0"
+                        target.write_text(json.dumps(metadata))
+                with self.subTest(dependency_control="version_mismatch"):
+                    with self.assertRaisesRegex(RuntimeError, "version mismatch"):
+                        self.locked_node_modules()
         with mock.patch.object(self.reference, "load_stage_result", side_effect=AssertionError("fixture fallback")):
             self.assertEqual([], self.reference.validate_s3(
                 self.typed, self.inputs, self.hashes, proof_root=self.proof_root))
@@ -4579,7 +4688,7 @@ class FrozenExecutionCountContractCorrectionTests(unittest.TestCase):
         import hashlib
         import yaml
 
-        source = (self.review / "reference-stage-semantic-validator.py").read_text()
+        source = (self.review / "reference-stage-semantic-validator.py").read_bytes().decode("utf-8")
 
         def structure(text):
             """Prove the defined normal-completion domain, not execution success."""
@@ -4589,6 +4698,8 @@ class FrozenExecutionCountContractCorrectionTests(unittest.TestCase):
                 if isinstance(node, ast.FunctionDef):
                     self.assertNotIn(node.name, functions)
                     functions[node.name] = node
+            for name in ("run_negative", "run_r3b_authoritative", "one_run"):
+                self.assertIn(name, functions, "required top-level function absent")
 
             def same(node, expression):
                 self.assertEqual(ast.dump(ast.parse(expression).body[0]), ast.dump(node))
@@ -4661,16 +4772,26 @@ class FrozenExecutionCountContractCorrectionTests(unittest.TestCase):
             self.assertFalse(any(isinstance(n, ast.Name) and "r3a" in n.id.lower()
                                  for n in ast.walk(combined)))
 
-            # Conservative AST guards cover indirect mutations/reassignments in the
-            # reviewed functions as well. Any drift requires renewed structural review;
-            # these fingerprints are NOT execution receipts or the count oracle.
+            # Hash exact original UTF-8 function lines, including their terminal
+            # newline. AST is only a span locator; its serialization is not hashed.
+            # These drift guards are not execution receipts or the count oracle.
+            lines = text.encode("utf-8").splitlines(keepends=True)
             for name, expected in {
-                "run_negative": "0c24802d520e39b9558a46b57c2e782aaf7b34d7ed083b0802c062a0c0fdc5ad",
-                "run_r3b_authoritative": "20e1aa30f8d767fa98e9f7d996955166d5fa6a9d2a1423bcc1146049ec4d3904",
-                "one_run": "7c83e9daa950f68adcef9d3375f728a10b1cb37d29076955f8fab080a1822f1b",
+                "run_negative": "9ff918842af65763753df6d38b603936112623fd8d10ac37e83c818c97557a32",
+                "run_r3b_authoritative": "a985fc5b8605e6abbebf5ba42a269236314ca7d33b5830ab1e8ce309b1887255",
+                "one_run": "696f9659d2111ccfe87c3b393af0ab5deda5464f1933b6307db2d28cbe566ddf",
             }.items():
-                actual = hashlib.sha256(ast.dump(functions[name], include_attributes=False).encode()).hexdigest()
-                self.assertEqual(expected, actual, name + " source structure changed")
+                self.assertIn(name, functions)
+                function = functions[name]
+                self.assertEqual(0, function.col_offset)
+                self.assertEqual([], function.decorator_list, "ambiguous decorated function span")
+                self.assertIsNotNone(function.end_lineno)
+                self.assertIsNotNone(function.end_col_offset)
+                self.assertTrue(lines[function.lineno - 1].startswith(("def " + name + "(").encode()))
+                self.assertEqual(b"", lines[function.end_lineno - 1][function.end_col_offset:].strip())
+                raw = b"".join(lines[function.lineno - 1:function.end_lineno])
+                actual = hashlib.sha256(raw).hexdigest()
+                self.assertEqual(expected, actual, name + " source bytes changed")
 
         structure(source)
         # Disposable source counterexamples exercise fail-closed structural checks.
