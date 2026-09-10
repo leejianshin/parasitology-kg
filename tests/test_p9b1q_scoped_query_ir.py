@@ -4741,5 +4741,354 @@ class FrozenExecutionCountContractCorrectionTests(unittest.TestCase):
                     self.assertEqual(actual, stale["required_" + field])
 
 
+class D5GlobalSourceCorrectionTests(unittest.TestCase):
+    """CONTROL design and original offline archives are external test inputs."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        import io
+        import tarfile
+        cls.design = os.environ.get("D5_GLOBAL_DESIGN_ARCHIVE")
+        cls.archives = os.environ.get("D5_GLOBAL_OFFLINE_ARCHIVE")
+        if not cls.design or not cls.archives:
+            raise unittest.SkipTest("CONTROL design and offline archive paths are required")
+        producer = ROOT / "phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py"
+        spec = importlib.util.spec_from_file_location("d5_clean_global_source", producer)
+        cls.module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.module)
+        raw = subprocess.check_output(["git", "archive", "c3e39bf884e97827c7bfbda446915a0347b94d17"], cwd=ROOT)
+        with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
+            cls.base = {m.name: archive.extractfile(m).read() for m in archive if m.isfile()}
+        cls.temporary = tempfile.TemporaryDirectory(prefix="d5-global-tests-")
+        cls.addClassCleanup(cls.temporary.cleanup)
+        cls.template = cls.module.GlobalSourceCorrection(
+            cls.base, design_archive=cls.design, offline_archive=cls.archives,
+            workspace=cls.temporary.name)
+
+    def setUp(self):
+        self.builder = copy.deepcopy(self.template)
+
+    def predecessors(self):
+        g = self.builder
+        for key in g.order:
+            if key == g.EXECUTION:
+                return
+            self.assertTrue(set(g.dependencies[key]) <= g.completed)
+            if key in g.rows and g.rows[key].get("mode"):
+                g.update(key, g.derive(key))
+            g.completed.add(key)
+        self.fail("N9 execution node is missing")
+
+    def test_offline_raw_archives_independently_verify(self):
+        packages = self.builder.archives()
+        self.assertEqual(set(packages), set(self.builder.PACKAGES))
+        for name, files in packages.items():
+            identity = json.loads(files["package.json"])
+            self.assertEqual((identity["name"], identity["version"]), (name, self.builder.PACKAGES[name]))
+
+    def test_wrong_archive_bytes_fail_before_preparation(self):
+        with tempfile.NamedTemporaryFile(dir=self.temporary.name) as bad:
+            bad.write(b"repacked or altered bytes"); bad.flush()
+            self.builder.offline_archive = Path(bad.name)
+            with self.assertRaisesRegex(ValueError, "OFFLINE_WRAPPER_IDENTITY"):
+                self.builder.archives()
+
+    def test_complete_frozen_inventory_rejects_missing_source(self):
+        incomplete = dict(self.base)
+        incomplete.pop("scripts/p9b1_local_retrieval.py")
+        with self.assertRaisesRegex(ValueError, "INCOMPLETE_AUTHORIZED_BASE_INVENTORY"):
+            self.module.GlobalSourceCorrection(incomplete, design_archive=self.design,
+                offline_archive=self.archives, workspace=self.temporary.name)
+
+    def test_catalog_replacement_and_hash_matching_are_rejected(self):
+        path = Path(self.temporary.name) / "untrusted-catalog.zip"
+        path.write_bytes(b'{"lookup":"matching SHA means source"}')
+        with self.assertRaisesRegex(ValueError, "ACCEPTED_DESIGN_IDENTITY_MISMATCH"):
+            self.module.GlobalSourceCorrection(self.base, design_archive=path,
+                offline_archive=self.archives, workspace=self.temporary.name)
+
+    def test_all_structural_resolver_classes_have_sealed_rules(self):
+        g = self.builder
+        classes = {row.get("resolver_id") for row in g.rows.values()}
+        self.assertTrue({"R%02d" % i for i in range(1, 24)} | {"P_U1", "P_U3"} <= classes)
+        for resolver in sorted(classes - {None, "P_U1", "P_U3", "R19"}):
+            key = next(key for key, row in g.rows.items() if row.get("resolver_id") == resolver)
+            original = copy.deepcopy(g.rows[key])
+            for field, bad in (("source", "missing/source"), ("source_pointer", "/wrong/kind"),
+                               ("resolver_id", "R00"), ("source", [original.get("source"), original.get("source")])):
+                with self.subTest(resolver=resolver, field=field, value=bad):
+                    g.rows[key][field] = bad
+                    with self.assertRaisesRegex(ValueError, "STRUCTURAL_SOURCE_AUTHORITY_REPLACEMENT"):
+                        g.derive(key)
+                    g.rows[key] = copy.deepcopy(original)
+
+    def test_policy_duplicate_overlap_and_scope_expansion_fail(self):
+        for operation in ("duplicate", "overlap", "historical", "opaque"):
+            g = copy.deepcopy(self.template)
+            path = next(iter(g.field_policy))
+            if operation == "duplicate":
+                g.field_policy[path].append(g.field_policy[path][0])
+            elif operation == "overlap":
+                g.field_policy[path].append(g.field_policy[path][0] + "/child")
+            elif operation == "historical":
+                row = next(r for r in g.rows.values() if r["classification"] == "OUT_OF_D5_REFRESH_SCOPE")
+                g.field_policy.setdefault(row["file"], []).append(row["pointer"])
+            else:
+                g.field_policy.setdefault(g.TYPED_RESULT, []).extend(g.PRESERVED)
+            with self.subTest(operation=operation), self.assertRaisesRegex(ValueError, "GLOBAL_POLICY_OR_TOPOLOGY_REPLACEMENT"):
+                g.plan()
+
+    def test_dag_missing_duplicate_and_cycle_rejected(self):
+        for graph in ({"a": ["missing"]}, {"a": ["b"], "b": ["a"]}, {"a": [], "b": ["a", "a"]}):
+            with self.subTest(graph=graph), self.assertRaises(ValueError):
+                self.builder.ordered(graph)
+
+    def test_forward_order_replacement_rejected(self):
+        self.builder.order.reverse()
+        with self.assertRaisesRegex(ValueError, "GLOBAL_POLICY_OR_TOPOLOGY_REPLACEMENT"):
+            self.builder.plan()
+
+    def test_premature_n9_rejected(self):
+        with self.assertRaisesRegex(ValueError, "PREMATURE_N9_MISSING_PREDECESSOR"):
+            self.builder.execute_n9()
+
+    def test_summary_before_execution_rejected(self):
+        key = next(k for k, row in self.builder.rows.items() if row.get("mode") == "N9_ACCEPTED_EXECUTION_OUTPUT")
+        for supplied in (None, {"result": "PASS"}, json.loads(self.base[self.builder.SUMMARY])):
+            self.builder.fresh_summary = supplied
+            with self.subTest(supplied=type(supplied).__name__), self.assertRaisesRegex(ValueError, "SUMMARY_BEFORE_FRESH_EXECUTION"):
+                self.builder.derive(key)
+
+    def test_u1_u3_modification_rejected_without_repair(self):
+        g = self.builder
+        for pointer in g.PRESERVED:
+            snapshot = dict(self.base)
+            obj = json.loads(snapshot[g.TYPED_RESULT])
+            g.assign(obj, pointer, "0" * 64)
+            snapshot[g.TYPED_RESULT] = self.module.cbytes(obj)
+            before = dict(snapshot)
+            with self.subTest(pointer=pointer), self.assertRaisesRegex(ValueError, "FAIL_CLOSED_NO_REPAIR"):
+                g.preservation(snapshot)
+            self.assertEqual(snapshot, before)
+
+    def test_u1_u3_all_recomputation_and_inheritance_paths_rejected(self):
+        g = self.builder
+        for pointer in g.PRESERVED:
+            for reason in ("empty_object", "compile_c3", "constraint_set", "typed_solver_contract",
+                           "generic_resolver", "caller_replacement", "scope_expansion", "inheritance"):
+                trial = copy.deepcopy(g)
+                trial.field_policy.setdefault(g.TYPED_RESULT, []).append(pointer)
+                with self.subTest(pointer=pointer, reason=reason), self.assertRaisesRegex(ValueError, "GLOBAL_POLICY_OR_TOPOLOGY_REPLACEMENT"):
+                    trial.plan()
+
+    def test_yaml_unicode_quotes_comments_and_unrelated_bytes(self):
+        raw = 'title: 中文 # keep\nidentity: \'old\' # keep too\ncount: 7\n'.encode()
+        result = self.builder.scalar_patch("example.yml", raw, {"/identity": "new"})
+        self.assertEqual(result, raw.replace(b"'old'", b"'new'"))
+
+    def test_yaml_alias_duplicate_and_collection_targets_rejected(self):
+        cases = [(b"a: &x old\nb: *x\n", {"/a": "new"}),
+                 (b"a: old\na: duplicate\n", {"/a": "new"}),
+                 (b"a: [old]\n", {"/a": ["new"]})]
+        for raw, targets in cases:
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                self.builder.scalar_patch("example.yml", raw, targets)
+
+    def test_unrelated_semantic_mutation_rejected(self):
+        g = self.builder
+        obj = json.loads(g.bytes[g.TYPED_RESULT])
+        obj["request_id"] = "unauthorized-semantic-change"
+        g.bytes[g.TYPED_RESULT] = self.module.cbytes(obj)
+        with self.assertRaisesRegex(ValueError, "SEMANTIC_PROJECTION_CHANGED"):
+            g.check_semantics()
+
+    def test_s2_selectors_do_not_control_whole_identity(self):
+        g = self.builder
+        self.assertEqual(len(g.s2_keys), 4)
+        for key in sorted(g.s2_keys):
+            row = g.rows[key]
+            self.assertEqual(row["resolver_id"], "R06")
+            self.assertEqual(row["source_pointer"], "")
+            source = g.bytes[row["source"]]
+            whole = len(source) if row["mode"] == "LEN" else hashlib.sha256(source).hexdigest()
+            self.assertEqual(g.derive(key), whole)
+            for selector in ("/bindings/exposure", "/bindings/diagnostic-role-catalog"):
+                selected = g.at(json.loads(source), selector)
+                bad = len(self.module.cbytes(selected)) if row["mode"] == "LEN" else self.module.csha(selected)
+                self.assertNotEqual(g.derive(key), bad)
+            self.assertTrue(any(dep.endswith("/bindings/exposure/query_interpreter_config_sha256") for dep in g.dependencies[key]))
+            self.assertTrue(any(dep.endswith("/bindings/diagnostic-role-catalog/query_interpreter_config_sha256") for dep in g.dependencies[key]))
+
+    def test_s2_noncanonical_source_rejected(self):
+        key = next(iter(self.builder.s2_keys))
+        source = self.builder.rows[key]["source"]
+        self.builder.bytes[source] += b"\n"
+        with self.assertRaisesRegex(ValueError, "S2_NONCANONICAL_WHOLE_SOURCE"):
+            self.builder.derive(key)
+
+    def test_execution_workspace_cannot_be_in_authoritative_checkout(self):
+        with self.assertRaisesRegex(ValueError, "N9_WORKSPACE_INSIDE_AUTHORITATIVE_REPOSITORY"):
+            self.module.GlobalSourceCorrection(self.base, design_archive=self.design,
+                offline_archive=self.archives, workspace=ROOT)
+
+    def test_narrow_s2_path_rejects_old_subobject_rules(self):
+        g = self.builder
+        for suffix in ("positive", "diagnostic-role-catalog-positive"):
+            name = g.REVIEW + "fixtures/stage-validation-s2-" + suffix + ".json"
+            source = g.REVIEW + "fixtures/diagnostic-predicate-argument-binding-positive.json"
+            snapshot = {name: self.base[name], source: self.base[source]}
+            pointer = "/actual_input_objects/7/canonical_sha256"
+            stale = json.loads(snapshot[name])
+            g.assign(stale, pointer, "0" * 64)
+            snapshot[name] = self.module.cbytes(stale)
+            with tempfile.TemporaryDirectory(dir=self.temporary.name) as temporary:
+                root = Path(temporary)
+                for path, raw in snapshot.items():
+                    target = root / path; target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(raw)
+                pointer = "/actual_input_objects/7/canonical_sha256"
+                with self.assertRaisesRegex(ValueError, "S2_REQUIRES_WHOLE_RESOLVED_OBJECT_IDENTITY"):
+                    self.module.narrow_refresh(root, frozen_bytes=snapshot, field_policy={name: [pointer]},
+                        rules=[{"path": name, "pointer": pointer, "derivation": "CANONICAL_SHA256",
+                                "source_path": source, "source_pointer": "/bindings/exposure"}])
+                changed = self.module.narrow_refresh(root, frozen_bytes=snapshot, field_policy={name: [pointer]},
+                    rules=[{"path": name, "pointer": pointer, "derivation": "RAW_SHA256", "source_path": source}])
+                actual = json.loads((root / name).read_bytes())
+                self.assertEqual(g.at(actual, pointer), hashlib.sha256(snapshot[source]).hexdigest())
+                self.assertEqual(g.at(actual, "/actual_input_objects/7/content_json_pointer"),
+                                 g.at(json.loads(snapshot[name]), "/actual_input_objects/7/content_json_pointer"))
+                self.assertEqual(changed, [name])
+
+    def test_narrow_u1_u3_reject_same_value_source_rules(self):
+        g = self.builder
+        snapshot = {g.TYPED_RESULT: self.base[g.TYPED_RESULT], "empty.json": b"{}"}
+        with tempfile.TemporaryDirectory(dir=self.temporary.name) as temporary:
+            root = Path(temporary)
+            for name, raw in snapshot.items():
+                p = root / name; p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(raw)
+            for pointer in g.PRESERVED:
+                for derivation, source in (("CANONICAL_SHA256", "empty.json"),
+                                           ("RAW_SHA256", "scripts/p9b1q_scoped_query_ir.py"),
+                                           ("RAW_SHA256", g.REVIEW + "constraint-set-v0.1.yml"),
+                                           ("RAW_SHA256", g.REVIEW + "typed-solver-contract.yml")):
+                    with self.subTest(pointer=pointer, source=source), self.assertRaisesRegex(ValueError, "OPAQUE_PRESERVATION_NO_RECOMPUTATION"):
+                        self.module.narrow_refresh(root, frozen_bytes=snapshot, field_policy={g.TYPED_RESULT: [pointer]},
+                            rules=[{"path": g.TYPED_RESULT, "pointer": pointer, "derivation": derivation,
+                                    "source_path": source, "expected_value": g.PRESERVED[pointer]}])
+            self.assertEqual((root / g.TYPED_RESULT).read_bytes(), snapshot[g.TYPED_RESULT])
+
+    def test_s2_subobject_hashes_and_lengths_explicitly_rejected(self):
+        g = self.builder
+        for key in g.s2_keys:
+            row = g.rows[key]
+            g.update(key, g.derive(key))
+        g.verify_s2_identity(g.bytes)
+        for key in g.s2_keys:
+            row = g.rows[key]
+            for selector in ("/bindings/exposure", "/bindings/diagnostic-role-catalog"):
+                snapshot = dict(g.bytes)
+                selected = g.at(json.loads(snapshot[row["source"]]), selector)
+                bad = len(self.module.cbytes(selected)) if row["mode"] == "LEN" else self.module.csha(selected)
+                obj = json.loads(snapshot[row["file"]])
+                g.assign(obj, row["pointer"], bad)
+                snapshot[row["file"]] = self.module.cbytes(obj)
+                with self.subTest(target=key, selector=selector), self.assertRaisesRegex(ValueError, "S2_SUBOBJECT_OR_STALE_IDENTITY_FORBIDDEN"):
+                    g.verify_s2_identity(snapshot)
+
+    def test_n9_parser_rejects_bad_counts_repeat_identity_and_governance(self):
+        g = self.builder
+        # Deliberately synthetic test data exercises rejection only. It never
+        # enters plan(), which has no caller-summary parameter.
+        payload = {"positive": [{"errors": []} for _ in range(18)],
+                   "minimality": [{"passed": True} for _ in range(8)],
+                   "negative": [{"passed": True} for _ in range(84)],
+                   "positive_pass_count": 18, "minimality_pass_count": 8, "negative_pass_count": 84,
+                   "registry_failure_governance": {"result": "PASS"}}
+        summary = dict(payload, result="PASS", repeat_runs=3, run_payload_sha256=self.module.csha(payload),
+                       executable_sha256=hashlib.sha256(g.base[g.REVIEW + "reference-stage-semantic-validator.py"]).hexdigest(),
+                       configuration_sha256=hashlib.sha256(g.base[g.REVIEW + "stage-semantic-validator-contract.yml"]).hexdigest(),
+                       schema_gate={"result": "PASS", "compiled_schema_count": 13, "fixture_pair_count": 37,
+                                    "valid_fixture_count": 37, "lockfile_sha256": g.LOCK_SHA,
+                                    "runner_sha256": hashlib.sha256(g.base[g.REVIEW + "strict-schema-gate.mjs"]).hexdigest()})
+        mutations = [("/result", "FAIL_CLOSED"), ("/repeat_runs", 2), ("/positive_pass_count", 17),
+                     ("/minimality_pass_count", 7), ("/negative_pass_count", 83),
+                     ("/schema_gate/compiled_schema_count", 12), ("/schema_gate/fixture_pair_count", 36),
+                     ("/schema_gate/valid_fixture_count", 36), ("/registry_failure_governance/result", "FAIL"),
+                     ("/executable_sha256", "0" * 64), ("/configuration_sha256", "0" * 64),
+                     ("/run_payload_sha256", "0" * 64), ("/negative/0/passed", False)]
+        for pointer, value in mutations:
+            obj = copy.deepcopy(summary)
+            g.assign(obj, pointer, value)
+            with self.subTest(pointer=pointer), self.assertRaises(ValueError):
+                g.check_n9_output(self.module.cbytes(obj), 0)
+        with self.assertRaisesRegex(ValueError, "N9_NONZERO_EXIT"):
+            g.check_n9_output(b"", 1)
+        with self.assertRaisesRegex(ValueError, "N9_NONCANONICAL_STDOUT"):
+            g.check_n9_output(self.module.cbytes(summary) + b"\n", 0)
+
+    def test_n9_missing_extra_wrong_validator_and_configuration_fail(self):
+        for kind in ("missing", "extra", "validator", "configuration"):
+            g = copy.deepcopy(self.template)
+            if kind == "missing":
+                del g.bytes[g.TYPED_RESULT]
+            elif kind == "extra":
+                g.bytes["undeclared.py"] = b"pass\n"
+            else:
+                name = {"validator": "reference-stage-semantic-validator.py",
+                        "configuration": "stage-semantic-validator-contract.yml"}[kind]
+                g.bytes[g.REVIEW + name] += b"\n"
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                g.check_semantics()
+
+    def test_n9_stale_predecessor_and_execution_exception_fail(self):
+        from types import SimpleNamespace
+        self.predecessors()
+        ready = copy.deepcopy(self.builder)
+        g = self.builder
+        row = g.rows[next(iter(g.s2_keys))]
+        stale = json.loads(g.bytes[row["file"]])
+        g.assign(stale, row["pointer"], 637 if row["mode"] == "LEN" else "0" * 64)
+        g.bytes[row["file"]] = self.module.cbytes(stale)
+        with self.assertRaisesRegex(ValueError, "S2_SUBOBJECT_OR_STALE_IDENTITY_FORBIDDEN"):
+            g.execute_n9()
+        index_name = g.REVIEW + "fixtures/retrieval-result-exposure-positive.json"
+        index = ready.object(index_name)["index_sha256"].encode() + b"\n"
+        # The subprocess seam injects failures only; no successful summary is
+        # synthesized or accepted. Check environment isolation on that path too.
+        effects = [SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
+                   SimpleNamespace(returncode=0, stdout=index, stderr=b""), RuntimeError("execution exception")]
+        with mock.patch.dict(os.environ, {"PYTHONPATH": "/untrusted", "NODE_OPTIONS": "--require /untrusted"}), \
+                mock.patch.object(self.module.subprocess, "run", side_effect=effects) as run:
+            with self.assertRaisesRegex(RuntimeError, "execution exception"):
+                ready.execute_n9()
+            self.assertIsNone(ready.fresh_summary)
+            for call in run.call_args_list:
+                self.assertNotIn("PYTHONPATH", call.kwargs["env"])
+                self.assertNotIn("NODE_OPTIONS", call.kwargs["env"])
+                self.assertEqual(call.kwargs["env"]["PYTHONDONTWRITEBYTECODE"], "1")
+
+    def test_algebraic_predecessor_closure_preserves_semantics(self):
+        self.predecessors()
+        g = self.builder
+        g.check_semantics()
+        self.assertEqual(len(g.policy_keys), 719)
+        self.assertEqual(len(g.field_policy), 37)
+        # Policy units include current/no-write dispositions, not just changed values.
+        for key in g.s2_keys:
+            row = g.rows[key]
+            self.assertEqual(g.at(g.object(row["file"]), row["pointer"]), g.derive(key))
+        negative = [row for row in g.rows.values() if row.get("resolver_id") == "R17"]
+        self.assertEqual(len(negative), 23)
+        for row in negative:
+            key = row["file"] + "#" + row["pointer"]
+            self.assertEqual(g.at(g.object(row["file"]), row["pointer"]), g.derive(key))
+        typed = g.TYPED_RESULT
+        downstream = [row for row in g.rows.values() if row.get("source") == typed and row["file"] != typed]
+        self.assertEqual(len(downstream), 9)
+        for row in downstream:
+            key = row["file"] + "#" + row["pointer"]
+            self.assertEqual(g.at(g.object(row["file"]), row["pointer"]), g.derive(key))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -4,12 +4,20 @@
 from __future__ import annotations
 
 import copy
+import base64
+import graphlib
 import hashlib
+import io
 import json
 import os
 import stat
 import runpy
+import shutil
 import subprocess
+import sys
+import tarfile
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -90,9 +98,583 @@ def refresh_core(core: dict[str, Any]) -> None:
     core["solution_id"] = f"SOL-{core['semantic_object_set_sha256'][:24]}"
 
 
+class GlobalSourceCorrection:
+    """Evaluate the sealed CONTROL catalog; never select sources by hash equality.
+
+    The catalog supplies structural (file, pointer, resolver, source, mode) rules,
+    not replacement values. Its observed/expected-value columns are not evaluated.
+    The two committed authorizations are the only changes to that design input.
+    Planning runs N9 in a separate complete tree; narrow_refresh alone writes.
+    """
+
+    REVIEW = "phase9/clonorchis-sinensis/p9b1q-architecture-review/"
+    AUTH = "phase9/clonorchis-sinensis/p9b1q/"
+    TYPED_RESULT = REVIEW + "fixtures/typed-result-exposure-positive.json"
+    SUMMARY = REVIEW + "fixtures/reference-validator-execution-summary.json"
+    EXECUTION = "EXECUTION#N9_FRESH_ACCEPTED_STDOUT"
+    DESIGN_SHA = "9571669f9b2b711e1b855e3e92eca936a219c3b07d8744e9b526e5c6ce5694eb"
+    ARCHIVE_SHA = "e42aa5fa9184694ad92be90ab22a56da463a6f49ead87ecab8e2c6dd5be43c2c"
+    MANIFEST_SHA = "841007859bd10c09f379a1ea710a9b7bb6eb3f835e4a6377cd65312d6fafee3a"
+    LOCK_SHA = "67c9fc1f782b526774d63022a41ab6f35dcee0b146f666dccf6b350e5009d09a"
+    PRESERVED = {
+        "/solver_trace_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "/solver/configuration_sha256": "7750ae58d7c89215809df97ce008e9bd9638447b9b91127e456e67b5d7de1c00",
+    }
+    AUTH_IDENTITIES = {
+        AUTH + "p9b2-c5-d5-global-source-resolver-u1-u3-preservation-n9-correction-authorization.yml":
+            "fc81d818eac44af04cd8b4ff0da149c692fad75532572f78b0fd44fe5229d18c",
+        AUTH + "p9b2-c5-d5-s2-actual-reference-hash-domain-correction-authorization.yml":
+            "443aee183f68e7c6a929a6ee8252ea7e3288c588d72b4561a17d494fdac17634",
+    }
+    PACKAGES = {"ajv": "8.17.1", "fast-deep-equal": "3.1.3", "fast-uri": "3.1.5",
+                "json-schema-traverse": "1.0.0", "require-from-string": "2.0.2", "yaml": "2.8.1"}
+
+    @staticmethod
+    def read_object(name, raw):
+        return json.loads(raw) if name.endswith(".json") else yaml.safe_load(raw)
+
+    @staticmethod
+    def at(obj, pointer):
+        if pointer == "":
+            return obj
+        if not isinstance(pointer, str) or not pointer.startswith("/"):
+            raise ValueError("INVALID_CATALOG_POINTER")
+        return pointer_get(obj, pointer)
+
+    @classmethod
+    def assign(cls, obj, pointer, value):
+        parent, _, leaf = pointer.rpartition("/")
+        record = cls.at(obj, parent)
+        leaf = leaf.replace("~1", "/").replace("~0", "~")
+        key = int(leaf) if isinstance(record, list) else leaf
+        record[key]  # Existing fields only, including scalar type preservation.
+        if type(record[key]) is not type(value):
+            raise ValueError("CATALOG_TARGET_TYPE_DRIFT: " + pointer)
+        record[key] = copy.deepcopy(value)
+
+    @staticmethod
+    def ordered(dependencies):
+        if any(not isinstance(v, list) or len(v) != len(set(v)) for v in dependencies.values()):
+            raise ValueError("DUPLICATE_DAG_EDGE")
+        if any(source not in dependencies for values in dependencies.values() for source in values):
+            raise ValueError("MISSING_DAG_PREDECESSOR")
+        try:
+            sorter = graphlib.TopologicalSorter(dependencies)
+            sorter.prepare()
+            result = []
+            while sorter.is_active():
+                ready = sorted(sorter.get_ready())
+                result.extend(ready)
+                sorter.done(*ready)
+            return result
+        except graphlib.CycleError as exc:
+            raise ValueError("CYCLIC_SOURCE_DEPENDENCY") from exc
+
+    def __init__(self, frozen_bytes, *, design_archive, offline_archive, workspace):
+        self.base = dict(frozen_bytes)
+        self.workspace = Path(workspace).resolve(strict=True)
+        if self.workspace.is_relative_to(REPO.resolve()):
+            raise ValueError("N9_WORKSPACE_INSIDE_AUTHORITATIVE_REPOSITORY")
+        self.offline_archive = Path(offline_archive).resolve(strict=True)
+        raw = Path(design_archive).read_bytes()
+        if sha_bytes(raw) != self.DESIGN_SHA:
+            raise ValueError("ACCEPTED_DESIGN_IDENTITY_MISMATCH")
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            catalog = json.loads(archive.read("field-catalog.json"))
+            self.dependencies = json.loads(archive.read("field-level-dag.json"))["dependencies"]
+            inventory = json.loads(archive.read("input-byte-inventory.json"))["files"]
+            policy = json.loads(archive.read("future-refresh-policy.json"))
+            historical = json.loads(archive.read("historical-bindings.json"))
+        identities = {r["path"]: r["sha256"] for r in inventory} | self.AUTH_IDENTITIES
+        if len(identities) != 308 or set(self.base) != set(identities):
+            raise ValueError("INCOMPLETE_AUTHORIZED_BASE_INVENTORY")
+        for name, digest in identities.items():
+            if sha_bytes(self.base[name]) != digest:
+                raise ValueError("FROZEN_BASE_IDENTITY_MISMATCH: " + name)
+        self.rows = {}
+        for row in catalog:
+            key = row["file"] + "#" + row["pointer"]
+            if key in self.rows:
+                raise ValueError("DUPLICATE_CATALOG_TARGET")
+            self.rows[key] = row
+        self.policy_keys = {r["file"] + "#" + r["pointer"] for r in policy["fields"]}
+        if len(self.policy_keys) != len(policy["fields"]):
+            raise ValueError("DUPLICATE_POLICY_TARGET")
+        self.field_policy = {}
+        for key in sorted(self.policy_keys):
+            r = self.rows[key]
+            if not r.get("future_write") or not r.get("mode"):
+                raise ValueError("NONWRITABLE_CATALOG_TARGET")
+            self.field_policy.setdefault(r["file"], []).append(r["pointer"])
+        for pointers in self.field_policy.values():
+            for i, pointer in enumerate(pointers):
+                if any(other.startswith(pointer + "/") for other in pointers[i+1:]):
+                    raise ValueError("OVERLAPPING_POLICY_TARGET")
+        if any(row["file"] in self.field_policy for row in historical):
+            raise ValueError("HISTORICAL_SNAPSHOT_CAPTURED")
+        self.s2_keys = set()
+        source = self.REVIEW + "fixtures/diagnostic-predicate-argument-binding-positive.json"
+        complete_source_edges = [key for key, row in self.rows.items()
+                                 if row["file"] == source and row.get("mode")]
+        for suffix in ("positive", "diagnostic-role-catalog-positive"):
+            target = self.REVIEW + "fixtures/stage-validation-s2-" + suffix + ".json"
+            for leaf, mode in (("canonical_sha256", "RAW"), ("byte_length", "LEN")):
+                key = target + "#/actual_input_objects/7/" + leaf
+                row = self.rows[key]
+                if row.get("source") != source or key not in self.policy_keys:
+                    raise ValueError("S2_CORRECTION_SCOPE_DRIFT")
+                row.update(source_pointer="", mode=mode, resolver_id="R06")
+                self.dependencies[key] = ["FROZEN_INPUT:" + source + "#"] + complete_source_edges
+                self.s2_keys.add(key)
+        self.dependencies.setdefault("FROZEN_INPUT:" + source + "#", [])
+        self.order = self.ordered(self.dependencies)
+        self.positions = {key: i for i, key in enumerate(self.order)}
+        if not set(self.rows).issuperset(self.policy_keys):
+            raise ValueError("UNKNOWN_POLICY_TARGET")
+        self.file_edges = sorted({(node.split("#")[0], dep.removeprefix("FROZEN_INPUT:").split("#")[0])
+                                  for node, deps in self.dependencies.items()
+                                  for dep in deps if not node.startswith(("FROZEN_INPUT:", "EXECUTION#"))
+                                  and node.split("#")[0] != dep.removeprefix("FROZEN_INPUT:").split("#")[0]})
+        self.bytes = dict(self.base)
+        self.objects = {}
+        self.completed = set()
+        self.fresh_summary = None
+        self.proof = {"policy_field_count": len(self.policy_keys), "policy_file_count": len(self.field_policy),
+                      "s2_r06_target_count": 4, "s2_r07_target_count": 0,
+                      "field_dag_sha256": csha(self.dependencies), "file_edges_sha256": csha(self.file_edges),
+                      "topological_order_sha256": csha(self.order)}
+        self.proof["historical_binding_count"] = sum(row["binding_count"] for row in historical)
+        self.proof["historical_writable_count"] = 0
+        self._rule_fields = ("file", "pointer", "source", "source_pointer", "mode", "resolver_id", "classification", "future_write")
+        self._rule_contract = {key: tuple(row.get(field) for field in self._rule_fields)
+                               for key, row in self.rows.items()}
+        self._policy_identity = csha(self.field_policy)
+        self.preservation(self.base)
+
+    def preservation(self, snapshot):
+        typed = self.read_object(self.TYPED_RESULT, snapshot[self.TYPED_RESULT])
+        for pointer, literal in self.PRESERVED.items():
+            if self.at(typed, pointer) != literal:
+                raise ValueError("OPAQUE_PRESERVATION_FAIL_CLOSED_NO_REPAIR: " + pointer)
+        for suffix, selector in (("positive", "/bindings/exposure"),
+                                 ("diagnostic-role-catalog-positive", "/bindings/diagnostic-role-catalog")):
+            name = self.REVIEW + "fixtures/stage-validation-s2-" + suffix + ".json"
+            obj = self.read_object(name, snapshot[name])
+            if self.at(obj, "/actual_input_objects/7/content_json_pointer") != selector:
+                raise ValueError("S2_EXTRACTION_SELECTOR_CHANGED")
+
+    @classmethod
+    def scalar_patch(cls, name, original, updates):
+        """Patch PyYAML source spans in Unicode text; encode once after validation."""
+        text = original.decode("utf-8")
+        root = yaml.compose(text)
+        spans = {}
+        seen = set()
+
+        def visit(node, pointer):
+            if id(node) in seen:
+                raise ValueError("UNSAFE_YAML_ALIAS")
+            seen.add(id(node))
+            if isinstance(node, yaml.ScalarNode):
+                spans[pointer] = node
+            elif isinstance(node, yaml.SequenceNode):
+                for i, child in enumerate(node.value):
+                    visit(child, pointer + "/" + str(i))
+            elif isinstance(node, yaml.MappingNode):
+                keys = set()
+                for key, child in node.value:
+                    if not isinstance(key, yaml.ScalarNode) or key.value in keys:
+                        raise ValueError("UNSAFE_YAML_DUPLICATE_OR_COMPLEX_KEY")
+                    keys.add(key.value)
+                    visit(child, pointer + "/" + key.value.replace("~", "~0").replace("/", "~1"))
+        visit(root, "")
+        before = yaml.safe_load(text)
+        after = copy.deepcopy(before)
+        replacements = []
+        for pointer, value in updates.items():
+            cls.assign(after, pointer, value)
+            node = spans.get(pointer)
+            if node is None or node.style in ("|", ">"):
+                raise ValueError("UNSAFE_YAML_NONSIMPLE_SCALAR")
+            if isinstance(value, str):
+                if node.style == "'":
+                    token = "'" + value.replace("'", "''") + "'"
+                elif node.style == '"':
+                    token = json.dumps(value, ensure_ascii=False)
+                elif yaml.safe_load(value) == value and "\n" not in value:
+                    token = value
+                else:
+                    raise ValueError("UNSAFE_YAML_SCALAR_STYLE_CHANGE")
+            elif type(value) is int:
+                token = str(value)
+            else:
+                raise ValueError("UNSAFE_YAML_TARGET_TYPE")
+            replacements.append((node.start_mark.index, node.end_mark.index, token))
+        previous = len(text) + 1
+        for start, end, token in sorted(replacements, reverse=True):
+            if end > previous:
+                raise ValueError("OVERLAPPING_YAML_SPAN")
+            text = text[:start] + token + text[end:]
+            previous = start
+        if yaml.safe_load(text) != after:
+            raise ValueError("UNRELATED_YAML_PARSED_MUTATION")
+        return text.encode("utf-8")
+
+    def object(self, name):
+        if name not in self.base:
+            raise ValueError("MISSING_STRUCTURAL_SOURCE: " + name)
+        if name not in self.objects:
+            self.objects[name] = self.read_object(name, self.bytes[name])
+        return self.objects[name]
+
+    def manifest_count(self, pointer):
+        summary = self.fresh_summary
+        owner = self.object(self.REVIEW + "design-manifest.yml")
+        group, leaf = pointer.strip("/").split("/")
+        if group == "inventory_counts":
+            return len(owner[leaf])
+        if summary is None:
+            raise ValueError("MANIFEST_COUNT_BEFORE_N9")
+        if group == "executable_evidence":
+            if leaf == "repeat_runs":
+                return summary[leaf]
+            if leaf == "integrated_r3b_positive_cases":
+                return sum(row["case"].startswith("POS-R3B-") for row in summary["positive"])
+            return len(summary[leaf.removesuffix("_cases")])
+        if group == "schema_gate":
+            return summary[group][{"positive_fixture_pair_count": "fixture_pair_count"}.get(leaf, leaf)]
+        if group == "failure_code_governance" and leaf not in ("formal_fixture_count", "explicit_fixture_failure_code_count"):
+            return summary["registry_failure_governance"][leaf]
+        counts = {key: len(self.object(self.REVIEW + "fixtures/" + filename)["cases"])
+                  for key, filename in (("stage_fixture_count", "stage-validator-negative-fixtures.yml"),
+                                        ("r3a_fixture_count", "r3a-reference-override-negative-fixtures.yml"),
+                                        ("r3b_fixture_count", "r3b-negation-scope-negative-fixtures.yml"))}
+        if leaf in ("total_fixture_count", "formal_fixture_count", "explicit_fixture_failure_code_count"):
+            return sum(counts.values())
+        return counts[leaf]
+
+    def derive(self, key):
+        row = self.rows[key]
+        if tuple(row.get(field) for field in self._rule_fields) != self._rule_contract[key]:
+            raise ValueError("STRUCTURAL_SOURCE_AUTHORITY_REPLACEMENT")
+        mode, name, pointer = row.get("mode"), row["file"], row["pointer"]
+        if mode == "N9_ACCEPTED_EXECUTION_OUTPUT":
+            if self.fresh_summary is None or self.EXECUTION not in self.completed:
+                raise ValueError("SUMMARY_BEFORE_FRESH_EXECUTION")
+            return self.at(self.fresh_summary, pointer)
+        if mode == "MANIFEST_COUNT":
+            return self.manifest_count(pointer)
+        source, sp = row["source"], row.get("source_pointer", "")
+        if source not in self.bytes:
+            raise ValueError("MISSING_STRUCTURAL_SOURCE: " + source)
+        raw = self.bytes[source]
+        if key in self.s2_keys and cbytes(json.loads(raw)) != raw:
+            raise ValueError("S2_NONCANONICAL_WHOLE_SOURCE")
+        if mode == "RAW":
+            return sha_bytes(raw)
+        if mode == "LEN":
+            return len(raw)
+        selected = self.at(self.object(source), sp)
+        if mode == "HASH":
+            return csha(selected)
+        if mode == "CLEN":
+            return len(cbytes(selected))
+        if mode == "COPY":
+            return copy.deepcopy(selected)
+        if mode == "SELF":
+            candidate = copy.deepcopy(selected)
+            del candidate[pointer.rsplit("/", 1)[1]]
+            return csha(candidate)
+        if mode == "SEMANTIC":
+            return csha(semantic_set(selected))
+        if mode == "SOL":
+            return "SOL-" + selected[:24]
+        if mode in ("PROBE_SEM", "PROBE_CORE", "R3A_PROBE"):
+            candidate = copy.deepcopy(selected)
+            if mode == "R3A_PROBE":
+                probe = self.at(self.object(name), pointer.rsplit("/", 1)[0])
+                operations = probe["operation"]
+            else:
+                probe = self.object(name)
+                operations = probe["mutation"]
+            for operation in operations:
+                if set(operation) != {"op", "path"} or operation["op"] != "remove":
+                    raise ValueError("INVALID_PERSISTED_REMOVAL")
+                candidate = apply_remove(candidate, operation["path"])
+            refresh_core(candidate)
+            return csha(candidate) if mode == "PROBE_CORE" else csha(semantic_set(candidate))
+        raise ValueError("UNSUPPORTED_AUTHORIZED_RESOLVER: " + str(mode))
+
+    def update(self, key, value):
+        row = self.rows[key]
+        name, pointer = row["file"], row["pointer"]
+        obj = self.object(name)
+        if self.at(obj, pointer) == value:
+            return
+        if key not in self.policy_keys:
+            raise ValueError("CORRECTION_REQUIRES_UNAUTHORIZED_POLICY_DELTA: " + key)
+        self.assign(obj, pointer, value)
+        before = self.read_object(name, self.base[name])
+        restored = copy.deepcopy(obj)
+        updates = {}
+        for target in self.field_policy[name]:
+            old, new = self.at(before, target), self.at(obj, target)
+            if old != new:
+                updates[target] = new
+            self.assign(restored, target, old)
+        if restored != before:
+            raise ValueError("NONADMITTED_SEMANTIC_MUTATION")
+        self.bytes[name] = (cbytes(obj) if name.endswith(".json") else
+                            self.scalar_patch(name, self.base[name], updates)) if updates else self.base[name]
+
+    def archives(self):
+        raw = self.offline_archive.read_bytes()
+        if len(raw) != 389120 or sha_bytes(raw) != self.ARCHIVE_SHA:
+            raise ValueError("OFFLINE_WRAPPER_IDENTITY")
+        lock_raw = self.base[self.REVIEW + "package-lock.json"]
+        if sha_bytes(lock_raw) != self.LOCK_SHA:
+            raise ValueError("FROZEN_LOCK_IDENTITY")
+        lock = json.loads(lock_raw)["packages"]
+        result = {}
+        with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as wrapper:
+            members = wrapper.getmembers()
+            names = {name + "-" + version + ".tgz" for name, version in self.PACKAGES.items()} | {"manifest.json"}
+            if len(members) != 7 or {m.name for m in members} != names or not all(m.isfile() for m in members):
+                raise ValueError("OFFLINE_WRAPPER_MEMBERS")
+            if sha_bytes(wrapper.extractfile("manifest.json").read()) != self.MANIFEST_SHA:
+                raise ValueError("OFFLINE_MANIFEST_IDENTITY")
+            for name, version in self.PACKAGES.items():
+                filename = name + "-" + version + ".tgz"
+                payload = wrapper.extractfile(filename).read()
+                sri = "sha512-" + base64.b64encode(hashlib.sha512(payload).digest()).decode("ascii")
+                locked = lock["node_modules/" + name]
+                if (locked["version"] != version or locked["integrity"] != sri or
+                        locked["resolved"] != "https://registry.npmjs.org/" + name + "/-/" + filename):
+                    raise ValueError("OFFLINE_ARCHIVE_SRI_OR_SOURCE")
+                with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as archive:
+                    files = archive.getmembers()
+                    if len({m.name for m in files}) != len(files):
+                        raise ValueError("OFFLINE_DUPLICATE_TAR_MEMBER")
+                    for member in files:
+                        parts = member.name.split("/")
+                        if parts[0] != "package" or any(p in ("", ".", "..") for p in parts) or not member.isfile():
+                            raise ValueError("OFFLINE_UNSAFE_TAR_MEMBER")
+                    package = json.loads(archive.extractfile("package/package.json").read())
+                    if (package["name"], package["version"]) != (name, version):
+                        raise ValueError("OFFLINE_TAR_PACKAGE_IDENTITY")
+                    result[name] = {m.name.removeprefix("package/"): archive.extractfile(m).read() for m in files}
+        return result
+
+    def check_semantics(self):
+        if set(self.bytes) != set(self.base):
+            raise ValueError("INCOMPLETE_OR_EXTRA_PROSPECTIVE_INVENTORY")
+        self.preservation(self.bytes)
+        for name in self.base:
+            if name not in self.field_policy:
+                if self.bytes[name] != self.base[name]:
+                    raise ValueError("PROTECTED_PROSPECTIVE_BYTES_CHANGED")
+                continue
+            before = self.read_object(name, self.base[name])
+            after = self.read_object(name, self.bytes[name])
+            updates = {p: self.at(after, p) for p in self.field_policy[name]
+                       if self.at(before, p) != self.at(after, p)}
+            exact = (cbytes(after) if name.endswith(".json") else self.scalar_patch(name, self.base[name], updates)) if updates else self.base[name]
+            for pointer in self.field_policy[name]:
+                self.assign(after, pointer, self.at(before, pointer))
+            if before != after:
+                raise ValueError("SEMANTIC_PROJECTION_CHANGED")
+            if exact != self.bytes[name]:
+                raise ValueError("UNRELATED_PROSPECTIVE_BYTE_MUTATION")
+
+    def verify_s2_identity(self, snapshot):
+        for key in self.s2_keys:
+            row = self.rows[key]
+            source = snapshot[row["source"]]
+            if cbytes(json.loads(source)) != source:
+                raise ValueError("S2_NONCANONICAL_WHOLE_SOURCE")
+            expected = len(source) if row["mode"] == "LEN" else sha_bytes(source)
+            actual = self.at(json.loads(snapshot[row["file"]]), row["pointer"])
+            if actual != expected:
+                raise ValueError("S2_SUBOBJECT_OR_STALE_IDENTITY_FORBIDDEN")
+
+    def check_n9_output(self, stdout, exit_code):
+        if exit_code != 0:
+            raise ValueError("N9_NONZERO_EXIT")
+        summary = json.loads(stdout)
+        if cbytes(summary) != stdout:
+            raise ValueError("N9_NONCANONICAL_STDOUT")
+        if summary["result"] != "PASS" or summary["repeat_runs"] != 3:
+            raise ValueError("N9_NONPASS_OR_REPEAT_COUNT")
+        for key, count in (("positive", 18), ("minimality", 8), ("negative", 84)):
+            if len(summary[key]) != count or summary[key + "_pass_count"] != count:
+                raise ValueError("N9_CASE_COUNT_MISMATCH")
+            passed = sum(not row["errors"] for row in summary[key]) if key == "positive" else sum(row["passed"] is True for row in summary[key])
+            if passed != count:
+                raise ValueError("N9_CASE_PASS_ASSERTION_MISMATCH")
+        gate = summary["schema_gate"]
+        if (gate["result"] != "PASS" or gate["compiled_schema_count"] != 13 or
+                gate["fixture_pair_count"] != 37 or gate["valid_fixture_count"] != 37):
+            raise ValueError("N9_SCHEMA_COUNTS")
+        if summary["registry_failure_governance"]["result"] != "PASS":
+            raise ValueError("N9_FAILURE_CODE_GOVERNANCE")
+        for field, name in (("executable_sha256", "reference-stage-semantic-validator.py"),
+                            ("configuration_sha256", "stage-semantic-validator-contract.yml")):
+            if summary[field] != sha_bytes(self.base[self.REVIEW + name]):
+                raise ValueError("N9_FROZEN_EXECUTABLE_OR_CONFIGURATION")
+        if (gate["runner_sha256"] != sha_bytes(self.base[self.REVIEW + "strict-schema-gate.mjs"])
+                or gate["lockfile_sha256"] != self.LOCK_SHA):
+            raise ValueError("N9_SCHEMA_RUNNER_IDENTITY")
+        payload = {key: summary[key] for key in ("registry_failure_governance", "positive", "minimality", "negative",
+                                               "positive_pass_count", "minimality_pass_count", "negative_pass_count")}
+        if summary["run_payload_sha256"] != csha(payload):
+            raise ValueError("N9_PAYLOAD_HASH_MISMATCH")
+        return summary
+
+    def execute_n9(self):
+        if not set(self.dependencies[self.EXECUTION]) <= self.completed:
+            raise ValueError("PREMATURE_N9_MISSING_PREDECESSOR")
+        self.check_semantics()
+        self.verify_s2_identity(self.bytes)
+        for key in self.completed:
+            if key in self.rows and self.rows[key].get("mode"):
+                row = self.rows[key]
+                obj = self.read_object(row["file"], self.bytes[row["file"]])
+                if obj != self.object(row["file"]) or self.at(obj, row["pointer"]) != self.derive(key):
+                    raise ValueError("STALE_OR_WRONG_N9_PREDECESSOR: " + key)
+        packages = self.archives()  # Always verify raw bytes before preparation.
+        node = shutil.which("node")
+        if node is None:
+            raise ValueError("OFFLINE_NODE_EXECUTABLE_UNAVAILABLE")
+        env = {"PATH": str(Path(node).resolve().parent) + ":/usr/bin:/bin", "LANG": "C.UTF-8",
+               "LC_ALL": "C.UTF-8", "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"}
+        with tempfile.TemporaryDirectory(prefix="d5-n9-", dir=self.workspace) as temporary:
+            outside = Path(temporary)
+            tree = outside / "predecessors"
+            tree.mkdir()
+            for name, raw in self.bytes.items():
+                path = tree / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(raw)
+            dep_root = outside / "verified-dependencies"
+            modules = dep_root / "node_modules"
+            module_bytes = {}
+            for package, files in packages.items():
+                for relative, raw in files.items():
+                    path = modules / package / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(raw)
+                    module_bytes[path] = raw
+            review = tree / self.REVIEW
+            (review / "node_modules").symlink_to(modules, target_is_directory=True)
+            probe = r'''const fs=require('fs'),path=require('path'),m=require('module');
+const root=fs.realpathSync(process.argv[1]);const r=m.createRequire(path.join(root,'probe.cjs'));
+for(const name of JSON.parse(process.argv[2])) {let p=fs.realpathSync(r.resolve(name));
+if(!p.startsWith(root+path.sep))throw Error('MODULE_SHADOWING');r(name);}
+for(const p of Object.keys(require.cache))if(!fs.realpathSync(p).startsWith(root+path.sep))throw Error('TRANSITIVE_SHADOWING');'''
+            checked = subprocess.run([node, "-e", probe, str(dep_root), json.dumps(list(self.PACKAGES))],
+                                     env=env, cwd=outside, capture_output=True)
+            if checked.returncode:
+                raise ValueError("OFFLINE_NODE_MODULE_ORIGIN: " + checked.stderr.decode(errors="replace"))
+
+            identities = {}
+
+            def seal():
+                live_identities = {}
+                inode_set = set()
+                for base in (tree, modules):
+                    for path in [base, *base.rglob("*")]:
+                        info = path.lstat()
+                        if path == review / "node_modules":
+                            if not path.is_symlink() or path.resolve() != modules.resolve():
+                                raise ValueError("N9_DEPENDENCY_LINK_DRIFT")
+                        elif not (stat.S_ISREG(info.st_mode) or stat.S_ISDIR(info.st_mode)):
+                            raise ValueError("N9_UNSEALED_OBJECT_KIND")
+                        if stat.S_ISREG(info.st_mode):
+                            identity = (info.st_dev, info.st_ino)
+                            if info.st_nlink != 1 or identity in inode_set:
+                                raise ValueError("N9_ALIASED_OBJECT")
+                            inode_set.add(identity)
+                        live_identities[str(path)] = (info.st_dev, info.st_ino, info.st_mode)
+                if identities and live_identities != identities:
+                    raise ValueError("N9_SEALED_OBJECT_OR_DIRECTORY_IDENTITY_DRIFT")
+                identities.update(live_identities)
+                actual = {p.relative_to(tree).as_posix(): p.read_bytes() for p in tree.rglob("*")
+                          if p.is_file() and "node_modules" not in p.parts}
+                if actual != self.bytes:
+                    raise ValueError("N9_PREDECESSOR_TREE_DRIFT")
+                if any(p.read_bytes() != raw for p, raw in module_bytes.items()):
+                    raise ValueError("OFFLINE_DEPENDENCY_IDENTITY_DRIFT")
+                actual_deps = {p for p in modules.rglob("*") if p.is_file()}
+                if actual_deps != set(module_bytes):
+                    raise ValueError("OFFLINE_DEPENDENCY_INVENTORY_DRIFT")
+            seal()
+            index_probe = "import runpy,sys; from pathlib import Path; m=runpy.run_path(sys.argv[1]); print(m['build_index'](Path(sys.argv[2])).index_sha256)"
+            index_run = subprocess.run([sys.executable, "-I", "-B", "-c", index_probe,
+                                        str(tree / "scripts/p9b1_local_retrieval.py"), str(tree)],
+                                       cwd=outside, env=env, capture_output=True)
+            index_name = self.REVIEW + "fixtures/retrieval-result-exposure-positive.json"
+            if (index_run.returncode or index_run.stdout.decode().strip() != self.object(index_name)["index_sha256"]):
+                raise ValueError("R19_SEALED_INDEX_RECOMPUTATION_FAILED")
+            self.proof["r19_independent_index_verification"] = "PASS"
+            # -I removes ambient cwd/user site. Add only the sealed validator's
+            # sibling directory, then verify every imported file's origin.
+            entry = r'''import sys,runpy
+from pathlib import Path
+script=Path(sys.argv[1]).resolve(); tree=Path(sys.argv[2]).resolve()
+sys.argv=[str(script),'--mode','all'];sys.path.insert(0,str(script.parent))
+def no_network(event,args):
+    if event.startswith(('socket.','urllib.','http.client.')): raise RuntimeError('NETWORK_FORBIDDEN')
+sys.addaudithook(no_network)
+try:
+    runpy.run_path(str(script),run_name='__main__')
+finally:
+    for module in tuple(sys.modules.values()):
+        origin=getattr(module,'__file__',None)
+        if origin and not origin.startswith('<'):
+            path=Path(origin).resolve()
+            if not (path.is_relative_to(Path(sys.base_prefix).resolve()) or path.is_relative_to(tree)):
+                raise RuntimeError('PYTHON_IMPORT_SHADOWING: '+str(path))
+'''
+            completed = subprocess.run([sys.executable, "-I", "-B", "-c", entry,
+                                        str(review / "reference-stage-semantic-validator.py"), str(tree)],
+                                       cwd=outside, env=env, capture_output=True)
+            seal()
+            self.proof["n9_exit_code"] = completed.returncode
+            self.proof["n9_stderr"] = completed.stderr.decode("utf-8", errors="replace")
+            self.proof["n9_stdout_sha256"] = sha_bytes(completed.stdout)
+            self.proof["n9_stdout"] = completed.stdout.decode("utf-8", errors="replace")
+            self.fresh_summary = self.check_n9_output(completed.stdout, completed.returncode)
+            self.proof["offline_dependency_count"] = len(packages)
+            self.proof["n9_payload_sha256"] = self.fresh_summary["run_payload_sha256"]
+
+    def plan(self):
+        if self.completed:
+            raise ValueError("GLOBAL_PLANNER_REUSE_FORBIDDEN")
+        if (csha(self.field_policy) != self._policy_identity or set(self._rule_contract) != set(self.rows)
+                or self.policy_keys != {name + "#" + p for name, values in self.field_policy.items() for p in values}
+                or csha(self.dependencies) != self.proof["field_dag_sha256"]
+                or csha(self.order) != self.proof["topological_order_sha256"]):
+            raise ValueError("GLOBAL_POLICY_OR_TOPOLOGY_REPLACEMENT")
+        for key in self.order:
+            if not set(self.dependencies[key]) <= self.completed:
+                raise ValueError("FORWARD_SOURCE_DEPENDENCY")
+            if key == self.EXECUTION:
+                self.execute_n9()
+            elif key in self.rows and self.rows[key].get("mode"):
+                self.update(key, self.derive(key))
+            self.completed.add(key)
+        self.check_semantics()
+        self.proof["actual_changed_fields"] = sum(self.at(self.read_object(row["file"], self.base[row["file"]]), row["pointer"])
+                                                   != self.at(self.object(row["file"]), row["pointer"])
+                                                   for key, row in self.rows.items() if key in self.policy_keys)
+        self.proof["actual_changed_files"] = sum(self.base[n] != self.bytes[n] for n in self.base)
+        return dict(self.bytes)
+
+
 def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
                    field_policy: dict[str, list[str]], rules: list[dict[str, Any]],
-                   prospective_bytes: dict[str, bytes] | None = None) -> list[str]:
+                   prospective_bytes: dict[str, bytes] | None = None,
+                   global_build: dict[str, Any] | None = None) -> list[str]:
     """Rebind explicit derived fields, validating the entire transaction before writes.
 
     frozen_bytes is the independently acquired, complete input snapshot supplied by
@@ -157,6 +739,22 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
             raise ValueError("INCOMPLETE_FROZEN_SNAPSHOT")
 
     complete_snapshot()
+
+    global_plan = None
+    if global_build is not None:
+        if field_policy or rules or set(global_build) != {"design_archive", "offline_archive", "workspace"}:
+            raise ValueError("GLOBAL_POLICY_CALLER_REPLACEMENT")
+        builder = GlobalSourceCorrection(frozen_bytes, **global_build)
+        global_plan = builder.plan()
+        field_policy = builder.field_policy
+
+    for name, pointers in field_policy.items():
+        if name == GlobalSourceCorrection.TYPED_RESULT:
+            for pointer in pointers:
+                for protected in GlobalSourceCorrection.PRESERVED:
+                    if (pointer == protected or pointer.startswith(protected + "/")
+                            or protected.startswith(pointer + "/")):
+                        raise ValueError("OPAQUE_PRESERVATION_NO_RECOMPUTATION")
 
     def path(name):
         if not isinstance(name, str) or not name or "\\" in name or ":" in name:
@@ -264,7 +862,14 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
                 raise ValueError("INVALID_RECORD_SOURCE_DERIVATION")
             source = reference(record[keys[0]])
             source_pointer = record.get("content_json_pointer") or ""
-            if source_pointer and kind != "CANONICAL_SHA256":
+            s2_actual = (name in {architecture + "fixtures/stage-validation-s2-positive.json",
+                                  architecture + "fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json"}
+                         and pointer in {"/actual_input_objects/7/canonical_sha256", "/actual_input_objects/7/byte_length"})
+            if s2_actual:
+                if kind not in ("RAW_SHA256", "BYTE_LENGTH"):
+                    raise ValueError("S2_REQUIRES_WHOLE_RESOLVED_OBJECT_IDENTITY")
+                source_pointer = ""
+            elif source_pointer and kind != "CANONICAL_SHA256":
                 raise ValueError("SUBOBJECT_CANONICAL_DERIVATION_REQUIRED")
         elif kind == "SELF_SHA256":
             if ts[-1] not in ("result_sha256", "sidecar_sha256", "link_sha256"):
@@ -298,7 +903,7 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
         for pointer in pointers:
             tokens(pointer)
     current = {name: path(name).read_bytes() for name in frozen_bytes}
-    planned = dict(frozen_bytes)
+    planned = dict(frozen_bytes) if global_plan is None else global_plan
     objects = {}
     targets = [(r["path"], r["pointer"]) for r in rules]
     if len(targets) != len(set(targets)):
@@ -321,6 +926,10 @@ def narrow_refresh(root: Path, *, frozen_bytes: dict[str, bytes],
             raise ValueError("SEMANTIC_REFRESH_TARGET")
         obj = objects.setdefault(name, decode(name, planned[name]))
         source_raw = planned[source]
+        if (name.endswith(("/stage-validation-s2-positive.json", "/stage-validation-s2-diagnostic-role-catalog-positive.json"))
+                and pointer in {"/actual_input_objects/7/canonical_sha256", "/actual_input_objects/7/byte_length"}
+                and cbytes(decode(source, source_raw)) != source_raw):
+            raise ValueError("S2_NONCANONICAL_WHOLE_SOURCE")
         if kind == "RAW_SHA256":
             value = sha_bytes(source_raw)
         elif kind == "BYTE_LENGTH":
