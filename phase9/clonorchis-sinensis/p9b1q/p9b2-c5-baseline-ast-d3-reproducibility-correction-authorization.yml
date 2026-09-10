@@ -1,0 +1,243 @@
+authorization_version: '1.0'
+authorization_id: AUTH-P9B1Q-BASELINE-AST-D3-REPRODUCIBILITY-CORRECTION
+record_type: BASELINE_REPRODUCIBILITY_CORRECTION_AUTHORIZATION
+status: MATERIALIZED_NOT_IMPLEMENTATION_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+public_base: b80f7f35b049cc059ac22da24fd67bb4b8190294
+expected_parent: c3e39bf884e97827c7bfbda446915a0347b94d17
+findings:
+- id: P9B1Q-BASELINE-N9-AST-FINGERPRINT-REPRODUCIBILITY-001
+  correction: EXACT_FUNCTION_SOURCE_BYTE_GUARDS_WITH_SEMANTIC_AST_CHECKS_RETAINED
+- id: P9B1Q-BASELINE-D3-REFERENCE-PARITY-REPRODUCIBILITY-001
+  correction: EXPLICIT_EXTERNAL_LOCK_VERIFIED_D3_NODE_DEPENDENCIES
+root_causes:
+  P9B1Q-BASELINE-N9-AST-FINGERPRINT-REPRODUCIBILITY-001: RUNTIME_DEPENDENT_VERIFICATION_CONTRACT_WITH_UNPROVEN_LITERAL_PROVENANCE
+  P9B1Q-BASELINE-D3-REFERENCE-PARITY-REPRODUCIBILITY-001: TEST_HARNESS_NODE_DEPENDENCY_PROVISIONING_GAP
+materialization_scope:
+  allowed_new_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-baseline-ast-d3-reproducibility-correction-authorization.yml
+  new_path_count: 1
+  existing_tracked_file_changes_allowed: false
+  implementation_execution_allowed: false
+  tests_execution_allowed: false
+  n9_execution_allowed: false
+  staging_allowed: false
+  commit_allowed: false
+  push_allowed: false
+  pull_request_allowed: false
+authorized_paths:
+- path: tests/test_p9b1q_scoped_query_ir.py
+  classification: TEST_ONLY
+- path: .github/workflows/validate.yml
+  classification: CI_TEST_ENVIRONMENT_ONLY
+future_direct_implementation_path_count: 2
+third_implementation_path_authorized: false
+implementation_started_by_materialization: false
+separate_control_build_start_required: true
+allowed_changes:
+  finding_a:
+    target_path: tests/test_p9b1q_scoped_query_ir.py
+    target_class: FrozenExecutionCountContractCorrectionTests
+    replacement_scope: ONLY_THE_THREE_RAW_INTERPRETER_DEPENDENT_LITERAL_FINGERPRINT_GUARDS
+    replaced_guard: SHA256(ast.dump(FunctionDef, include_attributes=False))
+    replacement_guard: SHA256(EXACT_UTF8_FUNCTION_SOURCE_BYTES)
+    guard_count: 3
+    source_path: phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+    expected_function_source_sha256:
+      run_negative: 9ff918842af65763753df6d38b603936112623fd8d10ac37e83c818c97557a32
+      run_r3b_authoritative: a985fc5b8605e6abbebf5ba42a269236314ca7d33b5830ab1e8ce309b1887255
+      one_run: 696f9659d2111ccfe87c3b393af0ab5deda5464f1933b6307db2d28cbe566ddf
+    hash_authority: CONTROL_SUPPLIED_INDEPENDENTLY_AUDITED_EXACT_UTF8_FUNCTION_SOURCE_HASHES
+    source_extraction_requirement: Future implementation must define a deterministic source-text extraction
+      boundary and prove that each extracted byte sequence resolves exactly to the independently audited
+      function bytes and SHA256 above.
+    source_guard_forbidden_dependencies:
+    - ast.dump serialization
+    - interpreter-owned AST field ordering
+    - CPython minor/patch-specific AST serialization behavior
+    retain_all_existing_semantic_ast_assertions: true
+    retain_all_existing_structural_checks: true
+    required_preserved_checks:
+    - exact manifest bindings
+    - exact loop topology
+    - no break / continue / return escape
+    - exactly one unconditional append
+    - exact return structure
+    - R3B gate placement
+    - exact one_run composition
+    - explicit counterexample rejection
+    existing_negative_and_counterexample_structural_tests_must_remain_active: true
+    guard_deletion_without_replacement_allowed: false
+    assertion_weakening_allowed: false
+  finding_b_test_harness:
+    target_path: tests/test_p9b1q_scoped_query_ir.py
+    target_class: ReferenceProductionParityTests
+    governed_pattern: FrozenExecutionCountContractCorrectionTests
+    dependency_root_supply: EXPLICIT_ENVIRONMENT_OR_CONFIGURATION
+    dependency_root_must_resolve_outside_authoritative_repository: true
+    repository_lock_bytes_must_match_dependency_root_lock: true
+    installed_versions_must_match_package_lock: true
+    fail_closed_on:
+    - missing dependency root
+    - dependency root inside authoritative repository
+    - package-lock mismatch
+    - installed package-version mismatch
+    node_modules_link_or_provisioning_location: DISPOSABLE_TEST_COPY_ONLY
+    authoritative_checkout_node_modules_creation_allowed: false
+    ambient_or_global_node_packages_allowed: false
+    reference_validator_bytes_must_remain_unchanged: true
+    schema_gate_bytes_must_remain_unchanged: true
+  finding_b_ci:
+    target_path: .github/workflows/validate.yml
+    scope: ONLY_PROVISION_EXISTING_LOCK_DEFINED_NODE_DEPENDENCIES_BEFORE_PYTHON_UNITTEST_DISCOVERY
+    dependency_inputs:
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/package.json
+    - phase9/clonorchis-sinensis/p9b1q-architecture-review/package-lock.json
+    dependency_versions_must_remain_unchanged: true
+    preferred_provisioning_location: OUTSIDE_CHECKOUT_UNDER_RUNNER_TEMPORARY_DIRECTORY
+    required_existing_setting: P9B1Q_COUNT_NODE_MODULES
+    required_d3_setting: EXPLICIT_D3_PARITY_DEPENDENCY_ROOT_SETTING_TO_BE_INTRODUCED_BY_THE_CORRECTION
+    expose_dependency_root_to_both_harnesses: true
+    use_same_external_lock_matching_root_where_compatible: true
+    committed_node_modules_allowed: false
+    package_file_modification_allowed: false
+locked_node_dependency_identities:
+  lockfile_path: phase9/clonorchis-sinensis/p9b1q-architecture-review/package-lock.json
+  lockfile_raw_sha256: 67c9fc1f782b526774d63022a41ab6f35dcee0b146f666dccf6b350e5009d09a
+  package_count: 6
+  packages:
+  - name: ajv
+    version: 8.17.1
+    lockfile_location: /packages/node_modules~1ajv
+    integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
+    resolved_url: https://registry.npmjs.org/ajv/-/ajv-8.17.1.tgz
+  - name: yaml
+    version: 2.8.1
+    lockfile_location: /packages/node_modules~1yaml
+    integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==
+    resolved_url: https://registry.npmjs.org/yaml/-/yaml-2.8.1.tgz
+  - name: fast-deep-equal
+    version: 3.1.3
+    lockfile_location: /packages/node_modules~1fast-deep-equal
+    integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
+    resolved_url: https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz
+  - name: fast-uri
+    version: 3.1.5
+    lockfile_location: /packages/node_modules~1fast-uri
+    integrity: sha512-gHwA1O9LDIcKunMKhObS/HimwtehO1nPUECKAu5TpKgaO19fcWEl4bliWe1jWxVFvIXztJjjQ4L8XQ1EU9f7Jw==
+    resolved_url: https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.5.tgz
+  - name: json-schema-traverse
+    version: 1.0.0
+    lockfile_location: /packages/node_modules~1json-schema-traverse
+    integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==
+    resolved_url: https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz
+  - name: require-from-string
+    version: 2.0.2
+    lockfile_location: /packages/node_modules~1require-from-string
+    integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==
+    resolved_url: https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz
+  dependency_version_changes_allowed: false
+  package_json_change_allowed: false
+  package_lock_change_allowed: false
+count_authority:
+  unchanged: true
+  positive: 18
+  minimality: 8
+  negative: 84
+  compiled_schema_count: 13
+  fixture_pair_count: 37
+  valid_fixture_count: 37
+  count_contract_modification_allowed: false
+forbidden_changes:
+- modify any direct implementation path beyond the two future authorized paths
+- delete any fingerprint guard without the exact source-byte replacement
+- weaken existing semantic AST assertions or structural/counterexample checks
+- change count authority or count contract
+- change dependency versions, package.json, or package-lock.json
+- change production code or D5 source resolver implementation
+- change reference validator, schema gate, stage contract, schemas, or semantic payloads
+- change existing authority records, fixtures, evidence, or manifests
+- delete or rewrite historical PASS records
+- create node_modules in the authoritative checkout
+protected_objects:
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/strict-schema-gate.mjs
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/package.json
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/package-lock.json
+- scripts/p9b1q_scoped_query_ir.py
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+- all other production code
+- all schemas
+- all existing authority records; only creation of this authorization record is excepted
+- all fixtures
+- all evidence artifacts
+- all manifests
+- all semantic payloads
+future_acceptance_gates:
+  targeted_tests_alone_are_sufficient: false
+  finding_a:
+    FrozenExecutionCountContractCorrectionTests:
+      total: 2
+      pass: 2
+      result: PASS
+    three_exact_function_source_guards: PASS
+    all_existing_semantic_ast_checks_preserved: 'YES'
+    assertion_weakening_count: 0
+  finding_b:
+    ReferenceProductionParityTests:
+      total: 7
+      pass: 7
+      result: PASS
+    explicit_external_lock_verified_node_dependency_root_required: true
+    required_negative_cases:
+    - missing dependency root
+    - dependency root inside authoritative repository
+    - package-lock mismatch
+    - installed package-version mismatch
+    negative_case_expected_result: FAIL_CLOSED
+  full_suite:
+    python_implementation: CPython
+    verified_python_version: 3.11.16
+    total: 198
+    pass: 198
+    fail: 0
+    error: 0
+  protected_byte_preservation:
+    reference_validator_unchanged: true
+    schema_gate_unchanged: true
+    stage_contract_unchanged: true
+    package_json_unchanged: true
+    package_lock_unchanged: true
+    production_script_unchanged: true
+    d5_source_resolver_unchanged: true
+    schemas_unchanged: true
+    authority_unchanged_except_this_new_authorization_record: true
+    fixtures_evidence_manifests_unchanged: true
+phase_b2_prohibition:
+  authorized_by_this_record: false
+  blocked_operations:
+  - N9 execution as closure evidence
+  - three canonical N9 runs
+  - prospective D5 refresh
+  - second-pass idempotence
+  - evidence refresh
+  - D5 mapping
+  remain_blocked_until: BASELINE_CORRECTION_IMPLEMENTATION_PUBLISHED_AND_INDEPENDENTLY_AUDITED
+historical_integrity_rule:
+  historical_pass_records_deleted: false
+  historical_pass_records_rewritten: false
+  rule: Historical PASS records are not deleted or rewritten. This correction records newly established
+    reproducibility defects and their remediation prospectively.
+  prior_frozen_semantic_authority_altered: false
+current_turn_prohibitions:
+- implementation
+- tests
+- N9
+- evidence refresh
+- D5 mapping
+- dependency installation inside repository
+- staging
+- commit
+- push
+- pull request
