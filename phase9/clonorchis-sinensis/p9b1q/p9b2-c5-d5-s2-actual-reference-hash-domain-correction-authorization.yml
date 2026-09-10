@@ -1,0 +1,141 @@
+authorization_version: '1.0'
+authorization_id: AUTH-D5-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CORRECTION
+record_type: D5_S2_ACTUAL_REFERENCE_HASH_DOMAIN_CORRECTION_AUTHORIZATION
+status: MATERIALIZED_NOT_IMPLEMENTATION_START
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+base: cf723ab2187a6e353ce7deb1ee32d21edacabe6b
+target_finding: D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CONFLICT-001
+parent_source_closure_finding: D5-MAPPING-CANONICAL-SOURCE-CLOSURE-GAP-001
+parent_source_closure_status: CLOSED_VERIFIED
+correction_class: DERIVATION_DOMAIN_AND_RESOLVER_ASSIGNMENT_CORRECTION
+previous_build_attempt: FAIL_CLOSED
+previous_failure: D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CONFLICT-001
+previous_dirty_implementation: ABANDONED_NOT_REUSABLE
+previous_dirty_implementation_reuse_allowed: false
+
+target_field_count: 4
+affected_target_fields:
+  - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-positive.json
+    pointer: /actual_input_objects/7/canonical_sha256
+    resolved_object_hash_component: SHA256
+  - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-positive.json
+    pointer: /actual_input_objects/7/byte_length
+    resolved_object_hash_component: BYTE_LENGTH
+  - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json
+    pointer: /actual_input_objects/7/canonical_sha256
+    resolved_object_hash_component: SHA256
+  - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json
+    pointer: /actual_input_objects/7/byte_length
+    resolved_object_hash_component: BYTE_LENGTH
+other_accepted_catalog_fields_adjudicated: false
+
+source_path_count: 1
+source_path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json
+source_applies_to: ALL_FOUR_AFFECTED_TARGET_FIELDS
+reference_object_kind: DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING
+identity_domain: WHOLE_RESOLVED_OBJECT
+identity_function: EXACT_FROZEN_REFERENCE_VALIDATOR_RESOLVED_OBJECT_HASH_SEMANTICS
+identity_requirement: >-
+  Recompute hash and byte length over the complete resolved prospective source
+  object exactly as frozen validate_actual_reference() and resolved_object_hash(path)
+  require, including the frozen canonical-byte validity check for fixture JSON.
+  Do not substitute a selected subobject or silently normalize invalid source bytes.
+
+semantic_extraction_pointer_preservation:
+  - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-positive.json
+    pointer: /actual_input_objects/7/content_json_pointer
+    preserved_value: /bindings/exposure
+  - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json
+    pointer: /actual_input_objects/7/content_json_pointer
+    preserved_value: /bindings/diagnostic-role-catalog
+content_json_pointer_role: POST_IDENTITY_SEMANTIC_EXTRACTION_SELECTOR
+content_json_pointer_controls_canonical_sha256: false
+content_json_pointer_controls_byte_length: false
+subobject_hash_as_actual_reference_identity: FORBIDDEN
+subobject_length_as_actual_reference_identity: FORBIDDEN
+
+required_resolver_class: R06
+r06_domain: WHOLE_EXACT_DECLARED_PATH_OBJECT_IDENTITY
+r06_applies_to_all_four: true
+r07_allowed_for_these_four_fields: false
+r07_global_deletion_allowed: false
+r07_global_redefinition_allowed: false
+r07_retained_scope: FIELDS_WITH_FORMALLY_EMBEDDED_OBJECT_IDENTITY_DOMAIN
+supersession_scope: >-
+  For exactly the four affected fields, supersede prior accepted-catalog
+  source_pointer use solely to hash or measure /bindings/exposure or
+  /bindings/diagnostic-role-catalog. Preserve the semantic extraction selectors.
+
+dag_correction:
+  dependency_chain:
+    - COMPLETE_PROSPECTIVE_DIAGNOSTIC_PREDICATE_ARGUMENT_BINDING_FILE_BYTES
+    - WHOLE_RESOLVED_OBJECT_HASH_AND_LENGTH
+    - BOTH_S2_ACTUAL_INPUT_OBJECTS_7_IDENTITY_BINDINGS
+    - S2_RESULT_IDENTITY
+    - DOWNSTREAM_STAGE_AND_RESULT_BINDINGS
+    - N9_PREDECESSOR_CLOSURE
+  content_json_pointer_extraction_order: AFTER_WHOLE_OBJECT_IDENTITY_VERIFICATION
+  extraction_selector_is_hash_or_length_predecessor: false
+  targeted_recomputation_required:
+    - AFFECTED_FIELD_LEVEL_DAG_EDGES
+    - AFFECTED_FILE_LEVEL_DAG_EDGES
+    - AFFECTED_TOPOLOGICAL_POSITIONS
+    - AFFECTED_RESOLVER_COVERAGE_CLASSIFICATION
+    - AFFECTED_PROSPECTIVE_EXPECTED_VALUES
+  prior_four_subobject_derived_values_assumed_valid: false
+
+count_policy:
+  previous_accepted_policy_field_count: 719
+  previous_accepted_policy_file_count: 37
+  previous_counts_are_future_fixed_acceptance_totals: false
+  force_previous_totals_allowed: false
+  future_clean_build_independent_recomputation_required: true
+  changed_total_reporting: EXACT_EXPLAINED_DELTA
+  delta_scope: CONSEQUENCES_OF_THIS_EXACT_FOUR_FIELD_CORRECTION_ONLY
+  delta_beyond_correction_consequences_action: FAIL_CLOSED
+
+reference_validator_change_allowed: false
+stage_validator_contract_change_allowed: false
+stage_result_schema_change_allowed: false
+canonicalization_profile_change_allowed: false
+validator_semantics_change_allowed: false
+
+future_direct_implementation_paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+  - tests/test_p9b1q_scoped_query_ir.py
+future_direct_implementation_path_count: 2
+third_implementation_path_authorized: false
+implementation_restarted_by_materialization: false
+separate_control_build_start_required: true
+
+d5_mapping_canonical_source_closure_gap_001_reopened: false
+source_authority_changed: false
+source_authority_unresolved: false
+u1_authority_unchanged: true
+u3_authority_unchanged: true
+n9_offline_dependency_archive_set_unchanged: CLOSED_VERIFIED
+
+materialization_scope: EXACTLY_ONE_NEW_YAML_AUTHORIZATION_FILE
+materialization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-s2-actual-reference-hash-domain-correction-authorization.yml
+existing_tracked_file_change_allowed: false
+catalog_or_dag_mutation_this_turn_allowed: false
+protected_objects:
+  - rebuild-reference-evidence.py
+  - tests/test_p9b1q_scoped_query_ir.py
+  - reference-stage-semantic-validator.py
+  - stage-semantic-validator-contract.yml
+  - stage-semantic-validation-result-schema-candidate.yml
+  - object-canonicalization-and-hash-chain.yml
+  - fixtures
+  - evidence
+  - manifests
+current_turn_prohibitions:
+  - implementation
+  - n9_execution
+  - simulation
+  - evidence_refresh
+  - d5_mapping_resume
+  - staging
+  - committing
+  - pushing
