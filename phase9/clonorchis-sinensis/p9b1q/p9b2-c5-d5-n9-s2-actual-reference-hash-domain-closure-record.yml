@@ -1,0 +1,148 @@
+record_type: GOVERNANCE_CLOSURE_RECORD
+closure_record_id: P9B1Q-C5-D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CLOSURE
+target_finding: D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CONFLICT-001
+final_status: CLOSED_VERIFIED
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+public_candidate: ce0bf6dbf3c18e17baa9aaef2c869bec39d289f5
+public_parent: ef7c51d1b59b16644e0d6711a09e131125566b9d
+public_tree: 6ef8b22e068e62bdf744dcaaf214e70b8ee39908
+record_scope: GOVERNANCE_RECORD_MATERIALIZATION_ONLY
+provenance: >-
+  This record materializes the completed independent audit findings and combined
+  adjudication supplied in the closure governance authorization. Historical audit,
+  execution, and repository-preservation facts below refer to that completed chain;
+  they are not claims of a new audit, test, reproduction, or evidence refresh in
+  this materialization turn.
+closure_basis:
+  ORIGINAL_FINAL_INDEPENDENT_AUDIT:
+    result_before_supplemental_closure: EVIDENCE_INSUFFICIENT
+    all_required_sections_except_second_pass_idempotence: PASS
+    exact_remaining_gap: SECOND_PASS_IDEMPOTENCE_RAW_BYTES_AND_RESOLVER_IDENTITY
+  SUPPLEMENTAL_SECTION_10_INDEPENDENT_AUDIT:
+    result: PASS
+    second_pass_idempotence: CLOSED_VERIFIED
+    prior_pass_evidence_contradiction_count: 0
+  FINAL_COMBINED_ADJUDICATION:
+    D5_N9_S2_FINAL_INDEPENDENT_AUDIT: PASS
+    TARGET_FINDING: CLOSED_VERIFIED
+verified_closure_facts:
+  S2_CORRECTION_CONFORMANCE: PASS
+  S2_AFFECTED_FIELD_COUNT: 4
+  S2_IDENTITY_DOMAIN: WHOLE_RESOLVED_OBJECT
+  S2_RESOLVER: R06
+  S2_R07_TARGET_COUNT: 0
+  S2_SUBOBJECT_IDENTITY_REJECTED: "YES"
+  U1_PRESERVED: PASS
+  U3_PRESERVED: PASS
+  DAG_CLOSURE: PASS
+  N9_ORIGINAL_RAW_RUN_COUNT: 3
+  N9_ORIGINAL_THREE_RUN_BYTE_IDENTITY: PASS
+  N9_POSITIVE_COUNT: 18
+  N9_MINIMALITY_COUNT: 8
+  N9_NEGATIVE_COUNT: 84
+  N9_COMPILED_SCHEMA_COUNT: 13
+  N9_FIXTURE_PAIR_COUNT: 37
+  N9_VALID_FIXTURE_COUNT: 37
+  PROSPECTIVE_FIELD_POLICY_COUNT: 719
+  PROSPECTIVE_FILE_POLICY_COUNT: 37
+  PROSPECTIVE_ACTUAL_CHANGED_FIELD_COUNT: 706
+  PROSPECTIVE_ACTUAL_CHANGED_FILE_COUNT: 37
+  UNCHANGED_POLICY_FIELD_COUNT: 13
+  UNCHANGED_POLICY_FIELD_CLASSIFICATION: 10 fresh-summary + 2 S2 length + 1 sidecar length
+  D5_GLOBAL_SOURCE_CORRECTION_TESTS: 25/25 PASS
+  FROZEN_EXECUTION_COUNT_TESTS: 2/2 PASS
+  D3_PARITY_TESTS: 7/7 PASS
+  D3_NEGATIVE_CONTROLS: 4/4 PASS
+  FULL_TEST_COUNT: 198
+  FULL_TEST_PASS: 198
+  FULL_TEST_FAIL: 0
+  FULL_TEST_ERROR: 0
+  FULL_TEST_SKIPPED: 0
+second_pass_closure_facts:
+  historical_evidence_statement: >-
+    Historical second-pass raw evidence was not retained and was not
+    retrospectively fabricated. The explicitly authorized targeted reproduction
+    chain below is distinct from the historical execution.
+  HISTORICAL_SECOND_PASS_RAW_EVIDENCE_RECOVERY: EVIDENCE_INSUFFICIENT
+  HISTORICAL_POLICY_RECORD_RECOVERED: "NO"
+  authorized_plan_reproduction:
+    AUTHORIZED_PLAN_REPRODUCTION: PASS
+    PRODUCTION_POLICY_TARGET_COUNT: 719
+    EXPECTED_POLICY_TARGET_COUNT: 719
+    ALL_PLAN_MISMATCH_COUNTS: 0
+    S2_R06_TARGET_COUNT: 4
+    S2_R07_TARGET_COUNT: 0
+  attempt_1:
+    EXACT_GLOBAL_SECOND_PASS_ATTEMPT_1: EVIDENCE_INSUFFICIENT
+    CAUSE: CPYTHON_3_11_16_RUNTIME_CAPABILITY_INTEGRITY_GAP
+  runtime_qualification:
+    RUNTIME_CAPABILITY_RECOVERY: PASS
+    QUALIFIED_RUNTIME_VERSION: "3.11.16"
+    QUALIFIED_RUNTIME_EXECUTABLE_SHA256: 572900b44a1fa84bcf2b01de5147101714e395a0e01825f99dbf1b667b24db44
+  attempt_2:
+    EXACT_GLOBAL_SECOND_PASS_ATTEMPT_2: PASS
+    GLOBAL_SECOND_PASS_CALL_COUNT: 1
+    PLAN_CALL_COUNT: 1
+    EXECUTE_N9_CALL_COUNT: 1
+    REFERENCE_VALIDATOR_PROCESS_COUNT: 1
+    SECOND_PASS_CHANGED_PATH_COUNT: 0
+    PASS1_FILE_COUNT: 308
+    PASS2_FILE_COUNT: 308
+    PASS1_PASS2_RECORD_COUNT: 308
+    PASS1_PASS2_MISMATCH_COUNT: 0
+    PASS1_PASS2_BYTE_IDENTITY: PASS
+    SECOND_PASS_PLAN_BINDING: PASS
+    U1_SECOND_PASS_IDENTITY: PASS
+    U3_SECOND_PASS_IDENTITY: PASS
+evidence_identities:
+  original_independent_audit_input:
+    sha256: 48090b04eb8680cf79a71b8f50c4708016b9b63cdccc147265339c5d68a17d7b
+    byte_size: 4427457
+  original_audit_manifest:
+    sha256: 125022f0f26c7ac8b4238d8faf896e3899e72d20fdcb4eb7d0e1c01f473b5a5f
+  plan_only_blocker_evidence:
+    sha256: eb7949eb276dbf34de64e75aae50158993171b31372f0eeed68f56cd56b09996
+    byte_size: 367808
+  attempt1_runtime_blocker_evidence:
+    sha256: 706b72af7088234bd6282f7b9f7ca92b821d1ef34caa53104e81a5f678c937ba
+    byte_size: 1674580
+  runtime_capability_recovery_evidence:
+    sha256: 3cf5ebea9362aec818bdefc653557598ff88f4961358409eeac0246eb462af3c
+    byte_size: 153885
+    manifest_sha256: bc51df548b37be84adecd955f1bd1ed9eb5a2df5db1935648296a531cf8d13d4
+  second_pass_reproduction_audit_input:
+    sha256: c4f93b93c9143a909eb7ce7e6f8a83c858fb9f227f0d9657d32cdd0127df609e
+    byte_size: 3363135
+    manifest_sha256: aa6207bf12b9334346ac6dd8be515460f499a406c40215de09b60d04a97e8117
+  n9_canonical_summary_sha256: e63b8494e6c72bcd7768f113ada2fb91e6f8b0916062b7ece4ba14eedcd2d9b2
+  n9_payload_sha256: 10c6079dec2e53ca6b2cd747409c8f7c084c4e3a8ea299d17734999754c11eec
+historical_integrity:
+  HISTORICAL_FAIL_CLOSED_RECORD_PRESERVED: "YES"
+  HISTORICAL_EVIDENCE_INSUFFICIENT_RECORDS_PRESERVED: "YES"
+  FAILED_OR_INCOMPLETE_ATTEMPTS_REWRITTEN_AS_PASS: "NO"
+  RETROACTIVE_HISTORICAL_EVIDENCE_FABRICATED: "NO"
+  TARGETED_REPRODUCTION_DISTINGUISHED_FROM_HISTORICAL_EXECUTION: "YES"
+repository_preservation:
+  scope: Completed independent closure evidence chain, before this new governance record.
+  REPOSITORY_BYTES_PRESERVED: PASS
+  AUTHORITATIVE_NODE_MODULES_PRESENT: "NO"
+  TRACKED_BYTE_FILES_CHECKED: 309
+  TRACKED_BYTE_MISMATCH_COUNT: 0
+  GIT_STATUS_DIRTY_PATH_COUNT: 0
+governance_boundary:
+  closure_scope: >-
+    This closure record closes ONLY
+    D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CONFLICT-001.
+  authorization_statement: >-
+    This record does not authorize authoritative evidence refresh, D5 mapping,
+    B2 resume, new implementation, fixture changes, schema changes, validator
+    changes, or source changes.
+  EVIDENCE_REFRESH_AUTHORIZED: "NO"
+  D5_MAPPING_AUTHORIZED: "NO"
+  B2_RESUME_AUTHORIZED: "NO"
+  NEW_IMPLEMENTATION_AUTHORIZED: "NO"
+  FIXTURE_CHANGES_AUTHORIZED: "NO"
+  SCHEMA_CHANGES_AUTHORIZED: "NO"
+  VALIDATOR_CHANGES_AUTHORIZED: "NO"
+  SOURCE_CHANGES_AUTHORIZED: "NO"
