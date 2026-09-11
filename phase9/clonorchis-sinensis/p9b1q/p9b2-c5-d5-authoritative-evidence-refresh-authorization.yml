@@ -1,0 +1,368 @@
+authorization_version: '1.0'
+authorization_id: AUTH-P9B1Q-C5-D5-AUTHORITATIVE-EVIDENCE-REFRESH
+record_type: D5_AUTHORITATIVE_EVIDENCE_REFRESH_AUTHORIZATION
+status: MATERIALIZED_CONTROL_AUTHORIZATION_ONLY
+control_result: PASS
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+authorization_base: 648b75bc8d2c6185287fb18f61aff8a8ac79ace1
+expected_parent_of_authorization_base: ce0bf6dbf3c18e17baa9aaef2c869bec39d289f5
+purpose: Authorize exactly one later AUTHORITATIVE_D5_EVIDENCE_REFRESH BUILD using the already CLOSED_VERIFIED D5 correction semantics. This record does not itself execute refresh, N9, tests, audit, mapping, or P9-B2 work.
+preconditions_verified:
+  branch_head_equals_authorization_base: true
+  authorization_base_parent_matches_expected: true
+  authorization_base_delta_from_parent:
+    changed_path_count: 1
+    only_changed_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-n9-s2-actual-reference-hash-domain-closure-record.yml
+    change_kind: ADDED_GOVERNANCE_CLOSURE_RECORD_ONLY
+    scope_semantics_or_implementation_changed: false
+  closure_record:
+    path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-n9-s2-actual-reference-hash-domain-closure-record.yml
+    raw_sha256: de64cb08c1e6a72ccb6ba380e273a196f046fd4c4ffa17dbdf6f4b19a5178639
+    byte_size: 6284
+    target_finding: D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CONFLICT-001
+    final_status: CLOSED_VERIFIED
+    EVIDENCE_REFRESH_AUTHORIZED_before_this_record: 'NO'
+    D5_MAPPING_AUTHORIZED: 'NO'
+    B2_RESUME_AUTHORIZED: 'NO'
+  published_refresh_implementation:
+    path: phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+    git_blob: f3fef798d99f307dfe7f4a55709005a52d1452a8
+    identity_match: true
+    implementation_change_authorized_by_this_record: false
+  published_global_source_authorization:
+    path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-global-source-resolver-u1-u3-preservation-n9-correction-authorization.yml
+    authorization_id: AUTH-D5-GLOBAL-SOURCE-RESOLVER-U1-U3-PRESERVATION-N9-CORRECTION
+    raw_sha256: fc81d818eac44af04cd8b4ff0da149c692fad75532572f78b0fd44fe5229d18c
+    published_at_authorization_base: true
+  published_s2_authorization:
+    path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-s2-actual-reference-hash-domain-correction-authorization.yml
+    authorization_id: AUTH-D5-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CORRECTION
+    raw_sha256: 443aee183f68e7c6a929a6ee8252ea7e3288c588d72b4561a17d494fdac17634
+    published_at_authorization_base: true
+closed_scope_state:
+  D5_N9_S2_STATUS: CLOSED_VERIFIED_AND_PUBLISHED
+  target_finding: D5-N9-S2-ACTUAL-REFERENCE-HASH-DOMAIN-CONFLICT-001
+  reopened_by_this_authorization: false
+  correction_semantics_frozen: true
+exact_refresh_scope:
+  POLICY_TARGET_COUNT: 719
+  POLICY_FILE_COUNT: 37
+  EXPECTED_ACTUAL_CHANGED_FIELD_COUNT: 706
+  EXPECTED_ACTUAL_CHANGED_FILE_COUNT: 37
+  EXPECTED_UNCHANGED_POLICY_FIELD_COUNT: 13
+  expected_unchanged_classification:
+    fresh_summary_fields: 10
+    s2_length_fields: 2
+    sidecar_length_fields: 1
+  s2:
+    S2_AFFECTED_FIELD_COUNT: 4
+    S2_IDENTITY_DOMAIN: WHOLE_RESOLVED_OBJECT
+    S2_RESOLVER: R06
+    S2_R06_TARGET_COUNT: 4
+    S2_R07_TARGET_COUNT: 0
+  u1_exact_preservation: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+  u3_exact_preservation: 7750ae58d7c89215809df97ce008e9bd9638447b9b91127e456e67b5d7de1c00
+authorized_write_allowlist:
+  count: 37
+  ordering: SORTED_LEXICOGRAPHIC_ASCENDING
+  paths:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/clause-ast-shared-argument-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/diagnostic-predicate-argument-binding-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/event-frame-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/execution-binding-sidecar-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-E01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-M01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-M02.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-N01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-N02.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-Q01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-Q02.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/minimality-removal-probe-R01.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/normalized-request-shared-argument-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/object-store-index-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/queryir-emission-record-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3a-reference-override-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3b-negation-scope-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/reference-validator-execution-summary.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/semantic-validation-exposure-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s0-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s1-shared-argument-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-diagnostic-role-catalog-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s2-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s3-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validation-s4-positive.json
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/typed-result-exposure-positive.json
+  any_38th_path: FAIL_CLOSED
+target_set_binding:
+  count: 719
+  target_identity_definition: target_file + "#" + target_pointer
+  ordering: SORTED_LEXICOGRAPHIC_ASCENDING
+  canonicalization:
+    encoding: UTF-8
+    serialization: JSON
+    ensure_ascii: false
+    object_keys_sorted_recursively: true
+    array_order_preserved: true
+    separators:
+    - ','
+    - ':'
+    trailing_newline: false
+    canonical_object: sorted array of exactly 719 target identity strings
+  sha256: 412dcf0e9e600c017c62fd96abe92e322cc0b1b16ac5aa91ca07f1a3b6549704
+effective_authorized_plan_binding:
+  deterministically_materialized_without_n9_this_turn: true
+  count: 719
+  target_order: same sorted target identity order as target_set_binding
+  row_fields:
+  - target_file
+  - target_pointer
+  - source
+  - source_pointer
+  - mode
+  - resolver_id
+  - classification
+  - future_write
+  - topological_position
+  - dependencies
+  canonicalization:
+    encoding: UTF-8
+    serialization: JSON
+    ensure_ascii: false
+    object_keys_sorted_recursively: true
+    array_order_preserved: true
+    separators:
+    - ','
+    - ':'
+    trailing_newline: false
+    canonical_object: array of 719 effective plan rows projected to row_fields in sorted target order
+  sha256: f002febd68aa69a6f8a8ddeaeeef7a7b4fbe2ab8843b104abce7bdabf693d7ae
+  production_vs_independent_plan_identity: PASS
+  all_plan_mismatch_counts: 0
+  field_policy_identity: 98bece8d6daaf06d27f2ddd7d088875ae84f2c313e960d3ef69c6250f4e9482d
+  rule_contract_identity: e5360fd0c5e52a2441a4a26239d7bcfcc7a742da3278b9b191b30f402b52e5d1
+  field_dag_sha256: d4b6aca4a0bc9789fbe1837b83d03c17341ee8f82409d614acb5c3c2b779fcbf
+  file_edges_sha256: 173d2d428d2477d9dc109b5a94a7540a71431a1d853e95631a0ad282616b041b
+  topological_order_sha256: be001bdcd5d6979f082ad2d59ec53e10f804bc453e6350b490bad302afa90606
+scope_evidence_identities:
+  accepted_d5_design_archive_sha256: 9571669f9b2b711e1b855e3e92eca936a219c3b07d8744e9b526e5c6ce5694eb
+  second_pass_reproduction_audit_input_sha256: c4f93b93c9143a909eb7ce7e6f8a83c858fb9f227f0d9657d32cdd0127df609e
+  second_pass_reproduction_audit_input_byte_size: 3363135
+  plan_only_blocker_evidence_sha256: eb7949eb276dbf34de64e75aae50158993171b31372f0eeed68f56cd56b09996
+  plan_only_blocker_evidence_byte_size: 367808
+  production_authorized_plan_raw_sha256: c6dfc5bfb62551cedb23b9ebdcde58b72b688bd8021f9768a1bccacfe5155493
+  independent_expected_authorized_plan_raw_sha256: 0ad673f000b3e10623a43bd6e81b7a196f8b7c0a5ef81b4b999c87bce89b302a
+  authorized_plan_comparison_raw_sha256: 6997f6f68ec591d9860b25a6d4a068f59c34445aa2d388d3eec43ad36f156305
+  plan_source_public_candidate: ce0bf6dbf3c18e17baa9aaef2c869bec39d289f5
+  authorization_base_only_adds_closure_record_to_plan_source_candidate: true
+future_build_authorization:
+  objective: AUTHORITATIVE_D5_EVIDENCE_REFRESH
+  authorization_must_be_published_before_build_starts: true
+  BUILD_BASE: THE_PUBLIC_COMMIT_THAT_PUBLISHES_THIS_AUTHORIZATION
+  candidate_parent: BUILD_BASE
+  expected_changed_path_count: 37
+  candidate_commit_creation_after_all_build_gates: AUTHORIZED
+  candidate_commit_message: 'refresh(p9b1q): apply D5 authoritative evidence refresh'
+  remote_push_during_build: UNAUTHORIZED
+  allowed_changes: ONLY exact bytes for the 37 paths in authorized_write_allowlist
+  prohibited_changes:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/rebuild-reference-evidence.py
+  - tests
+  - schemas
+  - contracts
+  - semantic authorities
+  - authorization records
+  - historical/versioned snapshots
+  - workflows
+  - unrelated repository files
+write_mechanism_boundary:
+  ordinary_git_checkout_direct_narrow_refresh: NOT_AUTHORIZED
+  execution_snapshot:
+    object_count: 308
+    requirement: EXACT_BYTE_IDENTITY
+    purpose: isolated execution/staging only
+  authoritative_git_candidate_tree:
+    separate_from_execution_snapshot: true
+    construction:
+    - derive and execute CLOSED_VERIFIED refresh only in isolated exact 308-object snapshot
+    - obtain resulting exact bytes for authorized 37 files
+    - verify every authoritative preimage still equals expected BUILD_BASE bytes
+    - construct Git candidate changing exactly the authorized 37 files and nothing else
+    - run BUILD acceptance against that exact candidate
+    - do not push until independent AUDIT passes
+  external_harness_permissions:
+  - orchestrate
+  - copy verified bytes
+  - hash
+  - inventory
+  - create Git candidate objects
+  - package evidence
+  external_harness_semantic_rewrite: FORBIDDEN
+mandatory_evidence_retention_contract:
+  status: REQUIRED_ACCEPTANCE_CONDITION
+  pre_refresh:
+    retain_complete_308_object_raw_snapshot: true
+    inventory: pre_refresh_inventory.json
+    inventory_fields:
+    - relative_path
+    - byte_size
+    - sha256
+  effective_plan:
+    retain: effective_authorized_plan.json
+    target_count: 719
+    minimum_fields:
+    - target_file
+    - target_pointer
+    - source
+    - source_pointer
+    - mode
+    - resolver_id
+    - classification
+    - future_write
+    - dependencies/topological identity
+    must_match_target_set_sha256: 412dcf0e9e600c017c62fd96abe92e322cc0b1b16ac5aa91ca07f1a3b6549704
+    must_match_effective_plan_sha256: f002febd68aa69a6f8a8ddeaeeef7a7b4fbe2ab8843b104abce7bdabf693d7ae
+  fresh_n9:
+    execute_in_future_build: true
+    retain_complete_raw_canonical_stdout_bytes: true
+    retain_invocation_and_runtime_identity: true
+    required_counts:
+      positive: 18
+      minimality: 8
+      negative: 84
+      compiled_schema: 13
+      fixture_pairs: 37
+      valid_fixtures: 37
+    retain_canonical_summary_sha256: true
+    retain_payload_sha256: true
+  first_refresh_output:
+    retain_complete_308_object_post_refresh_raw_snapshot: true
+    inventory: post_refresh_inventory.json
+    changed_field_inventory: changed_field_inventory.json
+    changed_file_inventory: changed_file_inventory.json
+    unchanged_policy_field_inventory: unchanged_policy_field_inventory.json
+    required_counts:
+      changed_fields: 706
+      changed_files: 37
+      unchanged_policy_fields: 13
+  authoritative_candidate:
+    retain:
+    - candidate commit SHA
+    - parent SHA
+    - tree SHA
+    - exact 37 changed paths
+    - old SHA256 for every changed file
+    - new SHA256 for every changed file
+    - proof no 38th path changed
+  second_pass_idempotence:
+    execution_location: disposable copy of completed refreshed 308-object snapshot
+    retain:
+    - complete second-pass 308 raw files
+    - pass1 inventory
+    - pass2 inventory
+    - 308-record per-file identity comparison
+    - second-pass changed-path return/result
+    - second-pass effective-plan binding
+    required:
+      second_pass_changed_path_count: 0
+      byte_identity_308_of_308: PASS
+      U1_unchanged: true
+      U3_unchanged: true
+  test_logs:
+    retain_raw_stdout_stderr_for:
+    - D5 global correction tests
+    - FrozenExecutionCount tests
+    - D3 parity tests
+    - D3 four negative controls
+    - full specified suite
+  repository_candidate_preservation:
+    retain:
+    - base identity
+    - candidate identity
+    - unauthorized changed path count
+    - node_modules absence
+    - external dependency origins
+    - worktree/index status as applicable
+future_build_acceptance_contract:
+  result_name_on_success: BUILD_VERIFIED_CANDIDATE
+  required:
+    POLICY_TARGET_COUNT: 719
+    POLICY_FILE_COUNT: 37
+    ACTUAL_CHANGED_FIELD_COUNT: 706
+    ACTUAL_CHANGED_FILE_COUNT: 37
+    UNCHANGED_POLICY_FIELD_COUNT: 13
+    S2_whole_object_R06_conformance: PASS
+    U1_preservation: PASS
+    U3_preservation: PASS
+    fresh_N9: PASS
+    candidate_changed_path_count: 37
+    unauthorized_path_count: 0
+    second_pass_changed_path_count: 0
+    second_pass_byte_identity_308_of_308: PASS
+    D5GlobalSourceCorrectionTests: 25/25 PASS
+    FrozenExecutionCountContractCorrectionTests: 2/2 PASS
+    ReferenceProductionParityTests: 7/7 PASS
+    D3_negative_controls: 4/4 PASS
+    full_specified_suite: 198/198; 0 fail; 0 error; 0 skipped
+    all_mandatory_raw_evidence_retained: true
+    candidate_pushed: false
+  semantic_contradiction_or_unauthorized_path: FAIL_CLOSED
+  required_raw_evidence_missing: EVIDENCE_INSUFFICIENT
+independent_audit_contract:
+  required_count: 1
+  normal_independent_audit_only: true
+  must_verify:
+  - candidate Git identity
+  - 37-path exact write scope
+  - 719 / 706 / 13 field accounting
+  - S2 / U1 / U3 / DAG-plan conformance
+  - fresh N9 raw identity
+  - post-refresh authoritative bytes
+  - second-pass 308/308 raw byte identity
+  - 25/25 + 2/2 + 7/7 + 4/4 + 198/198
+  - no unauthorized repository mutation
+  allowed_outcomes:
+  - PASS
+  - FAIL_CLOSED
+  - EVIDENCE_INSUFFICIENT
+  publication_eligibility_if_pass: true
+process_efficiency_rules:
+  AUDIT_EVIDENCE_RECOVERY_LIMIT: 1
+  NO_RECURSIVE_AUDIT_OF_AUDIT: 'YES'
+  NO_REOPEN_PREVIOUSLY_PASSED_GATES_WITHOUT_DIRECT_CONTRADICTION: 'YES'
+  EVIDENCE_RETENTION_SPEC_REQUIRED_BEFORE_EXECUTION: 'YES'
+  missing_evidence_after_one_read_only_recovery: RETURN_TO_CONTROL_FOR_ONE_TARGETED_REPRODUCTION_AUTHORIZATION_ONLY
+post_refresh_boundary:
+  D5_MAPPING_AUTHORIZED: 'NO'
+  B2_RESUME_AUTHORIZED: 'NO'
+  separate_readiness_control_required_after_refresh_publication: true
+current_turn_prohibitions:
+  refresh_execution: 'NO'
+  N9_execution: 'NO'
+  tests: 'NO'
+  implementation_change: 'NO'
+  evidence_write: 'NO'
+  candidate_commit: 'NO'
+  push: 'NO'
+  pull_request: 'NO'
+  D5_mapping: 'NO'
+  P9_B2_resume: 'NO'
+current_turn_materialization:
+  repository_new_file_count: 1
+  repository_modified_existing_file_count: 0
+  repository_new_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-authoritative-evidence-refresh-authorization.yml
+  path_absent_at_authorization_base_before_materialization: true
+  commit_created: 'NO'
+  push_performed: 'NO'
+  pr_created: 'NO'
