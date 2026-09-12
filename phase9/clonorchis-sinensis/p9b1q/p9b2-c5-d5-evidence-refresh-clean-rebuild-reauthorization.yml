@@ -1,0 +1,123 @@
+authorization_id: AUTH-P9B1Q-C5-D5-EVIDENCE-REFRESH-CLEAN-REBUILD
+authorization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-evidence-refresh-clean-rebuild-reauthorization.yml
+role: D5_EVIDENCE_REFRESH_CLEAN_REBUILD_REAUTHORIZER
+mode:
+- CONTROL_ONLY
+- REAUTHORIZATION_MATERIALIZATION_ONLY
+- NO_BUILD
+- NO_TEST
+- NO_PUSH
+- NO_MAPPING
+- NO_B2
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+public_base: 88416f49d02063d3623939b9208663ee5468381f
+history:
+  prior_build_attempt_1: FAIL_CLOSED
+  prior_recovery_attempt: EVIDENCE_INSUFFICIENT
+  historical_raw_evidence_recovery: EXHAUSTED
+  semantic_failure_established: false
+  fsync_test_retry_executed: false
+  preserve_prior_results_without_relabeling: true
+  basis: User-supplied CONTROL authority; not a claim of new historical verification.
+purpose: Authorize exactly one clean rebuild of the D5 authoritative evidence refresh because surviving historical
+  raw evidence was insufficient for recovery.
+authorized_clean_rebuild_operations:
+- first refresh
+- first fresh N9
+- second pass
+- second-pass fresh N9
+- required tests
+frozen_semantic_scope:
+  policy_target_count: 719
+  policy_file_count: 37
+  expected_changed_field_count: 706
+  expected_changed_file_count: 37
+  expected_unchanged_policy_field_count: 13
+  target_set_sha256: 412dcf0e9e600c017c62fd96abe92e322cc0b1b16ac5aa91ca07f1a3b6549704
+  effective_plan_sha256: f002febd68aa69a6f8a8ddeaeeef7a7b4fbe2ab8843b104abce7bdabf693d7ae
+  s2_r06_target_count: 4
+  s2_r07_target_count: 0
+  u1_exact_preservation_required: true
+  u3_exact_preservation_required: true
+  prohibited_changes:
+  - implementation
+  - tests
+  - schemas
+  - contracts
+  - workflows
+mandatory_durable_checkpoints:
+  require_durable_downloadable_packages_before_proceeding: true
+  checkpoint_1:
+    when: after first refresh, before second pass
+    package: D5_REFRESH_CHECKPOINT_1_FIRST_PASS.zip
+    minimum_contents:
+    - complete pre-refresh 308 raw objects
+    - complete post-refresh 308 raw objects
+    - pre/post inventories
+    - effective_authorized_plan.json
+    - first fresh N9 raw stdout
+    - changed-field inventory
+    - changed-file inventory
+    - unchanged-13 inventory
+    - exact 37 post-refresh file bytes
+    - manifest
+  checkpoint_2:
+    when: after second pass, before tests
+    package: D5_REFRESH_CHECKPOINT_2_SECOND_PASS.zip
+    minimum_contents:
+    - all CHECKPOINT_1 evidence
+    - complete second-pass 308 raw objects
+    - second-pass inventory
+    - 308-record pass1/pass2 identity
+    - second-pass result
+    - second-pass plan binding
+    - second fresh N9 raw stdout
+    - runtime identity
+    - external Node dependency identity
+    - manifest
+  on_either_package_not_successfully_created_and_verified:
+    build: EVIDENCE_INSUFFICIENT
+    action: STOP before proceeding
+future_test_environment:
+  before_tests: Qualify exactly ONE fsync-capable external scratch root.
+  environment:
+    TMPDIR: <qualified external scratch root>
+    TMP: <same qualified external scratch root>
+    TEMP: <same qualified external scratch root>
+  required_real_fsync_probes:
+  - file
+  - directory
+  - replace
+  - rollback
+  required_probe_result: PASS
+required_test_gates:
+  D5GlobalSourceCorrectionTests: 25/25 PASS
+  FrozenExecutionCountContractCorrectionTests: 2/2 PASS
+  ReferenceProductionParityTests: 7/7 PASS
+  D3 negative controls: 4/4 PASS
+  full specified suite: 198/198 PASS
+candidate:
+  only_after_all_gates_pass: true
+  local_commit_count: 1
+  commit_message: 'refresh(p9b1q): apply D5 authoritative evidence refresh'
+  required_parent: THE_PUBLIC_COMMIT_THAT_PUBLISHES_THIS_REAUTHORIZATION
+  expected_changed_paths: 37
+  unauthorized_paths: 0
+  push_authorized: false
+process_limit:
+  clean_rebuild_attempt_limit: 1
+  recursive_recovery_chain_allowed: false
+  on_clean_rebuild_failure: Return to CONTROL; do not automatically start another rebuild.
+boundaries:
+  remote_push_authorized: false
+  d5_mapping_authorized: false
+  b2_resume_authorized: false
+control_turn_execution:
+  build_executed: false
+  tests_executed: false
+  commit_created: false
+  push_performed: false
+  new_file_count: 1
+  modified_existing_file_count: 0
+  stop: true
