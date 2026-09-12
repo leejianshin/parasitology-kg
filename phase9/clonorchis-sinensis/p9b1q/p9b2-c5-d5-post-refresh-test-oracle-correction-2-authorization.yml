@@ -1,0 +1,146 @@
+role: D5_POST_REFRESH_TEST_ORACLE_CORRECTION_2_CONTROLLER
+mode:
+  - CONTROL_ONLY
+  - BOUNDED_TWO_METHOD_ORACLE_CORRECTION_AUTHORIZATION
+  - NO_REFRESH
+  - NO_N9
+  - NO_TEST
+  - NO_COMMIT
+  - NO_PUSH
+  - NO_MAPPING
+  - NO_B2
+
+control_result: PASS
+public_base: 327be356901a215bb43f15e29389fb3427e28c54
+authorization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-test-oracle-correction-2-authorization.yml
+
+history:
+  prior_correction_build: FAIL_CLOSED
+  prior_failure_test: RefreshProducerConformanceTests.test_narrow_r3a_replay_negative_semantics_and_idempotency
+  failure_class: POST_REFRESH_STATE_DEPENDENT_TEST_ORACLE_INVALIDATION
+  semantic_refresh_failure_established: false
+  preserve_prior_failure: true
+
+admitted_durable_evidence:
+  checkpoint_1_sha256: b50f7791ce4b8daebc8406fdefee6e4fc5c53155efcd59c488d4d83f2f84dc96
+  checkpoint_2_sha256: cf0c98b2c755735513f3229b3968682ebf8800e23494dbd77b6e78ed2b1ba6bb
+  checkpoint_raw_sha256_verified: true
+  admitted_without_rerun: true
+  preserved_facts:
+    policy_target_count: 719
+    policy_file_count: 37
+    changed_field_count: 706
+    changed_file_count: 37
+    unchanged_policy_field_count: 13
+    second_pass_changed_path_count: 0
+    second_pass_byte_identity: 308/308
+    s2: PASS
+    u1_u3: PASS
+  refresh_rerun_performed: false
+  second_pass_rerun_performed: false
+  n9_rerun_performed: false
+
+bounded_oracle_set:
+  test_path: tests/test_p9b1q_scoped_query_ir.py
+  state_dependent_sorted_policy_assertion_count: 2
+  authorized_state_dependent_oracle_method_count: 2
+  authorized_set_complete_for_exact_assertion_class: true
+  authorized_methods:
+    - RefreshProducerConformanceTests.test_complete_snapshot_positive_control_matches_enumerated_root
+    - RefreshProducerConformanceTests.test_narrow_r3a_replay_negative_semantics_and_idempotency
+  method_1_authorized: true
+  method_2_authorized: true
+  scope_constraints:
+    imports_changed: false
+    class_helper_added: false
+    third_test_method_changed: false
+    production_code_changed: false
+
+method_1_required_behavior:
+  preserve_already_validated_dual_state_behavior: true
+  already_current:
+    starting_bytes: current refreshed bytes
+    required_result: []
+  synthetic_stale:
+    location: fresh disposable simulation only
+    first_required_result: sorted(policy)
+    second_required_result: []
+
+method_2_required_behavior:
+  preserve_existing_independent_semantic_and_hash_checks: true
+  states_required:
+    already_current:
+      starting_bytes: current refreshed bytes
+      required_result: []
+      expected_hashes_and_semantic_invariants_must_pass: true
+    synthetic_stale:
+      location: fresh disposable simulation only
+      stale_policy_target_field_count: 4
+      stale_policy_targets:
+        - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3a-reference-override-positive.json
+          pointers:
+            - /objects/minimality_probes/0/candidate_semantic_object_set_sha256
+            - /objects/minimality_probes/1/candidate_semantic_object_set_sha256
+            - /objects/minimality_probes/2/candidate_semantic_object_set_sha256
+        - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml
+          pointers:
+            - /base_objects/11/canonical_sha256
+      stale_bytes_required_in:
+        - frozen_bytes trusted preimage
+        - corresponding disposable root files
+      source_objects_remain_unchanged: true
+      first_required_result: sorted(policy)
+      second_required_result: []
+      original_expected_hashes_enforced: true
+      negative_fixture_case_preservation_enforced: true
+      non_policy_byte_preservation_enforced: true
+  forbidden_assertion: assert result in ([], sorted(policy))
+  production_behavior_change_allowed: false
+
+manifest_rebind:
+  path: phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+  json_pointer: /protected_files/tests~1test_p9b1q_scoped_query_ir.py
+  required_value: SHA256_RAW_FILE_BYTES(final corrected tests/test_p9b1q_scoped_query_ir.py)
+  field_count: 1
+  additional_downstream_target_count: 0
+
+final_candidate_scope:
+  reconstruct_verified_refresh_paths_from_checkpoint_2: true
+  verified_refresh_path_count: 37
+  corrected_test_path_count: 1
+  design_manifest_already_within_verified_refresh_paths: true
+  total_changed_path_count: 38
+  unauthorized_changed_path_count: 0
+
+test_gates:
+  execution_order:
+    - entire RefreshProducerConformanceTests
+    - exactly one complete specified suite
+  complete_specified_suite:
+    total: 198
+    pass: 198
+    fail: 0
+    error: 0
+    skipped: 0
+  iterative_per_failure_correction_loop_authorized: false
+
+boundaries:
+  production_change_authorized: false
+  first_refresh_rerun_authorized: false
+  second_pass_rerun_authorized: false
+  n9_rerun_authorized: false
+  local_candidate_commit_authorized_after_all_tests_pass: true
+  remote_push_authorized: false
+  d5_mapping_authorized: false
+  b2_resume_authorized: false
+
+current_turn:
+  only_new_authorization_file: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-test-oracle-correction-2-authorization.yml
+  other_current_turn_mutations_authorized: false
+  refresh_executed: false
+  second_pass_executed: false
+  n9_executed: false
+  tests_executed: false
+  commit_created: false
+  push_performed: false
+  stop: true
