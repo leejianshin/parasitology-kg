@@ -1,0 +1,103 @@
+role: D5_FINAL_FULL_SUITE_ENVIRONMENT_COMPLETION_CONTROLLER
+mode: [CONTROL_ONLY, ONE_ENVIRONMENT_COMPLETION_RETRY_AUTHORIZATION, NO_CODE_CHANGE, NO_TEST_CHANGE, NO_REFRESH, NO_SECOND_PASS, NO_N9, NO_TEST_EXECUTION, NO_COMMIT, NO_PUSH, NO_MAPPING, NO_B2]
+control_result: PASS
+public_base: 28ee03a48b55e0a81ca1f4a6eede79076c5a9f83
+authorization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-final-full-suite-environment-completion-authorization.yml
+prior_results:
+  build: FAIL_CLOSED
+  targeted_gate: 20/20 PASS
+  full_suite_observed: {passed: 129, failures: 0, errors: 0, classes_skipped: 1}
+  failure_class: TEST_RUNNER_EXTERNAL_INPUT_CONFIGURATION_OMISSION
+  skipped_class: D5GlobalSourceCorrectionTests
+  recorded_skip_reason: CONTROL design and offline archive paths are required
+  semantic_failure_established: false
+  production_failure_established: false
+  test_oracle_failure_established: false
+admitted_durable_results:
+  checkpoint_1_sha256: b50f7791ce4b8daebc8406fdefee6e4fc5c53155efcd59c488d4d83f2f84dc96
+  checkpoint_2_sha256: cf0c98b2c755735513f3229b3968682ebf8800e23494dbd77b6e78ed2b1ba6bb
+  write_path_closure_audit_sha256: e7f4874914fcdd926fedb65161ca87b50c7a5bb93519fe9f2fcc39e524c67244
+  raw_hashes_verified: true
+  targeted_20_tests_admitted_without_rerun: true
+environment_completion:
+  only_new_environment_inputs:
+    D5_GLOBAL_DESIGN_ARCHIVE:
+      required_file: D5_GLOBAL_CLOSURE_FINAL_2_AUDIT.zip
+      required_sha256: 9571669f9b2b711e1b855e3e92eca936a219c3b07d8744e9b526e5c6ce5694eb
+      sha256_verified: true
+      retained_container: /workspace/scratch/65644c0da774/prior/inputs/D5_CLEAN_REBUILD_FAIL_CLOSED_EVIDENCE.zip
+      exact_member: original_inputs/D5_GLOBAL_CLOSURE_FINAL_2_AUDIT.zip
+      recovery: Extract this existing member byte-for-byte outside the candidate and bind its actual filesystem path; verify the required hash before use.
+    D5_GLOBAL_OFFLINE_ARCHIVE:
+      required_file: d5-n9-offline-archive-set.tar
+      required_sha256: e42aa5fa9184694ad92be90ab22a56da463a6f49ead87ecab8e2c6dd5be43c2c
+      sha256_verified: true
+      retained_path: /workspace/scratch/65644c0da774/deps/d5-n9-offline-archive-set.tar
+  replacement_archive_authorized: false
+  repacking_authorized: false
+  regenerated_substitute_authorized: false
+preserve_other_environment:
+  qualification_source: retained write-path closure audit qualification.json and admitted runtime/Node identity files
+  python_runtime: /workspace/scratch/65644c0da774/runtime/source/Python-3.11.16/python
+  python_runtime_sha256: b021fb9f1ee94becd5fb4f08968d96b7c6fc6f93b420cc73dc72c61b79feaf82
+  node_sha256: bc17c508ffeed0ec622934f9b7fa72f8e78da65350e63c3eceb56fa688aa5e12
+  P9B1Q_D3_NODE_MODULES: /workspace/scratch/65644c0da774/external-node/node_modules
+  NODE_PATH: /workspace/scratch/65644c0da774/external-node/node_modules
+  PYTHONPATH: /workspace/scratch/65644c0da774/deps/python-packages
+  TMPDIR: /workspace/scratch/65644c0da774/closure/test-tmp
+  TMP: /workspace/scratch/65644c0da774/closure/test-tmp
+  TEMP: /workspace/scratch/65644c0da774/closure/test-tmp
+  fsync_qualified_scratch_root: /workspace/scratch/65644c0da774/closure/test-tmp
+  dependency_upgrade_authorized: false
+  runner_logic_modification_authorized: false
+  all_other_previously_qualified_environment_preserved: true
+worktree:
+  stopped_path: /workspace/scratch/65644c0da774/closure/repo
+  survives_at_control_time: true
+  local_head_matches_public_base: true
+  retained_pretest_hash_inventory_mismatches: 0
+  candidate_changed_path_count: 38
+  unauthorized_changed_path_count_required: 0
+  test_bytes_identical_to_prior_stopped_build_required: true
+  production_bytes_identical_to_prior_stopped_build_required: true
+  if_missing: Mechanically reconstruct only from retained write-path closure audit package.
+  before_retry: Verify exact retained candidate bytes and 38 authorized paths again.
+authorized_retry:
+  full_suite_retry_limit: 1
+  suite: Complete previously specified suite in tests/test_p9b1q_scoped_query_ir.py
+  standalone_targeted_gate_rerun_authorized: false
+  complete_suite_membership_must_not_be_reduced: true
+  full_test_count: 198
+  full_test_pass: 198
+  full_test_fail: 0
+  full_test_error: 0
+  full_test_skipped: 0
+  any_difference: FAIL_CLOSED; STOP
+  additional_recovery_loop_authorized: false
+candidate:
+  local_commit_only_after_198_of_198_pass: true
+  local_candidate_commit_count: 1
+  required_parent: The PUBLIC COMMIT that publishes this exact authorization.
+  changed_paths_relative_to_required_parent: 38
+  unauthorized_paths: 0
+  authorization_is_in_parent_not_candidate_delta: true
+  push_authorized: false
+boundaries:
+  code_change_authorized: false
+  test_change_authorized: false
+  first_refresh_rerun_authorized: false
+  second_pass_rerun_authorized: false
+  n9_rerun_authorized: false
+  targeted_20_test_rerun_authorized: false
+  full_suite_retry_limit: 1
+  remote_push_authorized: false
+  d5_mapping_authorized: false
+  b2_resume_authorized: false
+current_turn:
+  only_authorization_file_created: true
+  environment_inputs_set: false
+  tests_executed: false
+  refresh_second_pass_or_n9_executed: false
+  code_or_test_changed: false
+  commit_or_push_performed: false
+  stop: true
