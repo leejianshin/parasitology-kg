@@ -1,0 +1,643 @@
+authorization_id: AUTH-P9B1Q-C5-D5-EVIDENCE-REFRESH-FSYNC-TEST-RECOVERY
+authorization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-evidence-refresh-fsync-test-recovery-authorization.yml
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+public_base: 1a6dfb090183d6576e6d8b6bbf3ea0fb751c49c8
+role: D5_EVIDENCE_REFRESH_FSYNC_TEST_RECOVERY_CONTROLLER
+mode: RECOVERY_AUTHORIZATION_MATERIALIZATION_ONLY
+build_attempt_1: FAIL_CLOSED
+observed_failure_class: TEST_EXECUTION_FILESYSTEM_FSYNC_IO_ERROR
+implementation_correctness_established: false
+prior_failure_stderr_sha256: 0982e105274809dbafae9ff01ea5113c95e7dee5bd616f22df4e7165e764b7f7
+fsync_recovery_attempt_limit: 1
+current_control_execution:
+  fsync_probe: false
+  tests: false
+  refresh: false
+  commit: false
+  push: false
+  pr: false
+future_recovery_authorization:
+  first_refresh_reuse: true
+  second_pass_reuse: true
+  reuse_requires_byte_identical_surviving_raw_evidence: true
+  first_refresh_rerun: false
+  second_pass_rerun: false
+  fsync_scratch_qualification: true
+  d5_test_gate_retry_limit: 1
+  remaining_tests_only_after_d5_pass: true
+  local_candidate_commit_only_after_all_gates_pass: true
+  candidate_commit_parent: PUBLIC COMMIT that publishes this recovery authorization
+  candidate_commit_message: 'refresh(p9b1q): apply D5 authoritative evidence refresh'
+  remote_push: false
+  pr: false
+  d5_mapping: false
+  b2_resume: false
+source_instruction:
+  filename: 粘贴的文本 (1)(20260912-043326).txt
+  raw_sha256: 461591ff8a75b45200f47a806f90c8decaf1be184fbd80daaa7eade43e7dcf7e
+  status: USER_SUPPLIED_AUTHORITY; historical facts are not independently reverified in this CONTROL turn
+operative_terms_format: The following literal block preserves the complete user instruction with line endings normalized
+  to LF. All operative requirements and stop conditions apply; section 17 is a return template, not evidence of
+  execution.
+operative_terms: |
+  # P9-B1Q｜C5 D5
+  # AUTHORITATIVE EVIDENCE REFRESH
+  # TEST FILESYSTEM FSYNC RECOVERY AUTHORIZATION ONLY
+  
+  ROLE=
+  D5_EVIDENCE_REFRESH_FSYNC_TEST_RECOVERY_CONTROLLER
+  
+  MODE=
+  CONTROL_ONLY
+  RECOVERY_AUTHORIZATION_MATERIALIZATION_ONLY
+  NO_REFRESH_RERUN
+  NO_SECOND_PASS_RERUN
+  NO_TEST_EXECUTION
+  NO_COMMIT
+  NO_PUSH
+  NO_MAPPING
+  NO_B2
+  
+  
+  ================================================
+  0. BASE / PRIOR RESULT
+  ================================================
+  
+  REPOSITORY=
+  leejianshin/parasitology-kg
+  
+  BRANCH=
+  agent/p9-b2
+  
+  PUBLIC_BASE=
+  1a6dfb090183d6576e6d8b6bbf3ea0fb751c49c8
+  
+  PRIOR_BUILD_RESULT=
+  FAIL_CLOSED
+  
+  PRIOR_BUILD_FAILURE_GATE=
+  D5GlobalSourceCorrectionTests
+  
+  PRIOR_D5_TEST_RESULT=
+  24/25 PASS
+  1 ERROR
+  0 FAIL
+  0 SKIPPED
+  
+  FAILING_TEST=
+  test_narrow_s2_path_rejects_old_subobject_rules
+  
+  FAILURE_SIGNATURE=
+  os.fsync -> OSError errno 5 Input/output error
+  followed by rollback fsync failure
+  ending in ROLLBACK_FAILED
+  
+  PRIOR_FAILURE_STDERR_SHA256=
+  0982e105274809dbafae9ff01ea5113c95e7dee5bd616f22df4e7165e764b7f7
+  
+  
+  ================================================
+  1. GOVERNANCE INTERPRETATION
+  ================================================
+  
+  Preserve the prior BUILD result exactly as:
+  
+  BUILD_ATTEMPT_1=
+  FAIL_CLOSED
+  
+  Do NOT rewrite it as PASS.
+  
+  The new authorization does NOT overturn the failed gate.
+  
+  It authorizes exactly one NEW recovery attempt whose purpose is to
+  determine whether the failed test gate can execute correctly on an
+  fsync-capable external test scratch filesystem.
+  
+  The observed failure is classified for recovery purposes as:
+  
+  OBSERVED_FAILURE_CLASS=
+  TEST_EXECUTION_FILESYSTEM_FSYNC_IO_ERROR
+  
+  This is NOT yet authorization to classify the implementation as correct.
+  
+  Only a successful qualified rerun may establish the test gate.
+  
+  
+  ================================================
+  2. ADMITTED DURABLE CHECKPOINT
+  ================================================
+  
+  The following completed BUILD facts may be reused without rerun,
+  provided their surviving raw artifacts remain byte-identical.
+  
+  POLICY_TARGET_COUNT=719
+  POLICY_FILE_COUNT=37
+  
+  ACTUAL_CHANGED_FIELD_COUNT=706
+  ACTUAL_CHANGED_FILE_COUNT=37
+  UNCHANGED_POLICY_FIELD_COUNT=13
+  
+  TARGET_SET_SHA256=
+  412dcf0e9e600c017c62fd96abe92e322cc0b1b16ac5aa91ca07f1a3b6549704
+  
+  EFFECTIVE_PLAN_SHA256=
+  f002febd68aa69a6f8a8ddeaeeef7a7b4fbe2ab8843b104abce7bdabf693d7ae
+  
+  FIRST_N9_CANONICAL_STDOUT_SHA256=
+  e63b8494e6c72bcd7768f113ada2fb91e6f8b0916062b7ece4ba14eedcd2d9b2
+  
+  FIRST_N9_PAYLOAD_SHA256=
+  10c6079dec2e53ca6b2cd747409c8f7c084c4e3a8ea299d17734999754c11eec
+  
+  SECOND_N9_CANONICAL_STDOUT_SHA256=
+  e63b8494e6c72bcd7768f113ada2fb91e6f8b0916062b7ece4ba14eedcd2d9b2
+  
+  SECOND_N9_PAYLOAD_SHA256=
+  10c6079dec2e53ca6b2cd747409c8f7c084c4e3a8ea299d17734999754c11eec
+  
+  S2_R06_TARGET_COUNT=4
+  S2_R07_TARGET_COUNT=0
+  
+  U1_PRESERVATION=PASS
+  U3_PRESERVATION=PASS
+  
+  SECOND_PASS_CHANGED_PATH_COUNT=0
+  PASS1_PASS2_RECORD_COUNT=308
+  PASS1_PASS2_MISMATCH_COUNT=0
+  PASS1_PASS2_BYTE_IDENTITY=PASS
+  SECOND_PASS_PLAN_BINDING=PASS
+  U1_SECOND_PASS_IDENTITY=PASS
+  U3_SECOND_PASS_IDENTITY=PASS
+  
+  CANDIDATE_PRECOMMIT_CHANGED_PATH_COUNT=37
+  CANDIDATE_PRECOMMIT_UNAUTHORIZED_PATH_COUNT=0
+  
+  
+  These gates MUST NOT be rerun merely for convenience.
+  
+  If their raw evidence cannot be recovered intact:
+  
+  RECOVERY_BUILD=
+  EVIDENCE_INSUFFICIENT
+  
+  STOP.
+  
+  
+  ================================================
+  3. EXACT NEW AUTHORIZATION FILE
+  ================================================
+  
+  Materialize exactly ONE new file:
+  
+  phase9/clonorchis-sinensis/p9b1q/
+  p9b2-c5-d5-evidence-refresh-fsync-test-recovery-authorization.yml
+  
+  AUTHORIZATION_ID=
+  AUTH-P9B1Q-C5-D5-EVIDENCE-REFRESH-FSYNC-TEST-RECOVERY
+  
+  No existing file modification.
+  
+  
+  ================================================
+  4. AUTHORIZED ENVIRONMENT RECOVERY
+  ================================================
+  
+  Authorize exactly ONE recovery BUILD attempt.
+  
+  Before rerunning any test, it must qualify ONE external scratch
+  filesystem for test transaction/temp-file use.
+  
+  The authoritative Git checkout and the 37 candidate bytes MUST NOT be
+  semantically modified by this qualification.
+  
+  Allowed environment change:
+  
+  - set TMPDIR
+  - set TMP
+  - set TEMP
+  
+  to one explicitly qualified external scratch root.
+  
+  Allowed examples include /tmp or /dev/shm, but only after the exact
+  selected root passes qualification.
+  
+  No monkeypatching.
+  
+  No replacement of os.fsync.
+  
+  No mocking fsync success.
+  
+  No implementation change.
+  
+  No test change.
+  
+  No Python source patch.
+  
+  No runtime rebuild merely to bypass the prior result.
+  
+  
+  ================================================
+  5. FSYNC FILESYSTEM QUALIFICATION
+  ================================================
+  
+  In the exact scratch filesystem that will later be used by the tests,
+  perform real OS operations.
+  
+  Required probes:
+  
+  A.
+  regular file:
+  create
+  write
+  flush
+  os.fsync(file_fd)
+  
+  B.
+  directory:
+  create directory
+  open directory fd
+  os.fsync(directory_fd)
+  
+  C.
+  transaction-style replace:
+  create old target
+  fsync target
+  create replacement
+  fsync replacement
+  os.replace replacement -> target
+  fsync resulting target
+  fsync parent directory
+  
+  D.
+  rollback-style replace:
+  create backup
+  fsync backup
+  replace/restore target
+  fsync restored target
+  fsync parent directory
+  
+  E.
+  repeat simple file + directory fsync probe at least 3 times within the
+  same selected scratch root.
+  
+  Every syscall must return successfully.
+  
+  Record:
+  
+  qualified scratch absolute path
+  filesystem/mount identity where obtainable
+  TMPDIR/TMP/TEMP exact values
+  Python executable identity
+  probe stdout/stderr
+  probe operation sequence
+  
+  
+  If no permitted scratch root passes:
+  
+  RECOVERY_BUILD=
+  EVIDENCE_INSUFFICIENT
+  
+  Do NOT rerun tests.
+  
+  STOP.
+  
+  
+  ================================================
+  6. RUNTIME BOUNDARY
+  ================================================
+  
+  Use the already-qualified exact Python runtime if still available.
+  
+  Do NOT rebuild Python in this recovery authorization.
+  
+  Require before tests:
+  
+  Python version exact
+  os.fsync present
+  os.symlink present
+  real fsync qualification PASS
+  
+  If the previously qualified runtime is unavailable or identity-drifted:
+  
+  RECOVERY_BUILD=
+  EVIDENCE_INSUFFICIENT
+  
+  Return to CONTROL.
+  
+  Do not silently substitute another runtime.
+  
+  
+  ================================================
+  7. NODE DEPENDENCY BOUNDARY
+  ================================================
+  
+  Reuse the exact verified external Node dependency root.
+  
+  Set BOTH:
+  
+  P9B1Q_COUNT_NODE_MODULES=
+  <same exact external root>
+  
+  P9B1Q_D3_NODE_MODULES=
+  <same exact external root>
+  
+  No authoritative node_modules.
+  
+  No ambient/global dependency fallback.
+  
+  
+  ================================================
+  8. EXACT TEST RETRY AUTHORIZATION
+  ================================================
+  
+  After filesystem qualification:
+  
+  rerun D5GlobalSourceCorrectionTests exactly ONCE.
+  
+  Required:
+  
+  25/25 PASS
+  0 FAIL
+  0 ERROR
+  0 SKIPPED
+  
+  
+  The retry must use the qualified test scratch filesystem.
+  
+  Retain complete raw stdout/stderr.
+  
+  
+  If the retry has ANY failure or error:
+  
+  RECOVERY_BUILD=
+  FAIL_CLOSED
+  
+  STOP.
+  
+  Do not select a second scratch filesystem and try again.
+  
+  Do not perform a third BUILD attempt automatically.
+  
+  
+  ================================================
+  9. CONTINUE REMAINING TEST GATES IF AND ONLY IF D5 RETRY PASSES
+  ================================================
+  
+  Then execute exactly once:
+  
+  FrozenExecutionCountContractCorrectionTests
+  required: 2/2 PASS
+  
+  ReferenceProductionParityTests
+  required: 7/7 PASS
+  
+  D3 negative controls
+  required: 4/4 PASS
+  
+  full specified suite
+  required:
+  198/198 PASS
+  0 fail
+  0 error
+  0 skipped
+  
+  
+  Retain complete raw stdout/stderr.
+  
+  Any failed required test gate:
+  
+  FAIL_CLOSED
+  STOP.
+  
+  
+  ================================================
+  10. CANDIDATE STATE RECOVERY
+  ================================================
+  
+  Prefer reuse of the exact surviving 37-path precommit candidate state.
+  
+  If the working state itself no longer survives, mechanical
+  reconstruction is allowed ONLY from the already-retained verified
+  post-refresh raw bytes.
+  
+  Allowed:
+  
+  - clean checkout of PUBLIC_BASE
+  - copy the exact retained post-refresh bytes for the authorized 37 paths
+  - verify old/new hashes
+  - verify exactly 37 changed paths
+  
+  Forbidden:
+  
+  - rerunning first refresh
+  - rerunning second refresh
+  - re-deriving replacement values with a new semantic procedure
+  
+  
+  Required before candidate commit:
+  
+  changed paths=37
+  unauthorized paths=0
+  
+  implementation unchanged
+  tests unchanged
+  schemas unchanged
+  contracts unchanged
+  authorization records unchanged
+  workflows unchanged
+  
+  
+  ================================================
+  11. CANDIDATE COMMIT
+  ================================================
+  
+  Only after all test gates PASS:
+  
+  create exactly one LOCAL commit:
+  
+  refresh(p9b1q): apply D5 authoritative evidence refresh
+  
+  Parent must be the PUBLIC COMMIT that publishes this recovery
+  authorization.
+  
+  DO NOT PUSH.
+  
+  
+  ================================================
+  12. EVIDENCE RETENTION
+  ================================================
+  
+  The final audit package must preserve BOTH histories:
+  
+  A.
+  original failed BUILD attempt:
+  - FAIL_CLOSED report
+  - original D5 test stdout/stderr
+  - stderr SHA256
+  - original environment identity
+  
+  B.
+  recovery attempt:
+  - fsync filesystem qualification evidence
+  - selected TMPDIR/TMP/TEMP
+  - retried D5 25-test raw logs
+  - remaining test logs
+  - reused first-refresh evidence
+  - reused second-pass 308/308 evidence
+  - candidate identity
+  - 37-path diff
+  - manifest
+  
+  
+  The historical failed attempt must not be deleted or relabeled.
+  
+  
+  ================================================
+  13. FINAL RECOVERY BUILD OUTCOME
+  ================================================
+  
+  If environment qualification passes and all tests pass:
+  
+  RECOVERY_BUILD=
+  BUILD_VERIFIED_CANDIDATE
+  
+  If qualified rerun exposes a semantic/test failure:
+  
+  RECOVERY_BUILD=
+  FAIL_CLOSED
+  
+  If required durable evidence/runtime/environment cannot be recovered:
+  
+  RECOVERY_BUILD=
+  EVIDENCE_INSUFFICIENT
+  
+  
+  ================================================
+  14. SCOPE PROHIBITIONS
+  ================================================
+  
+  NO first refresh rerun.
+  
+  NO second-pass rerun.
+  
+  NO implementation modification.
+  
+  NO test modification.
+  
+  NO schema/contract modification.
+  
+  NO authorization modification during BUILD.
+  
+  NO remote push.
+  
+  NO PR.
+  
+  NO D5 mapping.
+  
+  NO B2 resume.
+  
+  
+  ================================================
+  15. PROCESS LIMIT
+  ================================================
+  
+  FSYNC_RECOVERY_ATTEMPT_LIMIT=
+  1
+  
+  No recursive recovery chain.
+  
+  If this recovery attempt cannot close the test gate, return to CONTROL.
+  
+  
+  ================================================
+  16. CONTROL TURN PROHIBITIONS
+  ================================================
+  
+  This CONTROL turn itself performs:
+  
+  NO fsync probe
+  NO tests
+  NO refresh
+  NO commit
+  NO push
+  NO PR
+  
+  
+  ================================================
+  17. RETURN
+  ================================================
+  
+  Return:
+  
+  D5_EVIDENCE_REFRESH_FSYNC_RECOVERY_CONTROL=
+  PASS | FAIL_CLOSED | EVIDENCE_INSUFFICIENT
+  
+  AUTHORIZATION_ID=
+  AUTH-P9B1Q-C5-D5-EVIDENCE-REFRESH-FSYNC-TEST-RECOVERY
+  
+  AUTHORIZATION_PATH=
+  phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-evidence-refresh-fsync-test-recovery-authorization.yml
+  
+  AUTHORIZATION_FILE_SHA256=
+  <sha | NONE>
+  
+  AUTHORIZATION_FILE_BYTE_SIZE=
+  <number | NONE>
+  
+  PUBLIC_BASE=
+  1a6dfb090183d6576e6d8b6bbf3ea0fb751c49c8
+  
+  PRIOR_BUILD_ATTEMPT_STATUS=
+  FAIL_CLOSED
+  
+  PRIOR_D5_FAILURE_STDERR_SHA256=
+  0982e105274809dbafae9ff01ea5113c95e7dee5bd616f22df4e7165e764b7f7
+  
+  FIRST_REFRESH_REUSE_AUTHORIZED=
+  YES
+  
+  SECOND_PASS_REUSE_AUTHORIZED=
+  YES
+  
+  FIRST_REFRESH_RERUN_AUTHORIZED=
+  NO
+  
+  SECOND_PASS_RERUN_AUTHORIZED=
+  NO
+  
+  FSYNC_SCRATCH_QUALIFICATION_AUTHORIZED=
+  YES
+  
+  D5_TEST_GATE_SINGLE_RETRY_AUTHORIZED=
+  YES
+  
+  REMAINING_TEST_GATES_AUTHORIZED_AFTER_D5_PASS=
+  YES
+  
+  LOCAL_CANDIDATE_COMMIT_AUTHORIZED_AFTER_ALL_PASS=
+  YES
+  
+  REMOTE_PUSH_AUTHORIZED=
+  NO
+  
+  D5_MAPPING_AUTHORIZED=
+  NO
+  
+  B2_RESUME_AUTHORIZED=
+  NO
+  
+  NEW_FILE_COUNT=
+  1
+  
+  MODIFIED_EXISTING_FILE_COUNT=
+  0
+  
+  COMMIT_CREATED=
+  NO
+  
+  PUSH_PERFORMED=
+  NO
+  
+  STOP=
+  YES
