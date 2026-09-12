@@ -1,0 +1,139 @@
+role: D5_POST_REFRESH_WRITE_PATH_ORACLE_CLOSURE_CONTROLLER
+mode: [CONTROL_ONLY, FINAL_BOUNDED_TEST_ORACLE_AUTHORIZATION, NO_REFRESH, NO_N9, NO_TEST, NO_COMMIT, NO_PUSH, NO_MAPPING, NO_B2]
+control_result: PASS
+public_base: baae9d63f773acc381c7152ed705c00b2761be8a
+authorization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-write-path-oracle-closure-authorization.yml
+history:
+  prior_build: FAIL_CLOSED
+  failure_test: RefreshProducerConformanceTests.test_pinned_original_objects_survive_directory_and_path_identity_attacks
+  failure_subcase: parent_after_first
+  failure_class: POST_REFRESH_WRITE_PATH_PRECONDITION_INVALIDATION
+  semantic_refresh_failure_established: false
+  production_transaction_failure_established: false
+  preserve_prior_failure: true
+admitted_evidence:
+  checkpoint_1_sha256: b50f7791ce4b8daebc8406fdefee6e4fc5c53155efcd59c488d4d83f2f84dc96
+  checkpoint_2_sha256: cf0c98b2c755735513f3229b3968682ebf8800e23494dbd77b6e78ed2b1ba6bb
+  prior_correction_2_audit_sha256: e4bb3e9f9a3a160ac16d75c75378aa3815cfc62c2e3af19723810b2592ed79c4
+  prior_corrected_test_sha256: e5668665d64b78f4ea349f17b73fe53267e234a8b1117f2adfe904445743ea94
+  all_four_raw_hashes_verified: true
+  admission_without_rerun: true
+  local_head_matches_public_base: true
+  remote_head_reverification_performed: false
+test_scope:
+  path: tests/test_p9b1q_scoped_query_ir.py
+  class: RefreshProducerConformanceTests
+  starting_test_bytes: PRIOR_CORRECTED_TEST_SHA256
+  preserved_method_bodies_exactly:
+    - test_complete_snapshot_positive_control_matches_enumerated_root
+    - test_narrow_r3a_replay_negative_semantics_and_idempotency
+  newly_authorized_method_bodies:
+    - test_narrow_determinism_without_network_retrieval_or_model
+    - test_write_phase_and_final_boundary_drift_roll_back_transaction
+    - test_rollback_rejects_replaced_output_path_without_touching_referent
+    - test_pinned_original_objects_survive_directory_and_path_identity_attacks
+    - test_pinned_rollback_failure_is_explicit_and_short_writes_are_completed
+  prior_corrected_method_count: 2
+  newly_authorized_method_count: 5
+  total_state_dependent_method_count: 7
+  write_path_attack_method_count: 4
+  determinism_method_count: 1
+  eighth_method_authorized: false
+  imports_changed: false
+  class_helper_added: false
+  production_code_changed: false
+  other_method_or_test_category_changes_authorized: false
+correction_principle:
+  preserve_original_test_purpose_and_all_attack_assertion_logic: true
+  synthetic_stale_required_before_write_dependent_behavior: true
+  location: fresh disposable simulation only
+  stale_field_count: 4
+  stale_targets:
+    - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/r3a-reference-override-positive.json
+      pointers:
+        - /objects/minimality_probes/0/candidate_semantic_object_set_sha256
+        - /objects/minimality_probes/1/candidate_semantic_object_set_sha256
+        - /objects/minimality_probes/2/candidate_semantic_object_set_sha256
+    - path: phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/stage-validator-negative-fixtures.yml
+      pointers: [/base_objects/11/canonical_sha256]
+  identical_stale_bytes_required_in: [frozen_bytes trusted preimage, corresponding disposable root files]
+  source_objects_remain_unchanged: true
+  first_normal_successful_refresh_result: sorted(policy)
+  subsequent_refresh_after_successful_completion_result: []
+  injected_failure_paths: Preserve original exceptions and rollback assertions; do not substitute successful-refresh expectations for attack outcomes.
+  forbidden:
+    - changing narrow_refresh or production transaction behavior
+    - weakening expected exceptions
+    - removing attack cases or skipping subcases
+    - accepting an empty changed set as equivalent to a write-path test
+    - modifying a third category of test
+determinism:
+  synthetic_stale_input_for_every_run: true
+  each_run_required_changed_result: sorted(policy)
+  no_network_preserved: true
+  no_retrieval_preserved: true
+  no_model_preserved: true
+  identical_output_digest_across_all_runs: true
+  empty_changed_set_determinism_acceptable: false
+transaction_tests:
+  actual_write_path_entry_required: true
+  attack_matrix_reduction_authorized: false
+  preserve_all_existing_expectations_for:
+    - authority and schema drift
+    - second-target drift
+    - extra path
+    - symlink
+    - final boundary drift
+    - replaced output path
+    - parent, root, and deep-ancestor movement
+    - file replacement, symlink, unlink, and rename
+    - rollback failure
+    - short writes
+manifest_rebind:
+  path: phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+  pointer: /protected_files/tests~1test_p9b1q_scoped_query_ir.py
+  value: SHA256_RAW_FILE_BYTES(final corrected test file)
+  field_count: 1
+  additional_downstream_target_count: 0
+final_candidate_scope:
+  reconstruct_verified_37_refresh_paths_from: CHECKPOINT_2
+  starting_test_state: prior Correction 2 bytes identified by admitted hash
+  apply_only_five_additional_method_corrections: true
+  design_manifest_already_among_37_refresh_paths: true
+  total_changed_path_count: 38
+  unauthorized_changed_path_count: 0
+  scope_count_note: Candidate payload is 37 refresh paths plus one test path; this control authorization is a separate control artifact, not an additional refresh target.
+later_build_test_gates:
+  current_control_turn_execution_authorized: false
+  first:
+    suite: entire RefreshProducerConformanceTests
+    total: 20
+    passed: 20
+    failures: 0
+    errors: 0
+    skipped: 0
+  then:
+    suite: exactly ONE complete specified suite
+    total: 198
+    passed: 198
+    failures: 0
+    errors: 0
+    skipped: 0
+  any_new_failure: FAIL_CLOSED; STOP
+  additional_per_failure_correction_loop_authorized: false
+boundaries:
+  production_change_authorized: false
+  first_refresh_rerun_authorized: false
+  second_pass_rerun_authorized: false
+  n9_rerun_authorized: false
+  local_candidate_commit_authorized_after_all_tests_pass: true
+  remote_push_authorized: false
+  d5_mapping_authorized: false
+  b2_resume_authorized: false
+current_turn:
+  only_output: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-write-path-oracle-closure-authorization.yml
+  test_or_production_mutation: false
+  refresh_or_second_pass_or_n9_execution: false
+  tests_executed: false
+  commit_or_push: false
+  stop: true
