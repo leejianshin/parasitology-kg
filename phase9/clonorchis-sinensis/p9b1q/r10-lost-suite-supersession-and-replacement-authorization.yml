@@ -1,0 +1,43 @@
+authorization_version: "1.0"
+authorization_id: "p9b1q-r10-lost-suite-supersession-and-replacement"
+status: "AUTHORIZED"
+public_base: "5ccd8f65eeb2d453301cce78da6dd7ca7e8f2f65"
+old_r10:
+  commitment_commit: "21ce63d2bf87e65b2a08269a67f8e41aabb6dada"
+  suite_id: "p9b1q-r10-zhcn-6a9e41c7"
+  canonical_sha256: "152696dbd93ffa39adcaaa7bc792c84039dd7f3e85880e59f268e88fefde5ea9"
+  final_state: "INVALIDATED_ARTIFACT_UNAVAILABLE"
+  implementation_failure: false
+  executed: false
+  recovery_reopen_allowed: false
+  reconstruction_allowed: false
+  suite_id_reuse_allowed: false
+  canonical_sha256_reuse_allowed: false
+replacement_protocol:
+  required: true
+  evidence_model: "IMPLEMENTATION_FROZEN_FIRST_INDEPENDENT_HELDOUT"
+  preimplementation_freeze_claim: false
+  frozen_implementation_base: "5ccd8f65eeb2d453301cce78da6dd7ca7e8f2f65"
+  repository_freeze:
+    code_change_allowed: false
+    public_test_change_allowed: false
+    query_interpreter_config_change_allowed: false
+    graph_executor_change_allowed: false
+    semantic_validator_change_allowed: false
+  suite_shape:
+    semantic_case_count: 24
+    binding_positive_probe_count: 2
+    binding_negative_probe_count: 17
+    total_execution_count: 43
+  retention_gate:
+    copy_count: 3
+    byte_identical: true
+    manifest_present: true
+    sha256sums_present: true
+    raw_hash_verification_required: true
+    commitment_before_retention_verification_allowed: false
+boundaries:
+  d5_reopen_allowed: false
+  old_r10_recovery_allowed: false
+  audit_of_audit_allowed: false
+  b2_implementation_started: false
