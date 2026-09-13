@@ -1,0 +1,685 @@
+authorization_version: '1.0'
+authorization_id: P9B2_POST_R10_S1_MATERIAL_COVERAGE
+correction_atom_id: P9B2_POST_R10_S1_MATERIAL_COVERAGE
+precontrol_verdict: PASS
+public_root_defect_proven: true
+repository: leejianshin/parasitology-kg
+branch: agent/p9-b2
+base_commit: a25d55da4f8187949ce4e1d94d816884fa08577e
+authorization_scope: ONE_EXISTING_S1_VALIDATOR_COMPLETENESS_CORRECTION_ONLY
+implementation_start_requires: NEXT_EXPLICIT_POST_R10_CORRECTION_BUILD
+implementation_started: false
+r10_boundary:
+  heldout_status: CONSUMED_FINAL
+  result: CHANGES_REQUIRED
+  public_regression: 173/173 PASS
+  semantic_case_pass: 0/24
+  binding_positive_pass: 0/2
+  binding_negative_pass: 10/17
+  determinism_complete_pass: 23/24
+  aggregate_source: phase9/clonorchis-sinensis/p9b1q/r10-replacement-execution-result.yml
+  secret_body_read: false
+  secret_case_expectations_used_as_spec: false
+  same_suite_rerun_allowed: false
+  same_suite_replacement_allowed: false
+  causal_attribution_to_secret_failures: NOT_CLAIMED
+  all_r10_failures_resolved_by_this_atom: NOT_CLAIMED
+current_p9b2_implemented_stages:
+  C1_S0_S1: IMPLEMENTED; historical CLOSED_FROZEN governance admitted; this atom reopens only S1 material
+    coverage validation
+  C2_S2: IMPLEMENTED; includes diagnostic-role and occurrence-binding corrections
+  C3_S3: IMPLEMENTED; includes proof-chain and polarity corrections
+  C4_S4: IMPLEMENTED; production main calls compile_c4 and stops before S5
+  C5_S5: PUBLIC_AUTHORIZATION_AND_REFERENCE_SUPPORT_PRESENT; integrated runtime implementation NOT_PRESENT_IN_CURRENT_PUBLIC_TREE
+  C5_governance_admission: Completed/frozen C5 authority-representability and support/evidence work is
+    admitted. It is not evidence that integrated runtime binding is committed.
+  D5: CLOSED_NO_FURTHER_MAPPING_REQUIRED; 5ccd8f6 evidence refresh retained unchanged
+  fresh_C1_start_authorized: false
+  runtime_recovery_authorized: false
+public_history_basis:
+  C1:
+  - abd8727
+  - cf6ef06
+  - f1d4db9
+  C2:
+  - 47995c7
+  - '1138871'
+  - e2411e0
+  - fba3b9e
+  C3:
+  - f53d618
+  - 310c0a5
+  - 970796e
+  C4:
+  - 8aa017d
+  - b50ee95
+  C5_authority_and_recovery:
+  - 531c29b
+  - c56011b
+  - 52262be
+  - 188e3c1
+  proof_and_reference_support:
+  - 70a2fb4
+  - af17bb3
+  D5_closure:
+  - 5ccd8f6
+  R10_closure:
+  - a25d55da4f8187949ce4e1d94d816884fa08577e
+public_authority_snapshot:
+- path: phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml
+  raw_sha256: f4ca27ef7404a81f0bb073a3069f4609b910c36aaf7e77ed995d1b617a79b92d
+- path: phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+  raw_sha256: 5dbd425f4b7eed9250a3243a42b3f7402022195a8938dfec4397c629465e5bd0
+- path: phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-contract.yml
+  raw_sha256: e72231f37ffbbfc8d7285b9f0708cf9527d64853b338dfc7d9b51ece37374a47
+- path: phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-validator-contract.yml
+  raw_sha256: 970ca3f9a21d991e958ebfcb274a31fb2eccb3c1a20dcd701aae526b934a5993
+- path: phase9/clonorchis-sinensis/p9b1q/query-ir-schema-candidate.yml
+  raw_sha256: 8a6a9812f5fda8cc06fb79e65829a78097064620fd8cbacc8a7e35091f367d8e
+- path: phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml
+  raw_sha256: c376070ef8c4f7fddf7715eeb33c8f53afa1482b9c753d61a30c847c4c933051
+- path: phase9/clonorchis-sinensis/p9b1q/ambiguity-fail-closed-rules.yml
+  raw_sha256: 0807f51ab5b56be14a979093ebb47e7b1ea69940e9a8881674271c9f47d96177
+- path: phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml
+  raw_sha256: 2bdc905e305d249b0874263d5c9ce50573e23fd42a15f4c3234084bb71a89f9c
+- path: phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml
+  raw_sha256: d3c263d42d316d97676413554fa96630823f649e2725772f8971560505735ea5
+- path: phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml
+  raw_sha256: 2e47b781de44c3d0d36c708714002686788b31762d6cbe090f5aab2555dfb312
+- path: phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml
+  raw_sha256: 3c42e9d59d6e0417f1fc20154c248830f51a22bb8e12c7f8f0a2f6bf4ea35b89
+- path: phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml
+  raw_sha256: ce98f79771b572514270d511187defda484d303c00f3b010b802be84f257fe73
+public_governance_inventory:
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-build-authorization.yml
+  raw_sha256: 65a602435cb007928c57455f0954250e13309003458788bdf69efe92b0781c9a
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c1-post-correction-implementation-authorization.yml
+  raw_sha256: 7b2c57b88d365b0d64c161cced2f1ef471a24a743ada865a5ff3c32ed9e2342a
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-correction-authorization.yml
+  raw_sha256: 33071c1d5a0f8bf187a5709a49211d9f13e8d4d47d41d19c8d80282f00fbd99c
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c2-diagnostic-role-authority-executability-correction-authorization.yml
+  raw_sha256: 60209dddc0d9b546afb817f57ab9cf6e0e968f8bf33c9479eef4567fdafb37e9
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c2-event-frame-implementation-authorization.yml
+  raw_sha256: c7b44428909aa06431445a41c5db14da5bb08e341dfacb710c4a81cc04ad1374
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c2-post-correction-implementation-authorization.yml
+  raw_sha256: 8c3a0b496a134e26fb24e951ea7bd23ed0fc057144f1050d9333eb75583e579d
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-diagnostic-polarity-high-008-authority-correction-authorization-correction-1.yml
+  raw_sha256: 1eb400f15255b8ac1c765616b352db12fef9dfa6bb4a7d59394371ee536cce97
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-diagnostic-polarity-high-008-authority-correction-authorization.yml
+  raw_sha256: 48b5c9596c957c7b5356ae1809612d16e3be65c101c62cb6f797f4ab79c60130
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-post-high008-implementation-reauthorization.yml
+  raw_sha256: 89120e47b4767785310f300ebc412ad7e7df6bbae1ff419c1693bfd8ffa3b000
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-manifest-binding-forward-adoption-authority.yml
+  raw_sha256: 8aa150e25ff5cb7deba119562d7cd0a843f4094c819f2703ed0c09b0f497ae5b
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-production-executability-correction-authorization-correction-1.yml
+  raw_sha256: ed5bda79f1e67e05e6c5cb5ce963a2195feb11f33cf033f031adf3204c305bcd
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-production-executability-correction-authorization.yml
+  raw_sha256: bc19f335093a8f7252b23f596091630b87b9d2d499d3b7f279844ea510d11c81
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-s3-refresh-scope-high-002-correction-authorization.yml
+  raw_sha256: acb4b20b1448c9ee5bfff6fbe833a31e1b83aecbb5182d434c4c7ddb431c1a15
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-typed-constraint-solver-implementation-authorization.yml
+  raw_sha256: e196695ddcad95d0afd56167525c9034ead78156f87825e946594a8c094d40f1
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c3-typed-constraint-solver-post-correction-implementation-reauthorization.yml
+  raw_sha256: 53844ea17d381ed2e6f7c615041a7b71f120e25bff765ea23a51146635eda889
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c4-queryir-emitter-implementation-authorization.yml
+  raw_sha256: 55924205ff5c61ed8bd321d9a41bb600056646c7ad81f0a83a62329a7a8f34a8
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-authority-representability-correction-1-authorization.yml
+  raw_sha256: f7722021d5ceeb5c48a94a82885f06bc95b355f15dae7e2d302e2af3341d5a0c
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-baseline-ast-d3-reproducibility-correction-authorization.yml
+  raw_sha256: adf4baffb025ed9731a377f30782e7748025a1beb8dd99086fc8fb95d0a184b6
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-authoritative-evidence-refresh-authorization.yml
+  raw_sha256: 38a29215d9873a71d27df10969402504c5c1aab85aa89d96d037f90a861dfd57
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-evidence-refresh-clean-rebuild-reauthorization.yml
+  raw_sha256: 31525c6c56af1ac003f5cae00196e1a001676f747a1aec36b86f8ad0998c8803
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-evidence-refresh-fsync-test-recovery-authorization.yml
+  raw_sha256: a445039c6b8f3d579b95ad6a197abc1196166acdbd0a3585ab2b4dc8e6bb50ee
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-final-full-suite-environment-completion-amendment-authorization.yml
+  raw_sha256: 15f905147fa3e153d6c617d2aecc06f6e5d4481f9e0c1367608bc6c5f19891b9
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-final-full-suite-environment-completion-authorization.yml
+  raw_sha256: a082401daf239b6da422e4e5254a92cd8888bce32ad34dfd71ad44cd94c8c470
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-global-source-resolver-u1-u3-preservation-n9-correction-authorization.yml
+  raw_sha256: fc81d818eac44af04cd8b4ff0da149c692fad75532572f78b0fd44fe5229d18c
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-n9-frozen-execution-count-contract-correction-authorization.yml
+  raw_sha256: 0eb46d1d9ff7406747f5231bf9c35c924497197bf25acfa8c9dcc77422e85b7d
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-n9-s2-actual-reference-hash-domain-closure-record.yml
+  raw_sha256: de64cb08c1e6a72ccb6ba380e273a196f046fd4c4ffa17dbdf6f4b19a5178639
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-test-oracle-correction-2-authorization.yml
+  raw_sha256: 914bed356e6771543331e799359f935421ccefe5165a8605a2dc49577bdd5c23
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-test-oracle-correction-authorization.yml
+  raw_sha256: 0e757cd5c346eb14178b2dcd08e1ee0414001f88bd9710aa2e6aa462c13a2e00
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-post-refresh-write-path-oracle-closure-authorization.yml
+  raw_sha256: 6ac288056e6f7aa16757df7c3b41dfc6ec6d7c11552f1e710fb8bf48d3bcccbb
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-refresh-producer-conformance-correction-authorization.yml
+  raw_sha256: 4af36632a7759af36532c703e303532c65abbd204090d2f072d1af94af294b89
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-s2-actual-reference-hash-domain-correction-authorization.yml
+  raw_sha256: 443aee183f68e7c6a929a6ee8252ea7e3288c588d72b4561a17d494fdac17634
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-u1-opaque-solver-trace-preservation-authority.yml
+  raw_sha256: 0ec2dc473416c4cb82fd3424686edda71a6cd4be4de6b9be55daee3765b27dc8
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-u3-opaque-solver-configuration-preservation-authority.yml
+  raw_sha256: 0e52b4b6c22803ef2c04cd060b78088e4bd945aebee1f41f551cf4118e9a2463
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-post-correction-runtime-binding-implementation-reauthorization.yml
+  raw_sha256: 70c800ebe2323423e730ad6fca0545e080a9af26c9063642aa4fa03964832223
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-production-proof-chain-correction-authorization.yml
+  raw_sha256: a8bcf92bae10f90e232d03ef63b79fda3ded4360c3bb776e23580d51be07565f
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-recovery-validator-support-correction-authorization.yml
+  raw_sha256: 1a21e1a845f13b95a7bcb21c6d7c77f590992ac17f1582815d6f8fda8b636536
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-reference-validator-parity-correction-authorization.yml
+  raw_sha256: 96d026ad612c896740e880fe8b043952d6bdd9cfd00adb53c5c36f59b9ea416d
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-runtime-binding-implementation-authorization.yml
+  raw_sha256: 372604bb749698c7c0c2e56599132bd1eb3bafecd8e4982079ff85a74b97c0ce
+- path: phase9/clonorchis-sinensis/p9b1q/p9b2-post-freeze-authority-correction-authorization.yml
+  raw_sha256: f94c6f6a54e108190738019b0c073051fd445973665dc4195c6c2c3efbaff03e
+authority_reconciliation:
+- Current explicit consumed-heldout instruction supersedes older pipeline language permitting private
+  R10 diagnostic reruns.
+- C5 legacy_helpers clause allows frozen old interpreter/binding helpers; they must not be mistaken for
+  integrated C5 or used as its replacement.
+- HIGH-008 permits diagnostic UNSPECIFIED representation upstream; QueryIR semantic executability still
+  requires its separate diagnostic gate.
+- C5 recovery record 188e3c1 explicitly records uncommitted runtime recovery and main not reaching C5.
+  Later D1/D2, D3 and D5 scopes do not authorize that recovery.
+- No normative conflict exists about rejecting the concrete uncovered material interval. This atom adds
+  an S1 admission check using existing C1ValidationError, not a new registry ID or a reassignment of SPAN_ORDER_INVALID.
+- Other partial or nonconforming matrix rows are observations, not additional correction authorizations.
+conformance_matrix_basis: Public-source code inspection, cited public test inspection and one independently
+  constructed local S1/S2 coverage probe; not a new full regression or exhaustive conformance certificate.
+conformance_matrix:
+- id: A01
+  authority_requirement: Only frozen whitespace normalization; exact request binding and reversible map.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S0_request_normalization
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S0_NORMALIZED_REQUEST
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:380
+  - scripts/p9b1q_scoped_query_ir.py:484
+  actual_implementation_behavior: CRLF, tabs and ASCII-space runs have explicit raw/normalized segments;
+    no entity expansion. Validator reuses normalization routine.
+  public_test_coverage: test_s0_whitespace_profile_is_deterministic_and_losslessly_mapped; test_s0_property_style_allowed_transformations_are_idempotent
+  conformance: CONFORMING
+- id: B01
+  authority_requirement: Every material request codepoint is covered by a proposition or operator, independently
+    of ROOT coverage.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S1_CLAUSE_AST/additional_checks
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml#/completeness
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S1_clause_ast/gate
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:1237
+  actual_implementation_behavior: Checks individual slices, root extent, sibling overlap, mention containment
+    and recognized lexical operators; does not compute material coverage. Public probe leaves request
+    [5,7) unowned and is accepted.
+  public_test_coverage: Existing exact-span and recognized-operator tests do not remove non-operator material
+    while preserving all remaining spans. Independently observed in this CONTROL.
+  conformance: NONCONFORMING
+- id: B02
+  authority_requirement: Rooted noncrossing hierarchy, contained exact Unicode spans.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml#/span_model
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S1_CLAUSE_AST
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:650
+  - scripts/p9b1q_scoped_query_ir.py:1237
+  actual_implementation_behavior: Recursive nodes and graph checks exist; individual slices use Python
+    codepoints. Aggregate coverage is deficient as B01; raw/normalized span-basis reconciliation is outside
+    this narrow finding.
+  public_test_coverage: test_multilevel_coordination_is_non_crossing_and_source_bound; test_recursive_ast_is_byte_deterministic
+  conformance: PARTIAL
+- id: B03
+  authority_requirement: Shared arguments are local backward typed edges; no duplicated semantic materialization.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml#/node_operators/CONTRAST/shared_left_argument
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:650
+  - scripts/p9b1q_scoped_query_ir.py:1150
+  actual_implementation_behavior: Explicit shared_left_argument_node_id instead of copying antecedent;
+    validates locality, role and single realization.
+  public_test_coverage: test_shared_left_integrity_mutations_fail_closed; test_shared_left_property_and_metamorphic_boundaries
+  conformance: CONFORMING
+- id: B04
+  authority_requirement: Negation surface and target scope derive from public authority; preserve alternatives.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S1_CLAUSE_AST
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml#/attachment_policy
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:791
+  - scripts/p9b1q_scoped_query_ir.py:1237
+  actual_implementation_behavior: Governed markers use shared authority and participant candidates are
+    retained; other configured markers use local proposition or first operator child. Completeness of
+    all grammatical alternatives is not independently established.
+  public_test_coverage: test_multiple_participant_targets_are_complete_ordered_and_unresolved; test_event_and_object_negation_remain_distinct_ast_targets
+  conformance: PARTIAL
+- id: B05
+  authority_requirement: OR, CONDITION and HYPOTHETICAL structures remain explicit and complete.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S1_clause_ast
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml#/node_operators
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:537
+  - scripts/p9b1q_scoped_query_ir.py:791
+  actual_implementation_behavior: Recursive recognized OR/condition/contrast nodes and hypothetical markers
+    exist; surface recognition is config-dependent and complete arbitrary composition is not proved.
+  public_test_coverage: test_repeated_or_preserves_every_operator_and_three_branches; test_nested_condition_and_contrast_are_compositional;
+    test_configured_assertion_marker_classes_are_recorded
+  conformance: PARTIAL
+- id: C01
+  authority_requirement: Event identity excludes assertion and frame IDs, includes participants/method/specimen/temporal
+    dimensions.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/event-identity-contract.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/constraint_families/C05_event_identity
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:2085
+  - scripts/p9b1q_scoped_query_ir.py:2178
+  - scripts/p9b1q_scoped_query_ir.py:2201
+  actual_implementation_behavior: Dedicated identity and domain enumeration exist; identity includes temporal
+    and anatomical dimensions and excludes assertion.
+  public_test_coverage: test_normalized_identity_excludes_assertion_and_frame_id; test_identity_changes_for_method_specimen_target_and_anatomy
+  conformance: CONFORMING
+- id: C02
+  authority_requirement: Preserve all viable participant and event-type domains, without heuristic winner.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S2_event_frame
+  - phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml#/event_mapping
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:1863
+  - scripts/p9b1q_scoped_query_ir.py:1923
+  - scripts/p9b1q_scoped_query_ir.py:2458
+  actual_implementation_behavior: Domains are built from cues and type intersections; diagnostic presence
+    returns one class early and exposure cue replaces other candidates. Complete domain preservation is
+    not established for compound propositions.
+  public_test_coverage: test_event_type_and_participant_ambiguity_are_preserved; test_event_core_diagnostic_exposure_and_ordinary_frames
+  conformance: PARTIAL
+- id: C03
+  authority_requirement: Same/distinct reference and override behavior uses identity domains and declared
+    dimensions.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/event-identity-contract.yml
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/event_identity_execution
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:2234
+  - scripts/p9b1q_scoped_query_ir.py:2389
+  - scripts/p9b1q_scoped_query_ir.py:2178
+  actual_implementation_behavior: Explicit reference/override domains and source spans exist, rather than
+    nearest-event selection; S3 resolution is a separate gate.
+  public_test_coverage: test_reference_relation_domain_enumerates_overlapping_typed_assignments; test_override_unique_unresolved_and_no_match
+  conformance: CONFORMING
+- id: C04
+  authority_requirement: Diagnostic method/specimen/polarity remain on one frame; participant roles follow
+    exact public bound occurrences.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml#/event_mapping/DIAGNOSTIC_FINDING
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/diagnostic-predicate-argument-binding-contract.yml
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:1628
+  - scripts/p9b1q_scoped_query_ir.py:1790
+  - scripts/p9b1q_scoped_query_ir.py:2798
+  actual_implementation_behavior: Explicit occurrence binding is checked independently and canonical roles/provenance
+    compared; production binding producer remains unauthorized, so supplied binding is a material precondition.
+  public_test_coverage: test_high003_all_option_b_predicate_sides_materialize_exact_roles; test_high011_mirror_bound_occurrence_defeats_position_heuristics;
+    test_diagnostic_components_are_same_frame_and_never_cross_bound
+  conformance: CONFORMING
+- id: C05
+  authority_requirement: Assertion and finding polarity are independent; UNSPECIFIED remains representable
+    in S2/S3.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S3_TYPED_SOLVER
+  - phase9/clonorchis-sinensis/p9b1q/p9b2-c3-diagnostic-polarity-high-008-authority-correction-authorization.yml
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:1994
+  - scripts/p9b1q_scoped_query_ir.py:3525
+  actual_implementation_behavior: Preserves UNSPECIFIED into S3. S5 semantic executability can still reject
+    unspecified material diagnostic findings; representability does not confer retrieval permission.
+  public_test_coverage: test_diagnosed_by_unspecified_polarity_is_a_legal_unique_solution; test_assertion_validator_rederives_odd_and_even_parity
+  conformance: CONFORMING
+- id: D01
+  authority_requirement: Complete formal constraints and query-required semantic set precede cardinality.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/constraint_families/C11_minimal_semantic_object_set
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S3_TYPED_SOLVER
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:3396
+  - scripts/p9b1q_scoped_query_ir.py:4040
+  - scripts/p9b1q_scoped_query_ir.py:4072
+  - scripts/p9b1q_scoped_query_ir.py:3824
+  actual_implementation_behavior: Registry completeness is checked, but candidate membership is used to
+    mark events/relations/roles/narratives required; subset predicate checks presence/dependencies rather
+    than independently deriving all query obligations. Candidate constructors create single-relation cores.
+    Full semantic completeness is not established by a 48-entry receipt.
+  public_test_coverage: test_all_48_constraints_have_executable_or_bound_discharge_sites checks receipt
+    strings; independent removal replay tests also exist and must remain.
+  conformance: PARTIAL
+- id: D02
+  authority_requirement: Failures use frozen constraint ordering and accurately report causes.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/deterministic_output
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/common_executable_interface
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:5496
+  - scripts/p9b1q_scoped_query_ir.py:5478
+  actual_implementation_behavior: Ordered registry and proof replay exist; generic caught invalid-input
+    reasons are summarized as CNS-SOLVER-HASH_BINDING. This is not complete per-constraint failure attribution.
+  public_test_coverage: test_hash_binding_mismatch_is_invalid_zero; test_minimality_probe_replay_matches_reference_semantic_order
+  conformance: PARTIAL
+- id: D03
+  authority_requirement: Zero/one/multiple inclusion-minimal solutions fail closed without tie-breaking.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/solution_cardinality
+  - phase9/clonorchis-sinensis/p9b1q/ambiguity-fail-closed-rules.yml#/default_policy
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:5432
+  - scripts/p9b1q_scoped_query_ir.py:5496
+  actual_implementation_behavior: Enumerates declared domains and emits cardinality; correctness remains
+    conditional on upstream domain and candidate-universe completeness.
+  public_test_coverage: test_candidate_status_cannot_self_authorize_cardinality; test_duplicate_same_entity_occurrences_remain_ambiguous
+  conformance: PARTIAL
+- id: D04
+  authority_requirement: No lexical shortcut or retrieval score replaces formal semantics in S3.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/purpose/prohibited
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:3824
+  - scripts/p9b1q_scoped_query_ir.py:3675
+  - scripts/p9b1q_scoped_query_ir.py:5496
+  actual_implementation_behavior: No retrieval/model call in S3; derives candidates from bound frames
+    and public profiles. It cannot restore alternatives already narrowed by S1/S2; complete formal filtering
+    remains D01.
+  public_test_coverage: test_profile_and_general_domains_coexist_before_constraints; test_profile_general_candidate_interleaving_is_order_invariant
+  conformance: PARTIAL
+- id: E01
+  authority_requirement: Extract validated embedded QueryIR byte-identically; no new S4 inference.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S4_queryir_emitter
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S4_QUERYIR_EMISSION
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:7141
+  actual_implementation_behavior: Resolves persisted core, independently compares projection and proof
+    objects, returns a deep copy of embedded QueryIR; non-UNIQUE returns no QueryIR.
+  public_test_coverage: test_unique_extraction_is_byte_identical_and_pure; test_non_unique_and_failed_predecessors_emit_no_queryir
+  conformance: CONFORMING
+- id: E02
+  authority_requirement: Preserve clause topology and material OR/CONDITION semantics in projection.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-contract.yml#/clause_and_discourse_semantics
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S4_QUERYIR_EMISSION
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:4191
+  - scripts/p9b1q_scoped_query_ir.py:6189
+  actual_implementation_behavior: Both projection routines enumerate proposition leaves as first ROOT
+    then AND children of C01, with all alternative_group_id null. No branch/operator-specific projection
+    occurs in that construction; agreement of these routines does not prove topology preservation.
+  public_test_coverage: test_request_clause_mention_event_and_relation_projection_tampers_fail checks
+    deviation from expected projection; semantic topology coverage is insufficient.
+  conformance: NONCONFORMING
+- id: E03
+  authority_requirement: Intent activation and relation direction require exact typed roots and directed
+    selectors.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-contract.yml#/relation_intent_semantics
+  - phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:3588
+  - scripts/p9b1q_scoped_query_ir.py:6189
+  - scripts/p9b1q_scoped_query_ir.py:8466
+  actual_implementation_behavior: Typed relation checks and selector type checks exist; generic validate_query_ir
+    checks event predicate membership without all exact selector/root projection rules.
+  public_test_coverage: test_event_relation_derivation_constraint_executes_on_mutation; test_reverse_relation_direction_and_unlicensed_role_fail_closed
+  conformance: PARTIAL
+- id: E04
+  authority_requirement: Narrative intent anchors, selectors and roots must be licensed by formal mapping.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml#/event_to_narrative_derivation
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-validator-contract.yml#/algorithms/narrative_intents
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:3824
+  - scripts/p9b1q_scoped_query_ir.py:8466
+  actual_implementation_behavior: Public profiles supply narratives; generic validator only checks narrative
+    role membership before adding executable narrative IDs, not the complete anchor/root contract.
+  public_test_coverage: test_unlicensed_role coverage and C4 core checks are narrower than independent
+    narrative semantic validation.
+  conformance: NONCONFORMING
+- id: E05
+  authority_requirement: Explicit exclusion creates grounded prohibition and cannot activate unrelated
+    material.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/ambiguity-fail-closed-rules.yml#/resolved_cases/explicit_exclusion
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-contract.yml#/assertion_and_temporal_semantics
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:3675
+  - scripts/p9b1q_scoped_query_ir.py:8466
+  - scripts/p9b1q_scoped_query_ir.py:8754
+  actual_implementation_behavior: Prohibition construction and exact conflict checks exist; scope correctness
+    remains conditional on selected AST/event/mention domains.
+  public_test_coverage: test_formal_control_prohibition_is_materialized_and_eliminates_activation; test_excluded_control_becomes_prohibition
+  conformance: PARTIAL
+- id: E06
+  authority_requirement: Deterministic ordered output and no unlicensed semantic object.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml#/deterministic_output
+  - phase9/clonorchis-sinensis/p9b1q/query-ir-semantic-validator-contract.yml#/deterministic_result_array_ordering
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:8428
+  - scripts/p9b1q_scoped_query_ir.py:6882
+  - scripts/p9b1q_scoped_query_ir.py:6980
+  actual_implementation_behavior: Deterministic IDs/arrays and proof validation exist; no-extra-object
+    guarantee still depends on D01 and E02, not byte stability alone.
+  public_test_coverage: test_three_fresh_c4_runs_are_byte_deterministic; test_deterministic_result_arrays_reject_reordering;
+    test_license_dag_negative_matrix_fails_closed
+  conformance: PARTIAL
+- id: F01
+  authority_requirement: Exact validated C4 object reaches S5 after all actual stage gates.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/p9b2-c5-post-correction-runtime-binding-implementation-reauthorization.yml#/queryir_identity
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S5_existing_semantic_validator_and_binding
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:9449
+  - scripts/p9b1q_scoped_query_ir.py:7237
+  - scripts/p9b1q_scoped_query_ir.py:8837
+  - scripts/p9b1q_scoped_query_ir.py:9097
+  actual_implementation_behavior: Public production CLI deliberately stops at C4. Legacy bound execution
+    reinterprets request. No tracked integrated C4-to-S5 production entry is present. Legacy retention
+    is expressly allowed, so its mere existence is not a new defect.
+  public_test_coverage: test_production_entry_reaches_c4_and_stops_before_s5; BindingChainTests invokes
+    legacy build_bound_execution.
+  conformance: NOT_IMPLEMENTED
+- id: F02
+  authority_requirement: Semantic licensing before retrieval; no retrieval for failed stage or ambiguity.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml#/actual_object_requirements
+  - phase9/clonorchis-sinensis/p9b1q/ambiguity-fail-closed-rules.yml#/default_policy
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:8837
+  - scripts/p9b1q_scoped_query_ir.py:8767
+  - scripts/p9b1q_scoped_query_ir.py:7237
+  actual_implementation_behavior: C4 boundary prohibits retrieval; legacy pipeline validates first and
+    execute_query_ir returns none for non-PASS. Integrated all-stage S5 gating is absent; direct executor
+    treats supplied PASS as precondition.
+  public_test_coverage: test_c1_stop_boundary_invokes_no_downstream_stage; test_ambiguous_chain_has_no_retrieval
+  conformance: PARTIAL
+- id: F03
+  authority_requirement: Actual object hashes, canonical paths, sidecar mirrors and negative failure sites.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml#/binding_validation_order
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S5_RUNTIME_BINDING
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:8861
+  - scripts/p9b1q_scoped_query_ir.py:9214
+  - phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py#_validate_s5_production
+  actual_implementation_behavior: Legacy content-addressed object replay and reference production-storage
+    checks exist; complete integrated runtime stage chain remains absent.
+  public_test_coverage: test_unresolvable_object_fails; test_store_byte_tamper_fails; test_state_summary_tamper_fails;
+    no integrated C4-to-S5 witness.
+  conformance: PARTIAL
+- id: F04
+  authority_requirement: Candidate, admitted and material claim sets remain distinct; licenses bind exact
+    QueryIR.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml#/binding_chain/retrieval_to_audit
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:8767
+  - scripts/p9b1q_scoped_query_ir.py:8735
+  - scripts/p9b1q_scoped_query_ir.py:8949
+  - scripts/p9b1q_scoped_query_ir.py:9214
+  actual_implementation_behavior: Legacy executor filters with R/N licenses and prohibitions, then P9A
+    forms response/audit; this is component coverage, not completion of integrated C5.
+  public_test_coverage: BindingChainTests positive and response/audit reuse tests; ScopedQueryIRTests
+    candidate assertions.
+  conformance: PARTIAL
+- id: F05
+  authority_requirement: Actual audit/response chain and correct negative binding failure boundary.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml#/binding_chain
+  - phase9/clonorchis-sinensis/p9b1q/execution-binding-sidecar-schema-candidate.yml
+  implementation_sites:
+  - scripts/p9b1q_scoped_query_ir.py:8949
+  - scripts/p9b1q_scoped_query_ir.py:9214
+  actual_implementation_behavior: Legacy response/audit cross-check and recomputation exist. Current production
+    S0-S4 CLI does not generate an S5 chain; no claim of all five integrated S5 constraints passing.
+  public_test_coverage: test_response_or_audit_reuse_fails; test_component_configuration_substitution_fails_even_if_readdressed
+  conformance: PARTIAL
+- id: F06
+  authority_requirement: Existing deterministic retrieval component remains a separate frozen dependency.
+  public_authority:
+  - phase9/clonorchis-sinensis/p9b1q/p9b2-c5-post-correction-runtime-binding-implementation-reauthorization.yml#/retrieval_scope
+  implementation_sites:
+  - scripts/p9b1_local_retrieval.py#build_index
+  - scripts/p9b1_local_retrieval.py#retrieve
+  - scripts/p9b1q_scoped_query_ir.py:8767
+  actual_implementation_behavior: Scoped executor uses reviewed index records; p9b1 retrieve retains its
+    own analyze/rank path. Neither is authorized for change in this atom.
+  public_test_coverage: Existing tests/test_p9b1_retrieval.py and public scoped retrieval tests are retained.
+  conformance: CONFORMING
+public_test_self_confirmation_risk: HIGH
+public_test_self_confirmation_evidence:
+- Implementation and regression tests were introduced or corrected together in abd8727, 47995c7, f53d618
+  and 8aa017d; this is risk evidence, not proof every test is weak.
+- validate_c1_clause_ast checks retained spans and shares recognized-operator recognition with producer;
+  existing tests do not independently enforce all material codepoint coverage.
+- C3 and C4 projection routines both flatten proposition topology; agreement can preserve the same wrong
+  interpretation.
+- 48-constraint coverage test checks production receipt entries and nonempty site strings rather than
+  exercising every formal requirement.
+- BindingChainTests uses legacy build_bound_execution, while production CLI is expressly tested to stop
+  at C4.
+- Existing independent negative mutation, proof replay and C4 oracle correction b50ee95 remain valuable
+  and must not be weakened.
+- 173/173 is admitted historical regression stability, not independently established semantic conformance;
+  full suite was not rerun in this CONTROL.
+root_defect_class: S1_MATERIAL_SPAN_COVERAGE_ADMISSION_OMISSION
+public_authority_basis:
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml#/stages/S1_clause_ast/gate
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml#/validators/S1_CLAUSE_AST/additional_checks
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml#/completeness/every_material_codepoint_covered
+current_nonconforming_behavior: An AST can retain a complete ROOT and valid exact retained leaf/mention
+  spans while omitting material request text from every proposition/operator; validate_c1_clause_ast returns
+  successfully and compile_event_frame accepts the incomplete predecessor.
+public_probe:
+  origin: Constructed in this CONTROL from public entity alias and ordinary material text; no R10 case
+    source
+  request:
+    schema_version: '1.0'
+    request_id: P9B1Q-PUBLIC-COVERAGE
+    knowledge_version: clonorchis_pcms_v1
+    locale: zh-CN
+    query_text: 华支睾吸虫传播
+  construction: Compile C1 normally; deep-copy the AST in memory; change only S001.source_span from [0,7)
+    to exact [0,5) text 华支睾吸虫. Keep request, ROOT, mentions, IDs, markers and authority bindings unchanged.
+  unowned_material_interval:
+    start_char: 5
+    end_char: 7
+    text: 传播
+  expected: S1 rejection before Event Frame construction
+  observed: validate_c1_clause_ast returned normally; compile_event_frame also returned normally. Both
+    complete and incomplete probes had empty frame arrays; no event-output delta or retrieval impact is
+    claimed.
+  retrieval_executed: false
+  repository_mutated_by_probe: false
+correct_public_behavior:
+- Independently verify complete material coverage against the bound normalized request at S1 admission,
+  in addition to existing exact-span and nonoverlap checks.
+- ROOT or QUESTION envelope coverage must not substitute for proposition/operator ownership; shared argument
+  references must not add copied material coverage.
+- Any uncovered material substring fails at existing S1 validation before _build_event_frame, solver,
+  QueryIR emission or retrieval; no repair, widening or guessed semantics.
+- Preserve existing whitespace, punctuation, source mapping, grammar and negation authority; do not introduce
+  a broader parser or new token policy. If an edge case needs new authority, fail closed and return that
+  gap to CONTROL.
+- Existing valid AST semantic payload remains unchanged. Byte differences solely caused by authorized
+  executable hash binding must be distinguished from semantic differences.
+allowed_changed_paths:
+- scripts/p9b1q_scoped_query_ir.py
+- tests/test_p9b1q_scoped_query_ir.py
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/design-manifest.yml
+allowed_code_scope:
+  script: validate_c1_clause_ast plus a narrowly factored material-coverage check if needed; no other
+    stage behavior or entry-point change
+  tests: Add independent public material-coverage tests only; retain all existing tests/assertions
+  manifest: Only the two existing protected_files SHA256 values for the script and test when source bytes
+    change
+allowed_manifest_pointers:
+- /protected_files/scripts~1p9b1q_scoped_query_ir.py
+- /protected_files/tests~1test_p9b1q_scoped_query_ir.py
+forbidden_changed_paths:
+- ALL_PATHS_EXCEPT_EXACT_ALLOWLIST
+- scripts/p9b1_local_retrieval.py
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/reference-stage-semantic-validator.py
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/fixtures/
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-id-registry.yml
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/constraint-set-v0.1.yml
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/stage-semantic-validator-contract.yml
+- phase9/clonorchis-sinensis/p9b1q-architecture-review/clause-grammar-config.yml
+- phase9/clonorchis-sinensis/p9b1q/query-interpreter-config.yml
+- ALL_OTHER_SCHEMAS_CONTRACTS_CONFIGURATIONS_DEPENDENCIES_AND_PRIOR_AUTHORIZATIONS
+- ALL_D5_EVIDENCE_CATALOG_MAPPING_REFRESH_AND_N9_ARTIFACTS
+- ALL_R10_SECRET_OR_PUBLIC_SUITE_AND_RESULT_ARTIFACTS
+required_public_test_additions:
+- Independent literal-span positive control and S1 rejection of the public probe; expected uncovered interval
+  comes from request offsets, never a production coverage helper.
+- Public-contract-derived leading, interior and trailing material gaps with valid retained slices; preserve
+  schema validity and unrelated graph constraints so coverage is the tested invariant.
+- Unicode codepoint coverage including a supplementary-plane character; no byte/UTF-16 offset assumptions.
+- Preserve existing valid coordination, OR, condition, shared-argument, negation, whitespace and terminal
+  punctuation cases; envelope/reference coverage cannot hide a material gap.
+- Call compile_event_frame with incomplete AST while spying/trapping _build_event_frame and downstream
+  solver/emitter/retrieval; require zero calls past S1 rejection.
+- Positive source round-trip and semantic payload comparison are independently checked; expected rejection
+  must not be copied from producer or registry receipt.
+required_existing_regression_gates:
+- All preexisting 173 public test methods remain and pass in the qualified environment, with new tests
+  additional. Do not delete, weaken, rename away, skip or rewrite expected values.
+- Complete repository unittest discovery under the already qualified public environment; use retained
+  approved offline test inputs when required, not any R10 secret material.
+- Existing C1/C2/C3/C4, D1/D2 removal replay, D3 parity, legacy binding and retrieval regression remain
+  intact.
+- Existing strict-schema gate and reference semantic validator checks are read-only acceptance gates in
+  disposable roots; no evidence refresh or fixture rewrite.
+- git diff --check; exact changed-path and manifest-pointer checks; current authority byte hashes unchanged.
+upstream_immutability_gates:
+- S0 normalization implementation and behavior unchanged; existing authority/configuration/ontology/schema
+  bytes unchanged.
+- S1 producer topology, aliases, marker classification, attachment policy and shared-argument semantics
+  unchanged; only admission coverage strengthened.
+- S2-S5 and legacy execution code unchanged; C4 production stop boundary unchanged; no C5 recovery.
+- D5 closure and U1/U3 bytes preserved; no D5 reopening, refresh, mapping or N9 generation.
+- Before BUILD mutation inspect active content-addressed dependents. If changes beyond two protected manifest
+  fields are required, FAIL_CLOSED_SCOPE_INSUFFICIENT; do not refresh D5 or weaken a gate.
+- Compare unchanged valid outputs by semantic payload and separately explain legitimate executable-content
+  hash changes; never normalize away arbitrary differences.
+determinism_gate: 'Three runs with identical request and fixed public authorities across distinct PYTHONHASHSEED/disposable
+  roots: identical accepted canonical outputs or identical stage/rejection evidence. Preserve existing
+  C4 determinism.'
+retrieval_boundary_gate: New coverage tests must make no retrieval/model/network calls; uncovered material
+  must stop at S1 before Event Frame construction. Existing frozen regression retrieval remains as previously
+  authorized. No integrated C5 or production release.
+build_publication: This authorization does not authorize implementation in CONTROL or an automatic BUILD
+  push. Next BUILD must report exact candidate and gates under its own instruction.
+publication_gate:
+  required_parent: a25d55da4f8187949ce4e1d94d816884fa08577e
+  changed_path_count: 1
+  only_changed_path: phase9/clonorchis-sinensis/p9b1q/p9b2-post-r10-correction-authorization.yml
+  commit_message: 'governance(p9b2): authorize post-R10 public-contract correction'
+  force_push: false
+  amend: false
+  rebase: false
+next_page: RAG-P9-B1Q｜P9-B2 POST-R10 CORRECTION BUILD
+stop: true
