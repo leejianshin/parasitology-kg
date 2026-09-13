@@ -4101,36 +4101,78 @@ class RefreshProducerConformanceTests(unittest.TestCase):
 
     def test_narrow_r3a_replay_negative_semantics_and_idempotency(self):
         import yaml
-        root, frozen, policy, rules = self.simulation()
-        expected_hashes = ["556c2759109f06c8348da7960b421f96ad582d9a2762507cf3cfa794534c0b87",
-                           "3cded18ddd46e9fca53056d377c401f7e140bc3c9827b94d199339a20ebf235b",
-                           "d49a4c7aa749eb7a7cf5750792737a7a38513a895d0ba53da0b26ae241de0b66"]
-        r3a, negative = policy
-        before = json.loads(frozen[r3a])
-        for i, probe in enumerate(before["objects"]["minimality_probes"]):
-            candidate = copy.deepcopy(before["objects"]["typed_solution_core"])
-            for operation in probe["operation"]:
-                collection, index = operation["path"].split("/")[1:]
-                self.assertEqual(operation["op"], "remove")
-                del candidate[collection][int(index)]
-            self.assertEqual(self.independent_hash({k: candidate[k] for k in self.fields}), expected_hashes[i])
-        changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
-        self.assertEqual(changed, sorted(policy))
-        after = json.loads((root / r3a).read_bytes())
-        for i, probe in enumerate(after["objects"]["minimality_probes"]):
-            self.assertEqual(probe["candidate_semantic_object_set_sha256"], expected_hashes[i])
-            probe["candidate_semantic_object_set_sha256"] = before["objects"]["minimality_probes"][i]["candidate_semantic_object_set_sha256"]
-        self.assertEqual(after, before)
-        negative_before = yaml.safe_load(frozen[negative])
-        negative_after = yaml.safe_load((root / negative).read_bytes())
-        self.assertEqual(negative_after["cases"], negative_before["cases"])
-        core_path = self.H + "fixtures/typed-solution-exposure-positive.json"
-        self.assertEqual(negative_after["base_objects"][11]["canonical_sha256"], hashlib.sha256(frozen[core_path]).hexdigest())
-        negative_after["base_objects"][11]["canonical_sha256"] = negative_before["base_objects"][11]["canonical_sha256"]
-        self.assertEqual(negative_after, negative_before)
-        self.assertEqual(self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
-        for name in frozen.keys() - policy.keys():
-            self.assertEqual((root / name).read_bytes(), frozen[name])
+        for state in ("ALREADY_CURRENT", "SYNTHETIC_STALE"):
+            with self.subTest(state=state):
+                root, frozen, policy, rules = self.simulation()
+                if state == "SYNTHETIC_STALE":
+                    current = dict(frozen)
+                    r3a, negative = policy
+                    self.assertEqual(policy, {
+                        self.H + "fixtures/r3a-reference-override-positive.json": [
+                            f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                            for i in range(3)],
+                        self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                            "/base_objects/11/canonical_sha256"],
+                    })
+                    for name in (r3a, negative):
+                        original = yaml.safe_load(current[name])
+                        stale = copy.deepcopy(original)
+                        for pointer in policy[name]:
+                            parts = pointer.strip("/").split("/")
+                            target = stale
+                            for part in parts[:-1]:
+                                target = target[int(part)] if isinstance(target, list) else target[part]
+                            key = parts[-1]
+                            stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                            self.assertNotEqual(stale_value, target[key])
+                            target[key] = stale_value
+                        if name == r3a:
+                            raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+                        else:
+                            raw = yaml.safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+                        frozen[name] = raw
+                        (root / name).write_bytes(raw)
+                        restored = yaml.safe_load(raw)
+                        for pointer in policy[name]:
+                            parts = pointer.strip("/").split("/")
+                            target, source = restored, original
+                            for part in parts[:-1]:
+                                target = target[int(part)] if isinstance(target, list) else target[part]
+                                source = source[int(part)] if isinstance(source, list) else source[part]
+                            target[parts[-1]] = source[parts[-1]]
+                        self.assertEqual(restored, original)
+                    self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+                    self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                                     {n: current[n] for n in current.keys() - policy.keys()})
+                expected_hashes = ["556c2759109f06c8348da7960b421f96ad582d9a2762507cf3cfa794534c0b87",
+                                   "3cded18ddd46e9fca53056d377c401f7e140bc3c9827b94d199339a20ebf235b",
+                                   "d49a4c7aa749eb7a7cf5750792737a7a38513a895d0ba53da0b26ae241de0b66"]
+                r3a, negative = policy
+                before = json.loads(frozen[r3a])
+                for i, probe in enumerate(before["objects"]["minimality_probes"]):
+                    candidate = copy.deepcopy(before["objects"]["typed_solution_core"])
+                    for operation in probe["operation"]:
+                        collection, index = operation["path"].split("/")[1:]
+                        self.assertEqual(operation["op"], "remove")
+                        del candidate[collection][int(index)]
+                    self.assertEqual(self.independent_hash({k: candidate[k] for k in self.fields}), expected_hashes[i])
+                changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                self.assertEqual(changed, [] if state == "ALREADY_CURRENT" else sorted(policy))
+                after = json.loads((root / r3a).read_bytes())
+                for i, probe in enumerate(after["objects"]["minimality_probes"]):
+                    self.assertEqual(probe["candidate_semantic_object_set_sha256"], expected_hashes[i])
+                    probe["candidate_semantic_object_set_sha256"] = before["objects"]["minimality_probes"][i]["candidate_semantic_object_set_sha256"]
+                self.assertEqual(after, before)
+                negative_before = yaml.safe_load(frozen[negative])
+                negative_after = yaml.safe_load((root / negative).read_bytes())
+                self.assertEqual(negative_after["cases"], negative_before["cases"])
+                core_path = self.H + "fixtures/typed-solution-exposure-positive.json"
+                self.assertEqual(negative_after["base_objects"][11]["canonical_sha256"], hashlib.sha256(frozen[core_path]).hexdigest())
+                negative_after["base_objects"][11]["canonical_sha256"] = negative_before["base_objects"][11]["canonical_sha256"]
+                self.assertEqual(negative_after, negative_before)
+                self.assertEqual(self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+                for name in frozen.keys() - policy.keys():
+                    self.assertEqual((root / name).read_bytes(), frozen[name])
 
     def test_narrow_attacks_validate_whole_plan_before_any_write(self):
         for attack in ("path", "pointer", "semantic_and_hash", "authority", "schema", "wrong_derived_hash", "semantic_pointer"):
@@ -4179,10 +4221,54 @@ class RefreshProducerConformanceTests(unittest.TestCase):
         hashes = []
         for _ in range(3):
             root, frozen, policy, rules = self.simulation()
+            current = dict(frozen)
+            r3a, negative = policy
+            self.assertEqual(policy, {
+                self.H + "fixtures/r3a-reference-override-positive.json": [
+                    f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                    for i in range(3)],
+                self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                    "/base_objects/11/canonical_sha256"],
+            })
+            for name in (r3a, negative):
+                original = self.producer["yaml"].safe_load(current[name])
+                stale = copy.deepcopy(original)
+                for pointer in policy[name]:
+                    parts = pointer.strip("/").split("/")
+                    target = stale
+                    for part in parts[:-1]:
+                        target = target[int(part)] if isinstance(target, list) else target[part]
+                    key = parts[-1]
+                    stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                    self.assertNotEqual(stale_value, target[key])
+                    target[key] = stale_value
+                if name == r3a:
+                    raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+                else:
+                    raw = self.producer["yaml"].safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+                frozen[name] = raw
+                (root / name).write_bytes(raw)
+                restored = self.producer["yaml"].safe_load(raw)
+                for pointer in policy[name]:
+                    parts = pointer.strip("/").split("/")
+                    target, source = restored, original
+                    for part in parts[:-1]:
+                        target = target[int(part)] if isinstance(target, list) else target[part]
+                        source = source[int(part)] if isinstance(source, list) else source[part]
+                    target[parts[-1]] = source[parts[-1]]
+                self.assertEqual(restored, original)
+            self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+            self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                             {n: current[n] for n in current.keys() - policy.keys()})
             with mock.patch.object(socket.socket, "connect", side_effect=AssertionError("network")) as connect, \
                  mock.patch.object(socket, "create_connection", side_effect=AssertionError("network")) as connection, \
-                 mock.patch("scripts.p9b1q_scoped_query_ir.execute_query_ir", side_effect=AssertionError("retrieval")) as retrieval:
+                 mock.patch("scripts.p9b1q_scoped_query_ir.execute_query_ir", side_effect=AssertionError("retrieval")) as retrieval, \
+                 mock.patch.object(subprocess, "Popen", side_effect=AssertionError("external_model_process")) as model_process:
                 changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
+                self.assertEqual(changed, sorted(policy))
+                self.assertEqual(self.producer["narrow_refresh"](
+                    root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+                self.assertEqual(model_process.call_count, 0)
                 self.assertEqual(connect.call_count + connection.call_count + retrieval.call_count, 0)
             digest = hashlib.sha256()
             for name in changed:
@@ -4252,12 +4338,65 @@ class RefreshProducerConformanceTests(unittest.TestCase):
         self.assertEqual(before, {n: (root / n).read_bytes() for n in policy})
 
     def test_complete_snapshot_positive_control_matches_enumerated_root(self):
+        import yaml
+
+        # Already-current bytes must require no writes.
         root, frozen, policy, rules = self.simulation()
         actual = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
         self.assertEqual(actual, set(frozen))
-        changed = self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules)
-        self.assertEqual(changed, sorted(policy))
-        self.assertEqual(self.producer["narrow_refresh"](root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+        self.assertEqual(self.producer["narrow_refresh"](
+            root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+        self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+
+        # A separate trusted preimage and its root share exactly four stale targets.
+        root, frozen, policy, rules = self.simulation()
+        current = dict(frozen)
+        r3a, negative = policy
+        self.assertEqual(policy, {
+            self.H + "fixtures/r3a-reference-override-positive.json": [
+                f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                for i in range(3)],
+            self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                "/base_objects/11/canonical_sha256"],
+        })
+        for name in (r3a, negative):
+            original = yaml.safe_load(current[name])
+            stale = copy.deepcopy(original)
+            for pointer in policy[name]:
+                parts = pointer.strip("/").split("/")
+                target = stale
+                for part in parts[:-1]:
+                    target = target[int(part)] if isinstance(target, list) else target[part]
+                key = parts[-1]
+                stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                self.assertNotEqual(stale_value, target[key])
+                target[key] = stale_value
+            if name == r3a:
+                raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+            else:
+                raw = yaml.safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+            frozen[name] = raw
+            (root / name).write_bytes(raw)
+            restored = yaml.safe_load(raw)
+            for pointer in policy[name]:
+                parts = pointer.strip("/").split("/")
+                target, source = restored, original
+                for part in parts[:-1]:
+                    target = target[int(part)] if isinstance(target, list) else target[part]
+                    source = source[int(part)] if isinstance(source, list) else source[part]
+                target[parts[-1]] = source[parts[-1]]
+            self.assertEqual(restored, original)
+        self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+        self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                         {n: current[n] for n in current.keys() - policy.keys()})
+        self.assertEqual(self.producer["narrow_refresh"](
+            root, frozen_bytes=frozen, field_policy=policy, rules=rules), sorted(policy))
+        self.assertEqual(self.producer["narrow_refresh"](
+            root, frozen_bytes=frozen, field_policy=policy, rules=rules), [])
+        for name in policy:
+            self.assertEqual(yaml.safe_load((root / name).read_bytes()), yaml.safe_load(current[name]))
+        for name in frozen.keys() - policy.keys():
+            self.assertEqual((root / name).read_bytes(), current[name])
 
 
     def test_source_authority_rejects_wrong_paths_roles_and_overrides_before_write(self):
@@ -4448,6 +4587,45 @@ class RefreshProducerConformanceTests(unittest.TestCase):
         for attack in ("authority", "schema", "second_target", "extra", "symlink", "final"):
             with self.subTest(attack=attack):
                 root, frozen, policy, rules = self.simulation()
+                current = dict(frozen)
+                r3a, negative = policy
+                self.assertEqual(policy, {
+                    self.H + "fixtures/r3a-reference-override-positive.json": [
+                        f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                        for i in range(3)],
+                    self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                        "/base_objects/11/canonical_sha256"],
+                })
+                for name in (r3a, negative):
+                    original = self.producer["yaml"].safe_load(current[name])
+                    stale = copy.deepcopy(original)
+                    for pointer in policy[name]:
+                        parts = pointer.strip("/").split("/")
+                        target = stale
+                        for part in parts[:-1]:
+                            target = target[int(part)] if isinstance(target, list) else target[part]
+                        key = parts[-1]
+                        stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                        self.assertNotEqual(stale_value, target[key])
+                        target[key] = stale_value
+                    if name == r3a:
+                        raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+                    else:
+                        raw = self.producer["yaml"].safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+                    frozen[name] = raw
+                    (root / name).write_bytes(raw)
+                    restored = self.producer["yaml"].safe_load(raw)
+                    for pointer in policy[name]:
+                        parts = pointer.strip("/").split("/")
+                        target, source = restored, original
+                        for part in parts[:-1]:
+                            target = target[int(part)] if isinstance(target, list) else target[part]
+                            source = source[int(part)] if isinstance(source, list) else source[part]
+                        target[parts[-1]] = source[parts[-1]]
+                    self.assertEqual(restored, original)
+                self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+                self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                                 {n: current[n] for n in current.keys() - policy.keys()})
                 first, second = sorted(policy)
                 protected = self.H + ("typed-solution-core-schema-candidate.yml" if attack == "schema"
                                       else "constraint-set-v0.1.yml")
@@ -4495,6 +4673,45 @@ class RefreshProducerConformanceTests(unittest.TestCase):
 
     def test_rollback_rejects_replaced_output_path_without_touching_referent(self):
         root, frozen, policy, rules = self.simulation()
+        current = dict(frozen)
+        r3a, negative = policy
+        self.assertEqual(policy, {
+            self.H + "fixtures/r3a-reference-override-positive.json": [
+                f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                for i in range(3)],
+            self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                "/base_objects/11/canonical_sha256"],
+        })
+        for name in (r3a, negative):
+            original = self.producer["yaml"].safe_load(current[name])
+            stale = copy.deepcopy(original)
+            for pointer in policy[name]:
+                parts = pointer.strip("/").split("/")
+                target = stale
+                for part in parts[:-1]:
+                    target = target[int(part)] if isinstance(target, list) else target[part]
+                key = parts[-1]
+                stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                self.assertNotEqual(stale_value, target[key])
+                target[key] = stale_value
+            if name == r3a:
+                raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+            else:
+                raw = self.producer["yaml"].safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+            frozen[name] = raw
+            (root / name).write_bytes(raw)
+            restored = self.producer["yaml"].safe_load(raw)
+            for pointer in policy[name]:
+                parts = pointer.strip("/").split("/")
+                target, source = restored, original
+                for part in parts[:-1]:
+                    target = target[int(part)] if isinstance(target, list) else target[part]
+                    source = source[int(part)] if isinstance(source, list) else source[part]
+                target[parts[-1]] = source[parts[-1]]
+            self.assertEqual(restored, original)
+        self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+        self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                         {n: current[n] for n in current.keys() - policy.keys()})
         first = sorted(policy)[0]
         protected = "scripts/p9b1q_scoped_query_ir.py"
         original = os.write
@@ -4525,6 +4742,45 @@ class RefreshProducerConformanceTests(unittest.TestCase):
                        "parent_symlink", "unlink", "rename"):
             with self.subTest(attack=attack), tempfile.TemporaryDirectory(prefix="d5p-moved-") as temporary:
                 root, frozen, policy, rules = self.simulation()
+                current = dict(frozen)
+                r3a, negative = policy
+                self.assertEqual(policy, {
+                    self.H + "fixtures/r3a-reference-override-positive.json": [
+                        f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                        for i in range(3)],
+                    self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                        "/base_objects/11/canonical_sha256"],
+                })
+                for name in (r3a, negative):
+                    original = self.producer["yaml"].safe_load(current[name])
+                    stale = copy.deepcopy(original)
+                    for pointer in policy[name]:
+                        parts = pointer.strip("/").split("/")
+                        target = stale
+                        for part in parts[:-1]:
+                            target = target[int(part)] if isinstance(target, list) else target[part]
+                        key = parts[-1]
+                        stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                        self.assertNotEqual(stale_value, target[key])
+                        target[key] = stale_value
+                    if name == r3a:
+                        raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+                    else:
+                        raw = self.producer["yaml"].safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+                    frozen[name] = raw
+                    (root / name).write_bytes(raw)
+                    restored = self.producer["yaml"].safe_load(raw)
+                    for pointer in policy[name]:
+                        parts = pointer.strip("/").split("/")
+                        target, source = restored, original
+                        for part in parts[:-1]:
+                            target = target[int(part)] if isinstance(target, list) else target[part]
+                            source = source[int(part)] if isinstance(source, list) else source[part]
+                        target[parts[-1]] = source[parts[-1]]
+                    self.assertEqual(restored, original)
+                self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+                self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                                 {n: current[n] for n in current.keys() - policy.keys()})
                 first, second = sorted(policy)
                 original_write, original_open = os.write, os.open
                 identities = {(os.stat(root / n).st_dev, os.stat(root / n).st_ino): n for n in policy}
@@ -4602,6 +4858,45 @@ class RefreshProducerConformanceTests(unittest.TestCase):
         for fail_rollback in (False, True):
             with self.subTest(fail_rollback=fail_rollback):
                 root, frozen, policy, rules = self.simulation()
+                current = dict(frozen)
+                r3a, negative = policy
+                self.assertEqual(policy, {
+                    self.H + "fixtures/r3a-reference-override-positive.json": [
+                        f"/objects/minimality_probes/{i}/candidate_semantic_object_set_sha256"
+                        for i in range(3)],
+                    self.H + "fixtures/stage-validator-negative-fixtures.yml": [
+                        "/base_objects/11/canonical_sha256"],
+                })
+                for name in (r3a, negative):
+                    original = self.producer["yaml"].safe_load(current[name])
+                    stale = copy.deepcopy(original)
+                    for pointer in policy[name]:
+                        parts = pointer.strip("/").split("/")
+                        target = stale
+                        for part in parts[:-1]:
+                            target = target[int(part)] if isinstance(target, list) else target[part]
+                        key = parts[-1]
+                        stale_value = hashlib.sha256(("D5_ORACLE_STALE:" + name + pointer).encode()).hexdigest()
+                        self.assertNotEqual(stale_value, target[key])
+                        target[key] = stale_value
+                    if name == r3a:
+                        raw = (json.dumps(stale, ensure_ascii=False, indent=2) + "\n").encode()
+                    else:
+                        raw = self.producer["yaml"].safe_dump(stale, allow_unicode=True, sort_keys=False).encode()
+                    frozen[name] = raw
+                    (root / name).write_bytes(raw)
+                    restored = self.producer["yaml"].safe_load(raw)
+                    for pointer in policy[name]:
+                        parts = pointer.strip("/").split("/")
+                        target, source = restored, original
+                        for part in parts[:-1]:
+                            target = target[int(part)] if isinstance(target, list) else target[part]
+                            source = source[int(part)] if isinstance(source, list) else source[part]
+                        target[parts[-1]] = source[parts[-1]]
+                    self.assertEqual(restored, original)
+                self.assertEqual({n: (root / n).read_bytes() for n in frozen}, frozen)
+                self.assertEqual({n: frozen[n] for n in frozen.keys() - policy.keys()},
+                                 {n: current[n] for n in current.keys() - policy.keys()})
                 first = sorted(policy)[0]
                 original = os.write
                 injected = [False]
