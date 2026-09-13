@@ -1360,6 +1360,36 @@ def validate_c1_clause_ast(
         if item["node_kind"]
         in {"COORDINATION", "CONDITION", "CONTRAST", "OVERRIDE", "ALTERNATIVE_GROUP"}
     ]
+    # Completeness is independent of the enclosing node spans and reference
+    # edges. Only proposition text and exact operator surfaces own material.
+    covered: set[int] = set()
+    structural_punctuation: set[int] = set()
+    for node in nodes.values():
+        if node["node_kind"] == "PROPOSITION":
+            span = node["source_span"]
+            covered.update(range(span["start_char"], span["end_char"]))
+        if node["node_kind"] != "ROOT" and node["operator_span"] is not None:
+            span = node["operator_span"]
+            covered.update(range(span["start_char"], span["end_char"]))
+        if node["node_kind"] in {
+            "COORDINATION", "CONDITION", "CONTRAST", "OVERRIDE", "ALTERNATIVE_GROUP"
+        }:
+            # The frozen grammar preserves these separators in parent operator
+            # nodes (_operator_plan), including condition and contrast delimiters.
+            span = node["source_span"]
+            structural_punctuation.update(
+                index for index in range(span["start_char"], span["end_char"])
+                if text[index] in "，,；;"
+            )
+    uncovered = [
+        index for index in range(material_start, material_end)
+        if not text[index].isspace()
+        and index not in covered
+        and index not in structural_punctuation
+    ]
+    if uncovered:
+        _c1_fail("S1_CLAUSE_AST", f"uncovered material codepoints: {uncovered}")
+
     for recognized in _recognized_lexical_operator_spans(
         text, material_start, material_end, grammar_config
     ):

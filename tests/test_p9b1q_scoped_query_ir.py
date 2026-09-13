@@ -5506,5 +5506,157 @@ class D5GlobalSourceCorrectionTests(unittest.TestCase):
             self.assertEqual(g.at(g.object(row["file"]), row["pointer"]), g.derive(key))
 
 
+
+class S1MaterialCoverageTests(unittest.TestCase):
+    """Literal public offsets, independent of the production coverage check."""
+
+    def setUp(self):
+        self.boundary_spies = {}
+        for name in (
+            "_build_event_frame", "solve_typed_constraints", "extract_queryir_c4",
+            "execute_query_ir", "p9b1.retrieve",
+        ):
+            patcher = mock.patch(
+                f"scripts.p9b1q_scoped_query_ir.{name}",
+                side_effect=AssertionError(f"forbidden downstream call: {name}"),
+            )
+            self.boundary_spies[name] = patcher.start()
+            self.addCleanup(patcher.stop)
+        for name in ("socket.create_connection", "urllib.request.urlopen"):
+            patcher = mock.patch(name, side_effect=AssertionError("network forbidden"))
+            self.boundary_spies[name] = patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        for spy in self.boundary_spies.values():
+            spy.assert_not_called()
+
+    def altered_leaf(self, text, start, end):
+        normalized = normalize_request(request("PUBLIC-COVERAGE", text))
+        ast = compile_clause_ast(normalized)
+        leaf = next(n for n in ast["nodes"] if n["node_kind"] == "PROPOSITION")
+        leaf["source_span"] = {
+            "start_char": start, "end_char": end, "text": text[start:end],
+        }
+        # A negative must still be schema-valid; no malformed-span shortcut.
+        validate_schema(ast, CLAUSE_AST_SCHEMA_PATH)
+        return normalized, ast
+
+    def assert_gap(self, normalized, ast, expected_positions):
+        before = canonical_bytes(ast)
+        with self.assertRaises(C1ValidationError) as caught:
+            validate_c1_clause_ast(normalized, ast)
+        self.assertIn("S1_CLAUSE_AST", str(caught.exception))
+        self.assertIn(
+            f"uncovered material codepoints: {expected_positions}",
+            str(caught.exception),
+        )
+        self.assertEqual(before, canonical_bytes(ast))
+
+    def test_literal_complete_material_positive(self):
+        normalized = normalize_request(request("PUBLIC-COVERAGE", "甲乙，丙丁"))
+        ast = compile_clause_ast(normalized)
+        leaves = [n["source_span"] for n in ast["nodes"] if n["node_kind"] == "PROPOSITION"]
+        self.assertEqual([
+            {"start_char": 0, "end_char": 2, "text": "甲乙"},
+            {"start_char": 3, "end_char": 5, "text": "丙丁"},
+        ], leaves)
+        operator = next(n for n in ast["nodes"] if n["node_kind"] == "COORDINATION")
+        self.assertEqual({"start_char": 2, "end_char": 3, "text": "，"}, operator["operator_span"])
+        # Literal partition [0,2), [2,3), [3,5) covers this five-codepoint input.
+        before = canonical_bytes(ast)
+        validate_c1_clause_ast(normalized, ast)
+        self.assertEqual(before, canonical_bytes(ast))
+
+    def test_interior_material_gap(self):
+        normalized, ast = self.altered_leaf("甲乙，丙丁", 0, 1)
+        self.assertEqual("乙", normalized["normalized_query_text"][1:2])
+        self.assert_gap(normalized, ast, [1])
+
+    def test_leading_material_gap(self):
+        normalized, ast = self.altered_leaf("甲乙", 1, 2)
+        self.assertEqual("甲", normalized["normalized_query_text"][0:1])
+        self.assert_gap(normalized, ast, [0])
+
+    def test_trailing_material_gap(self):
+        normalized, ast = self.altered_leaf("甲乙", 0, 1)
+        self.assertEqual("乙", normalized["normalized_query_text"][1:2])
+        self.assert_gap(normalized, ast, [1])
+
+    def test_public_authorization_probe_with_retained_mention(self):
+        normalized, ast = self.altered_leaf("华支睾吸虫传播", 0, 5)
+        self.assertEqual("传播", normalized["normalized_query_text"][5:7])
+        self.assertTrue(ast["surface_mentions"])
+        self.assert_gap(normalized, ast, [5, 6])
+
+    def test_unicode_codepoint_positive_and_gap(self):
+        text = "甲𠀀，乙"
+        self.assertEqual(4, len(text))
+        self.assertEqual("𠀀", text[1:2])
+        normalized = normalize_request(request("PUBLIC-COVERAGE", text))
+        ast = compile_clause_ast(normalized)
+        leaf = next(n for n in ast["nodes"] if n["node_kind"] == "PROPOSITION")
+        self.assertEqual({"start_char": 0, "end_char": 2, "text": "甲𠀀"}, leaf["source_span"])
+        validate_c1_clause_ast(normalized, ast)
+        normalized, ast = self.altered_leaf(text, 0, 1)
+        self.assert_gap(normalized, ast, [1])
+
+    def test_root_and_structural_envelopes_do_not_own_gap(self):
+        normalized, ast = self.altered_leaf("甲乙，丙丁", 0, 1)
+        for kind in ("ROOT", "COORDINATION"):
+            node = next(n for n in ast["nodes"] if n["node_kind"] == kind)
+            self.assertEqual({"start_char": 0, "end_char": 5, "text": "甲乙，丙丁"}, node["source_span"])
+        self.assert_gap(normalized, ast, [1])
+
+    def test_question_envelope_does_not_own_gap(self):
+        normalized, ast = self.altered_leaf("甲乙？", 0, 1)
+        question = next(n for n in ast["nodes"] if n["node_kind"] == "QUESTION")
+        self.assertEqual({"start_char": 0, "end_char": 3, "text": "甲乙？"}, question["source_span"])
+        self.assert_gap(normalized, ast, [1])
+
+    def test_shared_reference_cannot_manufacture_coverage(self):
+        normalized, ast = self.altered_leaf("如果甲乙，但是丙丁。", 2, 3)
+        contrast = next(n for n in ast["nodes"] if n["node_kind"] == "CONTRAST")
+        target = next(n for n in ast["nodes"] if n["node_id"] == contrast["shared_left_argument_node_id"])
+        self.assertEqual({"start_char": 2, "end_char": 3, "text": "甲"}, target["source_span"])
+        self.assertEqual("乙", normalized["normalized_query_text"][3:4])
+        self.assert_gap(normalized, ast, [3])
+
+    def test_interior_punctuation_is_not_terminal_punctuation(self):
+        normalized, ast = self.altered_leaf("甲。乙", 0, 1)
+        self.assert_gap(normalized, ast, [1, 2])
+
+    def test_incomplete_s1_stops_public_event_frame_entry(self):
+        normalized, ast = self.altered_leaf("华支睾吸虫传播", 0, 5)
+        with self.assertRaises(C2ValidationError) as caught:
+            compile_event_frame(normalized, ast)
+        # Existing S2 API wraps the predecessor's S1 error; construction never runs.
+        self.assertIn("S1_CLAUSE_AST", str(caught.exception))
+        self.assertIn("uncovered material codepoints: [5, 6]", str(caught.exception))
+        for spy in self.boundary_spies.values():
+            spy.assert_not_called()
+
+    def test_existing_public_structure_roundtrip_is_byte_preserved(self):
+        # Captured before mutation at e9f0d160d6b34509c4023ae4e8453cb17d48b979.
+        # Rebind only the executable identity and its three dependent digest fields.
+        # All current bindings are checked first; no semantic field is removed.
+        cases = [('甲乙，丙丁', '5115479c44bd5be8965a40d01eb857b10c1090690f8d6d907935c01ee8031936'), ('华支睾吸虫或者肝吸虫', '8a8f520c08382fb0e71085228a0e51f537cac07d6304c708f0ea0afed6eb0dbe'), ('如果生食淡水鱼，粪便检卵阳性。', '4cb9ef2eed308f73f65b78770daffb281458ccb8f1d262def451d48ea0b517e9'), ('如果生食淡水鱼，但是粪便检卵阴性。', 'bec8085df17dd382ed5968a4f2bf87bdebf155cec2f2f75331f28914aec39352'), ('假设粪便检卵阳性。', '0431a22cbf07de0ea6225785fa48b61a070010d38ebc2bfdd19ecf280be032b0'), ('粪便未检出虫卵。', '6caf8af0680ef732aa5e26e0ca6f4de40033c5251184a1c90e1c931eb6e8f419'), ('  甲乙  ， 丙丁  。 ', '22c00d9e5a8a6b25ab4f5209c76ca27c6100c1b141923a939097eac49d4fbfff'), ('甲𠀀，乙？', '12162ef8f1348167a2098b9fdcb0d4b322737a7c65a79389edf0a316eb115b43')]
+        for index, (text, expected_sha256) in enumerate(cases):
+            with self.subTest(text=text):
+                actual = compile_c1(request(f"COVERAGE-ROUNDTRIP-{index}", text))
+                current_executable = file_sha256(ROOT / "scripts/p9b1q_scoped_query_ir.py")
+                for object_name in ("normalized_request", "clause_ast"):
+                    self.assertEqual(current_executable, actual[object_name]["producer"]["executable_sha256"])
+                self.assertEqual(canonical_sha256(actual["normalized_request"]), actual["normalized_request_sha256"])
+                self.assertEqual(actual["normalized_request_sha256"], actual["clause_ast"]["normalized_request_sha256"])
+                self.assertEqual(canonical_sha256(actual["clause_ast"]), actual["clause_ast_sha256"])
+                comparison = copy.deepcopy(actual)
+                for object_name in ("normalized_request", "clause_ast"):
+                    comparison[object_name]["producer"]["executable_sha256"] = "56f40521fd0081587ddfe427877adfa2bff0fa33069a17641d6a39d83f94468d"
+                comparison["normalized_request_sha256"] = canonical_sha256(comparison["normalized_request"])
+                comparison["clause_ast"]["normalized_request_sha256"] = comparison["normalized_request_sha256"]
+                comparison["clause_ast_sha256"] = canonical_sha256(comparison["clause_ast"])
+                self.assertEqual(expected_sha256, canonical_sha256(comparison))
+
 if __name__ == "__main__":
     unittest.main()
