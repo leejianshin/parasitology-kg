@@ -1,0 +1,43 @@
+result_version: "1.0"
+status: "CLOSED_CHANGES_REQUIRED"
+execution_attempt_count: 1
+heldout_implementation_failure: true
+heldout_status: "CONSUMED_FINAL"
+same_suite_rerun_allowed: false
+reuse_for_modified_implementation_acceptance: false
+
+replacement_commitment_commit: "ca80edf9d5e64473b9b183d0f01f393a8e403751"
+frozen_implementation_base: "5ccd8f65eeb2d453301cce78da6dd7ca7e8f2f65"
+suite_canonical_sha256: "86eaec21ccb567dacd6e626684d0b773079ea18742788c853ca269c27c59b057"
+retention_zip_sha256: "5bd922130982d6f5cf69a74fc32babed3eaa12508f303afef799b89ed97ea10c"
+audit_package_sha256: "49b8c69c4821b257a74a6e99073a28738baff9b75d06de9aada1f3b8e14bf4ae"
+
+environment_evidence_model: "PINNED_PORTABLE_CPYTHON31116_RUNTIME"
+qualified_python_version: "Python 3.11.16"
+portable_runtime_asset_sha256: "64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4"
+qualified_python_sha256: "1e761eb19d6f2594ab8dc64bd99ad4e1753589f3bf1ec199e4eef3aaa21e3930"
+environment_receipt_sha256: "13c7c8d3db22f729b5a044c4ed6e6ea7b66f1676786181bec59189397bb62215"
+
+public_p9b1q_tests:
+  count: 173
+  passed: 173
+  failed: 0
+  errors: 0
+
+heldout_aggregate:
+  semantic_case_pass: "0/24"
+  binding_positive_pass: "0/2"
+  binding_negative_pass: "10/17"
+  determinism_complete_pass: "23/24"
+  failed_assertion_occurrences: 820
+  unique_failed_case_gate_pairs: 284
+
+repository_mutated_by_execution: false
+implementation_changed_by_execution: false
+public_tests_changed_by_execution: false
+config_changed_by_execution: false
+dependency_changed_after_environment_freeze: false
+
+secret_suite_body_in_repository: false
+case_level_secret_expectations_published: false
+next_phase: "P9_B2_PRECONTROL"
