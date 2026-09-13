@@ -1,0 +1,83 @@
+role: D5_FINAL_FULL_SUITE_ENVIRONMENT_COMPLETION_AMENDMENT_CONTROLLER
+mode: [CONTROL_ONLY, ONE_ENVIRONMENT_VARIABLE_AMENDMENT_ONLY, NO_CODE_CHANGE, NO_TEST_CHANGE, NO_DEPENDENCY_CHANGE, NO_RUNNER_CHANGE, NO_TEST_EXECUTION, NO_REFRESH, NO_SECOND_PASS, NO_N9, NO_COMMIT, NO_PUSH, NO_MAPPING, NO_B2]
+control_result: PASS
+public_base: 031443737d23477333813d7d33f4e030e4e99cae
+prior_environment_authorization_sha256: a082401daf239b6da422e4e5254a92cd8888bce32ad34dfd71ad44cd94c8c470
+prior_authorization_raw_hash_verified: true
+authorization_path: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-final-full-suite-environment-completion-amendment-authorization.yml
+prior_attempt:
+  result: EVIDENCE_INSUFFICIENT
+  evidence: retained environment_completion/evidence/BUILD_RESULT.json and environment_preflight.json
+  blocker: ADDITIONAL_REQUIRED_ENVIRONMENT_VARIABLE_NOT_AUTHORIZED
+  full_suite_retry_started: false
+  full_suite_retry_executed: false
+amendment:
+  additional_variable_count: 1
+  P9B1Q_COUNT_NODE_MODULES: /workspace/scratch/65644c0da774/external-node/node_modules
+  existing_P9B1Q_D3_NODE_MODULES: /workspace/scratch/65644c0da774/external-node/node_modules
+  existing_NODE_PATH: /workspace/scratch/65644c0da774/external-node/node_modules
+  verified_realpath: /workspace/scratch/65644c0da774/external-node/node_modules
+  realpath_identity_with_P9B1Q_D3_NODE_MODULES: true
+  realpath_identity_with_NODE_PATH: true
+  node_modules_realpath_identity: PASS
+  installation_authorized: false
+  dependency_upgrade_authorized: false
+  node_modules_file_mutation_authorized: false
+preserve_unchanged:
+  - D5_GLOBAL_DESIGN_ARCHIVE
+  - D5_GLOBAL_OFFLINE_ARCHIVE
+  - Python runtime
+  - Node runtime
+  - PYTHONPATH
+  - P9B1Q_D3_NODE_MODULES
+  - NODE_PATH
+  - TMPDIR
+  - TMP
+  - TEMP
+  - fsync-qualified scratch root
+prior_environment_binding_removal_or_change_authorized: false
+retry_accounting:
+  full_suite_retry_consumed: false
+  full_suite_retry_limit: 1
+  full_suite_retry_remaining: 1
+  execution_after_publication_only: true
+  authorized_suite: Complete previously specified suite, unchanged membership and runner logic.
+  required: {total: 198, passed: 198, failures: 0, errors: 0, skipped: 0}
+  standalone_targeted_20_tests_rerun_authorized: false
+  on_any_difference: FAIL_CLOSED; STOP
+  additional_recovery_loop_authorized: false
+candidate_state:
+  preserve_exact_stopped_38_path_candidate_bytes: true
+  candidate_changed_path_count: 38
+  unauthorized_changed_path_count: 0
+  code_bytes_changed: false
+  test_bytes_changed: false
+  production_bytes_changed: false
+  verify_identity_before_authorized_execution: true
+prior_authorization_preservation:
+  all_other_requirements_remain_in_force: true
+  amendment_does_not_increase_retry_budget: true
+  current_turn_commit_or_publication_authorized: false
+boundaries:
+  code_change_authorized: false
+  test_change_authorized: false
+  dependency_change_authorized: false
+  runner_change_authorized: false
+  first_refresh_rerun_authorized: false
+  second_pass_rerun_authorized: false
+  n9_rerun_authorized: false
+  targeted_20_test_rerun_authorized: false
+  full_suite_retry_limit: 1
+  full_suite_retry_remaining: 1
+  remote_push_authorized: false
+  d5_mapping_authorized: false
+  b2_resume_authorized: false
+current_turn:
+  only_output: phase9/clonorchis-sinensis/p9b1q/p9b2-c5-d5-final-full-suite-environment-completion-amendment-authorization.yml
+  environment_variable_set: false
+  tests_executed: false
+  candidate_code_or_test_changed: false
+  dependency_or_runner_changed: false
+  refresh_second_pass_or_n9_executed: false
+  commit_or_push_performed: false
+  stop: true
