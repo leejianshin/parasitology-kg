@@ -1,5 +1,42 @@
 # Phase 9-A：受控RAG运行合同设计原子
 
+## 当前状态（取代下方历史施工口径）
+
+```text
+P9_ENGINEERING=
+FROZEN
+
+EVALUATION_SNAPSHOT=
+d77a76e6219482e1933e6377dfbad2151c829bef
+
+P9_B1Q=
+FROZEN_RESEARCH_PROTOTYPE
+
+P9_B2=
+FROZEN_RESEARCH_PROTOTYPE
+
+R10=
+CONSUMED_FINAL
+REOPEN=NO
+
+POST_R10_S1_CORRECTION=
+IMPLEMENTED
+AUDITED
+PUBLISHED
+
+FINAL_ENGINEERING_ACCEPTANCE=
+NOT_ESTABLISHED
+```
+
+P9工程已经冻结。P9-B1Q和P9-B2是冻结研究原型；R10已经消耗完毕且不得重新开启。
+POST-R10 S1修正已经实现、审计并发布，但不构成最终工程或生产验收。本页以下长篇
+逐轮叙述保留作可追溯的历史工程记录，其中的“当前”“待复审”“不得推送”等措辞
+只描述当时施工节点，不是本仓库的现行状态。
+
+## HISTORICAL ENGINEERING RECORD
+
+以下内容按原施工记录保留，不重构、不追溯性改写，也不用于声明最终工程验收。
+
 P9-A只冻结学生端受控RAG的接口、证据、拒答、审计和发布门禁，不实现模型调用、
 检索服务、网页、学习通集成或真实学生发布。
 

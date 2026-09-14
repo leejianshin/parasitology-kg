@@ -1,82 +1,61 @@
 # parasitology-kg
 
-面向人体寄生虫学学习的、以全健康（One Health）为总体框架、支持检索增强生成（RAG）的开放知识图谱。
+## 项目定位
 
-## 项目目标
+本仓库是一个可信知识图谱—检索增强生成（KG-RAG）方法研究原型，当前科学范围
+严格限定于华支睾吸虫（*Clonorchis sinensis*）及华支睾吸虫病知识域。它研究如何
+把可追溯的权威知识组织为结构化知识图谱，并通过有作用域的查询解释和语义约束，
+生成证据边界内的回答或在证据不足时拒答。
 
-本项目把经过来源登记和人工审核的人体寄生虫学知识组织为可阅读、可追溯、可计算的关系网络，帮助学生在教材和课堂学习之外，使用 AI 工具获得可靠的补充支撑。
+华支睾吸虫是本方法的验证试验域，不代表全部人体寄生虫学，也不能据此推断系统在
+其他虫种、临床场景或一般医学任务中的性能。
 
-知识图谱重点连接：
+## 为什么选择华支睾吸虫知识域
 
-- 寄生虫及其发育阶段；
-- 人、动物宿主、媒介和中间宿主；
-- 生态环境、生产生活方式与暴露行为；
-- 感染、疾病、诊断、治疗和防控；
-- 人类健康、动物健康与环境健康之间的相互关系。
+该知识域包含实体、虫期、宿主、解剖部位、事件、条件、诊断证据角色以及否定和
+作用域等多类结构化交互，适合检验知识进入、查询解释、确定性检索和证据约束能否
+保持一致。
 
-## 项目边界
+## 方法概览
 
-- 本项目是学习辅助资源，不替代教材、课堂教学、临床指南或专业诊疗。
-- 原始教材、课件和受版权保护的全文不存入公开仓库；仓库只保存经审核的知识表达、必要的短引文和可追溯来源信息。
-- AI 或 NotebookLM 生成的提取结果属于候选语料，未经人工审核不得进入正式知识层。
-- 关键事实和关系必须能够追溯到登记来源；无法确认的内容应明确标记，不以流畅表述代替证据。
+权威知识经过登记和审核后进入结构化知识图谱；用户问题被解释为带作用域的
+QueryIR；确定性检索只在冻结知识边界内工作；语义约束核查实体、关系、证据角色、
+否定和范围；最终只允许形成证据绑定的回答，覆盖或证据不足时关闭式拒答。
 
-## 数据路线
+## 当前研究状态
 
-项目拟采用“结构化 Markdown 为权威主数据，CSV/JSON 等图数据由其生成”的路线：
+**P9 engineering is frozen.**
 
-- Markdown 正文服务于学生阅读和语义 RAG；
-- 结构化元数据服务于实体识别、关系抽取和图查询；
-- 派生数据服务于不同 AI 工具和图数据库；
-- 所有正式内容通过 Git 版本控制和审阅流程进入主分支。
+```text
+FROZEN_EVALUATION_SNAPSHOT_V1=
+d77a76e6219482e1933e6377dfbad2151c829bef
 
-## 当前阶段
+SYSTEM_STATE=
+FROZEN_RESEARCH_PROTOTYPE
 
-Phase 0治理框架、Phase 1 Schema与编辑规范、Phase 2来源集冻结和Phase 3双路
-候选提取已经完成；Phase 2/3修订由PR #4合并。Phase 4已经完成双路对照、教师
-裁决和39条原子候选的正式准入准备。Phase 5已完成39条候选的四类重分；第一批
-10条关系和14个实体已经学科教师批准为`reviewed`并进入正式知识层，其派生图
-已通过确定性重建与入库验收并由PR #8合并。Phase 6已完成同模型baseline—RAG
-成对测试、独立复核和确认性测试，结论为可进入有限学生试点准备，但尚未向学生
-发布。Phase 7已完成华支睾吸虫`PILOT_CONTENT_MINIMUM_SET`的权威核查、Schema
-适配、课程负责人裁决、正式准入和16项结构回归；陈海英老师协作复核待补。
-Phase 8已完成学习通教师端、固定题目、知识点抽题和学生端最小验证：普通作业
-可以承载审核后的固定题目，但平台知识库与思维阶梯不能提供可审计、关闭式失败的
-受控RAG。Phase 9-A已经完成并合并独立学生端RAG的运行、引用、拒答、审计和发布
-合同；Phase 9-B1正在本地验证确定性证据检索核心，当前进入第八轮预冻结盲测门禁。
-学习通只保留为未来的链接与作业外壳。
+FINAL_ENGINEERING_ACCEPTANCE=
+NOT_ESTABLISHED
+```
 
-首个试点为：
+该快照是今后所有P10评估使用的系统提交。后续仅文档提交可以推进GitHub前台版本，
+但不构成新的系统版本，也不得替换上述评估目标。
 
-> 以华支睾吸虫为中心，构建覆盖“寄生虫—人—动物—环境—行为—疾病—诊疗—防控”的 One Health 知识子图，并验证其对学生 RAG 学习的支撑能力。
+本系统不得描述为生产就绪、已经临床验证或对一般寄生虫学可靠。当前工作仅为公共
+文档收口；文档收口通过后，下一项可进入的科学工作是P10科学评估方案设计，而非
+继续调优P9。
 
-详细文件：
+## 导航
 
+- [当前权威状态](docs/STATUS.md)
+- [冻结研究快照](phase9/clonorchis-sinensis/RESEARCH-SNAPSHOT.md)
+- [Phase 9架构与历史入口](phase9/clonorchis-sinensis/README.md)
 - [项目范围与原则](docs/PROJECT_SCOPE.md)
 - [系统工作流与阶段目标](docs/WORKFLOW.md)
 - [Schema说明](schema/README.md)
 - [编辑与审核规范](docs/EDITORIAL_GUIDE.md)
 - [华支睾吸虫试点来源冻结记录](sources/clonorchis-sinensis-pilot.md)
-- [第10版教材华支睾吸虫专节页码核验](reviews/clonorchis-sinensis/pmph-10e-page-scope-verification.md)
-- [Phase 3华支睾吸虫双路候选提取](phase3/clonorchis-sinensis/README.md)
-- [Phase 4最终裁决与公开收口](reviews/clonorchis-sinensis/phase4-final-adjudication.md)
-- [Phase 4批准候选账本](candidates/clonorchis-sinensis/phase4-approved-admission-ledger.yml)
-- [Phase 4 Schema适配缺口](reviews/clonorchis-sinensis/phase4-schema-fit-gap.yml)
-- [Phase 5正式准入方案](phase5/clonorchis-sinensis/README.md)
-- [Phase 5第一批派生图入库验收](reviews/clonorchis-sinensis/phase5-batch1-intake-validation.md)
-- [Phase 6学生RAG验收协议](phase6/clonorchis-sinensis/README.md)
 - [Phase 7 PCMS正式准入](phase7/clonorchis-sinensis/pilot-content-minimum-set-admission.yml)
-- [Phase 9-A受控RAG运行合同](phase9/clonorchis-sinensis/README.md)
-- [Phase 9-B1本地证据检索验收](phase9/clonorchis-sinensis/p9b1-local-acceptance.yml)
-- [学习通教学材料草案](docs/learning-platform/README.md)
-- [NotebookLM/Gemini候选语料v1审计](reviews/clonorchis-sinensis/notebooklm-gemini-v1-audit.md)
-- [NotebookLM/Gemini原子命题v2](candidates/clonorchis-sinensis/notebooklm-gemini-v2.md)
-- [NotebookLM/Gemini原子命题v2审计](reviews/clonorchis-sinensis/notebooklm-gemini-v2-audit.md)
-- [Notebook候选提取边界](docs/NOTEBOOK_EXTRACTION_BOUNDARY.md)
-- [NotebookLM/Gemini标准化重跑v3](candidates/clonorchis-sinensis/notebooklm-gemini-v3.md)
-- [NotebookLM/Gemini标准化重跑v3审计](reviews/clonorchis-sinensis/notebooklm-gemini-v3-audit.md)
-- [项目状态](docs/STATUS.md)
+- [P9-B1Q Scoped QueryIR](phase9/clonorchis-sinensis/p9b1q/README.md)
 
-## 历史说明
-
-仓库早期的 `triples.csv` 是 2025 年的概念验证数据，仅包含少量无来源三元组，现保存在 `archive/poc-2025/`，不作为正式知识数据使用。
+历史失败、盲测与修正记录保留在各阶段文档和治理证据中，作为可追溯的历史工程与
+验证证据；它们不构成最终工程验收。

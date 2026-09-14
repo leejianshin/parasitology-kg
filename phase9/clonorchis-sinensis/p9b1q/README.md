@@ -4,16 +4,37 @@
 `scripts/p9b1q_scoped_query_ir.py`，公开回归位于
 `tests/test_p9b1q_scoped_query_ir.py`。不调用模型、网络或学生数据。
 
-## 状态与基线
+## 当前状态
 
-- 设计状态：`DESIGN_CANDIDATE_INDEPENDENT_REVIEW_PASS`
-- 实现状态：`LOCAL_IMPLEMENTATION_PENDING_R10_BLIND_REVIEW`
-- 实现基线：`accf29d144412b5634de17b77c53f153b8ac7f7d`
+```text
+COMPONENT=
+P9-B1Q Scoped QueryIR
+
+STATUS=
+FROZEN_RESEARCH_PROTOTYPE
+
+ROLE=
+query interpretation / scoped semantic structure within the frozen P9 research system
+
+EVALUATION_SNAPSHOT=
+d77a76e6219482e1933e6377dfbad2151c829bef
+
+R10=
+CONSUMED_FINAL
+NO_REOPEN
+```
+
+本组件已作为冻结P9研究系统中的查询解释与作用域语义结构层完成收口。其设计原则、
+技术合同与历史验证记录继续保留；该状态不表示最终工程验收或生产就绪。
+
+## 历史设计基线与验证记录
+
+- 历史设计状态：`DESIGN_CANDIDATE_INDEPENDENT_REVIEW_PASS`
+- 历史实现基线：`accf29d144412b5634de17b77c53f153b8ac7f7d`
 - 架构裁决：`ADAPT_EXECUTOR_REPLACE_QUERY_INTERPRETATION_LAYER`
 - P9-A合同：保持冻结，不作修改
-- P9-B2：未启动
-- R10秘密套件：已由独立上下文预冻结并以公开承诺提交锁定；实现方不可读
-- 模型调用、网络调用、推送和Pull Request：均未发生
+
+以下R9/R10叙述记录当时的设计、验证与施工边界，不是当前待执行状态。
 
 R9独立盲测在该实现基线上取得Top12必需主张召回`24/24`，但完整QueryPlan仅
 `9/24`。因此本设计停止继续增加词面规则，改为先冻结“原始查询如何被解释为带
