@@ -1,0 +1,70 @@
+RECORD_ID: P10_AUTHORITY_CAPACITY_CORRECTED_DESIGN_V2
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+P10_AEM_SHA256: ff12f479af5e367ada38bad02c89e255a88ca26cd45efd5cd9086ae5c6acdc93
+
+CAPACITY_FORMULA: >-
+  distinct evidence cluster x distinct material semantic operation x legitimate
+  tier assignment, filtered to P9 contamination NONE or FACT_ONLY
+PRIMARY_DEPENDENCY_CLUSTER: >-
+  atomic scientific proposition identified by EVIDENCE_ID; a future
+  multi-evidence composition uses the sorted evidence-ID set as one cluster
+NESTING_RULE: questions sharing a scientific target remain in the same authority cluster
+PARAPHRASE_POLICY: wording_only_variants_have_zero_additional_capacity
+
+INVALIDATED:
+  prior_total_n: 600
+  prior_tier_n: {T1: 210, T2: 210, T3: 180}
+  count_dependent_simulations_and_power_claims: true
+FROZEN_DESIGN:
+  total_n: 209
+  tier_n: {T1: 20, T2: 131, T3: 58}
+  T3_action_n: {QUALIFY: 17, CORRECT_PREMISE: 24, ABSTAIN: 17}
+
+TIER_CAPACITY:
+  T1:
+    eligible_evidence_units: 23
+    eligible_evidence_clusters: 23
+    distinct_relation_patterns: 12
+    distinct_semantic_operations: 6
+    max_justified_single_variants: 19
+    max_justified_parallel_variants: 1
+    absolute_slot_capacity: 20
+    recommended_slot_capacity: 20
+  T2:
+    eligible_evidence_units: 48
+    eligible_evidence_clusters: 48
+    distinct_relation_patterns: 24
+    distinct_semantic_operations: 9
+    max_justified_single_variants: 48
+    max_justified_parallel_variants: 83
+    absolute_slot_capacity: 131
+    recommended_slot_capacity: 131
+  T3:
+    eligible_evidence_units: 35
+    eligible_evidence_clusters: 35
+    distinct_relation_patterns: 18
+    distinct_semantic_operations: 6
+    max_justified_single_variants: 28
+    max_justified_parallel_variants: 30
+    absolute_slot_capacity: 58
+    recommended_slot_capacity: 58
+
+CONTRAST_STATUS:
+  C1: ESTIMATION_ONLY
+  C2: ESTIMATION_ONLY
+  C3: ESTIMATION_ONLY
+  C4: RETAIN_CONFIRMATORY
+  C5: ESTIMATION_ONLY
+CONFIRMATORY_FAMILY: [C4]
+HOLM_FAMILY_REFROZEN: true
+PRIMARY_CLUSTER_AWARE_MODERATE_POWER_C4: 0.9713
+PRECISION_TARGETS: PASS
+
+SCIENTIFIC_BOUNDARY:
+  synthetic_only: true
+  uses_system_outputs: false
+  creates_benchmark_questions: false
+  creates_gold_content: false
+  authority_expanded: false

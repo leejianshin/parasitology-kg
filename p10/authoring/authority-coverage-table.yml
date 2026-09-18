@@ -1,0 +1,1692 @@
+aem_sha256: ff12f479af5e367ada38bad02c89e255a88ca26cd45efd5cd9086ae5c6acdc93
+mapped_evidence_units: 48/48
+rows:
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_adult
+  EVIDENCE_ID: P10-E-NAR-PCMS-001
+  EVIDENCE_TYPE: STRUCTURED_NARRATIVE
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA01
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  SEMANTIC_ROLE: morphology_fact
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_adult
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_adult
+  EVIDENCE_ID: P10-E-NAR-PCMS-002
+  EVIDENCE_TYPE: STRUCTURED_NARRATIVE
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA01
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  SEMANTIC_ROLE: morphology_fact
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_adult
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: FROZEN_SOURCE_RANGE_VARIANCE_RECONCILED
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - evidence_conflict
+  - excessive_certainty_request
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-NAR-PCMS-003
+  EVIDENCE_TYPE: STRUCTURED_NARRATIVE
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA01
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA12
+  SEMANTIC_ROLE: morphology_fact
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-NAR-PCMS-004
+  EVIDENCE_TYPE: STRUCTURED_NARRATIVE
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA01
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  SEMANTIC_ROLE: morphology_fact
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-NAR-PCMS-005
+  EVIDENCE_TYPE: STRUCTURED_NARRATIVE
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA01
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  SEMANTIC_ROLE: morphology_fact
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-NAR-PCMS-006
+  EVIDENCE_TYPE: STRUCTURED_NARRATIVE
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA01
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  SEMANTIC_ROLE: morphology_fact
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - excessive_certainty_request
+  - false_premise
+  - negation
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - diagnostic.biliary_imaging
+  - disease.clonorchiasis
+  EVIDENCE_ID: P10-E-PRJ-W2-ATOM-024
+  EVIDENCE_TYPE: AUTHORIZED_PROJECTION
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA11
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA07
+  - KA12
+  SEMANTIC_ROLE: diagnostic_evidence_integration
+  SOURCE_ID:
+  - source.cdc_clinical_overview_clonorchis_2024
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: diagnostic.biliary_imaging
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - excessive_certainty_request
+  - false_premise
+  - negation
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - diagnostic.biliary_imaging
+  - disease.clonorchiasis
+  EVIDENCE_ID: P10-E-PRJ-W2-ATOM-025
+  EVIDENCE_TYPE: AUTHORIZED_PROJECTION
+  OBJECT: null
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: null
+  PRIMARY_KNOWLEDGE_AREA: KA11
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA07
+  - KA12
+  SEMANTIC_ROLE: diagnostic_confirmation_limit
+  SOURCE_ID:
+  - source.cdc_clinical_overview_clonorchis_2024
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: diagnostic.biliary_imaging
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-REL-PCMS-007
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_egg
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_miracidium
+  EVIDENCE_ID: P10-E-REL-PCMS-008
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_miracidium
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_sporocyst
+  EVIDENCE_ID: P10-E-REL-PCMS-009
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_sporocyst
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_redia
+  EVIDENCE_ID: P10-E-REL-PCMS-010
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_redia
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_cercaria
+  EVIDENCE_ID: P10-E-REL-PCMS-011
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_cercaria
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_metacercaria
+  EVIDENCE_ID: P10-E-REL-PCMS-012
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_metacercaria
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - multi_hop_lifecycle
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - parasite.clonorchis_sinensis
+  - stage.clonorchis_adult
+  EVIDENCE_ID: P10-E-REL-PCMS-013
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_adult
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: has_life_cycle_stage
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: has_life_cycle_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - multi_hop_lifecycle
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_egg
+  - stage.clonorchis_miracidium
+  EVIDENCE_ID: P10-E-REL-PCMS-014
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_miracidium
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: develops_into
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: develops_into
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - multi_hop_lifecycle
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_miracidium
+  - stage.clonorchis_sporocyst
+  EVIDENCE_ID: P10-E-REL-PCMS-015
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_sporocyst
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: develops_into
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: develops_into
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_miracidium
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - multi_hop_lifecycle
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_redia
+  - stage.clonorchis_sporocyst
+  EVIDENCE_ID: P10-E-REL-PCMS-016
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_redia
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: develops_into
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: develops_into
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_sporocyst
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - multi_hop_lifecycle
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_cercaria
+  - stage.clonorchis_redia
+  EVIDENCE_ID: P10-E-REL-PCMS-017
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_cercaria
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: develops_into
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: develops_into
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_redia
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - multi_hop_lifecycle
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_cercaria
+  - stage.clonorchis_metacercaria
+  EVIDENCE_ID: P10-E-REL-PCMS-018
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_metacercaria
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: develops_into
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: develops_into
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_cercaria
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - multi_hop_lifecycle
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - stage.clonorchis_adult
+  - stage.clonorchis_metacercaria
+  EVIDENCE_ID: P10-E-REL-PCMS-019
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_adult
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: develops_into
+  PRIMARY_KNOWLEDGE_AREA: KA02
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA03
+  - KA04
+  SEMANTIC_ROLE: develops_into
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_metacercaria
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - host
+  - host_stage_site_binding
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - host.freshwater_snails_suitable_for_clonorchis
+  - parasite.clonorchis_sinensis
+  EVIDENCE_ID: P10-E-REL-PCMS-020
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.freshwater_snails_suitable_for_clonorchis
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_first_intermediate_host
+  PRIMARY_KNOWLEDGE_AREA: KA03
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA04
+  SEMANTIC_ROLE: has_first_intermediate_host
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - false_premise
+  - host
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - host.freshwater_fish
+  - parasite.clonorchis_sinensis
+  EVIDENCE_ID: P10-E-REL-PCMS-021
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.freshwater_fish
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_second_intermediate_host
+  PRIMARY_KNOWLEDGE_AREA: KA03
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA04
+  - KA12
+  SEMANTIC_ROLE: has_second_intermediate_host
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - host
+  - host_stage_site_binding
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - host.human
+  - parasite.clonorchis_sinensis
+  EVIDENCE_ID: P10-E-REL-PCMS-022
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.human
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_definitive_host
+  PRIMARY_KNOWLEDGE_AREA: KA03
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA04
+  SEMANTIC_ROLE: has_definitive_host
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - host
+  - host_stage_site_binding
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - host.piscivorous_mammals
+  - parasite.clonorchis_sinensis
+  EVIDENCE_ID: P10-E-REL-PCMS-023
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.piscivorous_mammals
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_definitive_host
+  PRIMARY_KNOWLEDGE_AREA: KA03
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA04
+  SEMANTIC_ROLE: has_definitive_host
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - host
+  - host_stage_site_binding
+  - multi_intent
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - host.domestic_dogs_cats_pigs
+  - parasite.clonorchis_sinensis
+  EVIDENCE_ID: P10-E-REL-PCMS-024
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.domestic_dogs_cats_pigs
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_reservoir_host
+  PRIMARY_KNOWLEDGE_AREA: KA03
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA04
+  SEMANTIC_ROLE: has_reservoir_host
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_clonorchiasis_qa_2025
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - false_premise
+  - host_stage_site_binding
+  - infection_route
+  - multi_intent
+  - relation_direction
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - host.human
+  - stage.clonorchis_metacercaria
+  EVIDENCE_ID: P10-E-REL-PCMS-025
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.human
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: infective_stage_for
+  PRIMARY_KNOWLEDGE_AREA: KA04
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA03
+  SEMANTIC_ROLE: infective_stage_for
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_metacercaria
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - relation_direction
+  - stage
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - stage.clonorchis_adult
+  EVIDENCE_ID: P10-E-REL-PCMS-026
+  EVIDENCE_TYPE: RELATION
+  OBJECT: disease.clonorchiasis
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: pathogenic_stage_for
+  PRIMARY_KNOWLEDGE_AREA: KA05
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA12
+  SEMANTIC_ROLE: major_pathogenic_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: stage.clonorchis_adult
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  ELIGIBLE_SEMANTIC_TAGS:
+  - diagnostic_method_specimen_target_binding
+  - diagnostic_stage
+  - false_premise
+  - host_stage_site_binding
+  - relation_direction
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - host.human
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-REL-PCMS-027
+  EVIDENCE_TYPE: RELATION
+  OBJECT: host.human
+  P9_CONTAMINATION_RISK: NONE
+  PREDICATE: diagnostic_stage_for
+  PRIMARY_KNOWLEDGE_AREA: KA07
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA11
+  - KA12
+  SEMANTIC_ROLE: diagnostic_stage_for
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_community_diagnosis_clonorchiasis
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - diagnostic.stool_egg_microscopy
+  - disease.clonorchiasis
+  EVIDENCE_ID: P10-E-REL-PCMS-028
+  EVIDENCE_TYPE: RELATION
+  OBJECT: diagnostic.stool_egg_microscopy
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: diagnosed_by
+  PRIMARY_KNOWLEDGE_AREA: KA07
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA11
+  - KA12
+  SEMANTIC_ROLE: parasitological_confirmation
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_community_diagnosis_clonorchiasis
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - diagnostic.duodenal_fluid_egg_microscopy
+  - disease.clonorchiasis
+  EVIDENCE_ID: P10-E-REL-PCMS-029
+  EVIDENCE_TYPE: RELATION
+  OBJECT: diagnostic.duodenal_fluid_egg_microscopy
+  P9_CONTAMINATION_RISK: STRUCTURAL_SIMILARITY
+  PREDICATE: diagnosed_by
+  PRIMARY_KNOWLEDGE_AREA: KA07
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA11
+  - KA12
+  SEMANTIC_ROLE: parasitological_confirmation
+  SOURCE_ID:
+  - source.nhc_ws309_2009
+  - source.pmph_human_parasitology_10e_2024
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - treatment.praziquantel
+  EVIDENCE_ID: P10-E-REL-PCMS-030
+  EVIDENCE_TYPE: RELATION
+  OBJECT: treatment.praziquantel
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: treated_by
+  PRIMARY_KNOWLEDGE_AREA: KA08
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA12
+  SEMANTIC_ROLE: treated_by
+  SOURCE_ID:
+  - source.who_community_diagnosis_clonorchiasis
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - treatment.albendazole
+  EVIDENCE_ID: P10-E-REL-PCMS-031
+  EVIDENCE_TYPE: RELATION
+  OBJECT: treatment.albendazole
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: treated_by
+  PRIMARY_KNOWLEDGE_AREA: KA08
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA12
+  SEMANTIC_ROLE: treated_by
+  SOURCE_ID:
+  - source.cdc_clinical_overview_clonorchis_2024
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - relation_direction
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - hazard.iarc_group_1_carcinogenic_to_humans
+  EVIDENCE_ID: P10-E-REL-PCMS-032
+  EVIDENCE_TYPE: RELATION
+  OBJECT: hazard.iarc_group_1_carcinogenic_to_humans
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: classified_as
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: classified_as
+  SOURCE_ID:
+  - source.iarc_clonorchis_group1
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - host.human
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-REL-PCMS-033
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_egg
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: sheds_stage
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: sheds_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_clonorchiasis_qa_2025
+  SUBJECT: host.human
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - host.domestic_dogs_cats_pigs
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-REL-PCMS-034
+  EVIDENCE_TYPE: RELATION
+  OBJECT: stage.clonorchis_egg
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: sheds_stage
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: sheds_stage
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_clonorchiasis_qa_2025
+  SUBJECT: host.domestic_dogs_cats_pigs
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - environment.freshwater_environment
+  - stage.clonorchis_egg
+  EVIDENCE_ID: P10-E-REL-PCMS-035
+  EVIDENCE_TYPE: RELATION
+  OBJECT: environment.freshwater_environment
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: present_in_environment
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: present_in_environment
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_clonorchiasis_qa_2025
+  SUBJECT: stage.clonorchis_egg
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - intervention.one_health_integrated_control
+  EVIDENCE_ID: P10-E-REL-PCMS-036
+  EVIDENCE_TYPE: RELATION
+  OBJECT: intervention.one_health_integrated_control
+  P9_CONTAMINATION_RISK: FACT_ONLY
+  PREDICATE: controlled_by
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: controlled_by
+  SOURCE_ID:
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - negation
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - behavior.raw_undercooked_freshwater_fish_consumption
+  - disease.clonorchiasis
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-001
+  EVIDENCE_TYPE: RELATION
+  OBJECT: behavior.raw_undercooked_freshwater_fish_consumption
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_diagnostic_clue
+  PRIMARY_KNOWLEDGE_AREA: KA11
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA07
+  - KA12
+  SEMANTIC_ROLE: epidemiological_clue
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_community_diagnosis_clonorchiasis
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - infection_route
+  - relation_direction
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - behavior.raw_undercooked_freshwater_fish_consumption
+  - parasite.clonorchis_sinensis
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-005
+  EVIDENCE_TYPE: RELATION
+  OBJECT: behavior.raw_undercooked_freshwater_fish_consumption
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: transmitted_via
+  PRIMARY_KNOWLEDGE_AREA: KA04
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA03
+  SEMANTIC_ROLE: transmitted_via
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: parasite.clonorchis_sinensis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - intervention.avoid_raw_undercooked_freshwater_fish
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-006
+  EVIDENCE_TYPE: RELATION
+  OBJECT: intervention.avoid_raw_undercooked_freshwater_fish
+  P9_CONTAMINATION_RISK: FACT_ONLY
+  PREDICATE: controlled_by
+  PRIMARY_KNOWLEDGE_AREA: KA09
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA10
+  - KA12
+  SEMANTIC_ROLE: controlled_by
+  SOURCE_ID:
+  - source.cdc_clinical_overview_clonorchis_2024
+  - source.who_clonorchiasis_qa_2025
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - anatomical_site
+  - host_stage_site_binding
+  - relation_direction
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - anatomy.intrahepatic_small_medium_bile_ducts
+  - stage.clonorchis_adult
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-008
+  EVIDENCE_TYPE: RELATION
+  OBJECT: anatomy.intrahepatic_small_medium_bile_ducts
+  P9_CONTAMINATION_RISK: STRUCTURAL_SIMILARITY
+  PREDICATE: parasitizes_site
+  PRIMARY_KNOWLEDGE_AREA: KA05
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA12
+  SEMANTIC_ROLE: parasitizes_site
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.hong_kim_clonorchis_cholangiocarcinoma_review_2016
+  SUBJECT: stage.clonorchis_adult
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  ELIGIBLE_SEMANTIC_TAGS:
+  - anatomical_site
+  - host_stage_site_binding
+  - relation_direction
+  ELIGIBLE_T1: 'YES'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'NO'
+  ENTITY_IDS:
+  - anatomy.biliary_system
+  - pathology.clonorchis_related_biliary_pathology
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-009
+  EVIDENCE_TYPE: RELATION
+  OBJECT: anatomy.biliary_system
+  P9_CONTAMINATION_RISK: STRUCTURAL_SIMILARITY
+  PREDICATE: occurs_in
+  PRIMARY_KNOWLEDGE_AREA: KA05
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA02
+  - KA12
+  SEMANTIC_ROLE: occurs_in
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.hong_kim_clonorchis_cholangiocarcinoma_review_2016
+  SUBJECT: pathology.clonorchis_related_biliary_pathology
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - negation
+  - relation_direction
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - manifestation.asymptomatic_light_infection
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-022
+  EVIDENCE_TYPE: RELATION
+  OBJECT: manifestation.asymptomatic_light_infection
+  P9_CONTAMINATION_RISK: FACT_ONLY
+  PREDICATE: manifests_as
+  PRIMARY_KNOWLEDGE_AREA: KA06
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA12
+  SEMANTIC_ROLE: manifests_as
+  SOURCE_ID:
+  - source.cdc_dpdx_clonorchiasis_2024
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - negation
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - diagnostic.biliary_imaging
+  - disease.clonorchiasis
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-023
+  EVIDENCE_TYPE: RELATION
+  OBJECT: diagnostic.biliary_imaging
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: has_diagnostic_clue
+  PRIMARY_KNOWLEDGE_AREA: KA11
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA07
+  - KA12
+  SEMANTIC_ROLE: auxiliary
+  SOURCE_ID:
+  - source.cdc_clinical_overview_clonorchis_2024
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - disease.clonorchiasis
+  - intervention.improved_sanitation
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-026
+  EVIDENCE_TYPE: RELATION
+  OBJECT: intervention.improved_sanitation
+  P9_CONTAMINATION_RISK: FACT_ONLY
+  PREDICATE: controlled_by
+  PRIMARY_KNOWLEDGE_AREA: KA09
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA10
+  - KA12
+  SEMANTIC_ROLE: controlled_by
+  SOURCE_ID:
+  - source.who_clonorchiasis_qa_2025
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: disease.clonorchiasis
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - environment.freshwater_environment
+  - intervention.reduce_human_fecal_contamination
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-027
+  EVIDENCE_TYPE: RELATION
+  OBJECT: environment.freshwater_environment
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: targets
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: targets
+  SOURCE_ID:
+  - source.who_clonorchiasis_qa_2025
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: intervention.reduce_human_fecal_contamination
+- AUTHORING_LIMITATIONS:
+  - No wording may be copied from public historical cases.
+  - Only operation-specific NONE or FACT_ONLY combinations enter ordinary authoring.
+  - This evidence unit supplies one atomic scientific target; paraphrase is not a new target.
+  CONFLICT_STATUS: NONE
+  ELIGIBLE_EXPECTED_ACTIONS:
+  - ABSTAIN
+  - ANSWER
+  - CORRECT_PREMISE
+  - QUALIFY
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_T1: 'NO'
+  ELIGIBLE_T2: 'YES'
+  ELIGIBLE_T3: 'YES'
+  ENTITY_IDS:
+  - environment.freshwater_environment
+  - intervention.reduce_animal_fecal_contamination
+  EVIDENCE_ID: P10-E-REL-W2-ATOM-028
+  EVIDENCE_TYPE: RELATION
+  OBJECT: environment.freshwater_environment
+  P9_CONTAMINATION_RISK: PROHIBITED_NEAR_DUPLICATE
+  PREDICATE: targets
+  PRIMARY_KNOWLEDGE_AREA: KA10
+  SECONDARY_KNOWLEDGE_AREAS:
+  - KA04
+  - KA09
+  - KA12
+  SEMANTIC_ROLE: targets
+  SOURCE_ID:
+  - source.who_clonorchiasis_qa_2025
+  - source.who_foodborne_trematode_fact_sheet
+  SUBJECT: intervention.reduce_animal_fecal_contamination
+schema_version: P10-ACT-1.0.0
+status: FROZEN_CANDIDATE
+system_commit: d77a76e6219482e1933e6377dfbad2151c829bef

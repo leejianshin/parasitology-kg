@@ -1,0 +1,64 @@
+FREEZE_ID: P10_MODEL_GENERATION_FREEZE_V1
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+
+MODEL_PROVIDER: OpenAI
+MODEL_ID: gpt-4.1-2025-04-14
+MODEL_SNAPSHOT_OR_REVISION: gpt-4.1-2025-04-14
+MODEL_REPRODUCIBILITY_STATUS: PINNED_MODEL_SNAPSHOT_WITH_REQUEST_LEVEL_VERSION_CAPTURE
+API_VERSION: v1
+SDK_OR_RUNTIME: OpenAI_HTTPS_JSON_API
+SDK_OR_RUNTIME_VERSION: v1
+
+GENERATION:
+  TEMPERATURE: 0
+  TOP_P: 1
+  MAX_OUTPUT_TOKENS: 1024
+  STUDY_CONTEXT_LIMIT: 16384
+  NUMBER_OF_RUNS_PER_QUESTION_SYSTEM: 1
+  TIMEOUT_SECONDS: 120
+
+SEED_POLICY:
+  request_seed: NOT_SET
+  reason: seed_is_not_part_of_the_frozen_generation_contract_for_this_endpoint
+  deterministic_claim: prohibited
+RETRY_POLICY:
+  maximum_retries: 2
+  permitted_causes: [transport_failure, timeout, HTTP_429, HTTP_5xx]
+  request_payload_change: prohibited
+  successful_response_regeneration: prohibited
+  retry_log_required: true
+REQUEST_METADATA_POLICY:
+  transmit:
+    - blinded_question_identifier
+    - blinded_comparator_run_identifier
+    - protocol_version
+  prohibit:
+    - gold_content
+    - tier_label
+    - expected_action
+    - comparator_identity_in_answer_prompt
+MODEL_VERSION_CAPTURE_POLICY:
+  capture_per_request:
+    - requested_model_ID
+    - returned_model_ID
+    - provider_request_ID
+    - response_created_timestamp
+    - API_version
+  returned_model_mismatch: FAIL_CLOSED_BEFORE_SCORING
+  provider_side_mutability_disclosure: >-
+    The dated model identifier is pinned. Provider infrastructure and serving
+    implementation remain outside repository control and are recorded as a
+    residual reproducibility limitation.
+
+GENERATION_PROMPT_POLICY:
+  one_common_answer_instruction_across_A_B_C_D: true
+  condition_specific_prompt_tuning: prohibited
+  post_result_prompt_tuning: prohibited
+  evidence_context_present_only_where_defined_by_comparator_contract: true
+
+EXECUTION_STATE:
+  model_called: false
+  benchmark_executed: false
+  A_B_C_D_outputs_created: false

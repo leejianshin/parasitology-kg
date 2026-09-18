@@ -1,0 +1,55 @@
+RECORD_ID: P10_PROTOCOL_FREEZE_RECORD_V2
+P10_PROTOCOL_VERSION: P10_PROTOCOL_CAPACITY_CORRECTED_V2
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_BASE: 7163840325abb62cba5fdca7bb9149b4b1c11a81
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+
+SUPERSEDED_COUNT_DEPENDENT_STATE:
+  total_n: 600
+  tier_n: {T1: 210, T2: 210, T3: 180}
+  dependent_power_claims: invalidated
+CURRENT_FROZEN_STATE:
+  total_n: 209
+  tier_n: {T1: 20, T2: 131, T3: 58}
+  T3_action_n: {QUALIFY: 17, CORRECT_PREMISE: 24, ABSTAIN: 17}
+  confirmatory_family: [C4]
+  estimation_only: [C1, C2, C3, C5]
+  authority_dependency_model: questions_nested_within_shared_authority_evidence_clusters
+
+FROZEN_IDENTITIES:
+  P10_AEM_VERSION: P10_AEM_V1
+  P10_AEM_SHA256: ff12f479af5e367ada38bad02c89e255a88ca26cd45efd5cd9086ae5c6acdc93
+  MATRIX_SHA256: 9466c949924e190e18453e3a6c54d26b6b35be5e50140f261313a011841e99cb
+  SLOT_ALLOCATION_SHA256: 151b533be8b516fbc920003fcc3b24f3603e229e024888e0e3e9f15151b8fb46
+  AUTHORITY_CLUSTER_REGISTER_SHA256: 45ccff36347351e46f7c7a3b8814c5c8dea076c9d00caa783ea9ea54aeabf006
+  PREAUTHORING_PACKAGE_SHA256: 66ee7aa615f76ee7290184765240300f9927b5c327754a077143591a91c6adbd
+
+PRESERVED_COMPONENTS:
+  - research_question
+  - comparator_definitions
+  - endpoint_definitions
+  - tier_definitions
+  - semantic_tags
+  - AEM
+  - expert_rubric
+  - gold_schema
+  - contamination_policy
+  - authoring_governance
+
+POST_FREEZE_PROHIBITIONS:
+  - question_count_change_without_formal_protocol_invalidation_and_refreeze
+  - authority_expansion_for_current_P10
+  - benchmark_failure_inspection_followed_by_system_patch_and_rerun
+  - question_or_gold_repair_after_system_outputs
+  - result_informed_prompt_vector_or_graph_tuning
+  - d77_mutation
+  - P9_reopen
+
+CURRENT_BOUNDARY:
+  BENCHMARK_EXECUTED: false
+  SYSTEM_EXECUTED: false
+  A_B_C_D_OUTPUTS_CREATED: false
+  SYSTEM_MUTATED: false
+  AUTHORITY_EXPANDED: false
+  P9_REOPENED: false

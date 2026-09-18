@@ -1,0 +1,604 @@
+aem_sha256: ff12f479af5e367ada38bad02c89e255a88ca26cd45efd5cd9086ae5c6acdc93
+areas:
+- AREA_ID: KA01
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 6 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Observable form, size, shape, and distinguishing structural features of parasite stages.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-NAR-PCMS-001
+  - P10-E-NAR-PCMS-002
+  - P10-E-NAR-PCMS-003
+  - P10-E-NAR-PCMS-004
+  - P10-E-NAR-PCMS-005
+  - P10-E-NAR-PCMS-006
+  ELIGIBLE_NARRATIVE_ROLES:
+  - morphology_fact
+  ELIGIBLE_RELATION_PREDICATES: []
+  ELIGIBLE_SEMANTIC_TAGS:
+  - cross_parasite_contamination
+  - evidence_conflict
+  - excessive_certainty_request
+  - morphology
+  - multi_intent
+  - shared_arguments
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - STRUCTURED_NARRATIVE
+  NAME: MORPHOLOGY
+- AREA_ID: KA02
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 29 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Developmental stages, ordered transitions, and stage-specific progression.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-NAR-PCMS-001
+  - P10-E-NAR-PCMS-002
+  - P10-E-NAR-PCMS-003
+  - P10-E-NAR-PCMS-004
+  - P10-E-NAR-PCMS-005
+  - P10-E-NAR-PCMS-006
+  - P10-E-REL-PCMS-007
+  - P10-E-REL-PCMS-008
+  - P10-E-REL-PCMS-009
+  - P10-E-REL-PCMS-010
+  - P10-E-REL-PCMS-011
+  - P10-E-REL-PCMS-012
+  - P10-E-REL-PCMS-013
+  - P10-E-REL-PCMS-014
+  - P10-E-REL-PCMS-015
+  - P10-E-REL-PCMS-016
+  - P10-E-REL-PCMS-017
+  - P10-E-REL-PCMS-018
+  - P10-E-REL-PCMS-019
+  - P10-E-REL-PCMS-020
+  - P10-E-REL-PCMS-021
+  - P10-E-REL-PCMS-022
+  - P10-E-REL-PCMS-023
+  - P10-E-REL-PCMS-024
+  - P10-E-REL-PCMS-025
+  - P10-E-REL-PCMS-026
+  - P10-E-REL-W2-ATOM-005
+  - P10-E-REL-W2-ATOM-008
+  - P10-E-REL-W2-ATOM-009
+  ELIGIBLE_NARRATIVE_ROLES:
+  - develops_into
+  - has_definitive_host
+  - has_first_intermediate_host
+  - has_life_cycle_stage
+  - has_reservoir_host
+  - has_second_intermediate_host
+  - infective_stage_for
+  - major_pathogenic_stage
+  - morphology_fact
+  - occurs_in
+  - parasitizes_site
+  - transmitted_via
+  ELIGIBLE_RELATION_PREDICATES:
+  - develops_into
+  - has_definitive_host
+  - has_first_intermediate_host
+  - has_life_cycle_stage
+  - has_reservoir_host
+  - has_second_intermediate_host
+  - infective_stage_for
+  - occurs_in
+  - parasitizes_site
+  - pathogenic_stage_for
+  - transmitted_via
+  ELIGIBLE_SEMANTIC_TAGS:
+  - anatomical_site
+  - condition
+  - cross_parasite_contamination
+  - evidence_conflict
+  - excessive_certainty_request
+  - false_premise
+  - host
+  - host_stage_site_binding
+  - infection_route
+  - morphology
+  - multi_hop_lifecycle
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - stage
+  - temporal_scope
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  - STRUCTURED_NARRATIVE
+  NAME: LIFE_CYCLE
+- AREA_ID: KA03
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 20 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Definitive, intermediate, reservoir, and other host-role relations.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-PCMS-007
+  - P10-E-REL-PCMS-008
+  - P10-E-REL-PCMS-009
+  - P10-E-REL-PCMS-010
+  - P10-E-REL-PCMS-011
+  - P10-E-REL-PCMS-012
+  - P10-E-REL-PCMS-013
+  - P10-E-REL-PCMS-014
+  - P10-E-REL-PCMS-015
+  - P10-E-REL-PCMS-016
+  - P10-E-REL-PCMS-017
+  - P10-E-REL-PCMS-018
+  - P10-E-REL-PCMS-019
+  - P10-E-REL-PCMS-020
+  - P10-E-REL-PCMS-021
+  - P10-E-REL-PCMS-022
+  - P10-E-REL-PCMS-023
+  - P10-E-REL-PCMS-024
+  - P10-E-REL-PCMS-025
+  - P10-E-REL-W2-ATOM-005
+  ELIGIBLE_NARRATIVE_ROLES:
+  - develops_into
+  - has_definitive_host
+  - has_first_intermediate_host
+  - has_life_cycle_stage
+  - has_reservoir_host
+  - has_second_intermediate_host
+  - infective_stage_for
+  - transmitted_via
+  ELIGIBLE_RELATION_PREDICATES:
+  - develops_into
+  - has_definitive_host
+  - has_first_intermediate_host
+  - has_life_cycle_stage
+  - has_reservoir_host
+  - has_second_intermediate_host
+  - infective_stage_for
+  - transmitted_via
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - host
+  - host_stage_site_binding
+  - infection_route
+  - multi_hop_lifecycle
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - stage
+  - temporal_scope
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: HOST_RELATIONSHIPS
+- AREA_ID: KA04
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 27 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Infection routes, exposure pathways, infective forms, and transmission conditions.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-PCMS-007
+  - P10-E-REL-PCMS-008
+  - P10-E-REL-PCMS-009
+  - P10-E-REL-PCMS-010
+  - P10-E-REL-PCMS-011
+  - P10-E-REL-PCMS-012
+  - P10-E-REL-PCMS-013
+  - P10-E-REL-PCMS-014
+  - P10-E-REL-PCMS-015
+  - P10-E-REL-PCMS-016
+  - P10-E-REL-PCMS-017
+  - P10-E-REL-PCMS-018
+  - P10-E-REL-PCMS-019
+  - P10-E-REL-PCMS-020
+  - P10-E-REL-PCMS-021
+  - P10-E-REL-PCMS-022
+  - P10-E-REL-PCMS-023
+  - P10-E-REL-PCMS-024
+  - P10-E-REL-PCMS-025
+  - P10-E-REL-PCMS-032
+  - P10-E-REL-PCMS-033
+  - P10-E-REL-PCMS-034
+  - P10-E-REL-PCMS-035
+  - P10-E-REL-PCMS-036
+  - P10-E-REL-W2-ATOM-005
+  - P10-E-REL-W2-ATOM-027
+  - P10-E-REL-W2-ATOM-028
+  ELIGIBLE_NARRATIVE_ROLES:
+  - classified_as
+  - controlled_by
+  - develops_into
+  - has_definitive_host
+  - has_first_intermediate_host
+  - has_life_cycle_stage
+  - has_reservoir_host
+  - has_second_intermediate_host
+  - infective_stage_for
+  - present_in_environment
+  - sheds_stage
+  - targets
+  - transmitted_via
+  ELIGIBLE_RELATION_PREDICATES:
+  - classified_as
+  - controlled_by
+  - develops_into
+  - has_definitive_host
+  - has_first_intermediate_host
+  - has_life_cycle_stage
+  - has_reservoir_host
+  - has_second_intermediate_host
+  - infective_stage_for
+  - present_in_environment
+  - sheds_stage
+  - targets
+  - transmitted_via
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - host
+  - host_stage_site_binding
+  - infection_route
+  - multi_hop_lifecycle
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - stage
+  - temporal_scope
+  - unsupported_causal_request
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: TRANSMISSION_AND_EXPOSURE
+- AREA_ID: KA05
+  AUTHORITY_CAPACITY: LIMITED
+  AUTHORITY_CAPACITY_NOTES: 3 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Anatomical localization and frozen-authority pathology relations.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-PCMS-026
+  - P10-E-REL-W2-ATOM-008
+  - P10-E-REL-W2-ATOM-009
+  ELIGIBLE_NARRATIVE_ROLES:
+  - major_pathogenic_stage
+  - occurs_in
+  - parasitizes_site
+  ELIGIBLE_RELATION_PREDICATES:
+  - occurs_in
+  - parasitizes_site
+  - pathogenic_stage_for
+  ELIGIBLE_SEMANTIC_TAGS:
+  - anatomical_site
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - relation_direction
+  - stage
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: ANATOMICAL_SITE_AND_PATHOLOGY
+- AREA_ID: KA06
+  AUTHORITY_CAPACITY: LIMITED
+  AUTHORITY_CAPACITY_NOTES: 1 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Frozen-authority clinical manifestations and their scope.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-W2-ATOM-022
+  ELIGIBLE_NARRATIVE_ROLES:
+  - manifests_as
+  ELIGIBLE_RELATION_PREDICATES:
+  - manifests_as
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - negation
+  - relation_direction
+  ELIGIBLE_TIERS:
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: CLINICAL_MANIFESTATIONS
+- AREA_ID: KA07
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 7 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Diagnostic methods, specimens, targets, stages, and confirmation relations.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-PRJ-W2-ATOM-024
+  - P10-E-PRJ-W2-ATOM-025
+  - P10-E-REL-PCMS-027
+  - P10-E-REL-PCMS-028
+  - P10-E-REL-PCMS-029
+  - P10-E-REL-W2-ATOM-001
+  - P10-E-REL-W2-ATOM-023
+  ELIGIBLE_NARRATIVE_ROLES:
+  - auxiliary
+  - diagnostic_confirmation_limit
+  - diagnostic_evidence_integration
+  - diagnostic_stage_for
+  - epidemiological_clue
+  - parasitological_confirmation
+  ELIGIBLE_RELATION_PREDICATES:
+  - diagnosed_by
+  - diagnostic_stage_for
+  - has_diagnostic_clue
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - diagnostic_stage
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - negation
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - AUTHORIZED_PROJECTION
+  - RELATION
+  NAME: DIAGNOSIS
+- AREA_ID: KA08
+  AUTHORITY_CAPACITY: LIMITED
+  AUTHORITY_CAPACITY_NOTES: 2 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Frozen-authority treatment agents, roles, jurisdictions, and time scope.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-PCMS-030
+  - P10-E-REL-PCMS-031
+  ELIGIBLE_NARRATIVE_ROLES:
+  - treated_by
+  ELIGIBLE_RELATION_PREDICATES:
+  - treated_by
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - temporal_scope
+  ELIGIBLE_TIERS:
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: TREATMENT
+- AREA_ID: KA09
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 9 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Personal, sanitary, and control recommendations within authority scope.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-PCMS-032
+  - P10-E-REL-PCMS-033
+  - P10-E-REL-PCMS-034
+  - P10-E-REL-PCMS-035
+  - P10-E-REL-PCMS-036
+  - P10-E-REL-W2-ATOM-006
+  - P10-E-REL-W2-ATOM-026
+  - P10-E-REL-W2-ATOM-027
+  - P10-E-REL-W2-ATOM-028
+  ELIGIBLE_NARRATIVE_ROLES:
+  - classified_as
+  - controlled_by
+  - present_in_environment
+  - sheds_stage
+  - targets
+  ELIGIBLE_RELATION_PREDICATES:
+  - classified_as
+  - controlled_by
+  - present_in_environment
+  - sheds_stage
+  - targets
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_TIERS:
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: PREVENTION_AND_CONTROL
+- AREA_ID: KA10
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 9 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Human-animal-environment relations, hazard classification, and epidemiologic context.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-REL-PCMS-032
+  - P10-E-REL-PCMS-033
+  - P10-E-REL-PCMS-034
+  - P10-E-REL-PCMS-035
+  - P10-E-REL-PCMS-036
+  - P10-E-REL-W2-ATOM-006
+  - P10-E-REL-W2-ATOM-026
+  - P10-E-REL-W2-ATOM-027
+  - P10-E-REL-W2-ATOM-028
+  ELIGIBLE_NARRATIVE_ROLES:
+  - classified_as
+  - controlled_by
+  - present_in_environment
+  - sheds_stage
+  - targets
+  ELIGIBLE_RELATION_PREDICATES:
+  - classified_as
+  - controlled_by
+  - present_in_environment
+  - sheds_stage
+  - targets
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - unsupported_causal_request
+  ELIGIBLE_TIERS:
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - RELATION
+  NAME: ONE_HEALTH_AND_EPIDEMIOLOGIC_CONTEXT
+- AREA_ID: KA11
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 7 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Distinctions among exposure clues, imaging clues, and confirmatory evidence.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-PRJ-W2-ATOM-024
+  - P10-E-PRJ-W2-ATOM-025
+  - P10-E-REL-PCMS-027
+  - P10-E-REL-PCMS-028
+  - P10-E-REL-PCMS-029
+  - P10-E-REL-W2-ATOM-001
+  - P10-E-REL-W2-ATOM-023
+  ELIGIBLE_NARRATIVE_ROLES:
+  - auxiliary
+  - diagnostic_confirmation_limit
+  - diagnostic_evidence_integration
+  - diagnostic_stage_for
+  - epidemiological_clue
+  - parasitological_confirmation
+  ELIGIBLE_RELATION_PREDICATES:
+  - diagnosed_by
+  - diagnostic_stage_for
+  - has_diagnostic_clue
+  ELIGIBLE_SEMANTIC_TAGS:
+  - condition
+  - diagnostic_method_specimen_target_binding
+  - diagnostic_stage
+  - excessive_certainty_request
+  - false_premise
+  - host_stage_site_binding
+  - multi_intent
+  - negation
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - AUTHORIZED_PROJECTION
+  - RELATION
+  NAME: EVIDENCE_ROLE_AND_DIAGNOSTIC_INTERPRETATION
+- AREA_ID: KA12
+  AUTHORITY_CAPACITY: AVAILABLE
+  AUTHORITY_CAPACITY_NOTES: 24 frozen evidence units; capacity denotes coverage, not independent question count.
+  DEFINITION: Authority scope, negation, conditions, conflicts, unsupported premises, and boundary actions.
+  ELIGIBLE_EVIDENCE_IDS:
+  - P10-E-NAR-PCMS-003
+  - P10-E-PRJ-W2-ATOM-024
+  - P10-E-PRJ-W2-ATOM-025
+  - P10-E-REL-PCMS-021
+  - P10-E-REL-PCMS-026
+  - P10-E-REL-PCMS-027
+  - P10-E-REL-PCMS-028
+  - P10-E-REL-PCMS-029
+  - P10-E-REL-PCMS-030
+  - P10-E-REL-PCMS-031
+  - P10-E-REL-PCMS-032
+  - P10-E-REL-PCMS-033
+  - P10-E-REL-PCMS-034
+  - P10-E-REL-PCMS-035
+  - P10-E-REL-PCMS-036
+  - P10-E-REL-W2-ATOM-001
+  - P10-E-REL-W2-ATOM-006
+  - P10-E-REL-W2-ATOM-008
+  - P10-E-REL-W2-ATOM-009
+  - P10-E-REL-W2-ATOM-022
+  - P10-E-REL-W2-ATOM-023
+  - P10-E-REL-W2-ATOM-026
+  - P10-E-REL-W2-ATOM-027
+  - P10-E-REL-W2-ATOM-028
+  ELIGIBLE_NARRATIVE_ROLES:
+  - auxiliary
+  - classified_as
+  - controlled_by
+  - diagnostic_confirmation_limit
+  - diagnostic_evidence_integration
+  - diagnostic_stage_for
+  - epidemiological_clue
+  - has_second_intermediate_host
+  - major_pathogenic_stage
+  - manifests_as
+  - morphology_fact
+  - occurs_in
+  - parasitizes_site
+  - parasitological_confirmation
+  - present_in_environment
+  - sheds_stage
+  - targets
+  - treated_by
+  ELIGIBLE_RELATION_PREDICATES:
+  - classified_as
+  - controlled_by
+  - diagnosed_by
+  - diagnostic_stage_for
+  - has_diagnostic_clue
+  - has_second_intermediate_host
+  - manifests_as
+  - occurs_in
+  - parasitizes_site
+  - pathogenic_stage_for
+  - present_in_environment
+  - sheds_stage
+  - targets
+  - treated_by
+  ELIGIBLE_SEMANTIC_TAGS:
+  - anatomical_site
+  - condition
+  - cross_parasite_contamination
+  - diagnostic_method_specimen_target_binding
+  - diagnostic_stage
+  - evidence_conflict
+  - excessive_certainty_request
+  - false_premise
+  - host
+  - host_stage_site_binding
+  - morphology
+  - multi_intent
+  - negation
+  - out_of_scope_claim
+  - relation_direction
+  - shared_arguments
+  - stage
+  - temporal_scope
+  - unsupported_causal_request
+  ELIGIBLE_TIERS:
+  - TIER_1
+  - TIER_2
+  - TIER_3
+  IN_SCOPE_EVIDENCE_TYPES:
+  - AUTHORIZED_PROJECTION
+  - RELATION
+  - STRUCTURED_NARRATIVE
+  NAME: SCOPE_NEGATION_CONDITION_AND_SEMANTIC_BOUNDARY
+schema_version: P10-KAM-1.0.0
+status: FROZEN_CANDIDATE
+system_commit: d77a76e6219482e1933e6377dfbad2151c829bef

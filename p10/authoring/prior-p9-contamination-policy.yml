@@ -1,0 +1,26 @@
+policy_id: P10-P9CONTAM-1.0.0
+comparison_corpus:
+  required_sources: [Phase_6_test_cases, P9_acceptance_cases,
+    disclosed_prior_heldout_regressions, R9_R10_R11_public_material,
+    public_failure_regressions, examples, fixtures]
+  freeze_requirement: enumerate file identity, source commit, byte SHA256, and extraction rule before authoring
+checks:
+  - normalized exact-text comparison
+  - deterministic near-text candidate detection using duplicate-policy thresholds
+  - semantic fingerprint comparison over authority target, bindings, operation tags, and expected action
+  - independent reviewer inspection of all candidates
+classification:
+  NONE: no material fact, wording, or structural overlap
+  FACT_ONLY: same scientific fact but independently constructed wording and semantic operation
+  STRUCTURAL_SIMILARITY: distinctive construction or query structure overlaps despite different wording
+  PROHIBITED_NEAR_DUPLICATE: exact, trivial paraphrase, known failure template, or known expected query structure
+admissibility:
+  accepted: [NONE, FACT_ONLY]
+  rejected: [STRUCTURAL_SIMILARITY, PROHIBITED_NEAR_DUPLICATE]
+  rule: rejected candidates are discarded, not repaired by copying the prior case
+audit_record_fields: [QUESTION_ID, compared_source_ids, candidate_metrics,
+  reviewer_id, classification, rationale, timestamp_utc]
+prohibitions:
+  - P9 failed-answer content as gold
+  - known prior failure construction as a P10 template
+  - changing thresholds after system output

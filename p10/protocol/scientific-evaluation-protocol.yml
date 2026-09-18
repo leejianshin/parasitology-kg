@@ -1,0 +1,119 @@
+PROTOCOL_ID: P10_SCIENTIFIC_EVALUATION_PROTOCOL
+PROTOCOL_VERSION: P10_PROTOCOL_CAPACITY_CORRECTED_V2
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_BASE: 7163840325abb62cba5fdca7bb9149b4b1c11a81
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+
+RESEARCH_QUESTION: >-
+  In a frozen Clonorchis sinensis knowledge domain, do explicit knowledge
+  structure and semantic constraints, relative to progressively simpler
+  architectures, improve reliability for selected query classes?
+INTERPRETIVE_OBJECTIVE:
+  - identify which architectural component helps
+  - identify the query classes on which it helps
+  - identify the reliability dimensions affected
+PROHIBITED_OBJECTIVE: prove_the_system_is_best
+
+COMPARATORS: [A_LLM_ALONE, B_VECTOR_RAG, C_KG_RAG, D_KG_RAG_PLUS_SEMANTIC_CONSTRAINTS]
+CONTROL_PRINCIPLES:
+  same_model_where_technically_possible: true
+  same_frozen_knowledge_authority: true
+  same_question_set: true
+  same_generation_policy: true
+  same_evaluation_rubric: true
+  intended_architectural_factor_only: true
+
+PRIMARY_TIER_RULE:
+  exactly_one_primary_tier: true
+  precedence:
+    - IF_EXPECTED_ACTION_REQUIRES_ABSTAIN_CORRECT_PREMISE_OR_SUBSTANTIVE_QUALIFY_THEN_TIER_3
+    - ELSE_IF_COMPOSITION_BINDING_NEGATION_TEMPORAL_CONDITION_SHARED_ARGUMENT_OR_MULTI_HOP_THEN_TIER_2
+    - ELSE_TIER_1
+  tiers:
+    T1: BASIC_FACTUAL_KNOWLEDGE
+    T2: COMPOSITIONAL_SEMANTICS
+    T3: BOUNDARY_AND_ABSTENTION
+SEMANTIC_TAGS:
+  model: NON_EXCLUSIVE
+  T1: [host, stage, morphology, infection_route, anatomical_site, diagnostic_stage]
+  T2: [negation, condition, temporal_scope, host_stage_site_binding,
+    diagnostic_method_specimen_target_binding, relation_direction,
+    shared_arguments, multi_intent, multi_hop_lifecycle]
+  T3: [insufficient_authority, false_premise, unsupported_causal_request,
+    out_of_scope_claim, cross_parasite_contamination, evidence_conflict,
+    excessive_certainty_request]
+  evidence_conflict_rule: permitted_only_for_a_frozen_AEM_conflict_record
+
+AUTHORITY:
+  manifest_version: P10_AEM_V1
+  manifest_sha256: ff12f479af5e367ada38bad02c89e255a88ca26cd45efd5cd9086ae5c6acdc93
+  sole_gold_authority: true
+  external_literature_after_freeze: prohibited
+  model_generated_truth: prohibited
+  post_output_answer_key_modification: prohibited
+
+BENCHMARK_DESIGN:
+  total_n: 209
+  tier_n: {T1: 20, T2: 131, T3: 58}
+  T3_action_n: {QUALIFY: 17, CORRECT_PREMISE: 24, ABSTAIN: 17}
+  primary_inferential_unit: question
+  dependency: questions_nested_within_shared_authority_evidence_clusters
+  parallel_paraphrase_as_new_slot: prohibited
+
+CONTRASTS:
+  C1:
+    endpoint: FACTUAL_CORRECTNESS
+    tier: T1
+    contrast: B_MINUS_A
+    status: ESTIMATION_ONLY
+  C2:
+    endpoint: SEMANTIC_RELATION_CORRECTNESS
+    tier: T2
+    contrast: C_MINUS_B
+    status: ESTIMATION_ONLY
+  C3:
+    endpoint: EVIDENCE_BINDING_CORRECTNESS
+    tier: T2
+    contrast: C_MINUS_B
+    status: ESTIMATION_ONLY
+  C4:
+    endpoint: UNSUPPORTED_CLAIM_RATE
+    tier: T3
+    contrast: D_MINUS_C
+    improvement_direction: LOWER
+    status: CONFIRMATORY
+  C5:
+    endpoint: APPROPRIATE_BOUNDARY_ACTION
+    tier: T3
+    contrast: D_MINUS_C
+    status: ESTIMATION_ONLY
+CONFIRMATORY_FAMILY: [C4]
+MULTIPLICITY: HOLM_FAMILYWISE_OVER_CONFIRMATORY_FAMILY
+
+ANTI_LEAKAGE_AND_CHANGE_CONTROL:
+  frozen_system_tuning_against_P10_results: prohibited
+  inspect_failure_patch_and_rerun: prohibited
+  question_or_gold_change_after_output: prohibited
+  critical_defect_action: invalidate_preserve_version_refreeze_before_execution
+  system_commit_must_remain: d77a76e6219482e1933e6377dfbad2151c829bef
+
+PAPER_GO_NO_GO:
+  favorable_superiority_required: false
+  go_requires:
+    - protocol_and_benchmark_integrity
+    - completed_prespecified_analysis
+    - acceptable_rater_reliability_or_transparent_limitation
+    - no_material_leakage_or_post_freeze_tuning
+  no_go_triggers:
+    - protocol_invalidating_deviation
+    - benchmark_or_gold_leakage
+    - result_informed_system_change
+    - unrecoverable_scoring_or_traceability_failure
+
+CURRENT_EXECUTION_STATE:
+  BENCHMARK_EXECUTED: false
+  SYSTEM_EXECUTED: false
+  A_B_C_D_OUTPUTS_CREATED: false
+  SYSTEM_MUTATED: false
+  P9_REOPENED: false

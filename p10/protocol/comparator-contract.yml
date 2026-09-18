@@ -1,0 +1,120 @@
+CONTRACT_ID: P10_ABCD_COMPARATOR_CONTRACT_V2
+PROTOCOL_VERSION: P10_PROTOCOL_CAPACITY_CORRECTED_V2
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+
+COMMON_GENERATION:
+  model: gpt-4.1-2025-04-14
+  generation_policy: p10/protocol/model-generation-freeze.yml
+  question_set: identical_across_A_B_C_D
+  answer_instruction_and_output_contract: identical_across_A_B_C_D
+  evidence_context_max_tokens: 4096
+  evidence_unit_maximum: 8
+  context_limit: 16384
+  no_query_specific_tuning: true
+  no_result_conditioned_evidence_addition: true
+
+CONDITIONS:
+  A:
+    name: LLM_ALONE
+    allowed_inputs: [benchmark_question, common_answer_instruction]
+    prohibited_inputs: [retrieved_evidence, graph_context, vector_context,
+      D_typed_semantic_constraints]
+    retrieval: NONE
+    evidence_representation: NONE
+    abstention_qualification: common_generation_instruction_only
+  B:
+    name: VECTOR_RAG
+    allowed_inputs: [benchmark_question, common_answer_instruction,
+      vector_retrieved_AEM_evidence]
+    prohibited_inputs: [graph_derived_enrichment, graph_traversal,
+      D_semantic_roles, D_typed_semantic_constraints]
+    retrieval: frozen_dense_vector_configuration_below
+    evidence_representation: deterministic_common_evidence_renderer
+    abstention_qualification: common_generation_instruction_only
+  C:
+    name: KG_RAG
+    ablation_path: P9B1_FROZEN_GRAPH_RETRIEVAL_REUSE
+    allowed_inputs: [benchmark_question, common_answer_instruction,
+      P9B1_graph_retrieved_evidence]
+    prohibited_inputs: [P9B1Q_typed_constraint_solver,
+      S3_typed_constraint_result, D_specific_semantic_enforcement]
+    retrieval:
+      implementation: scripts/p9b1_local_retrieval.py
+      contract: phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml
+      result_schema: phase9/clonorchis-sinensis/retrieval-result-schema.yml
+      authority_domain: clonorchis_pcms_v1
+      mechanism: deterministic_structured_graph_query_plan_and_graph_neighborhood_binding
+      vector_retrieval: false
+    evidence_representation: deterministic_common_evidence_renderer
+    abstention_qualification: common_generation_instruction_only
+    source_modification_required: false
+    P10_specific_retuning_required: false
+  D:
+    name: KG_RAG_PLUS_SEMANTIC_CONSTRAINTS
+    allowed_inputs: [benchmark_question, common_answer_instruction,
+      typed_semantically_validated_KG_evidence]
+    retrieval:
+      interpreter_and_executor: scripts/p9b1q_scoped_query_ir.py
+      ordering:
+        - request_normalization
+        - clause_AST
+        - event_frame
+        - typed_constraint_solver
+        - QueryIR_emission
+        - semantic_and_runtime_validation
+        - graph_retrieval
+      typed_solver_contract: phase9/clonorchis-sinensis/p9b1q-architecture-review/typed-constraint-solver-contract.yml
+      compiler_contract: phase9/clonorchis-sinensis/p9b1q-architecture-review/compiler-pipeline-contract.yml
+      binding_contract: phase9/clonorchis-sinensis/p9b1q/request-queryir-retrieval-audit-binding.yml
+    evidence_representation: deterministic_common_evidence_renderer
+    abstention_qualification: typed_fail_closed_state_plus_common_generation_instruction
+
+C_TO_D_INTERPRETATION: incremental_effect_of_D_specific_typed_semantic_constraint_enforcement
+C_SCIENTIFIC_INTERPRETABILITY: RESOLVED
+
+VECTOR_RAG_CONFIGURATION:
+  embedding_provider: OpenAI
+  embedding_model: text-embedding-3-large
+  embedding_model_revision: PROVIDER_DOES_NOT_EXPOSE_IMMUTABLE_REVISION
+  tokenizer: cl100k_base
+  tokenizer_revision: FROZEN_WITH_INDEX_BUILD_ENVIRONMENT_AND_RECORDED_IN_BUILD_MANIFEST
+  evidence_unit: ONE_VECTOR_PER_FROZEN_EVIDENCE_UNIT
+  text_canonicalization:
+    encoding: UTF-8
+    unicode: NFC
+    whitespace: canonical_single_space_with_trimmed_edges
+    field_order: [EMBEDDING_TEXT]
+    field_rule: canonical_ATOMIC_CLAIM_only_as_frozen_by_P10_AEM_V1
+    graph_derived_enrichment: prohibited
+  pooling_policy: PROVIDER_NATIVE_SINGLE_VECTOR_NO_CLIENT_POOLING
+  vector_normalization: L2_UNIT_NORM_BEFORE_INDEX_SERIALIZATION
+  similarity_metric: COSINE
+  top_k: 8
+  max_evidence_units: 8
+  max_evidence_tokens: 4096
+  index_implementation: exact_brute_force_float32_matrix
+  index_implementation_version: NUMPY_2.3.5
+  tie_break_policy: similarity_descending_then_evidence_id_UTF8_ascending
+  index_build_input: P10_AUTHORITATIVE_EVIDENCE_MANIFEST_ONLY
+  index_serialization_policy: little_endian_IEEE754_float32_plus_sorted_evidence_ID_table
+  index_config_sha256_policy: SHA256_of_canonical_UTF8_JSON_configuration
+  index_content_sha256_policy: >-
+    SHA256 of canonical config digest, ordered evidence IDs, canonicalized text
+    digests, embedding response model identifiers, and exact serialized vector bytes
+  index_content_sha256: PRODUCED_ONLY_BY_AUTHORIZED_PRE_EXECUTION_INDEX_BUILD
+
+EVIDENCE_EXPOSURE_PARITY:
+  common_max_evidence_tokens: 4096
+  common_max_evidence_units: 8
+  token_counting: frozen_tokenizer_recorded_per_request
+  actual_exposed_units_and_tokens_recorded: true
+  deterministic_truncation: evidence_rank_then_evidence_ID_then_token_prefix
+  admissible_token_tolerance: 0
+  structural_limitation: A_receives_no_evidence_by_definition
+
+EXECUTION_BOUNDARY:
+  source_change_authorized: false
+  system_execution_completed: false
+  benchmark_execution_completed: false

@@ -1,0 +1,44 @@
+MANIFEST_ID: P10_AUTHORITY_CLUSTER_AWARE_SIMULATION_MANIFEST_V1
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+
+SIMULATION_SEED: 2026091802
+SIMULATION_REPLICATIONS_PER_CELL: 10000
+SIMULATION_CODE_SHA256: 09d5475deaf8a5407daa11b5ce886131ead9f960b7758def3b91dcb9097f7bed
+SIMULATION_RESULT_SHA256: e17a017d5dce4a5fa8ef2e73dc1fdd5d457601e4e3dbf95d42af6db60385fe93
+DATA: SYNTHETIC_ONLY
+USES_A_B_C_D_OUTPUTS: false
+
+DESIGN:
+  total_n: 209
+  tier_n: {T1: 20, T2: 131, T3: 58}
+  within_question_system_correlation: 0.5
+  authority_cluster_ICC_grid: [0.1, 0.3, 0.5]
+  primary_authority_cluster_ICC: 0.3
+  effect_grid:
+    small: {ordinal_SD: 0.20, binary_absolute_difference: 0.10}
+    moderate: {ordinal_SD: 0.30, binary_absolute_difference: 0.15}
+    large: {ordinal_SD: 0.40, binary_absolute_difference: 0.20}
+  models_compared:
+    - NAIVE_QUESTION_INDEPENDENCE_MODEL
+    - CLUSTER_AWARE_MODEL
+  primary_decision_model: CLUSTER_AWARE_MODEL
+
+PRIMARY_MODERATE_SCENARIO:
+  authority_cluster_ICC: 0.3
+  C1: {power: 0.1813, CI95_half_width_p95: 0.5071, estimator_failure_rate: 0.0}
+  C2: {power: 0.6274, CI95_half_width_p95: 0.2102, estimator_failure_rate: 0.0}
+  C3: {power: 0.6359, CI95_half_width_p95: 0.2108, estimator_failure_rate: 0.0}
+  C4: {power: 0.9713, CI95_half_width_p95: 0.0924, estimator_failure_rate: 0.0}
+  C5: {power: 0.4684, CI95_half_width_p95: 0.2010, estimator_failure_rate: 0.0}
+
+DECISION_THRESHOLDS:
+  power_minimum: 0.80
+  ordinal_CI95_half_width_p95_maximum: 0.20
+  binary_or_proportion_CI95_half_width_p95_maximum: 0.10
+RESULT:
+  confirmatory_family: [C4]
+  estimation_only: [C1, C2, C3, C5]
+  cluster_aware_simulation: PASS
+  precision_targets_for_retained_confirmatory_family: PASS

@@ -1,0 +1,136 @@
+PLAN_ID: P10_ENDPOINT_AND_ANALYSIS_PLAN_V2
+PROTOCOL_VERSION: P10_PROTOCOL_CAPACITY_CORRECTED_V2
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+
+ORDINAL_ANCHOR:
+  2: all_key_content_correct_and_no_conclusion_changing_error
+  1: partial_correctness_with_omission_or_local_error_without_core_reversal
+  0: core_error_relation_reversal_evidence_misbinding_or_required_action_failure
+
+PRIMARY_ENDPOINTS:
+  FACTUAL_CORRECTNESS:
+    applicable_tiers: [T1]
+    scale: ORDINAL_0_1_2
+    unit: question_system_run_rater
+    source: expert_rated_against_frozen_gold
+    contrast: C1_B_MINUS_A
+    status: ESTIMATION_ONLY
+  SEMANTIC_RELATION_CORRECTNESS:
+    applicable_tiers: [T2]
+    scale: ORDINAL_0_1_2
+    unit: question_system_run_rater
+    source: expert_rated_against_required_relation_bindings
+    contrast: C2_C_MINUS_B
+    status: ESTIMATION_ONLY
+  EVIDENCE_BINDING_CORRECTNESS:
+    applicable_tiers: [T2]
+    scale: ORDINAL_0_1_2
+    unit: question_system_run_rater
+    source: expert_rated_with_machine_trace_precheck
+    contrast: C3_C_MINUS_B
+    status: ESTIMATION_ONLY
+    measurement_equivalence_note: A_is_exploratory_only_for_evidence_behavior
+  UNSUPPORTED_CLAIM_RATE:
+    applicable_tiers: [T3]
+    scale: CLAIM_PROPORTION_0_TO_1
+    numerator: unsupported_or_contradicted_material_claims
+    denominator: all_material_claims_in_the_output
+    empty_output_rule: missing_output_policy_below
+    unit: material_claim_nested_in_question_system_run_and_authority_cluster
+    source: expert_claim_adjudication_with_machine_segmentation_precheck
+    contrast: C4_D_MINUS_C
+    improvement_direction: LOWER
+    status: CONFIRMATORY
+  APPROPRIATE_BOUNDARY_ACTION:
+    applicable_tiers: [T3]
+    scale: BINARY_CORRECT_INCORRECT
+    correct_requires:
+      - expected_QUALIFY_CORRECT_PREMISE_or_ABSTAIN_action_performed
+      - supported_scope_not_over_abstained
+      - unsupported_scope_not_asserted
+    unit: question_system_run_rater
+    source: expert_rated
+    contrast: C5_D_MINUS_C
+    status: ESTIMATION_ONLY
+
+SECONDARY_ENDPOINTS:
+  - answer_completeness
+  - hallucination_rate
+  - evidence_precision
+  - evidence_recall
+  - citation_correctness
+  - expert_agreement
+  - reviewer_burden
+LATENCY_AND_COST: DESCRIPTIVE_ONLY
+
+DESIGN:
+  paired_questions_across_A_B_C_D: true
+  runs_per_question_system: 1
+  repeated_runs_if_ever_added: nested_not_independent
+  primary_inferential_unit: question
+  authority_dependency: questions_nested_within_authority_evidence_cluster
+  rater_dependency: crossed_random_effect_where_supported
+
+CONFIRMATORY_ANALYSIS:
+  family: [C4]
+  multiplicity: Holm_familywise_one_member_equivalent_to_alpha_0.05
+  model: beta_binomial_or_binomial_mixed_model_for_claim_proportions
+  fixed_effect: system_condition
+  random_or_cluster_terms:
+    - question_nested_within_authority_cluster
+    - rater_crossed_when_identifiable
+  estimate: D_minus_C_unsupported_claim_rate
+  reporting: effect_estimate_95_percent_CI_and_two_sided_p_value
+  convergence_fallback: prespecified_cluster_robust_paired_estimator_at_authority_cluster_level
+
+ESTIMATION_ONLY_ANALYSIS:
+  contrasts: [C1, C2, C3, C5]
+  reporting: effect_estimates_and_95_percent_CIs_without_confirmatory_claims
+  ordinal_model: cumulative_link_mixed_model
+  binary_model: binomial_mixed_model
+
+MISSING_AND_NONSCORABLE_OUTPUTS:
+  primary_policy:
+    ordinal_endpoints: score_0
+    appropriate_boundary_action: incorrect
+    unsupported_claim_rate: 1.0_if_no_scorable_material_claim_and_no_appropriate_abstention
+  appropriate_explicit_abstention: score_against_gold_boundary_action_not_automatically_missing
+  sensitivity:
+    - complete_case_with_missingness_by_condition_reported
+    - best_worst_case_bounds
+  technical_failure: retained_and_reported_separately_not_silently_dropped
+
+EXPERT_REVIEW:
+  minimum_raters_per_output: 2
+  eligibility: postgraduate_training_or_equivalent_expertise_in_human_or_medical_parasitology
+  blinding:
+    system_identity: hidden
+    comparator_label: hidden
+    question_author_identity: hidden
+    output_order: randomized
+  training: separate_non_benchmark_calibration_set
+  calibration: score_then_discuss_then_repeat_until_manual_is_consistently_applied
+  adjudication_triggers:
+    - ordinal_scores_differ_by_two_points
+    - nominal_boundary_action_disagreement
+    - disagreement_on_material_claim_support_or_evidence_binding
+  third_rater: independent_resolution_after_trigger
+  pre_adjudication_scores: retained_for_primary_agreement_and_modeling
+  adjudicated_score: reported_as_secondary_consensus
+  agreement_thresholds:
+    ordinal_weighted_kappa_minimum: 0.70
+    nominal_boundary_action_kappa_minimum: 0.70
+  below_threshold_action: recalibrate_without_viewing_system_identity_then_rescore_all_affected_outputs
+
+PRESPECIFIED_SUBGROUPS:
+  primary_tier: [T1, T2, T3]
+  semantic_operation: descriptive_or_estimation_only
+  T3_action: [QUALIFY, CORRECT_PREMISE, ABSTAIN]
+  no_post_result_subgroup_promotion: true
+
+SCIENTIFIC_BOUNDARY:
+  statistics_executed: false
+  A_B_C_D_outputs_used_for_design: false
+  result_informed_tuning: prohibited

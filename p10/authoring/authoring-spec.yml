@@ -1,0 +1,209 @@
+spec_id: P10-BBAS-2.0.0
+status: FROZEN
+scope: AUTHORING_GOVERNANCE_ONLY
+repository: leejianshin/parasitology-kg
+system_commit: d77a76e6219482e1933e6377dfbad2151c829bef
+documentation_base: 7163840325abb62cba5fdca7bb9149b4b1c11a81
+documentation_head: CONTAINING_GIT_COMMIT
+protocol_version: P10_PROTOCOL_CAPACITY_CORRECTED_V2
+protocol_state: FROZEN
+benchmark:
+  total_n: 209
+  primary_tier_counts: {TIER_1: 20, TIER_2: 131, TIER_3: 58}
+  tier_3_action_counts: {QUALIFY: 17, CORRECT_PREMISE: 24, ABSTAIN: 17}
+  language: zh-CN
+  id_pattern: '^P10-Q-[0-9]{4}$'
+  id_assignment: >-
+    Assign a random permutation of 0001..0209 only after all items pass review.
+    IDs are opaque and may not encode tier, area, tag, action, author, or difficulty.
+
+authority:
+  sole_source: P10_AUTHORITATIVE_EVIDENCE_MANIFEST
+  allowed:
+    - permitted frozen evidence IDs
+    - permitted source IDs
+    - frozen graph relations
+    - frozen structured narrative claims
+    - frozen authority projections
+    - pre-authorized deterministic derivations
+    - frozen conflict records
+  prohibited:
+    - web search or new literature
+    - model memory
+    - expert memory absent from the manifest
+    - prior A/B/C/D outputs
+    - post-freeze evidence repair
+    - undocumented local notes
+    - P9 failed-answer content used as gold
+  coverage_precondition: >-
+    Before wording any question, an authority-coverage table conforming to
+    knowledge-area-map.yml must map every permitted evidence unit to zero or
+    more knowledge areas and record eligible tiers, tags, derivations, and
+    conflict status. Unmapped evidence may not be used. Mapping does not
+    authorize question wording.
+
+roles:
+  QUESTION_AUTHOR:
+    access: [frozen_authority, authoring_specification, own_drafts]
+    denied: [A_B_C_D_outputs, system_failure_analysis, scoring_results]
+    duties: [draft_item, draft_gold_object, document_traceability]
+  GOLD_REVIEWER:
+    access: [question, frozen_authority, gold_object, authoring_specification]
+    denied: [A_B_C_D_outputs, scoring_results, system_identity]
+    duties: [independent_authority_check, gold_review, accept_revise_reject]
+  BENCHMARK_FREEZE_AUDITOR:
+    access: [complete_pre_freeze_package, audit_logs]
+    denied: [A_B_C_D_outputs, scoring_results]
+    duties: [validate_schema_counts_hashes_coverage_duplicates_contamination_blinding]
+  LATER_SYSTEM_OUTPUT_RATER:
+    access: [deidentified_question, randomized_deidentified_output, scoring_manual]
+    denied: [system_identity, author_identity, retrieval_logs_unless_endpoint_requires_them]
+    duties: [blind_scoring_only]
+  separation:
+    - QUESTION_AUTHOR and GOLD_REVIEWER must be different people for every item.
+    - BENCHMARK_FREEZE_AUDITOR may not audit an item they authored or reviewed.
+    - LATER_SYSTEM_OUTPUT_RATER may not receive author identity or system identity.
+    - No role may modify question or gold content after any A/B/C/D output exists.
+    - Conflicts of interest and role assignments are frozen in role-assignment.csv.
+
+primary_tier_rule:
+  precedence:
+    - if_expected_action_is_ABSTAIN_CORRECT_PREMISE_or_substantive_QUALIFY: TIER_3
+    - else_if_composition_binding_negation_temporal_condition_shared_arguments_or_multihop_required: TIER_2
+    - else: TIER_1
+  constraints:
+    - exactly one PRIMARY_TIER
+    - linguistic complexity never determines tier
+    - difficulty never determines tier
+    - any required multi-intent component needing boundary action makes the item TIER_3
+
+semantic_tags:
+  nonexclusive: true
+  allowed:
+    tier_1_content: [host, stage, morphology, infection_route, anatomical_site, diagnostic_stage]
+    tier_2_operation: [negation, condition, temporal_scope, host_stage_site_binding,
+      diagnostic_method_specimen_target_binding, relation_direction, shared_arguments,
+      multi_intent, multi_hop_lifecycle]
+    tier_3_boundary: [insufficient_authority, false_premise, unsupported_causal_request,
+      out_of_scope_claim, cross_parasite_contamination, evidence_conflict,
+      excessive_certainty_request]
+  validity:
+    TIER_1: exactly one or more tier_1_content tags; no tier_2_operation or tier_3_boundary tag
+    TIER_2: at least one tier_2_operation tag; no tier_3_boundary tag
+    TIER_3: at least one tier_3_boundary tag; tier_1_content and tier_2_operation tags optional
+  special_rules:
+    - evidence_conflict is legal only when the manifest has a frozen conflict record.
+    - tags describe what the accepted item actually requires, not incidental wording.
+
+expected_action:
+  enum: [ANSWER, QUALIFY, CORRECT_PREMISE, ABSTAIN]
+  tier_constraints:
+    TIER_1: [ANSWER]
+    TIER_2: [ANSWER]
+    TIER_3: [QUALIFY, CORRECT_PREMISE, ABSTAIN]
+  definitions:
+    ANSWER: authority fully supports the required answer scope
+    QUALIFY: authority supports a bounded answer but not the unrestricted request
+    CORRECT_PREMISE: a material premise must be corrected before any supported answer
+    ABSTAIN: authority cannot support a substantive answer to the requested scope
+
+question_unit:
+  independently_scorable: true
+  required_fields: [QUESTION_ID, QUESTION_TEXT, PRIMARY_TIER, SEMANTIC_TAGS,
+    PRIMARY_KNOWLEDGE_AREA, SUPPORTING_KNOWLEDGE_AREAS, EXPECTED_ACTION,
+    REQUIRED_ATOMIC_CLAIMS, OPTIONAL_ACCEPTABLE_CLAIMS,
+    FORBIDDEN_OR_UNSUPPORTED_CLAIMS, REQUIRED_RELATION_BINDINGS,
+    ACCEPTABLE_EVIDENCE_IDS, CONFLICT_STATUS, SUPPORTED_SCOPE,
+    UNSUPPORTED_SCOPE, REQUIRED_BOUNDARY_ACTION, STRUCTURAL_COMPLEXITY,
+    SCORING_NOTES, AUTHOR_ID_CODE, GOLD_REVIEW_STATUS,
+    PRIOR_TEST_OVERLAP, DUPLICATE_STATUS]
+  system_specific_expected_output: prohibited
+
+atomic_claim_policy:
+  definition: one independently supportable substantive proposition with one interpretable truth/support status
+  split_when: any conjunct, qualifier, relation, temporal scope, condition, or certainty level can differ in support status
+  do_not_split_when: split would yield tokens, noun fragments, or propositions without independent substantive meaning
+  identifiers: item-local opaque IDs AC01..ACnn
+  requirements:
+    - every required, optional, and forbidden claim has a support-status rationale
+    - each required or optional claim cites one or more acceptable evidence IDs
+    - a forbidden claim records why it is contradicted, outside scope, or unsupported
+    - claim granularity is independently checked by the GOLD_REVIEWER
+
+tier_rules:
+  TIER_1:
+    requires: [direct authority support, one primary factual relation_or_claim]
+    prohibits: [hidden composition, compound question, false premise, boundary dependence,
+      ambiguous pronoun, adversarial negation, unsupported external clinical inference]
+  TIER_2:
+    requires:
+      - at least one tier_2_operation tag
+      - every compositional requirement represented in REQUIRED_RELATION_BINDINGS or explicit scope fields
+      - all required intents fully answerable
+    prohibits: [length_only_complexity, boundary action]
+  TIER_3:
+    requires: [SUPPORTED_SCOPE, UNSUPPORTED_SCOPE, REQUIRED_BOUNDARY_ACTION,
+      at_least_one_tier_3_boundary_tag]
+    prohibits: [classification_based_only_on_difficulty]
+
+language_policy:
+  benchmark_language: SIMPLIFIED_CHINESE
+  requirements: [natural educational_or_professional Chinese, stable domain terminology,
+    standard Latin_or_scientific names when appropriate]
+  prohibits: [deliberately unnatural wording, model-targeting phrasing, prompt injection,
+    tier disclosure, expected-action disclosure, translation as a hidden intervention]
+
+structural_complexity:
+  descriptive_only: true
+  fields: [NUMBER_OF_REQUIRED_ATOMIC_CLAIMS, NUMBER_OF_RELATION_BINDINGS,
+    NUMBER_OF_ENTITIES, HOP_COUNT, NEGATION_PRESENT, CONDITION_PRESENT,
+    TEMPORAL_SCOPE_PRESENT, MULTI_INTENT_COUNT, BOUNDARY_ACTION_REQUIRED]
+  rule: structural complexity cannot replace or override PRIMARY_TIER
+
+workflow:
+  ordered_steps:
+    - select eligible frozen authority units
+    - assign PRIMARY_KNOWLEDGE_AREA and supporting areas
+    - define intended semantic operation without drafting an answer
+    - draft question
+    - apply primary-tier precedence rule
+    - assign semantic tags
+    - construct gold object
+    - independent gold review
+    - duplicate and prior-P9 contamination audit
+    - schema, traceability, and structural validation
+    - accept, revise, or reject
+  acceptance: only APPROVED items may enter the freeze candidate
+  revision_cycle: revisions return to independent review and repeat affected audits
+
+ai_assistance:
+  allowed: [format checking, schema validation, deterministic metadata validation,
+    spelling and punctuation checking, duplicate-candidate detection]
+  conditional: >-
+    AI may draft candidate wording only when ai_assistance_used=true and tool/version,
+    prompt-purpose, and human verification are recorded. Candidate wording has no
+    authority status and requires independent human author verification and review.
+  prohibited:
+    - authoritative gold creation or adjudication
+    - authority supplementation
+    - use of any evaluated A/B/C/D model as author or gold reviewer
+    - use of system outputs or failures to revise an item
+
+acceptance_gates:
+  GATE_A_SCHEMA_VALIDITY: all records validate against frozen schemas
+  GATE_B_AUTHORITY_TRACEABILITY: every substantive gold element resolves only to permitted manifest entries
+  GATE_C_PRIMARY_TIER_VALIDITY: precedence rule and exactly-one constraint pass
+  GATE_D_SEMANTIC_TAG_VALIDITY: tag vocabulary, tier constraints, and conflict rule pass
+  GATE_E_GOLD_COMPLETENESS: required gold fields, scopes, bindings, and claim support are complete
+  GATE_F_DUPLICATE_CONTROL: no unapproved exact, near, or semantic duplicate remains
+  GATE_G_PRIOR_P9_CONTAMINATION_CONTROL: every item is NONE or FACT_ONLY
+  GATE_H_TIER_COUNT_CONFORMANCE: counts equal 20, 131, and 58 exactly
+  GATE_I_KNOWLEDGE_AREA_COVERAGE: frozen tier-area matrix ranges and concentration limits pass
+  GATE_J_BLINDING_AND_LEAKAGE_AUDIT: access logs, identities, and package split satisfy policy
+  freeze_condition: all gates PASS with signed auditor record before any system run
+
+change_control:
+  after_freeze: [no_question_modification, no_gold_modification, no_tier_reassignment,
+    no_tag_reassignment, no_evidence_addition, no_replacement, no_selective_deletion]
+  critical_defect: preserve and mark the version INVALID; create a new version; repeat every affected gate; re-freeze before execution
+  result_informed_tuning: prohibited

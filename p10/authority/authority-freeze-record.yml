@@ -1,0 +1,35 @@
+RECORD_ID: P10_AUTHORITY_FREEZE_RECORD_V1
+STATUS: FROZEN
+SYSTEM_UNDER_EVALUATION: d77a76e6219482e1933e6377dfbad2151c829bef
+P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
+P10_AEM_VERSION: P10_AEM_V1
+P10_AEM_SHA256: ff12f479af5e367ada38bad02c89e255a88ca26cd45efd5cd9086ae5c6acdc93
+CANONICAL_MANIFEST_FILE_SHA256: 1c54dd2f0452b1fa86264a3a2b03ba80d1b82ab9f7932a68b8e62d909f5be949
+EVIDENCE_UNIT_COUNT: 48
+CONFLICT_RECORD_COUNT: 1
+SOURCE_ID_COUNT: 9
+ENTITY_ID_COUNT: 31
+RELATION_EVIDENCE_COUNT: 40
+NARRATIVE_EVIDENCE_COUNT: 6
+PROJECTION_EVIDENCE_COUNT: 2
+DETERMINISTIC_DERIVATION_RULE_COUNT: 0
+UNAUTHORIZED_EVIDENCE_COUNT: 0
+POST_D77_CONTENT_COUNT: 0
+
+PUBLIC_MATERIALIZATION:
+  path: p10/authority/authoritative-evidence-manifest.yml
+  representation: exact_canonical_JSON_bytes_valid_as_YAML_1_2
+  scientific_content_changed: false
+
+SOLE_AUTHORITY_RULE:
+  benchmark_gold_source: P10_AEM_V1_only
+  external_literature_addition: prohibited
+  hidden_authority_repair: prohibited
+  model_memory_as_truth: prohibited
+  teacher_memory_outside_manifest: prohibited
+  answer_key_change_after_outputs: prohibited
+
+MUTATION_STATE:
+  AEM_MUTATED: false
+  AUTHORITY_EXPANDED: false
+  SYSTEM_MUTATED: false
