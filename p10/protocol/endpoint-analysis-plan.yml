@@ -37,7 +37,9 @@ PRIMARY_ENDPOINTS:
     scale: CLAIM_PROPORTION_0_TO_1
     numerator: unsupported_or_contradicted_material_claims
     denominator: all_material_claims_in_the_output
-    empty_output_rule: missing_output_policy_below
+    zero_substantive_material_claim_rule: 0
+    refusal_evasion_or_boundary_behavior: SCORED_SEPARATELY
+    technical_no_output_rule: UNDEFINED_AND_TECHNICAL_FAILURE_FLAGGED
     unit: material_claim_nested_in_question_system_run_and_authority_cluster
     source: expert_claim_adjudication_with_machine_segmentation_precheck
     contrast: C4_D_MINUS_C
@@ -76,6 +78,7 @@ DESIGN:
 CONFIRMATORY_ANALYSIS:
   family: [C4]
   multiplicity: Holm_familywise_one_member_equivalent_to_alpha_0.05
+  primary_analysis_population: PAIRED_SCORABLE_QUESTION_ANALYSIS
   model: beta_binomial_or_binomial_mixed_model_for_claim_proportions
   fixed_effect: system_condition
   random_or_cluster_terms:
@@ -95,12 +98,19 @@ MISSING_AND_NONSCORABLE_OUTPUTS:
   primary_policy:
     ordinal_endpoints: score_0
     appropriate_boundary_action: incorrect
-    unsupported_claim_rate: 1.0_if_no_scorable_material_claim_and_no_appropriate_abstention
+    unsupported_claim_rate_if_zero_substantive_material_claims: 0
+    unsupported_claim_rate_if_technical_no_output: UNDEFINED
   appropriate_explicit_abstention: score_against_gold_boundary_action_not_automatically_missing
+  refusal_evasion_and_boundary_behavior: scored_separately
+  technical_failure: FLAGGED
+  technical_no_output_no_go_rule:
+    threshold: GREATER_THAN_5_PERCENT
+    scope: ANY_COMPARATOR_CONDITION
+    action: NO_GO_REVIEW
   sensitivity:
     - complete_case_with_missingness_by_condition_reported
     - best_worst_case_bounds
-  technical_failure: retained_and_reported_separately_not_silently_dropped
+    - predefined_paired_scorable_question_sensitivity_analyses
 
 EXPERT_REVIEW:
   minimum_raters_per_output: 2
@@ -117,12 +127,18 @@ EXPERT_REVIEW:
     - nominal_boundary_action_disagreement
     - disagreement_on_material_claim_support_or_evidence_binding
   third_rater: independent_resolution_after_trigger
-  pre_adjudication_scores: retained_for_primary_agreement_and_modeling
-  adjudicated_score: reported_as_secondary_consensus
-  agreement_thresholds:
-    ordinal_weighted_kappa_minimum: 0.70
-    nominal_boundary_action_kappa_minimum: 0.70
-  below_threshold_action: recalibrate_without_viewing_system_identity_then_rescore_all_affected_outputs
+  raw_pre_adjudication_ratings: retained
+  primary_main_score: ADJUDICATED_SCORE
+  raw_two_rater_analysis: SENSITIVITY_ANALYSIS
+  agreement_statistic: KRIPPENDORFF_ALPHA
+  ordinal_endpoints: ORDINAL_KRIPPENDORFF_ALPHA
+  nominal_boundary_action: NOMINAL_KRIPPENDORFF_ALPHA
+  calibration_minimum: 0.80
+  formal_study_minimum: 0.67
+  confidence_interval: 95_PERCENT
+  calibration_set: SEPARATE_NON_BENCHMARK_SET
+  below_formal_minimum_action: NO_GO_REVIEW_OR_FORMAL_STUDY_LIMITATION
+  prohibited_below_threshold_action: SILENT_RECALIBRATION_AND_RESCORING_UNTIL_THRESHOLD_PASSES
 
 PRESPECIFIED_SUBGROUPS:
   primary_tier: [T1, T2, T3]

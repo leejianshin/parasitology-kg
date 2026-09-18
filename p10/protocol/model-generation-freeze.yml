@@ -6,10 +6,11 @@ P10_PROTOCOL_DOCUMENTATION_HEAD: CONTAINING_GIT_COMMIT
 MODEL_PROVIDER: OpenAI
 MODEL_ID: gpt-4.1-2025-04-14
 MODEL_SNAPSHOT_OR_REVISION: gpt-4.1-2025-04-14
-MODEL_REPRODUCIBILITY_STATUS: PINNED_MODEL_SNAPSHOT_WITH_REQUEST_LEVEL_VERSION_CAPTURE
-API_VERSION: v1
-SDK_OR_RUNTIME: OpenAI_HTTPS_JSON_API
-SDK_OR_RUNTIME_VERSION: v1
+MODEL_REPRODUCIBILITY_STATUS: PINNED
+API_VERSION: v1/responses
+SDK_OR_RUNTIME: openai-python on CPython
+OPENAI_PYTHON_VERSION: 3.13.0
+CPYTHON_VERSION: 3.12.14
 
 GENERATION:
   TEMPERATURE: 0
@@ -24,11 +25,24 @@ SEED_POLICY:
   reason: seed_is_not_part_of_the_frozen_generation_contract_for_this_endpoint
   deterministic_claim: prohibited
 RETRY_POLICY:
-  maximum_retries: 2
-  permitted_causes: [transport_failure, timeout, HTTP_429, HTTP_5xx]
-  request_payload_change: prohibited
+  maximum_retries: 1
+  permitted_causes:
+    - transport_failure
+    - rate_limit
+    - timeout_before_response_creation
+    - provider_HTTP_5xx
+  retry_payload: BYTE_IDENTICAL
+  retain_both_attempts: true
+  retain_both_provider_request_IDs: true
   successful_response_regeneration: prohibited
   retry_log_required: true
+  prohibited_output_based_causes:
+    - weak
+    - incorrect
+    - incomplete
+    - empty
+    - refusal
+    - malformed_but_returned
 REQUEST_METADATA_POLICY:
   transmit:
     - blinded_question_identifier
@@ -39,14 +53,21 @@ REQUEST_METADATA_POLICY:
     - tier_label
     - expected_action
     - comparator_identity_in_answer_prompt
+  retain_per_request:
+    - CANONICAL_REQUEST_SHA256
+    - UTC_TIMESTAMP
+    - PROVIDER_REQUEST_ID
+    - REQUESTED_MODEL_STRING
+    - RETURNED_MODEL_STRING
+    - HTTP_STATUS
+    - TOKEN_USAGE
+    - RETRY_STATUS
+    - RESPONSE_SHA256
+    - AVAILABLE_PROVIDER_PROCESSING_METADATA
 MODEL_VERSION_CAPTURE_POLICY:
-  capture_per_request:
-    - requested_model_ID
-    - returned_model_ID
-    - provider_request_ID
-    - response_created_timestamp
-    - API_version
-  returned_model_mismatch: FAIL_CLOSED_BEFORE_SCORING
+  required_requested_model_string: gpt-4.1-2025-04-14
+  required_returned_model_string: gpt-4.1-2025-04-14
+  identifier_mismatch_action: FAIL_CLOSED_BEFORE_SCIENTIFIC_SCORING
   provider_side_mutability_disclosure: >-
     The dated model identifier is pinned. Provider infrastructure and serving
     implementation remain outside repository control and are recorded as a
