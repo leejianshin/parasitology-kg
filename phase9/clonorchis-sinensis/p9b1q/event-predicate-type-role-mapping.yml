@@ -20,7 +20,7 @@ authority:
     sha256: "3ce4adb9808f677e7e99e9eb7e5d1ba9705bec5c3ead3266ed90c721afa15353"
   p9a_runtime_contract:
     path: "phase9/clonorchis-sinensis/runtime-contract.yml"
-    sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
+    sha256: "91a590a819f4e24d06e6f0f155e226b65ef462fdc34aba5680b38027c76ce9c5"
 
 predicate_type_matrix:
   has_life_cycle_stage: {subject_types: [parasite], object_types: [life_cycle_stage]}

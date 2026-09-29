@@ -72,7 +72,7 @@ class P9B1RetrievalTests(unittest.TestCase):
         self.assertEqual(48, len(index.records))
         self.assertEqual(48, len({item.claim_id for item in index.records}))
         self.assertEqual(
-            "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f",
+            "312c972b4eab24ced7eee7a9a9f1977a457d1a5cc3b4b6688966f7eff4722334",
             index.bundle_sha256,
         )
 

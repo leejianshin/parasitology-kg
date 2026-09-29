@@ -9,9 +9,9 @@ started_at: "2026-07-29T12:00:00Z"
 completed_at: "2026-07-29T12:00:00Z"
 knowledge_authority:
   knowledge_version: "clonorchis_pcms_v1"
-  source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
-  canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
-  runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
+  source_commit: "718bccfb65ef52ffd19732cc6257e38e5aa1a4f9"
+  canonical_input_sha256: "d0e5114f4ef714576d86810c85f3ebeab9d04ad5c939a3bdaa1163c12ce04d07"
+  runtime_bundle_sha256: "312c972b4eab24ced7eee7a9a9f1977a457d1a5cc3b4b6688966f7eff4722334"
   hash_verified: false
 retrieval:
   candidate_claim_ids: []

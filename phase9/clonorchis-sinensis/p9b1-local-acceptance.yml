@@ -32,8 +32,8 @@ recovery_provenance:
   revision_8_trigger: "SCOPED_DIAGNOSTIC_ASSERTIONS_AFFIRMED_CONTROL_CONCEPTS_DYNAMIC_COVERAGE_AND_NEW_BLIND_HELD_OUT"
 
 authority:
-  runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
-  index_sha256: "2a33d06cd812715adb42fe88a2f71fab9002b0c87240f70bafa3c25084ac70c3"
+  runtime_bundle_sha256: "312c972b4eab24ced7eee7a9a9f1977a457d1a5cc3b4b6688966f7eff4722334"
+  index_sha256: "150b62b42a6dc276d4bd8bf9510327e685d6048029722458d17c70f2a43a0e56"
   entities: 31
   relation_claims: 40
   narrative_claims: 6
@@ -43,13 +43,13 @@ authority:
 frozen_artifacts:
   retrieval_contract:
     path: "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
-    sha256: "c6d96fd3c3180605b6be0466c9d386031c917225540be38a006ed452fe24337c"
+    sha256: "6f7934455c35e9f8ed9c81273d587d5ae0b79d28c440af42911bf56668e6c6f9"
   runtime_contract:
     path: "phase9/clonorchis-sinensis/runtime-contract.yml"
-    sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
+    sha256: "91a590a819f4e24d06e6f0f155e226b65ef462fdc34aba5680b38027c76ce9c5"
   runtime_bundle_manifest:
     path: "phase9/clonorchis-sinensis/runtime-bundle-manifest.yml"
-    sha256: "451e7a1fbff02236590b8247e8aa20e51834be1d1a47bb060393474606cb108c"
+    sha256: "99472b1bfb97fa73ae136a0272b7856d9fa64e33d38a3b49e4ec5fb2bfce1327"
   authority_projection:
     path: "phase9/clonorchis-sinensis/runtime-authority-projection.yml"
     sha256: "3ce4adb9808f677e7e99e9eb7e5d1ba9705bec5c3ead3266ed90c721afa15353"
@@ -58,10 +58,10 @@ frozen_artifacts:
     sha256: "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
   response_schema:
     path: "phase9/clonorchis-sinensis/response-schema.yml"
-    sha256: "6ce7440bb5ca978b42c60199fae1e80e23ba79cf46188b642442b922381039ae"
+    sha256: "08b71cf110fe7d8440a0192d313d8812e3fc5410297a94d82ab1282631d3dfab"
   audit_schema:
     path: "phase9/clonorchis-sinensis/audit-log-schema.yml"
-    sha256: "9f9231a02249e5a73c288edb0d66bd43cc3c3eb7f6b07f934376d3d793b3a544"
+    sha256: "abf0ce59d024ad6148ffc768b912e9d12e077169fa4ef0413da8f938f85992aa"
   fixed_regression:
     path: "phase7/clonorchis-sinensis/pilot-content-minimum-set-regression.yml"
     sha256: "2546aafd472fe7fa514f3cc395fc41449c5f06604d3f718cea1e3afa2d393cbd"
@@ -142,13 +142,13 @@ frozen_artifacts:
     reveal_timing: "AFTER_REVISION_8_LOCAL_COMMIT"
   implementation:
     path: "scripts/p9b1_local_retrieval.py"
-    sha256: "5e330c8532f5d8deafdea70c19f7a17d6f25897bdb84b27041ba7d2f2d404424"
+    sha256: "3f653d80b018e7bbb521af52e888764a830d1455c3edde7145101b894a85deed"
   tests:
     path: "tests/test_p9b1_retrieval.py"
-    sha256: "6b4821a038504bdeddbc92913f910493cc41563373f0c5c6f6b4ec531b2efa25"
+    sha256: "17fc884a0bcd8ad59076055b68b6a119d2e6a29b245909a06d58efe8af057685"
   p9a_validator:
     path: "scripts/validate_phase9_contract.py"
-    sha256: "c7b5dfc99f3e0730fa356db928e8ad9626ea5c626f3455d70184bc9839213715"
+    sha256: "0af97292270d39ebad28414e5f1855524e6ec89fff3153fb579c6a2893c42319"
   p9a_tests:
     path: "tests/test_phase9_contract.py"
     sha256: "37c76c82d334e74933cc0d5de2ad09654cd6b20fa10e9a91cae03e6a5ece8c9f"
@@ -215,7 +215,7 @@ acceptance_results:
   independent_id_statement_direction_citation_assertions: "2/2 PASS"
   authority_projection_tamper: "REJECTED_BEFORE_INDEX_USE"
   control_and_schema_tamper_cases: "4/4 REJECTED"
-  example_result_sha256: "bc1e2f4612d73c7d662b6e2b72aedbcf652d18aa81dee55051eaa1651a54d264"
+  example_result_sha256: "252f358f564568bc50880192fb085cf453529043334f54008f6f599cc0431062"
   p9a_contract_test_environment:
     status: "NOT_RUN"
     blocker: "MISSING_JSONSCHEMA_DEPENDENCY"

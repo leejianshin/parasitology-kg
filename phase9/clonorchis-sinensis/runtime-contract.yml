@@ -5,12 +5,12 @@ language: "zh-CN"
 
 authority:
   knowledge_version: "clonorchis_pcms_v1"
-  source_commit: "9a9ff5a17de0fc6d32595730f10dfbebd55d9897"
-  canonical_input_sha256: "3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f"
+  source_commit: "718bccfb65ef52ffd19732cc6257e38e5aa1a4f9"
+  canonical_input_sha256: "d0e5114f4ef714576d86810c85f3ebeab9d04ad5c939a3bdaa1163c12ce04d07"
   runtime_bundle_manifest:
     path: "phase9/clonorchis-sinensis/runtime-bundle-manifest.yml"
-    sha256: "451e7a1fbff02236590b8247e8aa20e51834be1d1a47bb060393474606cb108c"
-    bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
+    sha256: "99472b1bfb97fa73ae136a0272b7856d9fa64e33d38a3b49e4ec5fb2bfce1327"
+    bundle_sha256: "312c972b4eab24ced7eee7a9a9f1977a457d1a5cc3b4b6688966f7eff4722334"
     startup_verification: "REQUIRED_BEFORE_ANY_RETRIEVAL"
   expected_counts:
     entities: 31

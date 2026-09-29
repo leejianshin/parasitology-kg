@@ -1,7 +1,7 @@
 report_version: '1.0'
 suite_id: clonorchis_pcms_regression_v1
 status: PASS
-canonical_graph_sha256: 3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f
+canonical_graph_sha256: d0e5114f4ef714576d86810c85f3ebeab9d04ad5c939a3bdaa1163c12ce04d07
 counts:
   cases: 16
   passed: 16

@@ -1,0 +1,81 @@
+record_id: "P10-D77-SUCCESSOR-PCMS001-CORR1"
+record_type: "REPOSITORY_CORRECTION_RECORD"
+authority: "WEB_MASTER_CONTROL"
+build: "P10_D77_SUCCESSOR_PCMS001_TWO_STAGE_IDENTITY_CORR1"
+status: "CANDIDATE_RUNTIME_BINDING_BLOCKED_PENDING_YAML_VALIDATION"
+
+topology:
+  historical_base_commit: "d77a76e6219482e1933e6377dfbad2151c829bef"
+  source_anchor_commit: "718bccfb65ef52ffd19732cc6257e38e5aa1a4f9"
+  source_anchor_tree_sha1: "2c863619a4293f0d382930182d3715444e157a25"
+  source_anchor_parent: "d77a76e6219482e1933e6377dfbad2151c829bef"
+  candidate_head: "718bccfb65ef52ffd19732cc6257e38e5aa1a4f9"
+  final_successor_commit: "NOT_CREATED"
+  final_successor_parent: "718bccfb65ef52ffd19732cc6257e38e5aa1a4f9"
+
+correction:
+  claim_id: "PCMS-001"
+  corrected_claim: "华支睾吸虫成虫体形狭长、背腹扁平，前端稍窄、后端钝圆，形似葵花籽。"
+  scientific_claim_change_count: 1
+  unrelated_scientific_change_count: 0
+  new_source_count: 0
+  new_entity_count: 0
+  new_relation_count: 0
+  source_registry_changed: false
+
+authority_binding:
+  canonical_input_sha256: "d0e5114f4ef714576d86810c85f3ebeab9d04ad5c939a3bdaa1163c12ce04d07"
+  runtime_bundle_manifest_sha256: "99472b1bfb97fa73ae136a0272b7856d9fa64e33d38a3b49e4ec5fb2bfce1327"
+  runtime_bundle_sha256: "312c972b4eab24ced7eee7a9a9f1977a457d1a5cc3b4b6688966f7eff4722334"
+  runtime_contract_sha256: "91a590a819f4e24d06e6f0f155e226b65ef462fdc34aba5680b38027c76ce9c5"
+  retrieval_contract_sha256: "6f7934455c35e9f8ed9c81273d587d5ae0b79d28c440af42911bf56668e6c6f9"
+
+authorized_scope:
+  source_anchor_paths:
+    - "phase7/clonorchis-sinensis/pilot-content-minimum-set-authority-review.yml"
+    - "knowledge-extensions/clonorchis-sinensis/stage-clonorchis-adult-pcms.md"
+    - "derived/clonorchis-sinensis/pcms-v1/manifest.yml"
+  runtime_binding_paths:
+    - "phase9/clonorchis-sinensis/runtime-bundle-manifest.yml"
+    - "phase9/clonorchis-sinensis/runtime-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1-retrieval-contract.yml"
+    - "phase9/clonorchis-sinensis/p9b1q/event-predicate-type-role-mapping.yml"
+    - "phase9/clonorchis-sinensis/response-schema.yml"
+    - "phase9/clonorchis-sinensis/audit-log-schema.yml"
+    - "scripts/p9b1_local_retrieval.py"
+    - "scripts/validate_phase9_contract.py"
+    - "phase7/clonorchis-sinensis/pilot-content-minimum-set-regression-report.yml"
+    - "tests/fixtures/phase9/audit-answer-valid.yml"
+    - "tests/fixtures/phase9/audit-unverified-valid.yml"
+    - "tests/fixtures/phase9/response-abstain-valid.yml"
+    - "tests/fixtures/phase9/response-answer-valid.yml"
+    - "tests/test_p9b1_retrieval.py"
+    - "phase9/clonorchis-sinensis/p10-d77-successor-pcms001-correction-record.yml"
+
+semantic_invariance:
+  retrieval_algorithm: "UNCHANGED"
+  ranking: "UNCHANGED"
+  lexical_scoring: "UNCHANGED"
+  query_ir: "UNCHANGED"
+  semantic_constraints: "UNCHANGED"
+  validation_control_flow: "UNCHANGED"
+  error_handling: "UNCHANGED"
+  schema_structure_and_rules: "UNCHANGED"
+  verification_strength: "UNCHANGED"
+
+validation:
+  source_anchor_commit_resolves: "YES"
+  source_anchor_tree_matches: "YES"
+  source_bound_blobs_match: "YES"
+  candidate_source_files_equal_source_anchor: "YES"
+  identity_cycle_resolved: "YES"
+  static_identity_and_diff_checks: "PASS"
+  script_ast_equivalence_except_authorized_constants: "PASS"
+  yaml_dependent_validation: "NOT_RUN_BLOCKED_MISSING_PYYAML"
+  complete_candidate_acceptance: "BLOCKED"
+
+execution_boundary:
+  final_successor_commit_created: "NO"
+  public_push: "NO"
+  p10_scientific_benchmark_executed: "NO"
+  system_execution_authorized: "NO"

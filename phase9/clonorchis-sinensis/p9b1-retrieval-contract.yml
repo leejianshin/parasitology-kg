@@ -6,7 +6,7 @@ implementation_mode: "LOCAL_DETERMINISTIC_NO_MODEL"
 authority:
   parent_contract_id: "clonorchis_p9a_controlled_rag_v1"
   knowledge_version: "clonorchis_pcms_v1"
-  runtime_bundle_sha256: "cc812fd0085085d5e5e10758d0de3b6480680e3bd3ea908aeee446d57271481f"
+  runtime_bundle_sha256: "312c972b4eab24ced7eee7a9a9f1977a457d1a5cc3b4b6688966f7eff4722334"
   allowed_runtime_inputs:
     - "derived/clonorchis-sinensis/pcms-v1/nodes.jsonl"
     - "derived/clonorchis-sinensis/pcms-v1/edges.jsonl"
@@ -21,7 +21,7 @@ authority:
   every_retrieval_rebuilds_verified_index: true
 
 frozen_controls:
-  runtime_contract_sha256: "bc651a19acd3f81ed14f0f6aada08462129b185bb960ffafd2c2188171cab046"
+  runtime_contract_sha256: "91a590a819f4e24d06e6f0f155e226b65ef462fdc34aba5680b38027c76ce9c5"
   request_schema_sha256: "da98c6e6427a52cb17501177da6aa97c73c7417edbec39b019d1b46b4fcdbd56"
   result_schema_sha256: "3a44d7d457af16f4850ab812b009e59b10fdd5255ca920bb913670d1bb7ae4d6"
 
