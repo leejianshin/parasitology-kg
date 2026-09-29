@@ -88,7 +88,7 @@ candidate_groups:
     schema_mode: "structured_narrative"
     claims:
       - claim_id: PCMS-001
-        claim: "华支睾吸虫成虫背腹扁平，呈狭长或披针形。"
+        claim: "华支睾吸虫成虫体形狭长、背腹扁平，前端稍窄、后端钝圆，形似葵花籽。"
         claim_role: narrative_fact
         evidence:
           - {source_id: source.pmph_human_parasitology_10e_2024, locator: "印刷页94【形态】"}

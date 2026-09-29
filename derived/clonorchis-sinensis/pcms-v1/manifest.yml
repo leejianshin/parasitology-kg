@@ -4,7 +4,7 @@ base_batch_id: P5-B1
 admission_batch_id: P7-PCMS
 authority: reviewed_markdown_plus_reviewed_batch_extensions
 generator: scripts/build_pcms_graph.py
-canonical_input_sha256: 3e83162b75bc0bfcf40b7fd67eba13c610d7050f9bc77f64baa008d664e4411f
+canonical_input_sha256: d0e5114f4ef714576d86810c85f3ebeab9d04ad5c939a3bdaa1163c12ce04d07
 counts:
   base_nodes: 14
   base_edges: 10
